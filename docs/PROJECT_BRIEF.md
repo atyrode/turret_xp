@@ -47,9 +47,16 @@ The first playable releases should make progression visible and testable: select
 - Remove material deposit buttons and consume the matching carried element resource automatically during open-panel playtesting.
 - Add first-pass element mastery milestones and visual feedback for bounce, pierce, fire, electric, explosive, and combo effects.
 
+## V0.4.3 Scope
+
+- Replace player-inventory material feeding with a real Veteran Core feeder inventory entity.
+- Create the feeder next to the turret when a Veteran Core is installed, and show its status in the Evolution panel.
+- Consume element unlock and mastery materials from the feeder over time, even when the turret GUI is closed.
+- Destroy the feeder and spill leftover feeder contents when the core is extracted or the turret is mined.
+
 ## Open Product Questions
 
 - Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, or infinite mastery?
 - Should destroyed turrets destroy their installed core, drop a damaged core, or have a recovery chance?
 - Should XP eventually include waves survived, ammo consumed, or other behavior beyond damage and kill credit?
-- Should material investment be manual at first, automated through logistics, or both?
+- Should the feeder stay as an adjacent port, or should a future proxy-container pass make the turret tile itself feel like the feed target?

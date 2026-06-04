@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.4.2
+## Version 0.4.3
 
-V0.4.2 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Specialization choices now swap the current turret into hidden gun-turret variants with real prototype stat changes.
+V0.4.3 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates a nearby inserter-fed Veteran Core feeder inventory for element materials. Specialization choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
 
 V0.4.0 was published to the Factorio Mod Portal for playtesting before this follow-up release.
 
@@ -23,6 +23,7 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - Core upgrade ranks cost one point each and can be purchased repeatedly.
 - Powerful augment ranks unlock at level 30, cost one augment point each, and earn one augment point every ten levels.
 - Element choices do not cost points. They start a single-resource material project that permanently assigns the element when complete.
+- Material projects and element mastery milestones consume from the installed core's Veteran Core feeder inventory, not from the player inventory.
 - Unlocked elements can continue consuming their matching resource to advance element mastery milestones.
 - Specialization unlocks at level 20 and is a free one-time choice.
 - Specialization swaps the turret body between vanilla `gun-turret` and hidden `turret-xp-gun-turret-*` variants. Removing the Veteran Core returns the turret body to vanilla `gun-turret`.
@@ -40,6 +41,8 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - Extracting a core returns the profile item to the player inventory.
 - If the turret is mined, the normal gun turret item returns through vanilla behavior and the mod separately returns/spills the Veteran Core.
 - The profile can be named. If the player enables the label, the world label renders as `name (lvl N)` above the current turret body.
+- Installing a core creates a `turret-xp-veteran-feeder` entity near the turret when an adjacent tile is available.
+- Extracting or mining a core destroys the feeder and spills any leftover feeder contents.
 
 ## Evolution Sections
 
@@ -75,6 +78,7 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - If relative anchoring fails, the panel falls back to `player.gui.left`.
 - `on_gui_closed` destroys the panel and clears the remembered player/turret link.
 - The panel includes a Veteran Core slot-style control for install/extract, dev core creation, naming, and floating-label toggle.
+- The Evolution panel includes feeder status: feeder availability, slot usage, and relevant element resources currently waiting in the feeder.
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and panel styles.
 - The XP bar uses a custom solid progressbar style defined in `data.lua`.
@@ -83,6 +87,6 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.4.2`
+- Current version: `0.4.3`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

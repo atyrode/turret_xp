@@ -116,9 +116,17 @@
 - [x] Remove material deposit buttons and auto-consume the matching carried element material while the turret is open.
 - [x] Add element mastery milestones and short visual feedback for bounce, pierce, fire, electric, and explosive upgrade effects.
 
+## Completed For V0.4.3
+
+- [x] Add a real Veteran Core feeder inventory entity.
+- [x] Create the feeder near the turret when a Veteran Core is installed.
+- [x] Consume element unlock and mastery materials from the feeder instead of the player inventory.
+- [x] Show feeder status in the Evolution panel.
+- [x] Destroy the feeder and spill leftover feeder contents when the core is extracted or the turret is mined.
+
 ## Likely Next Work
 
-- Playtest V0.4.2 from the Mod Portal and integrate feedback.
+- Playtest V0.4.3 from the Mod Portal and integrate feedback, especially around feeder placement and inserter usability.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.

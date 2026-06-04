@@ -15,6 +15,7 @@ Turret XP ${version}.
 - Adds a Turret XP panel to the vanilla gun turret GUI.
 - Adds non-stackable Veteran Cores that make selected gun turrets unique while ordinary turrets stay stackable.
 - Tracks XP, level, kills, kill credit, lifetime damage, evolution choices, material projects, custom names, and label preference on the installed core profile.
+- Adds a real Veteran Core feeder inventory for inserter-fed element materials.
 - Awards configurable XP from cored gun turret damage and proportional kill credit.
 - Lets the player extract a core and install it in another turret, carrying progression with it.
 - Returns or spills the installed core when a turret is mined.

@@ -326,7 +326,7 @@ Skill points and materials should both matter. A turret with XP but no materials
 
 ## Portable Veteran Core
 
-Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, and V0.4.2 makes specialization stats travel with the core by swapping the current turret body.
+Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, V0.4.2 makes specialization stats travel with the core by swapping the current turret body, and V0.4.3 adds a feeder inventory so material progression is supplied like machine input.
 
 The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. When the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret.
 
@@ -370,6 +370,9 @@ Implemented first pass:
 - On installation, reads the core tags and restores the profile to the new turret host.
 - Does not allow two active turrets to share the same core ID.
 - Lets the player name the core profile and optionally draw a floating `name (lvl N)` label above the current turret body.
+- Creates a Veteran Core feeder next to the turret for element unlock and mastery materials.
+- Consumes matching material from the feeder inventory over time.
+- Destroys the feeder and spills leftover contents when the core is removed or the turret is mined.
 
 Open design questions:
 
@@ -377,6 +380,7 @@ Open design questions:
 - Should installing a core be reversible before the turret earns XP?
 - Should a core bind to one force or remain tradable between players/forces?
 - Should the core carry ammo/project/material-project progress, or only XP and evolution?
+- Should the feeder remain an adjacent port, or should a future proxy-container design make insertion feel like feeding the turret body itself?
 - Should quality on the core affect XP gain, memory capacity, element slots, or respec cost?
 - Should destroyed turrets always destroy the installed core, drop a damaged core, or have a recovery chance?
 - Should floating labels be always visible, alt-mode only, or configurable?

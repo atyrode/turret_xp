@@ -5,7 +5,7 @@
 - Factorio 2.0 runtime mod.
 - Lua control-stage implementation with runtime-global settings.
 - Runtime XP settings plus a required `flib >= 0.16.4` dependency for shared GUI styles.
-- V0.4.2 adds local hidden gun-turret variants for specialization choices, while the `item-with-tags` Veteran Core carries portable progression profiles.
+- V0.4.3 adds a real adjacent feeder inventory entity for Veteran Core material inputs. V0.4.2 added local hidden gun-turret variants for specialization choices, while the `item-with-tags` Veteran Core carries portable progression profiles.
 - Python packaging script reused from `player_quality`.
 - Shell scripts for checks, packaging, local install, GitHub release, and Mod Portal publishing.
 - Static GitHub Pages homepage served from `docs/index.html`.
@@ -89,6 +89,7 @@
 - `ItemWithTagsPrototype` and `ItemStackDefinition.tags` support storing a core profile directly on a non-stackable item when it is extracted from a turret.
 - `LuaItemStack::get_tag` and `LuaItemStack::set_tag` expose runtime tag access for tagged item stacks.
 - `LuaRendering::draw_text` supports entity targets with offsets, which is used for optional `name (lvl N)` turret labels.
+- Runtime GUI rows are not inserter-targetable inventories. V0.4.3 uses a real hidden chest-like feeder entity near the turret so material inputs can be fed like machine inventory.
 
 ## Risks
 
@@ -98,7 +99,8 @@
 - V0.4.1 implements mined turret persistence through the Veteran Core item. Destroyed turret recovery remains an open design question.
 - Evolution points are derived from core profile level and stored under `state.evolution`.
 - Runtime GUI cannot add a true extra slot inside the vanilla turret inventory, so Veteran Core install/extract uses explicit controls in the attached Turret XP panel.
-- V0.4.2 specialization stats are prototype-backed. Core upgrades, augments, elements, combos, passive repair, and vampiric healing still need playtest balance and clearer feedback.
+- V0.4.2 specialization stats are prototype-backed. V0.4.3 feeder placement is intentionally simple and may need a later proxy-container pass if adjacent placement feels awkward.
+- Core upgrades, augments, elements, combos, passive repair, and vampiric healing still need playtest balance and clearer feedback.
 - The panel updates named elements in place every 60 ticks; new GUI work should preserve stable hover/read behavior.
 - `flib` adds a dependency, but it is common and handled by the in-game dependency manager.
 - `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than the current relative-panel polish needs.

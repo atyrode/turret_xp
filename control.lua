@@ -1,5 +1,6 @@
 local MOD_PREFIX = "turret-xp-"
 local CHIP_NAME = "turret-xp-veteran-core"
+local FEEDER_NAME = "turret-xp-veteran-feeder"
 local PROFILE_TAG = "turret_xp_profile"
 local BASE_TURRET_NAME = "gun-turret"
 local SPECIALIZED_TURRET_PREFIX = "turret-xp-gun-turret-"
@@ -28,6 +29,7 @@ local GUI = {
   dev = MOD_PREFIX .. "dev",
   skill_points = MOD_PREFIX .. "skill-points",
   evolution = MOD_PREFIX .. "evolution",
+  feeder_status = MOD_PREFIX .. "feeder-status",
   active_elements = MOD_PREFIX .. "active-elements",
   active_specialization = MOD_PREFIX .. "active-specialization",
   active_combo = MOD_PREFIX .. "active-combo",
@@ -202,9 +204,10 @@ local COLOR = {
 
 local REFRESH_TICKS = 60
 local TARGET_DAMAGE_TTL = 60 * 60 * 5
-local AUTO_FEED_STACK_LIMIT = 100
+local FEEDER_CONSUME_LIMIT = 100
 local safe_read
 local build_turret_gui
+local feeder = {}
 
 local function ensure_storage()
   storage.turret_xp = storage.turret_xp or {}
@@ -213,6 +216,7 @@ local function ensure_storage()
   storage.turret_xp.next_chip_id = storage.turret_xp.next_chip_id or 1
   storage.turret_xp.players = storage.turret_xp.players or {}
   storage.turret_xp.targets = storage.turret_xp.targets or {}
+  storage.turret_xp.feeders = storage.turret_xp.feeders or {}
 end
 
 local function unlock_core_recipes_for_existing_tech()
@@ -636,7 +640,7 @@ local function copy_serializable(value)
 
   local result = {}
   for key, child in pairs(value) do
-    if key ~= "entity" and key ~= "name_render" then
+    if key ~= "entity" and key ~= "name_render" and key ~= "feeder" then
       result[key] = copy_serializable(child)
     end
   end
@@ -921,6 +925,7 @@ local function install_profile_on_turret(entity, profile)
   profile.entity = entity
   storage.turret_xp.chips[profile.chip_id] = profile
   host.chip_id = profile.chip_id
+  feeder.ensure(entity, profile)
   update_name_render(entity, profile)
   return profile
 end
@@ -933,6 +938,7 @@ local function detach_profile_from_turret(entity)
 
   local chip_id = profile.chip_id
   destroy_name_render(profile)
+  feeder.destroy(profile, entity.position, true)
   profile.entity = nil
   if chip_id then
     storage.turret_xp.chips[chip_id] = nil
@@ -1069,6 +1075,7 @@ local function swap_turret_body(entity, target_name)
 
   if profile then
     update_name_render(new_entity, profile)
+    feeder.ensure(new_entity, profile)
   end
 
   return new_entity
@@ -1201,6 +1208,317 @@ safe_read = function(object, property)
   end
 
   return nil
+end
+
+function feeder.get_inventory(entity)
+  if not entity or not entity.valid then
+    return nil
+  end
+
+  local ok, inventory = pcall(function()
+    return entity.get_inventory(defines.inventory.chest)
+  end)
+
+  if ok and inventory and inventory.valid then
+    return inventory
+  end
+
+  return nil
+end
+
+function feeder.spill_contents(entity, position)
+  local inventory = feeder.get_inventory(entity)
+  if not inventory then
+    return
+  end
+
+  for index = 1, #inventory do
+    local stack = inventory[index]
+    if stack and stack.valid_for_read then
+      local item = {
+        name = stack.name,
+        count = stack.count
+      }
+      pcall(function()
+        if stack.quality and stack.quality.name then
+          item.quality = stack.quality.name
+        end
+      end)
+      pcall(function()
+        entity.surface.spill_item_stack({
+          position = position or entity.position,
+          stack = item,
+          enable_looted = true,
+          allow_belts = false
+        })
+      end)
+      stack.clear()
+    end
+  end
+end
+
+function feeder.destroy(state, position, spill)
+  if not state then
+    return
+  end
+
+  local entity = state.feeder
+  state.feeder = nil
+  if not entity or not entity.valid then
+    return
+  end
+
+  ensure_storage()
+  if entity.unit_number then
+    storage.turret_xp.feeders[entity.unit_number] = nil
+  end
+
+  if spill then
+    feeder.spill_contents(entity, position or entity.position)
+  end
+
+  pcall(function()
+    entity.destroy({ raise_destroy = false })
+  end)
+end
+
+function feeder.find_position(entity)
+  if not is_gun_turret(entity) then
+    return nil
+  end
+
+  local offsets = {
+    { 1.5, 0 },
+    { -1.5, 0 },
+    { 0, 1.5 },
+    { 0, -1.5 },
+    { 1.5, 1.5 },
+    { -1.5, 1.5 },
+    { 1.5, -1.5 },
+    { -1.5, -1.5 }
+  }
+
+  for _, offset in ipairs(offsets) do
+    local position = {
+      x = entity.position.x + offset[1],
+      y = entity.position.y + offset[2]
+    }
+    local ok, can_place = pcall(function()
+      return entity.surface.can_place_entity({
+        name = FEEDER_NAME,
+        position = position,
+        force = entity.force
+      })
+    end)
+    if ok and can_place then
+      return position
+    end
+  end
+
+  local ok, position = pcall(function()
+    return entity.surface.find_non_colliding_position(FEEDER_NAME, entity.position, 4, 0.5)
+  end)
+  if ok then
+    return position
+  end
+
+  return nil
+end
+
+function feeder.ensure(entity, state)
+  if not is_gun_turret(entity) or not state then
+    return nil
+  end
+
+  ensure_storage()
+
+  local current = state.feeder
+  if current and current.valid and current.name == FEEDER_NAME and current.surface == entity.surface then
+    local dx = math.abs((current.position.x or 0) - (entity.position.x or 0))
+    local dy = math.abs((current.position.y or 0) - (entity.position.y or 0))
+    if dx <= 4 and dy <= 4 then
+      if current.unit_number and state.chip_id then
+        storage.turret_xp.feeders[current.unit_number] = state.chip_id
+      end
+      return current
+    end
+  end
+
+  if current and current.valid then
+    feeder.destroy(state, current.position, true)
+  else
+    state.feeder = nil
+  end
+
+  local position = feeder.find_position(entity)
+  if not position then
+    return nil
+  end
+
+  local ok, created = pcall(function()
+    return entity.surface.create_entity({
+      name = FEEDER_NAME,
+      position = position,
+      force = entity.force,
+      raise_built = false,
+      create_build_effect_smoke = false
+    })
+  end)
+
+  if not ok or not created then
+    return nil
+  end
+
+  pcall(function()
+    created.destructible = false
+  end)
+  pcall(function()
+    created.minable_flag = false
+  end)
+
+  state.feeder = created
+  if created.unit_number and state.chip_id then
+    storage.turret_xp.feeders[created.unit_number] = state.chip_id
+  end
+
+  return created
+end
+
+function feeder.remove_items(state, item_name, count)
+  count = math.max(0, math.floor(tonumber(count) or 0))
+  if count <= 0 or not item_name then
+    return 0
+  end
+
+  local entity = state and state.feeder
+  if state and is_gun_turret(state.entity) then
+    entity = feeder.ensure(state.entity, state) or entity
+  end
+
+  local inventory = feeder.get_inventory(entity)
+  if not inventory then
+    return 0
+  end
+
+  local ok, removed = pcall(function()
+    return inventory.remove({
+      name = item_name,
+      count = count
+    })
+  end)
+
+  if ok and removed then
+    return removed
+  end
+
+  return 0
+end
+
+function feeder.describe(state)
+  local entity = state and state.feeder
+  if state and is_gun_turret(state.entity) then
+    entity = feeder.ensure(state.entity, state) or entity
+  end
+  local inventory = feeder.get_inventory(entity)
+  if not inventory then
+    return {
+      valid = false,
+      used = 0,
+      total = 0,
+      summary = { "turret-xp.feeder-missing" }
+    }
+  end
+
+  local used = 0
+  local counts = {}
+  for index = 1, #inventory do
+    local stack = inventory[index]
+    if stack and stack.valid_for_read then
+      used = used + 1
+      counts[stack.name] = (counts[stack.name] or 0) + stack.count
+    end
+  end
+
+  local parts = {}
+  for _, element in ipairs(ELEMENTS) do
+    local count = counts[element.resource] or 0
+    if count > 0 then
+      parts[#parts + 1] = "[item=" .. element.resource .. "] " .. tostring(math.floor(count + 0.5))
+    end
+  end
+
+  local summary = #parts > 0 and table.concat(parts, "   ") or { "turret-xp.feeder-empty" }
+  return {
+    valid = true,
+    used = used,
+    total = #inventory,
+    summary = summary
+  }
+end
+
+function feeder.add_status(parent, state)
+  if not parent or not parent.valid then
+    return
+  end
+
+  local status = feeder.describe(state)
+  local frame = parent.add({
+    type = "frame",
+    name = GUI.feeder_status,
+    direction = "vertical",
+    style = "inside_shallow_frame_with_padding"
+  })
+  set_style(frame, "top_margin", 6)
+  set_style(frame, "horizontally_stretchable", true)
+
+  local row = frame.add({
+    type = "flow",
+    direction = "horizontal"
+  })
+  set_style(row, "horizontally_stretchable", true)
+  set_style(row, "vertical_align", "center")
+
+  local ok = pcall(function()
+    row.add({
+      type = "sprite",
+      sprite = "entity/" .. FEEDER_NAME
+    })
+  end)
+  if not ok then
+    row.add({
+      type = "sprite",
+      sprite = "item/iron-chest"
+    })
+  end
+
+  local title = row.add({
+    type = "label",
+    caption = { "turret-xp.feeder-title" },
+    style = "caption_label"
+  })
+  set_style(title, "font", "default-bold")
+
+  row.add({
+    type = "empty-widget",
+    style = "flib_horizontal_pusher"
+  })
+
+  local slots = row.add({
+    type = "label",
+    caption = status.valid
+      and { "turret-xp.feeder-slots", status.used, status.total }
+      or { "turret-xp.feeder-no-slots" },
+    style = "caption_label"
+  })
+  set_style(slots, "font_color", status.valid and COLOR.muted or { 1, 0.55, 0.45 })
+
+  local contents = frame.add({
+    type = "label",
+    caption = status.summary,
+    style = "caption_label"
+  })
+  set_style(contents, "font_color", status.valid and COLOR.muted or { 1, 0.55, 0.45 })
+  set_style(contents, "single_line", false)
 end
 
 local function as_array(value)
@@ -2513,7 +2831,7 @@ local function add_project_panel(parent, state)
 
   local note = frame.add({
     type = "label",
-    caption = "Feeds automatically while this turret is open.",
+    caption = { "turret-xp.feeder-project-note" },
     style = "caption_label"
   })
   set_style(note, "font_color", COLOR.muted)
@@ -2582,7 +2900,7 @@ local function add_element_mastery_panel(parent, state, element_id)
 
   local note = frame.add({
     type = "label",
-    caption = "Feeds automatically while this turret is open.",
+    caption = { "turret-xp.feeder-project-note" },
     style = "caption_label"
   })
   set_style(note, "font_color", COLOR.muted)
@@ -2796,6 +3114,7 @@ local function update_evolution_panel(panel, state)
 
   ensure_evolution_state(state)
   add_header(evolution_panel, "Evolution", state)
+  feeder.add_status(evolution_panel, state)
 
   add_base_section(evolution_panel, state)
   add_first_element_section(evolution_panel, state)
@@ -3131,27 +3450,7 @@ local function start_element_project(player, slot, element_id)
   refresh_open_turret(player, entity)
 end
 
-local function remove_player_items(player, item_name, count)
-  count = math.max(0, math.floor(tonumber(count) or 0))
-  if count <= 0 then
-    return 0
-  end
-
-  local ok, removed = pcall(function()
-    return player.remove_item({
-      name = item_name,
-      count = count
-    })
-  end)
-
-  if ok and removed then
-    return removed
-  end
-
-  return 0
-end
-
-local function auto_feed_element_project(player, state)
+local function auto_feed_element_project(state)
   local evolution = ensure_evolution_state(state)
   local project = evolution.element_project
   if not project then
@@ -3162,7 +3461,7 @@ local function auto_feed_element_project(player, state)
   for _, requirement in ipairs(project.requirements or {}) do
     local delivered = project.delivered[requirement.name] or 0
     local needed = math.max(0, requirement.count - delivered)
-    local removed = remove_player_items(player, requirement.name, math.min(needed, AUTO_FEED_STACK_LIMIT))
+    local removed = feeder.remove_items(state, requirement.name, math.min(needed, FEEDER_CONSUME_LIMIT))
     if removed > 0 then
       project.delivered[requirement.name] = delivered + removed
       changed = true
@@ -3176,7 +3475,7 @@ local function auto_feed_element_project(player, state)
   return changed
 end
 
-local function auto_feed_element_mastery(player, state)
+local function auto_feed_element_mastery(state)
   local evolution = ensure_evolution_state(state)
   local changed = false
 
@@ -3185,7 +3484,7 @@ local function auto_feed_element_mastery(player, state)
     if mastery and (mastery.rank or 0) > 0 then
       local required = get_element_requirement_count(element, mastery.rank + 1)
       local needed = math.max(0, required - (mastery.delivered or 0))
-      local removed = remove_player_items(player, element.resource, math.min(needed, AUTO_FEED_STACK_LIMIT))
+      local removed = feeder.remove_items(state, element.resource, math.min(needed, FEEDER_CONSUME_LIMIT))
       if removed > 0 then
         mastery.delivered = (mastery.delivered or 0) + removed
         advance_element_mastery(state, element.id)
@@ -3197,13 +3496,13 @@ local function auto_feed_element_mastery(player, state)
   return changed
 end
 
-local function auto_feed_open_turret(player, state)
+local function auto_feed_open_turret(state)
   if not state then
     return false
   end
 
-  local changed_project = auto_feed_element_project(player, state)
-  local changed_mastery = auto_feed_element_mastery(player, state)
+  local changed_project = auto_feed_element_project(state)
+  local changed_mastery = auto_feed_element_mastery(state)
   return changed_project or changed_mastery
 end
 
@@ -3261,6 +3560,8 @@ local function apply_passive_evolution_effects()
     ensure_evolution_state(state)
     local entity = state.entity
     if is_gun_turret(entity) then
+      feeder.ensure(entity, state)
+      auto_feed_open_turret(state)
       local repair_rank = get_base_rank(state, "repair")
       local repair_per_second = 0.2 * repair_rank
       if repair_per_second > 0 then
@@ -3703,7 +4004,7 @@ local function refresh_player_gui(player)
 
   local state = get_turret_state(entity)
   if state then
-    auto_feed_open_turret(player, state)
+    auto_feed_open_turret(state)
     local new_entity = ensure_specialized_turret_body(entity, state)
     if new_entity and new_entity ~= entity then
       player.opened = new_entity
@@ -3857,7 +4158,17 @@ local function on_entity_died(event)
   if is_gun_turret(event.entity) then
     local profile = get_turret_state(event.entity)
     destroy_name_render(profile)
+    feeder.destroy(profile, event.entity.position, true)
     remove_turret_state(event.entity, true)
+  elseif event.entity and event.entity.valid and event.entity.name == FEEDER_NAME then
+    ensure_storage()
+    local chip_id = event.entity.unit_number and storage.turret_xp.feeders[event.entity.unit_number] or nil
+    if chip_id and storage.turret_xp.chips[chip_id] then
+      storage.turret_xp.chips[chip_id].feeder = nil
+    end
+    if event.entity.unit_number then
+      storage.turret_xp.feeders[event.entity.unit_number] = nil
+    end
   end
 
   local cause = event.cause

@@ -1,4 +1,5 @@
 local CHIP_NAME = "turret-xp-veteran-core"
+local FEEDER_NAME = "turret-xp-veteran-feeder"
 local SPECIALIZATIONS = {
   sniper = {
     range = 34,
@@ -82,6 +83,43 @@ if #variant_names > 0 then
     end
   end
 end
+
+local feeder = table.deepcopy(data.raw["container"]["iron-chest"])
+feeder.name = FEEDER_NAME
+feeder.localised_name = { "entity-name." .. FEEDER_NAME }
+feeder.localised_description = { "entity-description." .. FEEDER_NAME }
+feeder.hidden = true
+feeder.hidden_in_factoriopedia = true
+feeder.flags = { "placeable-neutral", "not-blueprintable", "not-deconstructable", "not-on-map" }
+feeder.minable = nil
+feeder.next_upgrade = nil
+feeder.fast_replaceable_group = nil
+feeder.max_health = 250
+feeder.inventory_size = 6
+feeder.inventory_type = "normal"
+feeder.icon = "__base__/graphics/icons/iron-chest.png"
+feeder.icons = {
+  {
+    icon = "__base__/graphics/icons/iron-chest.png",
+    icon_size = 64,
+    tint = { 0.72, 0.86, 1.0 }
+  },
+  {
+    icon = "__base__/graphics/icons/electronic-circuit.png",
+    icon_size = 64,
+    scale = 0.28,
+    shift = { 8, -8 }
+  }
+}
+if feeder.picture and feeder.picture.layers then
+  for _, layer in ipairs(feeder.picture.layers) do
+    if not layer.draw_as_shadow then
+      layer.tint = { 0.72, 0.86, 1.0 }
+    end
+  end
+end
+
+data:extend({ feeder })
 
 data:extend({
   {

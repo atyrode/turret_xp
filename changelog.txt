@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.3
+Date: 2026-06-04
+  Features:
+    - Added a real Veteran Core feeder inventory entity that is created next to a turret when a Veteran Core is installed.
+    - Element unlock projects and element mastery milestones now consume matching materials from the feeder inventory.
+    - Added feeder status to the Evolution panel, showing whether the feeder exists, slot use, and relevant element materials waiting inside it.
+  Changes:
+    - Removed player-inventory material feeding. Element materials must now be inserted into the feeder port like a machine input.
+    - Extracting or mining a turret with an installed Veteran Core now destroys the feeder port and spills leftover feeder contents.
+    - Existing installed cores create a feeder port automatically the next time they refresh.
+  Notes:
+    - If no adjacent tile is available, the core remains installed but material projects will wait until space is cleared and a feeder can be created.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.2
 Date: 2026-06-04
   Features:
