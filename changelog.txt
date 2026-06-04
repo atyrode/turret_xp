@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.3
+Date: 2026-06-04
+  Changes:
+    - Reworked the Turret XP panel to better match vanilla GUI structure with an inner shallow frame, slot-style ammo display, simpler section headers, and compact row info buttons.
+    - Moved the prototype note behind a top info button instead of showing it as a full paragraph at the bottom of the panel.
+    - Added a hoverable quality marker next to HP, currently the vanilla stat this panel can verify as quality-affected.
+    - Updated shooting speed and damage display to show base values plus force research bonuses in a vanilla-like format.
+    - Colored positive research bonus values green for easier scanning.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.1.2
 Date: 2026-06-04
   Features:

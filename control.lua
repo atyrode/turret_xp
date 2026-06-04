@@ -332,22 +332,6 @@ local function get_ammo_type(ammo_name)
   return nil
 end
 
-local function estimate_ammo_damage(entity, ammo_name)
-  if not ammo_name then
-    return nil
-  end
-
-  local ammo_type = get_ammo_type(ammo_name)
-  if not ammo_type then
-    return nil
-  end
-
-  local damage = sum_trigger_items(ammo_type.action)
-  local attack_parameters = get_attack_parameters(entity)
-  damage = damage * (attack_parameters.damage_modifier or 1)
-  return damage
-end
-
 local function format_number(value, decimals)
   if not value then
     return "-"
@@ -360,10 +344,76 @@ local function format_number(value, decimals)
   return string.format("%." .. tostring(decimals or 1) .. "f", value)
 end
 
-local function format_shots_per_second(entity, ammo_name)
+local function format_colored_bonus(value, decimals)
+  local formatted = format_number(math.abs(value), decimals)
+  local sign = value < 0 and "- " or "+ "
+  return "[color=0.58,0.82,0.38]" .. sign .. formatted .. "[/color]"
+end
+
+local function format_base_plus_bonus(base, bonus, suffix, decimals)
+  suffix = suffix or ""
+
+  if not base then
+    return "-"
+  end
+
+  if bonus and math.abs(bonus) >= 0.005 then
+    return format_number(base, decimals) .. " " .. format_colored_bonus(bonus, decimals) .. suffix
+  end
+
+  return format_number(base, decimals) .. suffix
+end
+
+local function get_entity_quality_name(entity)
+  local quality = safe_read(entity, "quality")
+  return quality and quality.name or "normal"
+end
+
+local function quality_rich_text(quality_name)
+  return "[quality=" .. (quality_name or "normal") .. "]"
+end
+
+local function get_max_health_for_quality(entity, quality_name)
+  local prototype = safe_read(entity, "prototype")
+  if not prototype then
+    return nil
+  end
+
+  local ok, health = pcall(function()
+    return prototype.get_max_health(quality_name)
+  end)
+
+  if ok then
+    return health
+  end
+
+  return nil
+end
+
+local function make_health_quality_indicator(entity, current_max_health)
+  local quality_name = get_entity_quality_name(entity)
+  local normal_health = get_max_health_for_quality(entity, "normal")
+  local quality_health = get_max_health_for_quality(entity, quality_name) or current_max_health
+
+  if not normal_health or not quality_health then
+    return nil
+  end
+
+  return {
+    name = quality_name,
+    tooltip = {
+      "turret-xp.quality-health-tooltip",
+      quality_rich_text(quality_name),
+      format_number(normal_health, 0),
+      format_number(quality_health, 0)
+    }
+  }
+end
+
+local function get_shooting_speed_values(entity, ammo_name)
   local attack_parameters = get_attack_parameters(entity)
   if not attack_parameters.cooldown or attack_parameters.cooldown <= 0 then
-    return "-"
+    return nil, nil
   end
 
   local cooldown = attack_parameters.cooldown
@@ -390,16 +440,48 @@ local function format_shots_per_second(entity, ammo_name)
   end
 
   local bonus_speed = base_speed * speed_modifier
-  local total_speed = base_speed + bonus_speed
-
-  if math.abs(bonus_speed) >= 0.005 then
-    return string.format("%.2f/s (%.2f + %.2f)", total_speed, base_speed, bonus_speed)
-  end
-
-  return string.format("%.2f/s", total_speed)
+  return base_speed, bonus_speed
 end
 
-local function format_range(entity, ammo_name)
+local function format_shots_per_second(entity, ammo_name)
+  local base_speed, bonus_speed = get_shooting_speed_values(entity, ammo_name)
+  return format_base_plus_bonus(base_speed, bonus_speed, "/s", 2)
+end
+
+local function get_damage_values(entity, ammo_name)
+  if not ammo_name then
+    return nil, nil
+  end
+
+  local ammo_type = get_ammo_type(ammo_name)
+  if not ammo_type then
+    return nil, nil
+  end
+
+  local attack_parameters = get_attack_parameters(entity)
+  local base_damage = sum_trigger_items(ammo_type.action) * (attack_parameters.damage_modifier or 1)
+  local bonus_damage = 0
+  local force = safe_read(entity, "force")
+
+  if force and attack_parameters.ammo_category then
+    local ok, modifier = pcall(function()
+      return force.get_ammo_damage_modifier(attack_parameters.ammo_category)
+    end)
+
+    if ok and modifier then
+      bonus_damage = base_damage * modifier
+    end
+  end
+
+  return base_damage, bonus_damage
+end
+
+local function format_damage_per_shot(entity, ammo_name)
+  local base_damage, bonus_damage = get_damage_values(entity, ammo_name)
+  return format_base_plus_bonus(base_damage, bonus_damage, "", 1)
+end
+
+local function format_range(entity)
   local attack_parameters = get_attack_parameters(entity)
   local range = safe_read(safe_read(entity, "prototype"), "turret_range") or attack_parameters.range
 
@@ -517,24 +599,142 @@ local function cleanup_target_damage()
   end
 end
 
-local function add_stat_row(parent, label, value, tooltip)
+local function add_empty_cell(parent, width)
+  local ok, element = pcall(function()
+    return parent.add({
+      type = "empty-widget"
+    })
+  end)
+
+  if not ok or not element then
+    element = parent.add({
+      type = "label",
+      caption = ""
+    })
+  end
+
+  set_style(element, "width", width or 18)
+  return element
+end
+
+local function add_info_button(parent, tooltip)
+  if not tooltip then
+    return add_empty_cell(parent, 18)
+  end
+
+  local ok, button = pcall(function()
+    return parent.add({
+      type = "button",
+      caption = "i",
+      tooltip = tooltip
+    })
+  end)
+
+  if not ok or not button then
+    button = parent.add({
+      type = "label",
+      caption = "[font=default-bold]i[/font]",
+      tooltip = tooltip
+    })
+  end
+
+  set_element_style(button, "mini_tool_button")
+  set_style(button, "font", "default-bold")
+  set_style(button, "size", 18)
+  return button
+end
+
+local function add_quality_indicator(parent, indicator)
+  if not indicator then
+    return nil
+  end
+
+  local label = parent.add({
+    type = "label",
+    caption = quality_rich_text(indicator.name),
+    tooltip = indicator.tooltip
+  })
+  set_style(label, "left_margin", 4)
+  return label
+end
+
+local function add_stat_row(parent, label, value, options)
+  options = options or {}
+
   local label_element = parent.add({
     type = "label",
     caption = label,
-    tooltip = tooltip
+    tooltip = options.tooltip
   })
   set_style(label_element, "font_color", { 0.62, 0.62, 0.62 })
+  set_style(label_element, "single_line", true)
 
-  local value_element = parent.add({
+  local value_flow = parent.add({
+    type = "flow",
+    direction = "horizontal"
+  })
+  set_style(value_flow, "horizontal_align", "right")
+  set_style(value_flow, "horizontally_stretchable", true)
+
+  local value_element = value_flow.add({
     type = "label",
     caption = value,
-    tooltip = tooltip
+    tooltip = options.tooltip
   })
   set_style(value_element, "horizontal_align", "right")
   set_style(value_element, "single_line", false)
   set_style(value_element, "maximal_width", 210)
 
+  add_quality_indicator(value_flow, options.quality)
+  add_info_button(parent, options.tooltip)
+
   return label_element, value_element
+end
+
+local function add_ammo_row(parent, ammo_name, ammo_count)
+  local label_element = parent.add({
+    type = "label",
+    caption = { "turret-xp.ammo" }
+  })
+  set_style(label_element, "font_color", { 0.62, 0.62, 0.62 })
+
+  local value_flow = parent.add({
+    type = "flow",
+    direction = "horizontal"
+  })
+  set_style(value_flow, "horizontal_align", "right")
+  set_style(value_flow, "horizontally_stretchable", true)
+
+  if ammo_name then
+    local ok, button = pcall(function()
+      return value_flow.add({
+        type = "sprite-button",
+        sprite = "item/" .. ammo_name,
+        number = ammo_count,
+        elem_tooltip = {
+          type = "item",
+          name = ammo_name
+        }
+      })
+    end)
+
+    if ok and button then
+      set_element_style(button, "slot_button")
+      set_style(button, "size", 36)
+    else
+      value_flow.add({
+        type = "label",
+        caption = string.format("[item=%s] x%d", ammo_name, ammo_count)
+      })
+    end
+  else
+    value_flow.add({
+      type = "label",
+      caption = { "turret-xp.no-ammo" }
+    })
+  end
+
+  add_empty_cell(parent, 18)
 end
 
 local function add_section_label(parent, caption)
@@ -549,14 +749,13 @@ local function add_section_label(parent, caption)
     type = "label",
     caption = caption
   })
-  set_style(label, "font", "heading-3")
+  set_style(label, "font", "default-bold")
   set_style(label, "bottom_margin", 2)
   return label
 end
 
 local function add_entity_icon(parent, entity)
-  local quality = safe_read(entity, "quality")
-  local quality_name = quality and quality.name or "normal"
+  local quality_name = get_entity_quality_name(entity)
 
   local ok, icon = pcall(function()
     return parent.add({
@@ -640,12 +839,18 @@ local function build_turret_gui(player, entity)
   end
 
   local ammo_name, ammo_count = get_loaded_ammo(entity)
-  local ammo_damage = estimate_ammo_damage(entity, ammo_name)
   local frame = make_gui_frame(player)
-  set_style(frame, "minimal_width", 340)
-  set_style(frame, "maximal_width", 420)
+  set_style(frame, "minimal_width", 360)
+  set_style(frame, "maximal_width", 430)
 
-  local header = frame.add({
+  local body = frame.add({
+    type = "frame",
+    direction = "vertical"
+  })
+  set_element_style(body, "inside_shallow_frame_with_padding")
+  set_style(body, "horizontally_stretchable", true)
+
+  local header = body.add({
     type = "flow",
     direction = "horizontal"
   })
@@ -663,14 +868,16 @@ local function build_turret_gui(player, entity)
     type = "label",
     caption = { "entity-name." .. entity.name }
   })
-  set_style(title, "font", "heading-2")
+  set_style(title, "font", "default-bold")
 
   title_flow.add({
     type = "label",
     caption = { "turret-xp.level", progression.level }
   })
 
-  local xp_flow = frame.add({
+  add_info_button(header, { "turret-xp.prototype-note" })
+
+  local xp_flow = body.add({
     type = "flow",
     direction = "horizontal"
   })
@@ -687,7 +894,7 @@ local function build_turret_gui(player, entity)
   set_style(xp_label, "horizontal_align", "right")
   set_style(xp_label, "horizontally_stretchable", true)
 
-  local bar = frame.add({
+  local bar = body.add({
     type = "progressbar",
     value = progress
   })
@@ -696,50 +903,52 @@ local function build_turret_gui(player, entity)
 
   local max_health = safe_read(entity, "max_health")
   local health = safe_read(entity, "health") or max_health
+  local health_quality = make_health_quality_indicator(entity, max_health)
 
-  add_section_label(frame, { "turret-xp.current-turret" })
-  local current = frame.add({
+  add_section_label(body, { "turret-xp.current-turret" })
+  local current = body.add({
     type = "table",
-    column_count = 2,
+    column_count = 3,
     draw_horizontal_lines = true
   })
   set_style(current, "horizontally_stretchable", true)
 
-  add_stat_row(current, { "turret-xp.hp" }, string.format("%s / %s", format_number(health, 0), format_number(max_health, 0)))
-  add_stat_row(current, { "turret-xp.shooting-speed" }, format_shots_per_second(entity, ammo_name), { "turret-xp.shooting-speed-tooltip" })
-  add_stat_row(current, { "turret-xp.range" }, format_range(entity, ammo_name), { "turret-xp.range-tooltip" })
+  add_stat_row(current, { "turret-xp.hp" }, string.format("%s / %s", format_number(health, 0), format_number(max_health, 0)), {
+    quality = health_quality
+  })
+  add_stat_row(current, { "turret-xp.shooting-speed" }, format_shots_per_second(entity, ammo_name), {
+    tooltip = { "turret-xp.shooting-speed-tooltip" }
+  })
+  add_stat_row(current, { "turret-xp.range" }, format_range(entity), {
+    tooltip = { "turret-xp.range-tooltip" }
+  })
+
+  add_ammo_row(current, ammo_name, ammo_count)
 
   if ammo_name then
-    add_stat_row(current, { "turret-xp.ammo" }, string.format("[item=%s] x%d", ammo_name, ammo_count))
-  else
-    add_stat_row(current, { "turret-xp.ammo" }, { "turret-xp.no-ammo" })
-  end
-
-  if ammo_damage then
-    add_stat_row(current, { "turret-xp.damage" }, { "turret-xp.damage-value", format_number(ammo_damage, 1) })
+    add_stat_row(current, { "turret-xp.damage" }, { "turret-xp.damage-value", format_damage_per_shot(entity, ammo_name) }, {
+      tooltip = { "turret-xp.damage-tooltip" }
+    })
   else
     add_stat_row(current, { "turret-xp.damage" }, { "turret-xp.damage-unknown" })
   end
 
-  add_section_label(frame, { "turret-xp.progression-stats" })
-  local progression_stats = frame.add({
+  add_section_label(body, { "turret-xp.progression-stats" })
+  local progression_stats = body.add({
     type = "table",
-    column_count = 2,
+    column_count = 3,
     draw_horizontal_lines = true
   })
   set_style(progression_stats, "horizontally_stretchable", true)
 
   add_stat_row(progression_stats, { "turret-xp.killing-blows" }, format_number(state.kills, 0))
-  add_stat_row(progression_stats, { "turret-xp.kill-credit" }, format_number(state.kill_credit, 1), { "turret-xp.kill-credit-tooltip" })
-  add_stat_row(progression_stats, { "turret-xp.damage-dealt" }, format_number(state.damage, 0))
-  add_stat_row(progression_stats, { "turret-xp.total-xp" }, format_number(state.total_xp, 0), { "turret-xp.total-xp-tooltip" })
-
-  local note = frame.add({
-    type = "label",
-    caption = { "turret-xp.prototype-note" }
+  add_stat_row(progression_stats, { "turret-xp.kill-credit" }, format_number(state.kill_credit, 1), {
+    tooltip = { "turret-xp.kill-credit-tooltip" }
   })
-  set_style(note, "single_line", false)
-  set_style(note, "top_margin", 8)
+  add_stat_row(progression_stats, { "turret-xp.damage-dealt" }, format_number(state.damage, 0))
+  add_stat_row(progression_stats, { "turret-xp.total-xp" }, format_number(state.total_xp, 0), {
+    tooltip = { "turret-xp.total-xp-tooltip" }
+  })
 end
 
 local function refresh_player_gui(player)

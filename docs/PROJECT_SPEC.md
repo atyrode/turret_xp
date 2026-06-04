@@ -27,6 +27,6 @@ V0.1.x is a UI and tracking prototype. It proves that per-turret progression can
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.1.2`
+- Current version: `0.1.3`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

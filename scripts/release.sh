@@ -17,7 +17,8 @@ Turret XP ${version}.
 - Awards configurable XP from gun turret damage and proportional kill credit.
 - Adds runtime-global settings for damage XP, kill-credit XP, base level XP, and level XP growth.
 - Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, damage dealt, and XP progress.
-- Uses vanilla quality tooltip behavior for the turret icon in the panel.
+- Shows force research bonuses for shooting speed and damage in base plus bonus format.
+- Uses a more vanilla-like panel layout with slot-style ammo, compact row info buttons, and an HP quality marker.
 
 Validation:
 - Packaged zip layout checked.

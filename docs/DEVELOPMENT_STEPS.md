@@ -34,6 +34,14 @@
 - [x] Align range and shooting-speed displays more closely with vanilla hover stats.
 - [x] Add quality-aware turret icon and reorganize the panel for readability.
 
+## Completed For V0.1.3
+
+- [x] Rework the panel toward vanilla GUI styling with an inner shallow frame, slot-style ammo, compact section headers, and row info buttons.
+- [x] Move the prototype note behind the top info button.
+- [x] Add an HP quality marker with a hover tooltip.
+- [x] Show force research bonuses for shooting speed and ammo damage in base plus bonus format.
+- [x] Re-check Mod Portal libraries for GUI and quality support; document `entity-gui-lib` and `quality-lib` as future candidates without adding them yet.
+
 ## Likely Next Work
 
 - Decide first real level bonuses.

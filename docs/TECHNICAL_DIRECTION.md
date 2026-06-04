@@ -18,6 +18,13 @@
 - Near-term acceptable state: a simple static page with a documented obligation to keep it aligned.
 - Target state: a small generator updates `docs/index.html` from repo metadata/docs, and release/publish workflows run or check that generator before publishing.
 
+## Dependency Check Policy
+
+- Before implementing a feature with substantial custom GUI plumbing, migration machinery, data structures, scheduling, debugging UI, or workaround-style code, check the Factorio Mod Portal for maintained libraries that already solve that class of problem.
+- Prefer documented, Factorio 2.0 compatible, well-adopted libraries over local reimplementation when they reduce risk and maintenance cost.
+- Keep `flib` as the first library to re-evaluate for richer GUI and migration work.
+- If a feature remains custom after the check, document why the local implementation is small enough or more appropriate than adding a dependency.
+
 ## Libraries To Consider
 
 These libraries are not dependencies today. Revisit them when a feature needs enough shared machinery to justify adding a dependency.
@@ -39,6 +46,13 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - `Kux-GuiLib` / `Kux-CoreLib`:
   - Factorio 2.0 compatible libraries used by Kuxynator mods.
   - Could be useful for GUI-specific work, but they are less general-purpose for this project than `flib`.
+- `entity-gui-lib`:
+  - Factorio 2.0 library for replacing or extending vanilla entity GUIs with vanilla-styled custom entity interfaces.
+  - Includes quality-aware item/tooltips and entity GUI helpers.
+  - Consider if Turret XP outgrows a small relative panel and needs a full custom entity GUI, tabs, inventory display, or multi-mod GUI conflict handling.
+- `quality-lib`:
+  - Factorio 2.0 library for modders to interface with Quality and add quality stats to items/entities.
+  - Consider when Turret XP starts adding quality-scaled custom stats such as crit chance, crit damage, XP gain, or skill-tree effects.
 - `gvv`:
   - Debugging tool, not a production dependency.
   - Consider as a local playtest/dev dependency if inspecting `storage.turret_xp` in game becomes useful.
@@ -60,6 +74,7 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - `LuaItemPrototype::get_ammo_type("turret")` exposes loaded ammo prototype data for best-effort damage estimates.
 - `LuaEntity::quality`, `sprite-button` quality overlays, and `elem_tooltip` with `entity-with-quality` allow the panel's turret icon to use vanilla quality tooltip behavior.
 - `LuaForce::get_gun_speed_modifier` exposes force shooting-speed research bonuses by ammo category.
+- `LuaForce::get_ammo_damage_modifier` exposes force ammo-damage research bonuses by ammo category.
 
 ## Risks
 
@@ -69,6 +84,8 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - Mined turret persistence is intentionally out of scope for V0.1.x.
 - Rebuilding the panel every 60 ticks is simple and reliable for the prototype, but later versions should update named elements in place if the GUI grows.
 - Adding `flib` would make users install an extra dependency, but it is common and handled by the in-game dependency manager.
+- `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than this V0.1.x relative-panel polish needs.
+- `quality-lib` may be valuable once Turret XP owns quality-scaled custom stats; for now the HP marker uses the direct runtime prototype API.
 - The website can become stale if it stays hand-maintained; keep generation from mod metadata/docs on the roadmap before the site grows.
 
 ## Validation Path
