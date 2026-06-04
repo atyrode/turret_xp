@@ -1,0 +1,11 @@
+{
+  "name": "turret_xp",
+  "version": "0.1.0",
+  "title": "Turret XP",
+  "author": "atyrode",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0.0"
+  ],
+  "description": "Adds an XP, level, and stats panel to vanilla gun turrets as the first step toward per-turret progression."
+}

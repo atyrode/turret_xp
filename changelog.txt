@@ -1,0 +1,10 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2026-06-04
+  Features:
+    - Adds a Turret XP panel to the vanilla gun turret GUI.
+    - Tracks per-turret XP, level, kill count, and lifetime damage dealt.
+    - Awards XP from damage dealt by gun turrets and a small bonus on kills.
+    - Shows first-pass turret stats: HP, attack speed, range, loaded ammo, estimated ammo damage, kills, total damage, and total XP.
+  Notes:
+    - Level bonuses are not applied to turret combat stats yet; this release focuses on reliable tracking and GUI feedback.
