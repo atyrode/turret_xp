@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 2026-06-04
+  Features:
+    - Added Factorio Library (`flib`) as a required dependency and started using its GUI styles for slot buttons, pushers, and status indicators.
+    - Added quality summaries on hover for quality-affected HP and range rows using the real `[img=quality_info]` marker and runtime quality prototypes.
+    - Added estimated DPS, damage XP, and kill-credit XP rows to make current combat output and XP sources easier to understand.
+  Changes:
+    - Rebuilt the Turret XP relative panel with vanilla-like shallow/deep frames, subheaders, richer spacing, status indicators, and a more scannable progression block.
+    - Replaced the incorrect `utility/tip_icon` sprite with the same `[img=info]` rich-text marker pattern used by Factory Planner.
+    - Updated the panel in place during refresh ticks instead of destroying and rebuilding it, making hover tooltips and reading flow more stable.
+    - Changed range display to use turret attack range plus quality multiplier instead of the broader turret prototype range.
+  Notes:
+    - The quality marker tooltip is a custom summary because Factorio does not expose the native Factoriopedia quality popover as an arbitrary runtime GUI widget.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.1.4
 Date: 2026-06-04
   Bugfixes:

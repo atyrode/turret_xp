@@ -49,13 +49,21 @@
 - [x] Replace gray framed info buttons with the exposed vanilla `utility/tip_icon` sprite, and stop rendering a custom fallback marker when that sprite is unavailable.
 - [x] Document that exact vanilla quality stat pills are deferred until a supported API path or dependency is confirmed.
 
+## Completed For V0.2.0
+
+- [x] Add `flib >= 0.16.4` as the first production dependency.
+- [x] Rebuild the right-side relative panel with vanilla-like shallow/deep frames, subheaders, flib slot styling, and flib status indicators.
+- [x] Replace `utility/tip_icon` with Factory Planner-style `[img=info]` rich text markers.
+- [x] Add `[img=quality_info]` markers with custom HP/range quality summary tooltips derived from runtime quality prototypes.
+- [x] Add estimated DPS, damage XP, and kill-credit XP rows.
+- [x] Update the panel in place every refresh tick instead of destroying and rebuilding the full GUI.
+
 ## Likely Next Work
 
 - Decide first real level bonuses.
 - Decide whether mined turrets retain XP.
 - Evaluate `entity-gui-lib` before any full replacement of the turret GUI.
 - Evaluate `quality-lib` and/or prototype `custom_tooltip_fields` before adding quality-scaled custom stats.
-- Update GUI in place instead of rebuilding every 60 ticks.
 - Add a lightweight website generator so `docs/index.html` is derived from `info.json`, `changelog.txt`, README content, and docs where practical.
 - Fold website freshness into release validation so public docs and Mod Portal homepage do not drift from the mod.
 - Add headless Factorio smoke-test automation if a stable local binary is available.

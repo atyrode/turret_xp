@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.1.x
+## Version 0.2.0
 
-V0.1.x is a UI and tracking prototype. It proves that per-turret progression can be tracked in live saves and shown in the vanilla gun turret workflow.
+V0.2.0 is a UI polish and tracking prototype. It keeps the vanilla turret GUI as the main interaction while making the Turret XP relative panel feel closer to Factorio's own GUI language.
 
 ## Runtime Behavior
 
@@ -22,11 +22,12 @@ V0.1.x is a UI and tracking prototype. It proves that per-turret progression can
 - The mod creates a frame in `player.gui.relative` anchored to `defines.relative_gui_type.turret_gui` on the right side.
 - If relative anchoring fails, the panel falls back to `player.gui.left`.
 - `on_gui_closed` destroys the panel and clears the remembered player/turret link.
-- The panel refreshes every 60 ticks while the turret GUI remains open.
+- The panel updates named elements every 60 ticks while the turret GUI remains open, without destroying and rebuilding the whole panel.
+- The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and indicator styles.
 
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.1.4`
+- Current version: `0.2.0`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

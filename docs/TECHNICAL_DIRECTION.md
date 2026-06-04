@@ -4,7 +4,7 @@
 
 - Factorio 2.0 runtime mod.
 - Lua control-stage implementation with runtime-global settings.
-- No custom prototypes beyond runtime XP settings and standard empty `data.lua` placeholder.
+- Runtime XP settings plus a required `flib >= 0.16.4` dependency for shared GUI styles.
 - Python packaging script reused from `player_quality`.
 - Shell scripts for checks, packaging, local install, GitHub release, and Mod Portal publishing.
 - Static GitHub Pages homepage served from `docs/index.html`.
@@ -22,20 +22,20 @@
 
 - Before implementing a feature with substantial custom GUI plumbing, migration machinery, data structures, scheduling, debugging UI, or workaround-style code, check the Factorio Mod Portal for maintained libraries that already solve that class of problem.
 - Prefer documented, Factorio 2.0 compatible, well-adopted libraries over local reimplementation when they reduce risk and maintenance cost.
-- Keep `flib` as the first library to re-evaluate for richer GUI and migration work.
+- Keep `flib` as the default first choice for richer GUI, migration, and shared utility work.
 - If a feature remains custom after the check, document why the local implementation is small enough or more appropriate than adding a dependency.
 
-## Libraries To Consider
+## Libraries
 
-These libraries are not dependencies today. Revisit them when a feature needs enough shared machinery to justify adding a dependency.
+`flib` is a dependency as of V0.2.0. Revisit the other libraries when a feature needs enough shared machinery to justify adding another dependency.
 
-### Strong Candidate
+### Current Dependency
 
 - `flib` / Factorio Library:
   - Factorio 2.0 compatible internal library mod.
   - Large adoption signal on the Mod Portal, with over 1M downloads and hundreds of dependent mods.
-  - Useful future modules for this project include `gui`, `migration`, `dictionary`, `on-tick-n`, `queue`, `format`, `table`, and position/geometry helpers.
-  - Consider adding `flib >= 0.16.5` before building a richer upgrade UI, player-configurable GUI, substantial migration logic, or queued/deferred processing.
+  - V0.2.0 uses `flib` GUI styles for slot buttons, pushers, and status indicators.
+  - Useful future modules for this project may include `gui`, `migration`, `dictionary`, `on-tick-n`, `queue`, `format`, `table`, and position/geometry helpers.
 
 ### Possible But Lower Priority
 
@@ -75,7 +75,7 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - `LuaEntity::quality`, `sprite-button` quality overlays, and `elem_tooltip` with `entity-with-quality` allow the panel's turret icon to use vanilla quality tooltip behavior.
 - `LuaGuiElement::quality` is only a sprite-button overlay; it is not the same thing as the vanilla blue stat marker plus built-in quality delta popover shown in native entity/tooltips.
 - `Prototype::custom_tooltip_fields` can add quality-aware values to native tooltips and Factoriopedia during the data stage, but it does not provide a direct runtime GUI element for arbitrary custom stat rows.
-- Do not fake vanilla quality stat markers. Either use a supported API/library path or leave the marker out.
+- Runtime custom GUI cannot instantiate the native Factoriopedia quality popover as a widget. V0.2.0 uses the real `[img=quality_info]` marker with a custom tooltip summary generated from Factorio quality prototypes for HP and range.
 - `LuaForce::get_gun_speed_modifier` exposes force shooting-speed research bonuses by ammo category.
 - `LuaForce::get_ammo_damage_modifier` exposes force ammo-damage research bonuses by ammo category.
 - `LuaForce::get_turret_attack_modifier` exposes turret-specific force damage bonuses; gun turret damage display needs this in addition to ammo damage.
@@ -86,10 +86,10 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - Damage estimation only covers direct damage effects in ammo prototype data. More complex projectile or nested modded ammo may show `Unknown`.
 - Contribution-based kill credit is based on recent tracked target damage and prunes stale target entries after five minutes.
 - Per-entity combat stat mutation is not designed yet. Factorio exposes force-wide modifiers more readily than individual turret attack modifiers.
-- Mined turret persistence is intentionally out of scope for V0.1.x.
-- Rebuilding the panel every 60 ticks is simple and reliable for the prototype, but later versions should update named elements in place if the GUI grows.
-- Adding `flib` would make users install an extra dependency, but it is common and handled by the in-game dependency manager.
-- `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than this V0.1.x relative-panel polish needs.
+- Mined turret persistence is intentionally out of scope for V0.2.0.
+- The panel updates named elements in place every 60 ticks; new GUI work should preserve stable hover/read behavior.
+- `flib` adds a dependency, but it is common and handled by the in-game dependency manager.
+- `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than this relative-panel polish needs.
 - `quality-lib` may be valuable once Turret XP owns quality-scaled custom stats, but adding it should be an intentional dependency decision because it changes prototype/data-stage behavior.
 - The website can become stale if it stays hand-maintained; keep generation from mod metadata/docs on the roadmap before the site grows.
 

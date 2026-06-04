@@ -2,7 +2,7 @@
 
 ## Functional
 
-- The mod must load in Factorio 2.0 with `base >= 2.0.0`.
+- The mod must load in Factorio 2.0 with `base >= 2.0.0` and `flib >= 0.16.4`.
 - Opening a vanilla gun turret must show a Turret XP panel attached to the vanilla turret GUI when possible.
 - Each gun turret must have independent tracked progression state.
 - Gun turret damage against non-friendly entities must add lifetime damage and damage-derived XP.
@@ -19,11 +19,11 @@
 - Show current level and XP progress to the next level.
 - Show current HP and prototype max HP.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
-- Show base turret range in tiles to match the vanilla hover stat.
+- Show turret attack range in tiles, including quality range multiplier when relevant.
 - Show loaded ammo and count.
-- Show estimated loaded-ammo damage per shot when it can be derived from prototype data.
-- Show killing blows, kill credit, lifetime damage, and total XP.
-- Clearly state that V0.1.x levels do not apply combat bonuses yet.
+- Show estimated loaded-ammo damage per shot and estimated DPS when they can be derived from prototype data.
+- Show killing blows, kill credit, lifetime damage, XP source breakdown, and total XP.
+- Clearly state that V0.2.0 levels do not apply combat bonuses yet.
 
 ## Operational
 

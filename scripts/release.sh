@@ -16,10 +16,11 @@ Turret XP ${version}.
 - Tracks per-turret XP, level, killing blows, kill credit, lifetime damage, and total XP.
 - Awards configurable XP from gun turret damage and proportional kill credit.
 - Adds runtime-global settings for damage XP, kill-credit XP, base level XP, and level XP growth.
-- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, damage dealt, and XP progress.
+- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, killing blows, kill credit, damage dealt, XP source breakdown, and XP progress.
 - Shows force research bonuses for shooting speed and damage in base plus bonus format.
-- Fixes gun turret damage display to include both ammo damage and gun-turret attack research modifiers.
-- Avoids fake custom quality stat markers until vanilla-equivalent behavior is confirmed.
+- Uses Factorio Library (`flib`) GUI styles for a more vanilla-like relative panel.
+- Shows quality summaries for HP and range with the real quality info marker where runtime quality data is available.
+- Updates the panel in place while open instead of destroying and rebuilding it every refresh.
 
 Validation:
 - Packaged zip layout checked.

@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.1.4 tracks XP, level, killing blows, kill credit, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a compact stats panel.
+`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.2.0 tracks XP, level, killing blows, kill credit, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a polished right-side stats panel.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -12,12 +12,12 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - Planning and tracking documents: [docs/](docs/).
 - Factorio mod scaffold: `info.json`, `data.lua`, `control.lua`, `settings.lua`, and `locale/`.
 - Factorio changelog: `changelog.txt`.
-- Current prototype: runtime-only XP tracking and a right-side relative GUI panel for vanilla `gun-turret`.
+- Current prototype: runtime-only XP tracking and a `flib`-styled right-side relative GUI panel for vanilla `gun-turret`.
 - XP is awarded from damage dealt by gun turrets plus proportional kill credit based on damage contribution.
 - XP pacing is configurable with runtime-global mod settings.
-- The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, lifetime damage, and total XP.
+- The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, killing blows, kill credit, lifetime damage, XP source breakdown, and total XP.
 - Research bonuses are shown in a vanilla-like base plus bonus format where available.
-- Vanilla quality stat markers are not faked in the custom panel. They are deferred until a supported Factorio API path or library dependency is confirmed.
+- HP and range show the real quality-info marker with a custom hover summary derived from Factorio quality prototypes. The native Factoriopedia popover is not exposed as a reusable runtime GUI widget.
 
 ## Development
 
@@ -91,7 +91,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.1.x tracks and displays XP/levels but does not apply stat bonuses yet.
+- V0.2.0 tracks and displays XP/levels but does not apply stat bonuses yet.
 - XP is currently scoped to vanilla `gun-turret`.
 - Default XP pacing is intentionally conservative: damage gives very little XP, kill credit matters more, and level requirements grow exponentially.
 - Damage shown in the GUI is a best-effort estimate from loaded ammo prototype data.
