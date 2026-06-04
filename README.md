@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of progression for vanilla gun turrets. Version 0.4.1 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret.
+`turret_xp` adds the first layer of progression for vanilla gun turrets. Version 0.4.2 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, and specialization choices now swap the turret into real prototype-backed stat variants.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -96,12 +96,12 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.4.1 adds the first Veteran Core implementation and the simplified scrollable Evolution UI.
+- V0.4.2 adds real turret-body variants for specializations and keeps the simplified scrollable Evolution UI.
 - The Veteran Core item currently uses vanilla layered icons; dedicated art can replace it later without changing the profile model.
-- V0.4.x is a first draft of list-based evolution. It includes scripted combat effects for several upgrades, but exact balance and effect readability are still expected to change.
+- V0.4.x is a first draft of list-based evolution. Core upgrades, augments, elements, and combos still need playtest balance and effect readability passes.
 - The failed embedded skill-tree drag spike was removed. The current progression UI is intentionally simple while the gameplay model is tested.
 - XP is currently scoped to vanilla `gun-turret`.
-- Default XP pacing is intentionally conservative: damage gives very little XP, kill credit matters more, and level requirements grow exponentially.
+- Default XP pacing is intentionally conservative: damage gives very little XP, kill credit matters more, and level requirements grow linearly by a configurable step.
 - Damage shown in the GUI is a best-effort estimate from loaded ammo prototype data.
 - Mined turrets return their installed Veteran Core. Destroyed turrets currently lose the installed core.
 

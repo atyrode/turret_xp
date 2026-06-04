@@ -25,8 +25,9 @@ Turret XP ${version}.
 - Shows quality summaries for HP and range while filtering Factorio's hidden unknown quality prototype.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
 - Adds compact core upgrades, level-gated element projects, specialization choices, powerful augments, and second-element combo text.
+- Specialization choices use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
 - Adds optional floating turret labels in "name (lvl N)" format.
-- Adds first-draft scripted combat effects for bonus damage, crits, bounce, pierce, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
+- Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, pierce, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
 - Adds always-visible dev controls for quick level, core, and material-project testing.
 - Uses a custom solid XP bar style.
 - Updates the panel in place while open instead of destroying and rebuilding it every refresh.

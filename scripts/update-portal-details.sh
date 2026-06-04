@@ -56,12 +56,13 @@ Current prototype:
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
 - Adds compact core upgrades, element material projects, a free specialization choice, powerful augments, and a second element combo path.
+- Specialization choices now use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
 - Adds optional floating turret labels in "name (lvl N)" format.
-- Adds first-draft scripted combat effects for bonus damage, crits, bounce, pierce, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
+- Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, pierce, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
 - Adds always-visible dev controls for quick level, core, and material-project testing.
 - Uses a custom solid XP bar style.
 
-This is an early test release intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, element choices, scripted effects, and XP pacing before deeper balance work.
+This is an early test release intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.
 
 Source:
 ${source_url}

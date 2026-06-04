@@ -4,7 +4,7 @@
 
 Current portal playtest:
 
-0.4.1 is published on the Factorio Mod Portal.
+0.4.2 is published on the Factorio Mod Portal.
 
 Preferred once published:
 
@@ -38,14 +38,14 @@ scripts/install-local.sh
 14. Spend core upgrade points and confirm ranks and remaining points refresh immediately.
 15. At level 10, start an Explosive, Fire, or Electric element project.
 16. Confirm the active project shows item requirements and a progress bar.
-17. Try `Deposit carried items` with real carried materials if available.
-18. Use `Dev complete` or `Complete materials` and confirm the element becomes active.
-19. At level 20, pick Sniper, Machine Gun, or Bulwark and confirm the choice is locked in.
-20. At level 30, buy a powerful augment and confirm the next cost doubles.
+17. Carry the required material while the turret is open and confirm the project progress advances without a deposit button.
+18. Use `Materials` and confirm the element becomes active, or advances the selected element's next mastery milestone if no unlock project is active.
+19. At level 20, pick Sniper, Machine Gun, Bulwark, or Brawler and confirm the choice is locked in and the turret stats change.
+20. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
 21. At level 40, start and complete a second element project and confirm the combo text appears.
-22. Let the turret shoot enemies and confirm XP, damage dealt, kills, and scripted effects feel visible enough to judge.
-23. Damage a turret with repair or Bulwark upgrades and confirm passive repair works.
-24. Try Lifesteal or Bulwark in combat and check whether vampiric healing is understandable.
+22. Let the turret shoot enemies and confirm XP, damage dealt, kills, and upgrade effect feedback feel visible enough to judge.
+23. Damage a turret with regeneration ranks and confirm passive repair works.
+24. Try Lifesteal in combat and check whether vampiric healing is understandable.
 25. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
 26. Select the turret and run `/turret-xp` as a fallback path.
 

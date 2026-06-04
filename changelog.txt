@@ -1,4 +1,21 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.2
+Date: 2026-06-04
+  Features:
+    - Added hidden gun-turret body variants for specializations so Sniper, Machine Gun, Bulwark, and Brawler change real turret range, cooldown, damage modifier, and health values.
+    - Added short visual feedback for bounce, pierce, fire, electric, explosive, and combo upgrade effects.
+    - Added element mastery milestones after element unlocks, using the same element resource for ongoing progression.
+  Changes:
+    - Extracting a Veteran Core now returns the turret body to the normal gun turret.
+    - Replaced exponential level scaling with linear per-level scaling so high levels remain playtestable through level 100.
+    - Changed powerful augments to cost one augment point per rank, with one augment point earned every ten levels starting at level 30.
+    - Removed material deposit buttons. Element projects and mastery milestones now consume the matching carried item automatically while the turret is open.
+    - Simplified the top of the Turret XP panel by removing the redundant turret/name/ammo row.
+    - Updated specialization and augment copy to reflect their actual behavior.
+  Notes:
+    - Specializations are now prototype-backed turret stat changes. Core upgrades, augments, elements, and combos remain runtime upgrade effects.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.1
 Date: 2026-06-04
   Features:
@@ -31,7 +48,7 @@ Date: 2026-06-04
     - Added material project progress bars, carried-item deposit buttons, and permanent element assignment when requirements are complete.
     - Added a free level-20 specialization choice: Sniper, Machine Gun, or Bulwark.
     - Added level-30 powerful augments with doubling point costs: Bullet Bounce, Piercing Follow-through, and Longshot Optics.
-    - Added first-draft scripted combat effects for bonus damage, crits, bounce, pierce follow-through, fire, electric arcs, explosive splash, mixed-element combos, passive repair, and vampiric healing.
+    - Added first-draft runtime combat effects for bonus damage, crits, bounce, pierce follow-through, fire, electric arcs, explosive splash, mixed-element combos, passive repair, and vampiric healing.
     - Added dev buttons in the Turret XP panel to grant quick levels and complete active material projects for playtesting.
   Changes:
     - Removed the embedded click-drag skill-tree spike and its custom input because it did not function reliably in the relative turret GUI.

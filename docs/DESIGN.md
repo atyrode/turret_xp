@@ -40,7 +40,7 @@ The main design goal is specialization over universal upgrades. A sniper turret,
 
 - Early levels should arrive fast enough for testing and feedback, but damage should contribute very little because damage totals grow quickly.
 - Kill credit should be based on damage contribution so final-hit stealing does not erase most turret progress.
-- Default 0.4.x pacing is conservative: `0.02` XP per damage, `20` XP per full kill credit, `100` base XP, and `1.65` exponential growth.
+- Default 0.4.x pacing is conservative: `0.02` XP per damage, `20` XP per full kill credit, `100` base XP, and linear level growth using the `1.65` growth step.
 - Long-term curves should avoid turning a single turret into a complete wall replacement.
 - Bonuses should probably be modest and visible, with caps or specialization tradeoffs.
 

@@ -235,7 +235,7 @@ Possible tradeoffs:
 
 - Needs material gates and element slots before it comes online.
 - Should not out-DPS every physical build by default.
-- Performance must be watched carefully if effects spawn scripted projectiles or many area checks.
+- Performance must be watched carefully if effects spawn many projectiles, render objects, or area checks.
 
 ### Veteran Support
 
@@ -326,7 +326,7 @@ Skill points and materials should both matter. A turret with XP but no materials
 
 ## Portable Veteran Core
 
-Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model.
+Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, and V0.4.2 makes specialization stats travel with the core by swapping the current turret body.
 
 The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. When the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret.
 

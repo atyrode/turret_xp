@@ -37,6 +37,16 @@ The first playable releases should make progression visible and testable: select
 - Return or spill the core when a turret is mined.
 - Let a core profile display an optional floating `name (lvl N)` label above its current turret body.
 
+## V0.4.2 Scope
+
+- Make specialization choices change real turret stats through hidden gun-turret prototype variants.
+- Add Sniper, Machine Gun, Bulwark, and Brawler turret bodies with distinct range, cooldown, damage modifier, and health values.
+- Revert specialized bodies back to the normal gun turret when the Veteran Core is extracted.
+- Replace exponential level scaling with linear per-level scaling.
+- Replace doubling augment costs with one augment point every ten levels.
+- Remove material deposit buttons and consume the matching carried element resource automatically during open-panel playtesting.
+- Add first-pass element mastery milestones and visual feedback for bounce, pierce, fire, electric, explosive, and combo effects.
+
 ## Open Product Questions
 
 - Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, or infinite mastery?

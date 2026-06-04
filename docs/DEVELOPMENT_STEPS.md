@@ -29,7 +29,7 @@
 ## Completed For V0.1.2
 
 - [x] Add runtime-global XP pacing settings.
-- [x] Rebalance default XP with low damage XP, kill-credit XP, and exponential level growth.
+- [x] Rebalance default XP with low damage XP, kill-credit XP, and configurable level growth.
 - [x] Add contribution-based kill credit so final-hit stealing does not erase turret XP.
 - [x] Align range and shooting-speed displays more closely with vanilla hover stats.
 - [x] Add quality-aware turret icon and reorganize the panel for readability.
@@ -89,7 +89,7 @@
 - [x] Add infinite core upgrades, first/second element projects, specialization choice, and powerful augments.
 - [x] Add material-project progress, carried-item deposits, and dev completion buttons.
 - [x] Add dev level buttons for fast level-gate testing.
-- [x] Add first-draft scripted combat effects for core upgrades, specializations, augments, elements, combos, passive repair, and vampiric healing.
+- [x] Add first-draft runtime combat effects for core upgrades, augments, elements, combos, passive repair, and vampiric healing.
 - [x] Migrate old 0.3.x skill ranks into 0.4.0 core ranks where possible.
 
 ## Completed For V0.4.1
@@ -106,10 +106,20 @@
 - [x] Move playtest dev controls above the Evolution scroll area.
 - [x] Simplify locked sections, core upgrade rows, and remove the Elements/Specialization summary line.
 
+## Completed For V0.4.2
+
+- [x] Add hidden gun-turret prototype variants for Sniper, Machine Gun, Bulwark, and Brawler.
+- [x] Swap specialized turret bodies when a Veteran Core specialization is chosen.
+- [x] Revert the turret body to vanilla `gun-turret` when the Veteran Core is extracted.
+- [x] Replace exponential level scaling with linear per-level scaling.
+- [x] Give powerful augments one augment point every ten levels instead of doubling rank costs.
+- [x] Remove material deposit buttons and auto-consume the matching carried element material while the turret is open.
+- [x] Add element mastery milestones and short visual feedback for bounce, pierce, fire, electric, and explosive upgrade effects.
+
 ## Likely Next Work
 
-- Playtest V0.4.1 from the Mod Portal and integrate feedback.
-- Playtest and tune level gates, material costs, point costs, core recipe cost, and scripted effect strength.
+- Playtest V0.4.2 from the Mod Portal and integrate feedback.
+- Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.
 - Evaluate `quality-lib` and/or prototype `custom_tooltip_fields` before adding quality-scaled custom stats.

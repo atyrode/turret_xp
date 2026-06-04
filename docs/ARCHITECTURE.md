@@ -85,7 +85,7 @@ storage.turret_xp = {
 
 ## Runtime Responsibilities
 
-- `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, cache per-target damage contribution, and apply scripted evolution damage effects.
+- `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, cache per-target damage contribution, and apply runtime evolution damage effects.
 - `on_entity_died`: award proportional kill credit to contributing core profiles, track kills, and delete installed core profiles when a turret dies.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined gun turrets.
