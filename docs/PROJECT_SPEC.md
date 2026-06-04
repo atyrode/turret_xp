@@ -1,19 +1,21 @@
 # Project Spec
 
-## Version 0.2.0
+## Version 0.3.0
 
-V0.2.0 is a UI polish and tracking prototype. It keeps the vanilla turret GUI as the main interaction while making the Turret XP relative panel feel closer to Factorio's own GUI language.
+V0.3.0 is a UI simplification and first skill-tree prototype. It keeps the vanilla turret GUI as the main interaction while making the Turret XP relative panel cleaner and adding allocatable per-turret skills.
 
 ## Runtime Behavior
 
 - State lives under `storage.turret_xp`.
 - A turret state record is keyed by the turret entity `unit_number`.
-- New turret records start at level 1 with zero XP, killing blows, kill credit, damage, and total XP.
+- New turret records start at level 1 with zero XP, kills, kill credit, damage, total XP, and skill ranks.
 - XP is derived from lifetime damage and kill credit using runtime-global mod settings.
 - Default damage XP is `0.02` XP per final damage point.
 - Default kill-credit XP is `20` XP per full kill credit.
 - Default level XP starts at `100` and grows by a `1.65` exponential multiplier each level.
 - Kill credit is split proportionally by damage contribution so turrets are not fully denied XP when another source lands the final hit.
+- Skill points equal `level - 1 - spent_points`.
+- Ballistics Drill increases damage XP, Kill Chain increases kill-credit XP, Targeting Data increases all XP, and Field Repairs slowly repairs damaged skilled turrets.
 - Destroyed or mined turrets remove their state.
 
 ## GUI Behavior
@@ -28,6 +30,6 @@ V0.2.0 is a UI polish and tracking prototype. It keeps the vanilla turret GUI as
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.2.0`
+- Current version: `0.3.0`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

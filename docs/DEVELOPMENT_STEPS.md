@@ -58,6 +58,15 @@
 - [x] Add estimated DPS, damage XP, and kill-credit XP rows.
 - [x] Update the panel in place every refresh tick instead of destroying and rebuilding the full GUI.
 
+## Completed For V0.3.0
+
+- [x] Simplify the main panel into one compact stat table.
+- [x] Move ammo and turret icon into the title row.
+- [x] Remove the quality text row, top info marker, no-bonuses note, progression section, and XP source rows.
+- [x] Filter hidden `quality-unknown` out of quality summaries.
+- [x] Add a first skill tree panel with four allocatable skill bubbles.
+- [x] Add active baseline skill effects for XP modifiers and passive repairs.
+
 ## Likely Next Work
 
 - Decide first real level bonuses.

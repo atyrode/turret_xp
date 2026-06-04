@@ -1,6 +1,6 @@
 {
   "name": "turret_xp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "title": "Turret XP",
   "author": "atyrode",
   "factorio_version": "2.0",
@@ -8,5 +8,5 @@
     "base >= 2.0.0",
     "flib >= 0.16.4"
   ],
-  "description": "Adds configurable XP, levels, kill credit, and a stats panel to vanilla gun turrets as the first step toward per-turret progression."
+  "description": "Adds configurable XP, levels, skill points, and a vanilla-like progression panel to vanilla gun turrets."
 }

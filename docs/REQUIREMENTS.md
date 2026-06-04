@@ -10,6 +10,8 @@
 - Gun turret final hits must add a killing-blow count.
 - Runtime-global mod settings must allow tuning damage XP, kill-credit XP, base level XP, and level XP growth.
 - XP overflow must advance levels and carry remaining XP into the next level.
+- Skill points must be derived from turret level and spent allocations.
+- Clicking an available skill bubble must allocate one rank to the opened turret and refresh the panel.
 - The GUI must refresh while the turret GUI remains open.
 - Selecting a gun turret and running `/turret-xp` must open the same panel as a fallback.
 - The packaged zip must include `info.json`, Lua files, locale, docs, README, and changelog.
@@ -22,8 +24,9 @@
 - Show turret attack range in tiles, including quality range multiplier when relevant.
 - Show loaded ammo and count.
 - Show estimated loaded-ammo damage per shot and estimated DPS when they can be derived from prototype data.
-- Show killing blows, kill credit, lifetime damage, XP source breakdown, and total XP.
-- Clearly state that V0.2.0 levels do not apply combat bonuses yet.
+- Show kills, lifetime damage, and skill points.
+- Show a first skill tree with 3-5 allocatable skills.
+- Clearly state that V0.3.0 skill effects are early baseline effects, not the final combat-bonus design.
 
 ## Operational
 

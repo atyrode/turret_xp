@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.2.0 tracks XP, level, killing blows, kill credit, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a polished right-side stats panel.
+`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.3.0 tracks XP, level, kills, kill credit, lifetime damage, and skill allocations for each gun turret, then extends the vanilla gun turret GUI with a polished right-side stats panel.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -15,9 +15,10 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - Current prototype: runtime-only XP tracking and a `flib`-styled right-side relative GUI panel for vanilla `gun-turret`.
 - XP is awarded from damage dealt by gun turrets plus proportional kill credit based on damage contribution.
 - XP pacing is configurable with runtime-global mod settings.
-- The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, killing blows, kill credit, lifetime damage, XP source breakdown, and total XP.
+- The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, and lifetime damage.
 - Research bonuses are shown in a vanilla-like base plus bonus format where available.
 - HP and range show the real quality-info marker with a custom hover summary derived from Factorio quality prototypes. The native Factoriopedia popover is not exposed as a reusable runtime GUI widget.
+- The skill tree panel grants points from turret levels and currently includes four baseline skills: damage XP, kill-credit XP, passive repairs, and all-XP targeting data.
 
 ## Development
 
@@ -86,12 +87,12 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 2. Start Factorio 2.0 with `turret_xp` enabled.
 3. Place a vanilla gun turret and add ammo.
 4. Open the turret. The vanilla turret GUI should show a `Turret XP` panel on the right.
-5. Let the turret shoot enemies, then reopen or keep the GUI open and confirm XP, level, damage, killing blows, and kill credit update.
+5. Let the turret shoot enemies, then reopen or keep the GUI open and confirm XP, level, damage, kills, and skill points update.
 6. Optional: select a gun turret and run `/turret-xp` to open its panel directly.
 
 ## Prototype Limits
 
-- V0.2.0 tracks and displays XP/levels but does not apply stat bonuses yet.
+- V0.3.0 tracks and displays XP/levels and includes early skill allocations. Only XP modifiers and passive repair are active; deeper combat bonuses are still future work.
 - XP is currently scoped to vanilla `gun-turret`.
 - Default XP pacing is intentionally conservative: damage gives very little XP, kill credit matters more, and level requirements grow exponentially.
 - Damage shown in the GUI is a best-effort estimate from loaded ammo prototype data.

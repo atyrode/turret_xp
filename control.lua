@@ -1,9 +1,7 @@
 local MOD_PREFIX = "turret-xp-"
 local GUI = {
   panel = MOD_PREFIX .. "panel",
-  status = MOD_PREFIX .. "status",
   level = MOD_PREFIX .. "level",
-  quality = MOD_PREFIX .. "quality",
   xp = MOD_PREFIX .. "xp",
   xp_bar = MOD_PREFIX .. "xp-bar",
   xp_percent = MOD_PREFIX .. "xp-percent",
@@ -14,11 +12,8 @@ local GUI = {
   damage = MOD_PREFIX .. "damage",
   dps = MOD_PREFIX .. "dps",
   kills = MOD_PREFIX .. "kills",
-  kill_credit = MOD_PREFIX .. "kill-credit",
   damage_dealt = MOD_PREFIX .. "damage-dealt",
-  damage_xp = MOD_PREFIX .. "damage-xp",
-  kill_credit_xp = MOD_PREFIX .. "kill-credit-xp",
-  total_xp = MOD_PREFIX .. "total-xp"
+  skill_points = MOD_PREFIX .. "skill-points"
 }
 
 local SETTINGS = {
@@ -34,6 +29,50 @@ local DEFAULTS = {
   level_base_xp = 100,
   level_growth = 1.65
 }
+
+local SKILLS = {
+  {
+    id = "ballistics",
+    sprite = "item/firearm-magazine",
+    max_rank = 3,
+    short_name = { "turret-xp.skill-ballistics-short" },
+    name = { "turret-xp.skill-ballistics" },
+    description = { "turret-xp.skill-ballistics-description" },
+    effect = { "turret-xp.skill-ballistics-effect" }
+  },
+  {
+    id = "kill_chain",
+    sprite = "item/piercing-rounds-magazine",
+    max_rank = 3,
+    short_name = { "turret-xp.skill-kill-chain-short" },
+    name = { "turret-xp.skill-kill-chain" },
+    description = { "turret-xp.skill-kill-chain-description" },
+    effect = { "turret-xp.skill-kill-chain-effect" }
+  },
+  {
+    id = "field_repairs",
+    sprite = "item/repair-pack",
+    max_rank = 3,
+    short_name = { "turret-xp.skill-field-repairs-short" },
+    name = { "turret-xp.skill-field-repairs" },
+    description = { "turret-xp.skill-field-repairs-description" },
+    effect = { "turret-xp.skill-field-repairs-effect" }
+  },
+  {
+    id = "targeting_data",
+    sprite = "entity/radar",
+    max_rank = 2,
+    short_name = { "turret-xp.skill-targeting-data-short" },
+    name = { "turret-xp.skill-targeting-data" },
+    description = { "turret-xp.skill-targeting-data-description" },
+    effect = { "turret-xp.skill-targeting-data-effect" }
+  }
+}
+
+local SKILL_BY_ID = {}
+for _, skill in ipairs(SKILLS) do
+  SKILL_BY_ID[skill.id] = skill
+end
 
 local COLOR = {
   caption = { 0.62, 0.62, 0.62 },
@@ -102,6 +141,49 @@ local function get_xp_settings()
   }
 end
 
+local function ensure_skill_state(state)
+  state.skills = state.skills or {}
+
+  for _, skill in ipairs(SKILLS) do
+    local rank = state.skills[skill.id]
+    if type(rank) ~= "number" then
+      rank = 0
+    end
+    state.skills[skill.id] = math.max(0, math.min(skill.max_rank, math.floor(rank)))
+  end
+end
+
+local function get_skill_rank(state, skill_id)
+  if not state then
+    return 0
+  end
+
+  ensure_skill_state(state)
+  return state.skills[skill_id] or 0
+end
+
+local function get_spent_skill_points(state)
+  if not state then
+    return 0
+  end
+
+  ensure_skill_state(state)
+  local spent = 0
+  for _, skill in ipairs(SKILLS) do
+    spent = spent + (state.skills[skill.id] or 0)
+  end
+
+  return spent
+end
+
+local function get_available_skill_points(state)
+  if not state then
+    return 0
+  end
+
+  return math.max(0, (state.level or 1) - 1 - get_spent_skill_points(state))
+end
+
 local function xp_required(level)
   local xp_settings = get_xp_settings()
   return math.max(1, math.floor((xp_settings.level_base_xp * (xp_settings.level_growth ^ (level - 1))) + 0.5))
@@ -123,10 +205,15 @@ end
 
 local function sync_turret_progression(state)
   state.kill_credit = state.kill_credit or state.kills or 0
+  ensure_skill_state(state)
 
   local xp_settings = get_xp_settings()
-  local total_xp = ((state.damage or 0) * xp_settings.xp_per_damage)
-    + ((state.kill_credit or 0) * xp_settings.xp_per_kill_credit)
+  local damage_multiplier = 1 + (get_skill_rank(state, "ballistics") * 0.10)
+  local kill_credit_multiplier = 1 + (get_skill_rank(state, "kill_chain") * 0.10)
+  local global_multiplier = 1 + (get_skill_rank(state, "targeting_data") * 0.05)
+  local total_xp = (((state.damage or 0) * xp_settings.xp_per_damage * damage_multiplier)
+    + ((state.kill_credit or 0) * xp_settings.xp_per_kill_credit * kill_credit_multiplier))
+    * global_multiplier
   local level, xp, required = progression_from_total_xp(total_xp)
 
   state.total_xp = total_xp
@@ -153,17 +240,20 @@ local function get_turret_state(entity)
       level = 1,
       kills = 0,
       kill_credit = 0,
-      damage = 0
+      damage = 0,
+      skills = {}
     }
     storage.turret_xp.turrets[key] = state
   end
 
+  state.entity = entity
   state.xp = state.xp or 0
   state.total_xp = state.total_xp or 0
   state.level = math.max(1, state.level or 1)
   state.kills = state.kills or 0
   state.kill_credit = state.kill_credit or state.kills or 0
   state.damage = state.damage or 0
+  ensure_skill_state(state)
   sync_turret_progression(state)
   return state
 end
@@ -519,7 +609,7 @@ local function get_quality_prototypes()
   end
 
   for _, quality in pairs(quality_prototypes) do
-    if quality and quality.valid then
+    if quality and quality.valid and quality.name ~= "quality-unknown" and not safe_read(quality, "hidden") then
       qualities[#qualities + 1] = quality
     end
   end
@@ -862,40 +952,6 @@ local function cleanup_target_damage()
   end
 end
 
-local function add_empty_cell(parent, width)
-  local ok, element = pcall(function()
-    return parent.add({
-      type = "empty-widget"
-    })
-  end)
-
-  if not ok or not element then
-    element = parent.add({
-      type = "label",
-      caption = ""
-    })
-  end
-
-  set_style(element, "width", width or 18)
-  return element
-end
-
-local function add_rich_info_label(parent, tooltip)
-  if not tooltip then
-    return add_empty_cell(parent, 18)
-  end
-
-  local label = parent.add({
-    type = "label",
-    caption = "[img=info]",
-    tooltip = tooltip,
-    style = "caption_label"
-  })
-  set_style(label, "left_margin", 6)
-  set_style(label, "right_margin", 2)
-  return label
-end
-
 local function add_stat_row(parent, label, element_name, options)
   options = options or {}
 
@@ -926,47 +982,6 @@ local function add_stat_row(parent, label, element_name, options)
   set_style(value_element, "maximal_width", options.maximal_width or 240)
 
   return label_element, value_element
-end
-
-local function add_ammo_row(parent)
-  local label_element = parent.add({
-    type = "label",
-    caption = with_info_marker({ "turret-xp.ammo" }, { "turret-xp.ammo-tooltip" }),
-    tooltip = { "turret-xp.ammo-tooltip" },
-    style = "caption_label"
-  })
-  set_style(label_element, "font_color", COLOR.caption)
-
-  local value_flow = parent.add({
-    type = "flow",
-    name = GUI.ammo,
-    direction = "horizontal"
-  })
-  set_style(value_flow, "horizontal_align", "right")
-  set_style(value_flow, "horizontally_stretchable", true)
-end
-
-local function add_section_header(parent, caption, tooltip)
-  local subheader = parent.add({
-    type = "frame",
-    direction = "horizontal",
-    style = "subheader_frame"
-  })
-  set_style(subheader, "top_margin", 8)
-  set_style(subheader, "horizontally_stretchable", true)
-  set_style(subheader, "vertical_align", "center")
-
-  local label = subheader.add({
-    type = "label",
-    caption = with_info_marker(caption, tooltip),
-    tooltip = tooltip,
-    style = "subheader_caption_label"
-  })
-  subheader.add({
-    type = "empty-widget",
-    style = "flib_horizontal_pusher"
-  })
-  return label
 end
 
 local function add_entity_icon(parent, entity)
@@ -1007,17 +1022,6 @@ local function add_entity_icon(parent, entity)
   set_element_style(icon, "slot_button")
   set_style(icon, "size", 40)
   return icon
-end
-
-local function add_status_flow(parent)
-  local flow = parent.add({
-    type = "flow",
-    name = GUI.status,
-    direction = "horizontal",
-    style = "flib_indicator_flow"
-  })
-  set_style(flow, "top_margin", 2)
-  return flow
 end
 
 local function make_stats_table(parent)
@@ -1078,56 +1082,18 @@ local function add_xp_panel(parent)
     value = 0
   })
   set_style(bar, "horizontally_stretchable", true)
-  set_style(bar, "height", 18)
+  set_style(bar, "height", 20)
   set_style(bar, "top_margin", 4)
-  set_style(bar, "bottom_margin", 4)
+  set_style(bar, "bottom_margin", 0)
 
-  local bottom = xp_panel.add({
-    type = "flow",
-    direction = "horizontal"
-  })
-  set_style(bottom, "horizontally_stretchable", true)
-
-  local percent = bottom.add({
+  local percent = xp_panel.add({
     type = "label",
     name = GUI.xp_percent,
     caption = { "turret-xp.progress-percent", 0 },
     style = "caption_label"
   })
   set_style(percent, "font_color", COLOR.muted)
-
-  bottom.add({
-    type = "empty-widget",
-    style = "flib_horizontal_pusher"
-  })
-
-  bottom.add({
-    type = "label",
-    caption = with_info_marker({ "turret-xp.next-unlock" }, { "turret-xp.next-unlock-tooltip" }),
-    tooltip = { "turret-xp.next-unlock-tooltip" },
-    style = "caption_label"
-  })
-end
-
-local function update_status(panel, ammo_count)
-  local flow = find_gui_element(panel, GUI.status)
-  if not flow then
-    return
-  end
-
-  flow.clear()
-  local has_ammo = ammo_count and ammo_count > 0
-  flow.add({
-    type = "sprite",
-    sprite = has_ammo and "flib_indicator_green" or "flib_indicator_yellow",
-    style = "flib_indicator"
-  })
-  local label = flow.add({
-    type = "label",
-    caption = has_ammo and { "turret-xp.status-loaded" } or { "turret-xp.status-no-ammo" },
-    style = "caption_label"
-  })
-  set_style(label, "font_color", COLOR.muted)
+  set_style(percent, "top_margin", 2)
 end
 
 local function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality)
@@ -1136,14 +1102,28 @@ local function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality)
     return
   end
 
+  local current_tags = flow.tags or {}
+  if current_tags.ammo_name == (ammo_name or "")
+    and current_tags.ammo_count == (ammo_count or 0)
+    and current_tags.ammo_quality == (ammo_quality or "")
+  then
+    return
+  end
+
+  flow.tags = {
+    ammo_name = ammo_name or "",
+    ammo_count = ammo_count or 0,
+    ammo_quality = ammo_quality or ""
+  }
+
   flow.clear()
   if not ammo_name then
-    local label = flow.add({
-      type = "label",
-      caption = { "turret-xp.no-ammo" },
-      style = "caption_label"
+    flow.add({
+      type = "sprite",
+      sprite = "flib_indicator_yellow",
+      style = "flib_indicator",
+      tooltip = { "turret-xp.no-ammo" }
     })
-    set_style(label, "font_color", COLOR.muted)
     return
   end
 
@@ -1173,6 +1153,154 @@ local function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality)
   })
 end
 
+local function skill_button_name(skill_id)
+  return MOD_PREFIX .. "skill-button-" .. skill_id
+end
+
+local function skill_rank_name(skill_id)
+  return MOD_PREFIX .. "skill-rank-" .. skill_id
+end
+
+local function make_skill_tooltip(skill, state)
+  local rank = get_skill_rank(state, skill.id)
+  local available = get_available_skill_points(state)
+  local footer = { "turret-xp.skill-click-unavailable" }
+
+  if rank >= skill.max_rank then
+    footer = { "turret-xp.skill-maxed" }
+  elseif available > 0 then
+    footer = { "turret-xp.skill-click-available" }
+  end
+
+  return {
+    "",
+    skill.name,
+    "\n",
+    skill.description,
+    "\n",
+    skill.effect,
+    "\n",
+    { "turret-xp.skill-rank", rank, skill.max_rank },
+    "\n",
+    footer
+  }
+end
+
+local function add_skill_panel(parent)
+  local skill_panel = parent.add({
+    type = "frame",
+    direction = "vertical",
+    style = "inside_shallow_frame_with_padding"
+  })
+  set_style(skill_panel, "top_margin", 6)
+  set_style(skill_panel, "horizontally_stretchable", true)
+
+  local header = skill_panel.add({
+    type = "flow",
+    direction = "horizontal"
+  })
+  set_style(header, "horizontally_stretchable", true)
+  set_style(header, "vertical_align", "center")
+
+  local title = header.add({
+    type = "label",
+    caption = { "turret-xp.skill-tree" },
+    style = "heading_2_label"
+  })
+  set_style(title, "font", "default-bold")
+
+  header.add({
+    type = "empty-widget",
+    style = "flib_horizontal_pusher"
+  })
+
+  local points = header.add({
+    type = "label",
+    name = GUI.skill_points,
+    caption = { "turret-xp.skill-points", 0 },
+    style = "caption_label"
+  })
+  set_style(points, "font_color", COLOR.muted)
+
+  local table_element = skill_panel.add({
+    type = "table",
+    column_count = #SKILLS
+  })
+  set_style(table_element, "top_margin", 8)
+  set_style(table_element, "horizontally_stretchable", true)
+  set_style(table_element, "horizontal_spacing", 10)
+
+  for _, skill in ipairs(SKILLS) do
+    local node = table_element.add({
+      type = "flow",
+      direction = "vertical"
+    })
+    set_style(node, "horizontal_align", "center")
+    set_style(node, "width", 82)
+
+    local button = node.add({
+      type = "sprite-button",
+      name = skill_button_name(skill.id),
+      sprite = skill.sprite,
+      style = "flib_slot_button_blue",
+      tags = {
+        turret_xp_action = "allocate-skill",
+        skill = skill.id
+      },
+      tooltip = skill.description
+    })
+    set_style(button, "size", 42)
+
+    local label = node.add({
+      type = "label",
+      caption = skill.short_name,
+      style = "caption_label"
+    })
+    set_style(label, "top_margin", 3)
+    set_style(label, "horizontal_align", "center")
+    set_style(label, "single_line", true)
+
+    local rank = node.add({
+      type = "label",
+      name = skill_rank_name(skill.id),
+      caption = "0/" .. tostring(skill.max_rank),
+      style = "caption_label"
+    })
+    set_style(rank, "font_color", COLOR.muted)
+    set_style(rank, "horizontal_align", "center")
+  end
+end
+
+local function update_skill_panel(panel, state)
+  if not panel then
+    return
+  end
+
+  local available = get_available_skill_points(state)
+  set_gui_caption(panel, GUI.skill_points, { "turret-xp.skill-points", available })
+
+  for _, skill in ipairs(SKILLS) do
+    local rank = get_skill_rank(state, skill.id)
+    local button = find_gui_element(panel, skill_button_name(skill.id))
+    if button then
+      button.tooltip = make_skill_tooltip(skill, state)
+      button.enabled = rank < skill.max_rank
+
+      if rank >= skill.max_rank then
+        set_element_style(button, "flib_selected_slot_button_green")
+      elseif rank > 0 then
+        set_element_style(button, "flib_selected_slot_button_blue")
+      elseif available > 0 then
+        set_element_style(button, "flib_slot_button_blue")
+      else
+        set_element_style(button, "flib_slot_button_grey")
+      end
+    end
+
+    set_gui_caption(panel, skill_rank_name(skill.id), tostring(rank) .. "/" .. tostring(skill.max_rank))
+  end
+end
+
 local function update_turret_gui(player, entity)
   local panel = get_gui_panel(player)
   if not panel then
@@ -1187,12 +1315,8 @@ local function update_turret_gui(player, entity)
   local quality_name = get_entity_quality_name(entity)
   local max_health = safe_read(entity, "max_health") or get_max_health_for_quality(entity, quality_name)
   local health = safe_read(entity, "health") or max_health
-  local xp_settings = get_xp_settings()
-  local damage_xp = (state.damage or 0) * xp_settings.xp_per_damage
-  local kill_credit_xp = (state.kill_credit or 0) * xp_settings.xp_per_kill_credit
 
   set_gui_caption(panel, GUI.level, { "turret-xp.level", progression.level })
-  set_gui_caption(panel, GUI.quality, { "", "[quality=", quality_name, "] ", { "quality-name." .. quality_name } })
   set_gui_caption(panel, GUI.xp, { "turret-xp.xp-progress", format_number(progression.xp, 0), format_number(required, 0) })
   set_gui_progress(panel, GUI.xp_bar, progress)
   set_gui_caption(panel, GUI.xp_percent, { "turret-xp.progress-percent", format_number(progress * 100, 0) })
@@ -1215,7 +1339,6 @@ local function update_turret_gui(player, entity)
   set_gui_caption(panel, GUI.range, with_quality_marker(format_range(entity), range_tooltip), range_tooltip)
 
   update_ammo_row(panel, ammo_name, ammo_count, ammo_quality)
-  update_status(panel, ammo_count)
 
   if ammo_name then
     set_gui_caption(panel, GUI.damage, { "turret-xp.damage-value", format_damage_per_shot(entity, ammo_name) }, { "turret-xp.damage-tooltip" })
@@ -1226,13 +1349,59 @@ local function update_turret_gui(player, entity)
   end
 
   set_gui_caption(panel, GUI.kills, format_number(state.kills, 0))
-  set_gui_caption(panel, GUI.kill_credit, format_number(state.kill_credit, 1), { "turret-xp.kill-credit-tooltip" })
   set_gui_caption(panel, GUI.damage_dealt, format_number(state.damage, 0))
-  set_gui_caption(panel, GUI.damage_xp, format_number(damage_xp, 1), { "turret-xp.damage-xp-tooltip" })
-  set_gui_caption(panel, GUI.kill_credit_xp, format_number(kill_credit_xp, 1), { "turret-xp.kill-credit-xp-tooltip" })
-  set_gui_caption(panel, GUI.total_xp, format_number(state.total_xp, 0), { "turret-xp.total-xp-tooltip" })
+  update_skill_panel(panel, state)
 
   return true
+end
+
+local function allocate_skill(player, skill_id)
+  local skill = SKILL_BY_ID[skill_id]
+  if not skill then
+    return
+  end
+
+  local entity = get_remembered_turret(player)
+  if not entity or player.opened ~= entity then
+    return
+  end
+
+  local state = get_turret_state(entity)
+  if get_available_skill_points(state) <= 0 then
+    update_turret_gui(player, entity)
+    return
+  end
+
+  local rank = get_skill_rank(state, skill_id)
+  if rank >= skill.max_rank then
+    update_turret_gui(player, entity)
+    return
+  end
+
+  state.skills[skill_id] = rank + 1
+  sync_turret_progression(state)
+  update_turret_gui(player, entity)
+end
+
+local function apply_passive_skill_effects()
+  ensure_storage()
+
+  for _, state in pairs(storage.turret_xp.turrets) do
+    ensure_skill_state(state)
+    local entity = state.entity
+    if is_gun_turret(entity) then
+      local repair_rank = get_skill_rank(state, "field_repairs")
+      if repair_rank > 0 then
+        local max_health = safe_read(entity, "max_health")
+        local health = safe_read(entity, "health")
+        if max_health and health and health > 0 and health < max_health then
+          entity.health = math.min(max_health, health + (0.25 * repair_rank * (REFRESH_TICKS / 60)))
+        end
+      end
+    elseif entity and not entity.valid then
+      state.entity = nil
+    end
+  end
 end
 
 local function make_gui_frame(player)
@@ -1288,40 +1457,33 @@ local function build_turret_gui(player, entity)
   })
   set_style(header, "bottom_margin", 8)
   set_style(header, "vertical_align", "center")
-  add_entity_icon(header, entity)
 
-  local title_flow = header.add({
-    type = "flow",
-    direction = "vertical"
-  })
-  set_style(title_flow, "left_margin", 8)
-  set_style(title_flow, "horizontally_stretchable", true)
-
-  local title = title_flow.add({
+  local title = header.add({
     type = "label",
     caption = { "entity-name." .. entity.name },
     style = "heading_2_label"
   })
   set_style(title, "font", "default-bold")
 
-  title_flow.add({
-    type = "label",
-    name = GUI.quality,
-    caption = "",
-    style = "caption_label"
-  })
-
-  add_status_flow(title_flow)
   header.add({
     type = "empty-widget",
     style = "flib_horizontal_pusher"
   })
-  add_rich_info_label(header, { "turret-xp.prototype-note" })
+
+  local ammo_flow = header.add({
+    type = "flow",
+    name = GUI.ammo,
+    direction = "horizontal"
+  })
+  set_style(ammo_flow, "right_margin", 6)
+  set_style(ammo_flow, "vertical_align", "center")
+
+  add_entity_icon(header, entity)
 
   add_xp_panel(body)
 
-  add_section_header(body, { "turret-xp.current-turret" })
   local current = make_stats_table(body)
+  set_style(current, "top_margin", 8)
   add_stat_row(current, { "turret-xp.hp" }, GUI.hp)
   add_stat_row(current, { "turret-xp.shooting-speed" }, GUI.shooting_speed, {
     info_tooltip = { "turret-xp.shooting-speed-tooltip" }
@@ -1329,30 +1491,16 @@ local function build_turret_gui(player, entity)
   add_stat_row(current, { "turret-xp.range" }, GUI.range, {
     info_tooltip = { "turret-xp.range-tooltip" }
   })
-  add_ammo_row(current)
   add_stat_row(current, { "turret-xp.damage" }, GUI.damage, {
     info_tooltip = { "turret-xp.damage-tooltip" }
   })
   add_stat_row(current, { "turret-xp.dps" }, GUI.dps, {
     info_tooltip = { "turret-xp.dps-tooltip" }
   })
+  add_stat_row(current, { "turret-xp.kills" }, GUI.kills)
+  add_stat_row(current, { "turret-xp.damage-dealt" }, GUI.damage_dealt)
 
-  add_section_header(body, { "turret-xp.progression-stats" }, { "turret-xp.progression-tooltip" })
-  local progression_stats = make_stats_table(body)
-  add_stat_row(progression_stats, { "turret-xp.killing-blows" }, GUI.kills)
-  add_stat_row(progression_stats, { "turret-xp.kill-credit" }, GUI.kill_credit, {
-    info_tooltip = { "turret-xp.kill-credit-tooltip" }
-  })
-  add_stat_row(progression_stats, { "turret-xp.damage-dealt" }, GUI.damage_dealt)
-  add_stat_row(progression_stats, { "turret-xp.damage-xp" }, GUI.damage_xp, {
-    info_tooltip = { "turret-xp.damage-xp-tooltip" }
-  })
-  add_stat_row(progression_stats, { "turret-xp.kill-credit-xp" }, GUI.kill_credit_xp, {
-    info_tooltip = { "turret-xp.kill-credit-xp-tooltip" }
-  })
-  add_stat_row(progression_stats, { "turret-xp.total-xp" }, GUI.total_xp, {
-    info_tooltip = { "turret-xp.total-xp-tooltip" }
-  })
+  add_skill_panel(frame)
 
   update_turret_gui(player, entity)
 end
@@ -1400,6 +1548,25 @@ local function on_gui_closed(event)
   forget_open_turret(player)
 end
 
+local function on_gui_click(event)
+  local element = event.element
+  if not element or not element.valid then
+    return
+  end
+
+  local tags = element.tags or {}
+  if tags.turret_xp_action ~= "allocate-skill" then
+    return
+  end
+
+  local player = game.get_player(event.player_index)
+  if not player then
+    return
+  end
+
+  allocate_skill(player, tags.skill)
+end
+
 local function on_runtime_mod_setting_changed(event)
   if not event.setting or string.sub(event.setting, 1, #MOD_PREFIX) ~= MOD_PREFIX then
     return
@@ -1408,6 +1575,7 @@ local function on_runtime_mod_setting_changed(event)
   ensure_storage()
 
   for _, state in pairs(storage.turret_xp.turrets) do
+    ensure_skill_state(state)
     sync_turret_progression(state)
   end
 
@@ -1431,6 +1599,10 @@ local function on_entity_damaged(event)
   end
 
   record_damage_contribution(event, cause, damage)
+
+  if is_gun_turret(event.entity) then
+    get_turret_state(event.entity)
+  end
 
   if is_gun_turret(cause) then
     local state = get_turret_state(cause)
@@ -1466,6 +1638,7 @@ end
 local function on_refresh_tick()
   ensure_storage()
   cleanup_target_damage()
+  apply_passive_skill_effects()
 
   for player_index in pairs(storage.turret_xp.players) do
     local player = game.get_player(player_index)
@@ -1482,6 +1655,7 @@ script.on_configuration_changed(function()
   ensure_storage()
   storage.turret_xp.targets = {}
   for _, state in pairs(storage.turret_xp.turrets) do
+    ensure_skill_state(state)
     sync_turret_progression(state)
   end
   for _, player in pairs(game.players) do
@@ -1492,6 +1666,7 @@ end)
 
 script.on_event(defines.events.on_gui_opened, on_gui_opened)
 script.on_event(defines.events.on_gui_closed, on_gui_closed)
+script.on_event(defines.events.on_gui_click, on_gui_click)
 script.on_event(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_setting_changed)
 script.on_event(defines.events.on_entity_damaged, on_entity_damaged)
 script.on_event(defines.events.on_entity_died, on_entity_died)

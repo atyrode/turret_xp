@@ -44,16 +44,16 @@ Turret XP adds the first layer of per-turret progression for vanilla gun turrets
 Current prototype:
 
 - Adds a Turret XP panel to the vanilla gun turret GUI.
-- Tracks XP, level, killing blows, kill credit, lifetime damage, and total XP per turret.
+- Tracks XP, level, kills, kill credit, lifetime damage, and skill allocations per turret.
 - Awards configurable XP from damage dealt by gun turrets and proportional kill credit.
-- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, killing blows, kill credit, total damage, XP source breakdown, and XP progress.
+- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, total damage, and XP progress.
 - Includes runtime-global settings for XP pacing.
 - Uses Factorio Library (flib) styles and richer vanilla-like panel structure.
 - Shows research bonuses in base plus bonus format.
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
-- Keeps combat balance unchanged for now: V0.2.0 tracks levels but does not apply level bonuses yet.
+- Adds a first skill tree panel with four allocatable skills: Ballistics Drill, Kill Chain, Field Repairs, and Targeting Data.
 
-This is an early test release intended to validate the GUI placement, stat display, quality summaries, and XP pacing before adding actual level bonuses.
+This is an early test release intended to validate the simplified GUI, quality summaries, skill-tree shape, and XP pacing before deeper combat bonuses.
 
 Source:
 ${source_url}

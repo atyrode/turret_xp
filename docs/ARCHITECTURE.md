@@ -48,7 +48,7 @@ storage.turret_xp = {
 ## Runtime Responsibilities
 
 - `on_entity_damaged`: track lifetime damage for vanilla gun turrets and cache per-target damage contribution.
-- `on_entity_died`: award proportional kill credit to contributing gun turrets, track killing blows, and clean up turret state when a turret dies.
+- `on_entity_died`: award proportional kill credit to contributing gun turrets, track kills, and clean up turret state when a turret dies.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: remove tracked state for mined gun turrets.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI.

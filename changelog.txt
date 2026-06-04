@@ -1,4 +1,20 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 2026-06-04
+  Features:
+    - Added a first skill tree panel below the main Turret XP panel.
+    - Added per-turret skill points derived from level minus spent ranks.
+    - Added four allocatable baseline skills: Ballistics Drill, Kill Chain, Field Repairs, and Targeting Data.
+    - Added active skill effects for XP modifiers and passive Field Repairs healing.
+  Changes:
+    - Simplified the top panel into one sober stats table with HP, shooting speed, range, damage, estimated DPS, kills, and damage dealt.
+    - Moved loaded ammo and the gun turret icon into the title row.
+    - Removed the quality text row, prototype info marker, bottom no-bonuses note, progression section, kill-credit row, XP-source rows, and total-XP row.
+    - Kept the XP area to one progress bar plus compact progress text.
+  Bugfixes:
+    - Filtered Factorio's hidden `quality-unknown` prototype out of custom quality summary tooltips.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2026-06-04
   Features:

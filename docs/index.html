@@ -25,7 +25,7 @@
           <h1 id="intro-title">Turret XP</h1>
           <p class="lede">
             A lightweight progression layer for vanilla gun turrets, with XP,
-            levels, contribution-aware kill credit, and a polished right-side panel attached to the turret GUI.
+            levels, contribution-aware kill credit, a clean right-side panel, and the first per-turret skill tree.
           </p>
           <div class="actions" aria-label="Project links">
             <a class="button primary" href="https://mods.factorio.com/mod/turret_xp">Download</a>
@@ -48,8 +48,8 @@
             <span>Range</span><strong>18</strong>
             <span>Ammo</span><strong>piercing x42</strong>
             <span>Est. DPS</span><strong>157.5/s</strong>
-            <span>Kill credit</span><strong>18.6</strong>
-            <span>Total XP</span><strong>449</strong>
+            <span>Kills</span><strong>18</strong>
+            <span>Damage dealt</span><strong>3,860</strong>
           </div>
         </div>
       </section>
@@ -57,13 +57,12 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.2.0</h2>
+          <h2 id="current-title">Version 0.3.0</h2>
         </div>
         <p>
-          The current playtest build focuses on a flib-styled vanilla-like panel,
-          configurable XP pacing, proportional kill credit, corrected research bonus
-          display, and quality summaries for HP and range. Combat bonuses are still
-          intentionally disabled.
+          The current playtest build simplifies the turret panel, keeps quality
+          summaries for HP and range, and adds the first allocatable skill bubbles
+          for XP bonuses and passive repairs.
         </p>
       </section>
 
@@ -72,15 +71,15 @@
         <div class="feature-grid">
           <article>
             <h3>Per-turret progression</h3>
-            <p>Tracks XP, level, total XP, killing blows, kill credit, and lifetime damage for each vanilla gun turret.</p>
+            <p>Tracks XP, level, kills, kill credit, lifetime damage, and skill ranks for each vanilla gun turret.</p>
           </article>
           <article>
             <h3>Combat feedback</h3>
-            <p>Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, and quality summaries for affected rows.</p>
+            <p>Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, damage dealt, and quality summaries for affected rows.</p>
           </article>
           <article>
             <h3>Early balance pass</h3>
-            <p>Awards configurable XP from turret damage and proportional kill credit while leaving vanilla stats unchanged.</p>
+            <p>Awards configurable XP from turret damage and proportional kill credit, then lets level-earned points allocate the first skill bubbles.</p>
           </article>
         </div>
       </section>
@@ -96,7 +95,8 @@
         <ol class="steps">
           <li>Let the turret shoot enemies.</li>
           <li>Check that XP and lifetime damage increase.</li>
-          <li>Confirm killing blows and kill credit update from combat contribution.</li>
+          <li>Confirm kills and damage dealt update from combat.</li>
+          <li>Allocate a skill point after leveling and check the skill tree refresh.</li>
           <li>Report confusing stats, pacing issues, or runtime errors.</li>
         </ol>
       </section>
