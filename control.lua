@@ -3,16 +3,28 @@ local GUI = {
   panel = MOD_PREFIX .. "panel"
 }
 
-local BASE_XP_REQUIRED = 100
-local XP_REQUIRED_STEP = 50
-local XP_PER_DAMAGE = 1
-local XP_PER_KILL = 20
+local SETTINGS = {
+  xp_per_damage = MOD_PREFIX .. "xp-per-damage",
+  xp_per_kill_credit = MOD_PREFIX .. "xp-per-kill-credit",
+  level_base_xp = MOD_PREFIX .. "level-base-xp",
+  level_growth = MOD_PREFIX .. "level-growth"
+}
+
+local DEFAULTS = {
+  xp_per_damage = 0.02,
+  xp_per_kill_credit = 20,
+  level_base_xp = 100,
+  level_growth = 1.65
+}
+
 local REFRESH_TICKS = 60
+local TARGET_DAMAGE_TTL = 60 * 60 * 5
 
 local function ensure_storage()
   storage.turret_xp = storage.turret_xp or {}
   storage.turret_xp.turrets = storage.turret_xp.turrets or {}
   storage.turret_xp.players = storage.turret_xp.players or {}
+  storage.turret_xp.targets = storage.turret_xp.targets or {}
 end
 
 local function is_gun_turret(entity)
@@ -31,8 +43,78 @@ local function turret_key(entity)
   }, ":")
 end
 
+local function entity_tracking_key(entity)
+  if not entity or not entity.valid then
+    return nil
+  end
+
+  if entity.unit_number then
+    return tostring(entity.unit_number)
+  end
+
+  return table.concat({
+    tostring(entity.surface.index),
+    entity.name,
+    string.format("%.2f", entity.position.x),
+    string.format("%.2f", entity.position.y)
+  }, ":")
+end
+
+local function get_setting(name, fallback)
+  local setting = settings.global[name]
+  if setting == nil or setting.value == nil then
+    return fallback
+  end
+
+  return setting.value
+end
+
+local function get_xp_settings()
+  return {
+    xp_per_damage = math.max(0, get_setting(SETTINGS.xp_per_damage, DEFAULTS.xp_per_damage)),
+    xp_per_kill_credit = math.max(0, get_setting(SETTINGS.xp_per_kill_credit, DEFAULTS.xp_per_kill_credit)),
+    level_base_xp = math.max(1, get_setting(SETTINGS.level_base_xp, DEFAULTS.level_base_xp)),
+    level_growth = math.max(1.01, get_setting(SETTINGS.level_growth, DEFAULTS.level_growth))
+  }
+end
+
 local function xp_required(level)
-  return BASE_XP_REQUIRED + ((level - 1) * XP_REQUIRED_STEP)
+  local xp_settings = get_xp_settings()
+  return math.max(1, math.floor((xp_settings.level_base_xp * (xp_settings.level_growth ^ (level - 1))) + 0.5))
+end
+
+local function progression_from_total_xp(total_xp)
+  local level = 1
+  local remaining_xp = math.max(0, total_xp or 0)
+  local required_xp = xp_required(level)
+
+  while remaining_xp >= required_xp and level < 10000 do
+    remaining_xp = remaining_xp - required_xp
+    level = level + 1
+    required_xp = xp_required(level)
+  end
+
+  return level, remaining_xp, required_xp
+end
+
+local function sync_turret_progression(state)
+  state.kill_credit = state.kill_credit or state.kills or 0
+
+  local xp_settings = get_xp_settings()
+  local total_xp = ((state.damage or 0) * xp_settings.xp_per_damage)
+    + ((state.kill_credit or 0) * xp_settings.xp_per_kill_credit)
+  local level, xp, required = progression_from_total_xp(total_xp)
+
+  state.total_xp = total_xp
+  state.level = level
+  state.xp = xp
+
+  return {
+    total_xp = total_xp,
+    level = level,
+    xp = xp,
+    required = required
+  }
 end
 
 local function get_turret_state(entity)
@@ -46,6 +128,7 @@ local function get_turret_state(entity)
       total_xp = 0,
       level = 1,
       kills = 0,
+      kill_credit = 0,
       damage = 0
     }
     storage.turret_xp.turrets[key] = state
@@ -55,7 +138,9 @@ local function get_turret_state(entity)
   state.total_xp = state.total_xp or 0
   state.level = math.max(1, state.level or 1)
   state.kills = state.kills or 0
+  state.kill_credit = state.kill_credit or state.kills or 0
   state.damage = state.damage or 0
+  sync_turret_progression(state)
   return state
 end
 
@@ -66,22 +151,6 @@ local function remove_turret_state(entity)
 
   ensure_storage()
   storage.turret_xp.turrets[turret_key(entity)] = nil
-end
-
-local function add_turret_xp(entity, amount)
-  if not is_gun_turret(entity) or amount <= 0 then
-    return
-  end
-
-  local state = get_turret_state(entity)
-  local rounded_amount = math.floor(amount + 0.5)
-  state.xp = state.xp + rounded_amount
-  state.total_xp = state.total_xp + rounded_amount
-
-  while state.xp >= xp_required(state.level) do
-    state.xp = state.xp - xp_required(state.level)
-    state.level = state.level + 1
-  end
 end
 
 local function destroy_gui(player)
@@ -129,6 +198,14 @@ local function set_style(element, property, value)
   if element and element.valid and element.style then
     pcall(function()
       element.style[property] = value
+    end)
+  end
+end
+
+local function set_element_style(element, style)
+  if element and element.valid then
+    pcall(function()
+      element.style = style
     end)
   end
 end
@@ -234,7 +311,7 @@ local function get_loaded_ammo(entity)
   return ammo_name, count
 end
 
-local function estimate_ammo_damage(entity, ammo_name)
+local function get_ammo_type(ammo_name)
   if not ammo_name then
     return nil
   end
@@ -248,7 +325,20 @@ local function estimate_ammo_damage(entity, ammo_name)
     return ammo.get_ammo_type("turret")
   end)
 
-  if not ok or not ammo_type then
+  if ok then
+    return ammo_type
+  end
+
+  return nil
+end
+
+local function estimate_ammo_damage(entity, ammo_name)
+  if not ammo_name then
+    return nil
+  end
+
+  local ammo_type = get_ammo_type(ammo_name)
+  if not ammo_type then
     return nil
   end
 
@@ -279,54 +369,230 @@ local function format_shots_per_second(entity, ammo_name)
   local cooldown = attack_parameters.cooldown
 
   if ammo_name then
-    local ammo = prototypes.item[ammo_name]
-    local ok, ammo_type = pcall(function()
-      return ammo and ammo.get_ammo_type("turret")
-    end)
-    if ok and ammo_type and ammo_type.cooldown_modifier then
+    local ammo_type = get_ammo_type(ammo_name)
+    if ammo_type and ammo_type.cooldown_modifier then
       cooldown = cooldown * ammo_type.cooldown_modifier
     end
   end
 
-  return string.format("%.2f/s", 60 / cooldown)
+  local base_speed = 60 / cooldown
+  local speed_modifier = 0
+  local force = safe_read(entity, "force")
+
+  if force and attack_parameters.ammo_category then
+    local ok, modifier = pcall(function()
+      return force.get_gun_speed_modifier(attack_parameters.ammo_category)
+    end)
+
+    if ok and modifier then
+      speed_modifier = modifier
+    end
+  end
+
+  local bonus_speed = base_speed * speed_modifier
+  local total_speed = base_speed + bonus_speed
+
+  if math.abs(bonus_speed) >= 0.005 then
+    return string.format("%.2f/s (%.2f + %.2f)", total_speed, base_speed, bonus_speed)
+  end
+
+  return string.format("%.2f/s", total_speed)
 end
 
 local function format_range(entity, ammo_name)
   local attack_parameters = get_attack_parameters(entity)
   local range = safe_read(safe_read(entity, "prototype"), "turret_range") or attack_parameters.range
 
-  if ammo_name then
-    local ammo = prototypes.item[ammo_name]
-    local ok, ammo_type = pcall(function()
-      return ammo and ammo.get_ammo_type("turret")
-    end)
-    if ok and ammo_type and ammo_type.range_modifier then
-      range = (range or 0) + ammo_type.range_modifier
-    end
-  end
-
   return format_number(range, 1)
 end
 
-local function add_stat_row(parent, label, value)
-  parent.add({
+local function target_prior_damage(event, damage)
+  local max_health = safe_read(event.entity, "max_health")
+  local final_health = event.final_health
+
+  if not max_health or not final_health then
+    return 0
+  end
+
+  local pre_hit_health = final_health + damage
+  return math.max(0, max_health - pre_hit_health)
+end
+
+local function get_or_create_target_damage(event, damage, create)
+  ensure_storage()
+
+  local key = entity_tracking_key(event.entity)
+  if not key then
+    return nil
+  end
+
+  local entry = storage.turret_xp.targets[key]
+  if not entry and create then
+    entry = {
+      total_damage = target_prior_damage(event, damage),
+      turrets = {},
+      tick = game.tick
+    }
+    storage.turret_xp.targets[key] = entry
+  end
+
+  return entry, key
+end
+
+local function record_damage_contribution(event, turret, damage)
+  local create = is_gun_turret(turret)
+  local entry = get_or_create_target_damage(event, damage, create)
+
+  if not entry then
+    return
+  end
+
+  entry.total_damage = (entry.total_damage or 0) + damage
+  entry.tick = game.tick
+
+  if not create then
+    return
+  end
+
+  local key = turret_key(turret)
+  local contributor = entry.turrets[key]
+  if not contributor then
+    contributor = {
+      damage = 0,
+      entity = turret
+    }
+    entry.turrets[key] = contributor
+  end
+
+  contributor.damage = (contributor.damage or 0) + damage
+  contributor.entity = turret
+end
+
+local function award_kill_credit(target, killing_turret)
+  ensure_storage()
+
+  local target_key = entity_tracking_key(target)
+  local entry = target_key and storage.turret_xp.targets[target_key] or nil
+
+  if entry and entry.total_damage and entry.total_damage > 0 then
+    for contributor_key, contributor in pairs(entry.turrets or {}) do
+      local contribution = math.max(0, contributor.damage or 0)
+      local credit = contribution / entry.total_damage
+
+      if credit > 0 then
+        local turret = contributor.entity
+        local state = nil
+
+        if is_gun_turret(turret) then
+          state = get_turret_state(turret)
+        else
+          state = storage.turret_xp.turrets[contributor_key]
+        end
+
+        if state then
+          state.kill_credit = (state.kill_credit or state.kills or 0) + credit
+          sync_turret_progression(state)
+        end
+      end
+    end
+
+    storage.turret_xp.targets[target_key] = nil
+    return
+  end
+
+  if is_gun_turret(killing_turret) then
+    local state = get_turret_state(killing_turret)
+    state.kill_credit = (state.kill_credit or state.kills or 0) + 1
+    sync_turret_progression(state)
+  end
+end
+
+local function cleanup_target_damage()
+  ensure_storage()
+
+  for key, entry in pairs(storage.turret_xp.targets) do
+    if not entry.tick or game.tick - entry.tick > TARGET_DAMAGE_TTL then
+      storage.turret_xp.targets[key] = nil
+    end
+  end
+end
+
+local function add_stat_row(parent, label, value, tooltip)
+  local label_element = parent.add({
     type = "label",
-    caption = label
+    caption = label,
+    tooltip = tooltip
   })
-  parent.add({
+  set_style(label_element, "font_color", { 0.62, 0.62, 0.62 })
+
+  local value_element = parent.add({
     type = "label",
-    caption = value
+    caption = value,
+    tooltip = tooltip
   })
+  set_style(value_element, "horizontal_align", "right")
+  set_style(value_element, "single_line", false)
+  set_style(value_element, "maximal_width", 210)
+
+  return label_element, value_element
 end
 
 local function add_section_label(parent, caption)
+  local line = parent.add({
+    type = "line",
+    direction = "horizontal"
+  })
+  set_style(line, "top_margin", 8)
+  set_style(line, "bottom_margin", 6)
+
   local label = parent.add({
     type = "label",
     caption = caption
   })
   set_style(label, "font", "heading-3")
-  set_style(label, "top_margin", 8)
+  set_style(label, "bottom_margin", 2)
   return label
+end
+
+local function add_entity_icon(parent, entity)
+  local quality = safe_read(entity, "quality")
+  local quality_name = quality and quality.name or "normal"
+
+  local ok, icon = pcall(function()
+    return parent.add({
+      type = "sprite-button",
+      sprite = "entity/" .. entity.name,
+      quality = quality_name,
+      elem_tooltip = {
+        type = "entity-with-quality",
+        name = entity.name,
+        quality = quality_name
+      }
+    })
+  end)
+
+  if not ok or not icon then
+    ok, icon = pcall(function()
+      return parent.add({
+        type = "sprite-button",
+        sprite = "entity/" .. entity.name,
+        quality = quality_name,
+        tooltip = { "turret-xp.entity-tooltip" }
+      })
+    end)
+  end
+
+  if not ok or not icon then
+    icon = parent.add({
+      type = "sprite-button",
+      sprite = "entity/" .. entity.name,
+      tooltip = { "turret-xp.entity-tooltip" }
+    })
+  end
+
+  set_element_style(icon, "slot_button")
+  set_style(icon, "size", 40)
+  return icon
 end
 
 local function make_gui_frame(player)
@@ -366,31 +632,60 @@ local function build_turret_gui(player, entity)
   remember_open_turret(player, entity)
 
   local state = get_turret_state(entity)
-  local required = xp_required(state.level)
+  local progression = sync_turret_progression(state)
+  local required = progression.required
   local progress = 0
   if required > 0 then
-    progress = math.min(1, state.xp / required)
+    progress = math.min(1, progression.xp / required)
   end
 
   local ammo_name, ammo_count = get_loaded_ammo(entity)
   local ammo_damage = estimate_ammo_damage(entity, ammo_name)
   local frame = make_gui_frame(player)
-  set_style(frame, "minimal_width", 320)
-  set_style(frame, "maximal_width", 380)
+  set_style(frame, "minimal_width", 340)
+  set_style(frame, "maximal_width", 420)
 
-  local level_flow = frame.add({
+  local header = frame.add({
     type = "flow",
     direction = "horizontal"
   })
-  level_flow.add({
-    type = "label",
-    caption = { "turret-xp.level", state.level }
+  set_style(header, "bottom_margin", 6)
+  add_entity_icon(header, entity)
+
+  local title_flow = header.add({
+    type = "flow",
+    direction = "vertical"
   })
-  local xp_label = level_flow.add({
+  set_style(title_flow, "left_margin", 8)
+  set_style(title_flow, "horizontally_stretchable", true)
+
+  local title = title_flow.add({
     type = "label",
-    caption = { "turret-xp.xp-progress", state.xp, required }
+    caption = { "entity-name." .. entity.name }
   })
-  set_style(xp_label, "left_margin", 12)
+  set_style(title, "font", "heading-2")
+
+  title_flow.add({
+    type = "label",
+    caption = { "turret-xp.level", progression.level }
+  })
+
+  local xp_flow = frame.add({
+    type = "flow",
+    direction = "horizontal"
+  })
+  set_style(xp_flow, "horizontally_stretchable", true)
+
+  xp_flow.add({
+    type = "label",
+    caption = { "turret-xp.next-level" }
+  })
+  local xp_label = xp_flow.add({
+    type = "label",
+    caption = { "turret-xp.xp-progress", format_number(progression.xp, 0), format_number(required, 0) }
+  })
+  set_style(xp_label, "horizontal_align", "right")
+  set_style(xp_label, "horizontally_stretchable", true)
 
   local bar = frame.add({
     type = "progressbar",
@@ -399,44 +694,45 @@ local function build_turret_gui(player, entity)
   set_style(bar, "horizontally_stretchable", true)
   set_style(bar, "height", 18)
 
-  add_section_label(frame, { "turret-xp.combat-stats" })
-  local stats = frame.add({
-    type = "table",
-    column_count = 2,
-    draw_horizontal_lines = true
-  })
-  set_style(stats, "horizontally_stretchable", true)
-
   local max_health = safe_read(entity, "max_health")
   local health = safe_read(entity, "health") or max_health
 
-  add_stat_row(stats, { "turret-xp.hp" }, string.format("%s / %s", format_number(health, 0), format_number(max_health, 0)))
-  add_stat_row(stats, { "turret-xp.attack-speed" }, format_shots_per_second(entity, ammo_name))
-  add_stat_row(stats, { "turret-xp.range" }, format_range(entity, ammo_name))
-
-  if ammo_name then
-    add_stat_row(stats, { "turret-xp.ammo" }, string.format("[item=%s] x%d", ammo_name, ammo_count))
-  else
-    add_stat_row(stats, { "turret-xp.ammo" }, { "turret-xp.no-ammo" })
-  end
-
-  if ammo_damage then
-    add_stat_row(stats, { "turret-xp.damage" }, { "turret-xp.damage-value", format_number(ammo_damage, 1) })
-  else
-    add_stat_row(stats, { "turret-xp.damage" }, { "turret-xp.damage-unknown" })
-  end
-
-  add_section_label(frame, { "turret-xp.progression-stats" })
-  local progression = frame.add({
+  add_section_label(frame, { "turret-xp.current-turret" })
+  local current = frame.add({
     type = "table",
     column_count = 2,
     draw_horizontal_lines = true
   })
-  set_style(progression, "horizontally_stretchable", true)
+  set_style(current, "horizontally_stretchable", true)
 
-  add_stat_row(progression, { "turret-xp.kills" }, format_number(state.kills, 0))
-  add_stat_row(progression, { "turret-xp.damage-dealt" }, format_number(state.damage, 0))
-  add_stat_row(progression, { "turret-xp.total-xp" }, format_number(state.total_xp, 0))
+  add_stat_row(current, { "turret-xp.hp" }, string.format("%s / %s", format_number(health, 0), format_number(max_health, 0)))
+  add_stat_row(current, { "turret-xp.shooting-speed" }, format_shots_per_second(entity, ammo_name), { "turret-xp.shooting-speed-tooltip" })
+  add_stat_row(current, { "turret-xp.range" }, format_range(entity, ammo_name), { "turret-xp.range-tooltip" })
+
+  if ammo_name then
+    add_stat_row(current, { "turret-xp.ammo" }, string.format("[item=%s] x%d", ammo_name, ammo_count))
+  else
+    add_stat_row(current, { "turret-xp.ammo" }, { "turret-xp.no-ammo" })
+  end
+
+  if ammo_damage then
+    add_stat_row(current, { "turret-xp.damage" }, { "turret-xp.damage-value", format_number(ammo_damage, 1) })
+  else
+    add_stat_row(current, { "turret-xp.damage" }, { "turret-xp.damage-unknown" })
+  end
+
+  add_section_label(frame, { "turret-xp.progression-stats" })
+  local progression_stats = frame.add({
+    type = "table",
+    column_count = 2,
+    draw_horizontal_lines = true
+  })
+  set_style(progression_stats, "horizontally_stretchable", true)
+
+  add_stat_row(progression_stats, { "turret-xp.killing-blows" }, format_number(state.kills, 0))
+  add_stat_row(progression_stats, { "turret-xp.kill-credit" }, format_number(state.kill_credit, 1), { "turret-xp.kill-credit-tooltip" })
+  add_stat_row(progression_stats, { "turret-xp.damage-dealt" }, format_number(state.damage, 0))
+  add_stat_row(progression_stats, { "turret-xp.total-xp" }, format_number(state.total_xp, 0), { "turret-xp.total-xp-tooltip" })
 
   local note = frame.add({
     type = "label",
@@ -487,20 +783,43 @@ local function on_gui_closed(event)
   forget_open_turret(player)
 end
 
+local function on_runtime_mod_setting_changed(event)
+  if not event.setting or string.sub(event.setting, 1, #MOD_PREFIX) ~= MOD_PREFIX then
+    return
+  end
+
+  ensure_storage()
+
+  for _, state in pairs(storage.turret_xp.turrets) do
+    sync_turret_progression(state)
+  end
+
+  for _, player in pairs(game.players) do
+    if player and player.valid and player.connected then
+      refresh_player_gui(player)
+    end
+  end
+end
+
 local function on_entity_damaged(event)
   local cause = event.cause
-  if not is_gun_turret(cause) then
-    return
-  end
-
-  if event.entity and event.entity.valid and event.entity.force == cause.force then
-    return
-  end
-
   local damage = event.final_damage_amount or 0
-  local state = get_turret_state(cause)
-  state.damage = state.damage + damage
-  add_turret_xp(cause, damage * XP_PER_DAMAGE)
+  if damage <= 0 or not event.entity or not event.entity.valid then
+    return
+  end
+
+  local damage_force = event.force or (cause and cause.valid and cause.force)
+  if damage_force and event.entity.force == damage_force then
+    return
+  end
+
+  record_damage_contribution(event, cause, damage)
+
+  if is_gun_turret(cause) then
+    local state = get_turret_state(cause)
+    state.damage = state.damage + damage
+    sync_turret_progression(state)
+  end
 end
 
 local function on_entity_died(event)
@@ -509,17 +828,18 @@ local function on_entity_died(event)
   end
 
   local cause = event.cause
-  if not is_gun_turret(cause) then
+  local damage_force = event.force or (cause and cause.valid and cause.force)
+  if damage_force and event.entity and event.entity.valid and event.entity.force == damage_force then
     return
   end
 
-  if event.entity and event.entity.valid and event.entity.force == cause.force then
-    return
+  if is_gun_turret(cause) then
+    local state = get_turret_state(cause)
+    state.kills = state.kills + 1
+    sync_turret_progression(state)
   end
 
-  local state = get_turret_state(cause)
-  state.kills = state.kills + 1
-  add_turret_xp(cause, XP_PER_KILL)
+  award_kill_credit(event.entity, cause)
 end
 
 local function on_turret_removed(event)
@@ -528,6 +848,7 @@ end
 
 local function on_refresh_tick()
   ensure_storage()
+  cleanup_target_damage()
 
   for player_index in pairs(storage.turret_xp.players) do
     local player = game.get_player(player_index)
@@ -542,6 +863,10 @@ end
 script.on_init(ensure_storage)
 script.on_configuration_changed(function()
   ensure_storage()
+  storage.turret_xp.targets = {}
+  for _, state in pairs(storage.turret_xp.turrets) do
+    sync_turret_progression(state)
+  end
   for _, player in pairs(game.players) do
     destroy_gui(player)
     forget_open_turret(player)
@@ -550,6 +875,7 @@ end)
 
 script.on_event(defines.events.on_gui_opened, on_gui_opened)
 script.on_event(defines.events.on_gui_closed, on_gui_closed)
+script.on_event(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_setting_changed)
 script.on_event(defines.events.on_entity_damaged, on_entity_damaged)
 script.on_event(defines.events.on_entity_died, on_entity_died)
 script.on_event(defines.events.on_pre_player_mined_item, on_turret_removed)

@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.2
+Date: 2026-06-04
+  Features:
+    - Added runtime-global mod settings for XP per damage, XP per kill credit, base level XP, and level XP growth.
+    - Added contribution-based kill credit so gun turrets earn proportional kill XP even when another source lands the final hit.
+    - Added a quality-aware gun turret icon to the Turret XP panel with the vanilla entity-with-quality tooltip.
+  Changes:
+    - Rebalanced default XP pacing to make damage worth much less XP and level requirements grow exponentially.
+    - Reworked displayed progression to derive from lifetime damage and kill credit using the current settings.
+    - Updated range display to match the vanilla turret hover range instead of applying ammo range modifiers.
+    - Updated shooting speed display to include force gun speed bonuses in a vanilla-like base plus bonus format.
+    - Reorganized the Turret XP panel to make progression and current turret stats easier to scan.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.1.1
 Date: 2026-06-04
   Bugfixes:

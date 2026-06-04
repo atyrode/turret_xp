@@ -1,1 +1,38 @@
--- No startup or runtime settings are defined yet.
+data:extend({
+  {
+    type = "double-setting",
+    name = "turret-xp-xp-per-damage",
+    setting_type = "runtime-global",
+    default_value = 0.02,
+    minimum_value = 0,
+    maximum_value = 100,
+    order = "a"
+  },
+  {
+    type = "double-setting",
+    name = "turret-xp-xp-per-kill-credit",
+    setting_type = "runtime-global",
+    default_value = 20,
+    minimum_value = 0,
+    maximum_value = 100000,
+    order = "b"
+  },
+  {
+    type = "int-setting",
+    name = "turret-xp-level-base-xp",
+    setting_type = "runtime-global",
+    default_value = 100,
+    minimum_value = 1,
+    maximum_value = 1000000,
+    order = "c"
+  },
+  {
+    type = "double-setting",
+    name = "turret-xp-level-growth",
+    setting_type = "runtime-global",
+    default_value = 1.65,
+    minimum_value = 1.01,
+    maximum_value = 10,
+    order = "d"
+  }
+})

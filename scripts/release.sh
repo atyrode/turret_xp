@@ -13,10 +13,11 @@ cat > "$notes_path" <<NOTES
 Turret XP ${version}.
 
 - Adds a Turret XP panel to the vanilla gun turret GUI.
-- Tracks per-turret XP, level, kills, lifetime damage, and total XP.
-- Awards XP from gun turret damage and a small bonus on kills.
-- Shows HP, attack speed, range, loaded ammo, estimated ammo damage, kills, damage dealt, and XP progress.
-- Fixes the 0.1.0 crash when opening a turret GUI on runtime versions where max health is exposed on the entity instead of the prototype.
+- Tracks per-turret XP, level, killing blows, kill credit, lifetime damage, and total XP.
+- Awards configurable XP from gun turret damage and proportional kill credit.
+- Adds runtime-global settings for damage XP, kill-credit XP, base level XP, and level XP growth.
+- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, damage dealt, and XP progress.
+- Uses vanilla quality tooltip behavior for the turret icon in the panel.
 
 Validation:
 - Packaged zip layout checked.

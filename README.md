@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.1.1 tracks XP, level, kills, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a compact stats panel.
+`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.1.2 tracks XP, level, killing blows, kill credit, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a compact stats panel.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -13,8 +13,9 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - Factorio mod scaffold: `info.json`, `data.lua`, `control.lua`, `settings.lua`, and `locale/`.
 - Factorio changelog: `changelog.txt`.
 - Current prototype: runtime-only XP tracking and a right-side relative GUI panel for vanilla `gun-turret`.
-- XP is awarded from damage dealt by gun turrets plus a small kill bonus.
-- The panel shows level, XP progress, HP, attack speed, range, loaded ammo, estimated ammo damage, kills, lifetime damage, and total XP.
+- XP is awarded from damage dealt by gun turrets plus proportional kill credit based on damage contribution.
+- XP pacing is configurable with runtime-global mod settings.
+- The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, lifetime damage, and total XP.
 
 ## Development
 
@@ -83,13 +84,14 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 2. Start Factorio 2.0 with `turret_xp` enabled.
 3. Place a vanilla gun turret and add ammo.
 4. Open the turret. The vanilla turret GUI should show a `Turret XP` panel on the right.
-5. Let the turret shoot enemies, then reopen or keep the GUI open and confirm XP, level, damage, and kills update.
+5. Let the turret shoot enemies, then reopen or keep the GUI open and confirm XP, level, damage, killing blows, and kill credit update.
 6. Optional: select a gun turret and run `/turret-xp` to open its panel directly.
 
 ## Prototype Limits
 
 - V0.1.x tracks and displays XP/levels but does not apply stat bonuses yet.
 - XP is currently scoped to vanilla `gun-turret`.
+- Default XP pacing is intentionally conservative: damage gives very little XP, kill credit matters more, and level requirements grow exponentially.
 - Damage shown in the GUI is a best-effort estimate from loaded ammo prototype data.
 - Removed or destroyed turrets lose their tracked state.
 

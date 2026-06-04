@@ -26,6 +26,14 @@
 - [x] Move HP stat display to `LuaEntity::max_health` and harden optional prototype stat reads.
 - [x] Document library/framework candidates to consider for future features.
 
+## Completed For V0.1.2
+
+- [x] Add runtime-global XP pacing settings.
+- [x] Rebalance default XP with low damage XP, kill-credit XP, and exponential level growth.
+- [x] Add contribution-based kill credit so final-hit stealing does not erase turret XP.
+- [x] Align range and shooting-speed displays more closely with vanilla hover stats.
+- [x] Add quality-aware turret icon and reorganize the panel for readability.
+
 ## Likely Next Work
 
 - Decide first real level bonuses.

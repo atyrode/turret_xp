@@ -3,8 +3,8 @@
 ## Current Stack
 
 - Factorio 2.0 runtime mod.
-- Lua control-stage implementation only.
-- No custom prototypes beyond standard empty `data.lua` and `settings.lua` placeholders.
+- Lua control-stage implementation with runtime-global settings.
+- No custom prototypes beyond runtime XP settings and standard empty `data.lua` placeholder.
 - Python packaging script reused from `player_quality`.
 - Shell scripts for checks, packaging, local install, GitHub release, and Mod Portal publishing.
 - Static GitHub Pages homepage served from `docs/index.html`.
@@ -58,10 +58,13 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - `defines.relative_gui_type.turret_gui` is the intended anchor for extending the vanilla turret GUI.
 - `LuaGuiElement.add` supports `anchor` when adding to `player.gui.relative`.
 - `LuaItemPrototype::get_ammo_type("turret")` exposes loaded ammo prototype data for best-effort damage estimates.
+- `LuaEntity::quality`, `sprite-button` quality overlays, and `elem_tooltip` with `entity-with-quality` allow the panel's turret icon to use vanilla quality tooltip behavior.
+- `LuaForce::get_gun_speed_modifier` exposes force shooting-speed research bonuses by ammo category.
 
 ## Risks
 
 - Damage estimation only covers direct damage effects in ammo prototype data. More complex projectile or nested modded ammo may show `Unknown`.
+- Contribution-based kill credit is based on recent tracked target damage and prunes stale target entries after five minutes.
 - Per-entity combat stat mutation is not designed yet. Factorio exposes force-wide modifiers more readily than individual turret attack modifiers.
 - Mined turret persistence is intentionally out of scope for V0.1.x.
 - Rebuilding the panel every 60 ticks is simple and reliable for the prototype, but later versions should update named elements in place if the GUI grows.

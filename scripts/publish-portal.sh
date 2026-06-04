@@ -46,9 +46,10 @@ Turret XP adds the first layer of per-turret progression for vanilla gun turrets
 Current prototype:
 
 - Adds a Turret XP panel to the vanilla gun turret GUI.
-- Tracks XP, level, kills, lifetime damage, and total XP per turret.
-- Awards XP from damage dealt by gun turrets and a small kill bonus.
-- Shows HP, attack speed, range, loaded ammo, estimated ammo damage, kills, total damage, and XP progress.
+- Tracks XP, level, killing blows, kill credit, lifetime damage, and total XP per turret.
+- Awards configurable XP from damage dealt by gun turrets and proportional kill credit.
+- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, total damage, and XP progress.
+- Includes runtime-global settings for XP pacing.
 - Keeps combat balance unchanged for now: V0.1.x tracks levels but does not apply level bonuses yet.
 
 This is an early test release intended to validate the GUI placement, stat display, and XP pacing before adding actual level bonuses.

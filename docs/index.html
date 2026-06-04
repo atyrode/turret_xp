@@ -25,7 +25,7 @@
           <h1 id="intro-title">Turret XP</h1>
           <p class="lede">
             A lightweight progression layer for vanilla gun turrets, with XP,
-            levels, kill tracking, and a compact stat panel inside the turret GUI.
+            levels, contribution-aware kill credit, and a compact stat panel inside the turret GUI.
           </p>
           <div class="actions" aria-label="Project links">
             <a class="button primary" href="https://mods.factorio.com/mod/turret_xp">Download</a>
@@ -37,17 +37,17 @@
           <div class="panel-title">Turret XP</div>
           <div class="level-row">
             <strong>Level 3</strong>
-            <span>124 / 200 XP</span>
+            <span>74 / 272 XP</span>
           </div>
           <div class="xp-bar" aria-hidden="true">
             <span></span>
           </div>
           <div class="stats-grid">
             <span>HP</span><strong>400 / 400</strong>
-            <span>Attack speed</span><strong>10.00/s</strong>
+            <span>Shooting speed</span><strong>25.00/s</strong>
             <span>Range</span><strong>18</strong>
             <span>Ammo</span><strong>piercing x42</strong>
-            <span>Kills</span><strong>18</strong>
+            <span>Kill credit</span><strong>18.6</strong>
             <span>Damage dealt</span><strong>3,860</strong>
           </div>
         </div>
@@ -56,12 +56,12 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.1.1</h2>
+          <h2 id="current-title">Version 0.1.2</h2>
         </div>
         <p>
-          The first playtest build focuses on reliable tracking and GUI feedback.
-          It does not apply combat bonuses yet; that comes after the XP pacing and
-          interface are proven in game.
+          The current playtest build focuses on configurable XP pacing, proportional
+          kill credit, clearer vanilla-aligned stats, and GUI feedback. Combat bonuses
+          are still intentionally disabled.
         </p>
       </section>
 
@@ -70,15 +70,15 @@
         <div class="feature-grid">
           <article>
             <h3>Per-turret progression</h3>
-            <p>Tracks XP, level, total XP, kills, and lifetime damage for each vanilla gun turret.</p>
+            <p>Tracks XP, level, total XP, killing blows, kill credit, and lifetime damage for each vanilla gun turret.</p>
           </article>
           <article>
             <h3>Combat feedback</h3>
-            <p>Shows HP, attack speed, range, loaded ammo, and estimated ammo damage in a compact panel.</p>
+            <p>Shows HP, shooting speed, range, loaded ammo, and estimated ammo damage in a compact panel.</p>
           </article>
           <article>
             <h3>Early balance pass</h3>
-            <p>Awards XP from turret damage and a small bonus on kills while leaving vanilla stats unchanged.</p>
+            <p>Awards configurable XP from turret damage and proportional kill credit while leaving vanilla stats unchanged.</p>
           </article>
         </div>
       </section>
@@ -94,7 +94,7 @@
         <ol class="steps">
           <li>Let the turret shoot enemies.</li>
           <li>Check that XP and lifetime damage increase.</li>
-          <li>Confirm kills increase when the turret lands killing blows.</li>
+          <li>Confirm killing blows and kill credit update from combat contribution.</li>
           <li>Report confusing stats, pacing issues, or runtime errors.</li>
         </ol>
       </section>

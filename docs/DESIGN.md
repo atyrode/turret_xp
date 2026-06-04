@@ -10,13 +10,14 @@ The mod should make defensive infrastructure feel more personal without making e
 - Add a compact panel to the right of the vanilla GUI.
 - Use direct labels and an XP bar; avoid controls that imply unimplemented upgrades.
 - Keep the prototype note visible so testers know levels are tracked but not applied yet.
+- Show vanilla-aligned stats where possible: base turret range, force-modified shooting speed, and entity-with-quality tooltip on the turret icon.
 
 ## Progression Direction
 
 Candidate future bonuses:
 
 - Damage per shot.
-- Attack speed.
+- Shooting speed.
 - Range.
 - Max HP or resistance.
 - Ammo efficiency.
@@ -24,7 +25,9 @@ Candidate future bonuses:
 
 ## Balance Direction
 
-- Early levels should arrive fast enough for testing and feedback.
+- Early levels should arrive fast enough for testing and feedback, but damage should contribute very little because damage totals grow quickly.
+- Kill credit should be based on damage contribution so final-hit stealing does not erase most turret progress.
+- Default V0.1.x pacing is conservative: `0.02` XP per damage, `20` XP per full kill credit, `100` base XP, and `1.65` exponential growth.
 - Long-term curves should avoid turning a single turret into a complete wall replacement.
 - Bonuses should probably be modest and visible, with caps or specialization tradeoffs.
 
