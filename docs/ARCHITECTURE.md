@@ -8,7 +8,7 @@
 - `settings.lua`: currently no settings.
 - `locale/en/turret-xp.cfg`: English GUI strings.
 - `scripts/`: validation, packaging, install, release, and portal publishing.
-- `docs/`: project context and playtest guidance.
+- `docs/`: project context, playtest guidance, and the GitHub Pages homepage.
 
 ## Runtime State
 
@@ -47,3 +47,4 @@ storage.turret_xp = {
 - `control.lua` owns runtime state and GUI.
 - Data-stage files should stay minimal until the mod needs new prototypes, settings, sprites, or shortcuts.
 - Release scripts should stay data-driven from `info.json` where practical.
+- The website should stay tightly coupled to mod metadata and docs. As it grows, prefer a small generator over manually maintaining duplicate homepage content.

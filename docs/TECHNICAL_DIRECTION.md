@@ -7,6 +7,16 @@
 - No custom prototypes beyond standard empty `data.lua` and `settings.lua` placeholders.
 - Python packaging script reused from `player_quality`.
 - Shell scripts for checks, packaging, local install, GitHub release, and Mod Portal publishing.
+- Static GitHub Pages homepage served from `docs/index.html`.
+
+## Website Direction
+
+- Keep the public website current whenever the mod version, user-visible behavior, documentation, or release status changes.
+- Treat the website as a generated or mostly generated project surface, not as independent marketing copy.
+- Prefer deriving website content from existing sources such as `info.json`, `changelog.txt`, `README.md`, locale strings, and the Markdown docs.
+- Avoid duplicating version numbers, feature lists, playtest steps, and roadmap notes in hand-written HTML when a script can read them from existing files.
+- Near-term acceptable state: a simple static page with a documented obligation to keep it aligned.
+- Target state: a small generator updates `docs/index.html` from repo metadata/docs, and release/publish workflows run or check that generator before publishing.
 
 ## Libraries To Consider
 
@@ -56,6 +66,7 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - Mined turret persistence is intentionally out of scope for V0.1.x.
 - Rebuilding the panel every 60 ticks is simple and reliable for the prototype, but later versions should update named elements in place if the GUI grows.
 - Adding `flib` would make users install an extra dependency, but it is common and handled by the in-game dependency manager.
+- The website can become stale if it stays hand-maintained; keep generation from mod metadata/docs on the roadmap before the site grows.
 
 ## Validation Path
 
@@ -63,4 +74,5 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - Run `scripts/package.sh`.
 - Inspect the zip layout.
 - If a local Factorio binary is available, run a headless load smoke test.
+- Confirm the GitHub Pages homepage still matches the current release and documentation.
 - Publish the current version, install from the in-game Mods interface, and manually test opening a turret plus turret combat.

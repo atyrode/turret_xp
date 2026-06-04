@@ -31,4 +31,6 @@
 - Decide first real level bonuses.
 - Decide whether mined turrets retain XP.
 - Update GUI in place instead of rebuilding every 60 ticks.
+- Add a lightweight website generator so `docs/index.html` is derived from `info.json`, `changelog.txt`, README content, and docs where practical.
+- Fold website freshness into release validation so public docs and Mod Portal homepage do not drift from the mod.
 - Add headless Factorio smoke-test automation if a stable local binary is available.
