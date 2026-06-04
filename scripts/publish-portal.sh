@@ -50,7 +50,7 @@ Current prototype:
 - Awards configurable XP from damage dealt by gun turrets and proportional kill credit.
 - Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, killing blows, kill credit, total damage, XP source breakdown, and XP progress.
 - Includes runtime-global settings for XP pacing.
-- Uses Factorio Library (`flib`) styles and richer vanilla-like panel structure.
+- Uses Factorio Library (flib) styles and richer vanilla-like panel structure.
 - Shows research bonuses in base plus bonus format.
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
 - Keeps combat balance unchanged for now: V0.2.0 tracks levels but does not apply level bonuses yet.
