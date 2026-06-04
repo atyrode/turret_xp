@@ -11,7 +11,7 @@
 - Runtime-global mod settings must allow tuning damage XP, kill-credit XP, base level XP, and level XP growth.
 - XP overflow must advance levels and carry remaining XP into the next level.
 - Skill points must be derived from turret level and spent allocations.
-- Clicking an available skill bubble must allocate one rank to the opened turret and refresh the panel.
+- Clicking an allocatable skill node must allocate one rank to the opened turret and refresh the panel.
 - The GUI must refresh while the turret GUI remains open.
 - Selecting a gun turret and running `/turret-xp` must open the same panel as a fallback.
 - The packaged zip must include `info.json`, Lua files, locale, docs, README, and changelog.
@@ -26,7 +26,9 @@
 - Show estimated loaded-ammo damage per shot and estimated DPS when they can be derived from prototype data.
 - Show kills, lifetime damage, and skill points.
 - Show a first skill tree with 3-5 allocatable skills.
-- Clearly state that V0.3.0 skill effects are early baseline effects, not the final combat-bonus design.
+- Present the skill tree as a scrollable technology-style surface with a central turret root and branch nodes.
+- Skill node hover text must only show the effect gained by allocating the next rank.
+- Clearly state that V0.3.x skill effects are early baseline effects, not the final combat-bonus design.
 
 ## Operational
 

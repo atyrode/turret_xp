@@ -51,7 +51,8 @@ Current prototype:
 - Uses Factorio Library (flib) styles and richer vanilla-like panel structure.
 - Shows research bonuses in base plus bonus format.
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
-- Adds a first skill tree panel with four allocatable skills: Ballistics Drill, Kill Chain, Field Repairs, and Targeting Data.
+- Adds a scrollable technology-style skill tree surface with four allocatable skills: Ballistics Drill, Kill Chain, Field Repairs, and Targeting Data.
+- Uses effect-only skill hover text, a central turret root summary, and a custom solid XP bar style.
 
 This is an early test release intended to validate the simplified GUI, quality summaries, skill-tree shape, and XP pacing before deeper combat bonuses.
 

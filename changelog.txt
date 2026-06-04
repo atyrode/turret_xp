@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.1
+Date: 2026-06-04
+  Changes:
+    - Rebuilt the skill tree as a larger two-axis scrollable surface with a central gun-turret root and branching technology-style nodes.
+    - Changed skill hover tooltips to show only the next allocated effect, using rich-text color for readability.
+    - Changed the root turret node tooltip to summarize currently allocated skill bonuses.
+    - Removed skill tooltip flavor text, explanatory click text, and the skill panel title.
+    - Changed the XP progress bar to a custom solid style so it no longer reads as a split productivity-style bar.
+  Documentation:
+    - Documented the current `entity-gui-lib` decision: useful for future full GUI replacement, but not needed for this focused relative-panel/tree update.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 2026-06-04
   Features:

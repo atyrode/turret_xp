@@ -4,7 +4,7 @@
 
 - `info.json`: Factorio mod metadata.
 - `control.lua`: runtime XP tracking, GUI handling, and command fallback.
-- `data.lua`: currently runtime-only placeholder.
+- `data.lua`: data-stage GUI style definitions, currently the solid XP progressbar style.
 - `settings.lua`: runtime-global XP pacing settings.
 - `locale/en/turret-xp.cfg`: English GUI strings.
 - `scripts/`: validation, packaging, install, release, and portal publishing.
@@ -21,7 +21,10 @@ storage.turret_xp = {
       level = 1,
       kills = 0,
       kill_credit = 0,
-      damage = 0
+      damage = 0,
+      skills = {
+        [skill_id] = <rank>
+      }
     }
   },
   targets = {
@@ -59,6 +62,6 @@ storage.turret_xp = {
 ## Boundaries
 
 - `control.lua` owns runtime state and GUI.
-- Data-stage files should stay minimal until the mod needs new prototypes, sprites, or shortcuts.
+- Data-stage files should stay minimal and only define styles/prototypes needed by the runtime GUI.
 - Release scripts should stay data-driven from `info.json` where practical.
 - The website should stay tightly coupled to mod metadata and docs. As it grows, prefer a small generator over manually maintaining duplicate homepage content.

@@ -20,7 +20,9 @@ Turret XP ${version}.
 - Shows force research bonuses for shooting speed and damage in base plus bonus format.
 - Uses Factorio Library (flib) GUI styles for a more vanilla-like relative panel.
 - Shows quality summaries for HP and range while filtering Factorio's hidden unknown quality prototype.
-- Adds a first skill tree panel with allocatable points from turret levels.
+- Adds a scrollable technology-style skill tree surface with allocatable points from turret levels.
+- Uses effect-only skill hover text and a root turret tooltip that summarizes allocated bonuses.
+- Uses a custom solid XP bar style.
 - Updates the panel in place while open instead of destroying and rebuilding it every refresh.
 
 Validation:

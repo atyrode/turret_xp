@@ -4,7 +4,7 @@
 
 The first playable release should make the progression visible without changing combat balance yet: each gun turret earns XP from combat, gains levels, and displays its current progress and combat stats inside or alongside the vanilla turret GUI.
 
-## V0.3.0 Scope
+## V0.3.1 Scope
 
 - Track XP, level, kills, kill credit, lifetime damage, total XP, and skill ranks per vanilla `gun-turret`.
 - Award XP from damage dealt by gun turrets and proportional kill credit.
@@ -13,9 +13,10 @@ The first playable release should make the progression visible without changing 
 - Show HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, damage, current level, and XP to next level.
 - Use Factorio Library (`flib`) GUI styles and follow Factory Planner-style rich text info markers where appropriate.
 - Add a first skill tree panel with allocatable points gained from turret levels.
-- Package and publish as version `0.3.0` so the mod can be installed from the Factorio Mod Portal.
+- Present the skill tree as a scrollable technology-style surface with a turret root and branching perk nodes.
+- Package and publish as version `0.3.1` so the mod can be installed from the Factorio Mod Portal.
 
-## Non-Goals For V0.3.0
+## Non-Goals For V0.3.1
 
 - Do not apply level bonuses to combat stats yet.
 - Do not support laser, flamethrower, artillery, or modded turret prototypes yet.

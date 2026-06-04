@@ -13,7 +13,9 @@ local GUI = {
   dps = MOD_PREFIX .. "dps",
   kills = MOD_PREFIX .. "kills",
   damage_dealt = MOD_PREFIX .. "damage-dealt",
-  skill_points = MOD_PREFIX .. "skill-points"
+  skill_points = MOD_PREFIX .. "skill-points",
+  skill_tree_scroll = MOD_PREFIX .. "skill-tree-scroll",
+  skill_root = MOD_PREFIX .. "skill-root"
 }
 
 local SETTINGS = {
@@ -36,8 +38,6 @@ local SKILLS = {
     sprite = "item/firearm-magazine",
     max_rank = 3,
     short_name = { "turret-xp.skill-ballistics-short" },
-    name = { "turret-xp.skill-ballistics" },
-    description = { "turret-xp.skill-ballistics-description" },
     effect = { "turret-xp.skill-ballistics-effect" }
   },
   {
@@ -45,8 +45,6 @@ local SKILLS = {
     sprite = "item/piercing-rounds-magazine",
     max_rank = 3,
     short_name = { "turret-xp.skill-kill-chain-short" },
-    name = { "turret-xp.skill-kill-chain" },
-    description = { "turret-xp.skill-kill-chain-description" },
     effect = { "turret-xp.skill-kill-chain-effect" }
   },
   {
@@ -54,8 +52,6 @@ local SKILLS = {
     sprite = "item/repair-pack",
     max_rank = 3,
     short_name = { "turret-xp.skill-field-repairs-short" },
-    name = { "turret-xp.skill-field-repairs" },
-    description = { "turret-xp.skill-field-repairs-description" },
     effect = { "turret-xp.skill-field-repairs-effect" }
   },
   {
@@ -63,8 +59,6 @@ local SKILLS = {
     sprite = "entity/radar",
     max_rank = 2,
     short_name = { "turret-xp.skill-targeting-data-short" },
-    name = { "turret-xp.skill-targeting-data" },
-    description = { "turret-xp.skill-targeting-data-description" },
     effect = { "turret-xp.skill-targeting-data-effect" }
   }
 }
@@ -1079,10 +1073,11 @@ local function add_xp_panel(parent)
   local bar = xp_panel.add({
     type = "progressbar",
     name = GUI.xp_bar,
+    style = "turret_xp_xp_progressbar",
     value = 0
   })
   set_style(bar, "horizontally_stretchable", true)
-  set_style(bar, "height", 20)
+  set_style(bar, "height", 18)
   set_style(bar, "top_margin", 4)
   set_style(bar, "bottom_margin", 0)
 
@@ -1162,28 +1157,207 @@ local function skill_rank_name(skill_id)
 end
 
 local function make_skill_tooltip(skill, state)
-  local rank = get_skill_rank(state, skill.id)
-  local available = get_available_skill_points(state)
-  local footer = { "turret-xp.skill-click-unavailable" }
-
-  if rank >= skill.max_rank then
-    footer = { "turret-xp.skill-maxed" }
-  elseif available > 0 then
-    footer = { "turret-xp.skill-click-available" }
+  if get_skill_rank(state, skill.id) >= skill.max_rank then
+    return nil
   end
 
-  return {
-    "",
-    skill.name,
-    "\n",
-    skill.description,
-    "\n",
-    skill.effect,
-    "\n",
-    { "turret-xp.skill-rank", rank, skill.max_rank },
-    "\n",
-    footer
-  }
+  return skill.effect
+end
+
+local function add_tooltip_line(tooltip, line)
+  if #tooltip > 1 then
+    tooltip[#tooltip + 1] = "\n"
+  end
+
+  tooltip[#tooltip + 1] = line
+end
+
+local function make_skill_root_tooltip(state)
+  local tooltip = { "" }
+  local ballistics = get_skill_rank(state, "ballistics")
+  local kill_chain = get_skill_rank(state, "kill_chain")
+  local field_repairs = get_skill_rank(state, "field_repairs")
+  local targeting_data = get_skill_rank(state, "targeting_data")
+
+  if ballistics > 0 then
+    add_tooltip_line(tooltip, { "turret-xp.skill-root-damage", ballistics * 10 })
+  end
+
+  if kill_chain > 0 then
+    add_tooltip_line(tooltip, { "turret-xp.skill-root-kill-credit", kill_chain * 10 })
+  end
+
+  if field_repairs > 0 then
+    add_tooltip_line(tooltip, { "turret-xp.skill-root-repair", format_number(field_repairs * 0.25, 2) })
+  end
+
+  if targeting_data > 0 then
+    add_tooltip_line(tooltip, { "turret-xp.skill-root-all-xp", targeting_data * 5 })
+  end
+
+  if #tooltip == 1 then
+    return { "turret-xp.skill-root-empty" }
+  end
+
+  return tooltip
+end
+
+local function get_skill_node_style(skill, state, available)
+  local rank = get_skill_rank(state, skill.id)
+
+  if rank >= skill.max_rank then
+    return "flib_technology_slot_researched"
+  end
+
+  if rank > 0 then
+    return "flib_technology_slot_conditionally_available"
+  end
+
+  if available > 0 then
+    return "flib_technology_slot_available"
+  end
+
+  return "flib_technology_slot_not_available"
+end
+
+local function add_graph_cell(parent, width, height)
+  local cell = parent.add({
+    type = "flow",
+    direction = "vertical"
+  })
+  set_style(cell, "width", width)
+  set_style(cell, "height", height)
+  set_style(cell, "horizontal_align", "center")
+  set_style(cell, "vertical_align", "center")
+  return cell
+end
+
+local function add_graph_spacer(parent)
+  add_graph_cell(parent, 78, 54)
+end
+
+local function add_graph_connector(parent, direction)
+  local is_horizontal = direction == "horizontal"
+  local cell = add_graph_cell(parent, is_horizontal and 70 or 92, is_horizontal and 132 or 58)
+  local line = cell.add({
+    type = "line",
+    direction = direction
+  })
+
+  if is_horizontal then
+    set_style(line, "width", 70)
+  else
+    set_style(line, "height", 58)
+  end
+end
+
+local function add_technology_slot_icon(button, sprite)
+  local icon_flow = button.add({
+    type = "flow",
+    style = "flib_technology_slot_sprite_flow",
+    ignored_by_interaction = true
+  })
+  icon_flow.add({
+    type = "sprite",
+    sprite = sprite,
+    style = "flib_technology_slot_sprite",
+    ignored_by_interaction = true
+  })
+end
+
+local function add_skill_node(parent, skill)
+  local node = add_graph_cell(parent, 92, 132)
+  local button = node.add({
+    type = "sprite-button",
+    name = skill_button_name(skill.id),
+    style = "flib_technology_slot_not_available",
+    tags = {
+      turret_xp_action = "allocate-skill",
+      skill = skill.id
+    },
+    tooltip = skill.effect
+  })
+  add_technology_slot_icon(button, skill.sprite)
+
+  local label = node.add({
+    type = "label",
+    caption = skill.short_name,
+    style = "caption_label"
+  })
+  set_style(label, "top_margin", 3)
+  set_style(label, "horizontal_align", "center")
+  set_style(label, "single_line", true)
+  set_style(label, "maximal_width", 88)
+
+  local rank = node.add({
+    type = "label",
+    name = skill_rank_name(skill.id),
+    caption = "0/" .. tostring(skill.max_rank),
+    style = "caption_label"
+  })
+  set_style(rank, "font_color", COLOR.muted)
+  set_style(rank, "horizontal_align", "center")
+
+  return button
+end
+
+local function add_skill_root_node(parent)
+  local node = add_graph_cell(parent, 92, 132)
+  local root = node.add({
+    type = "sprite-button",
+    name = GUI.skill_root,
+    style = "flib_technology_slot_researched",
+    tooltip = { "turret-xp.skill-root-empty" }
+  })
+  add_technology_slot_icon(root, "entity/gun-turret")
+
+  local label = node.add({
+    type = "label",
+    caption = { "entity-name.gun-turret" },
+    style = "caption_label"
+  })
+  set_style(label, "top_margin", 3)
+  set_style(label, "horizontal_align", "center")
+  set_style(label, "single_line", true)
+  set_style(label, "maximal_width", 88)
+
+  return root
+end
+
+local function add_skill_tree_graph(parent)
+  local graph = parent.add({
+    type = "table",
+    column_count = 9
+  })
+  set_style(graph, "padding", { 22, 22, 22, 22 })
+  set_style(graph, "horizontal_spacing", 0)
+  set_style(graph, "vertical_spacing", 0)
+
+  local root = nil
+
+  for row = 1, 9 do
+    for column = 1, 9 do
+      if row == 2 and column == 5 then
+        add_skill_node(graph, SKILL_BY_ID.ballistics)
+      elseif row == 5 and column == 2 then
+        add_skill_node(graph, SKILL_BY_ID.kill_chain)
+      elseif row == 5 and column == 5 then
+        root = add_skill_root_node(graph)
+      elseif row == 5 and column == 8 then
+        add_skill_node(graph, SKILL_BY_ID.field_repairs)
+      elseif row == 8 and column == 5 then
+        add_skill_node(graph, SKILL_BY_ID.targeting_data)
+      elseif column == 5 and (row == 3 or row == 4 or row == 6 or row == 7) then
+        add_graph_connector(graph, "vertical")
+      elseif row == 5 and (column == 3 or column == 4 or column == 6 or column == 7) then
+        add_graph_connector(graph, "horizontal")
+      else
+        add_graph_spacer(graph)
+      end
+    end
+  end
+
+  return root
 end
 
 local function add_skill_panel(parent)
@@ -1202,13 +1376,6 @@ local function add_skill_panel(parent)
   set_style(header, "horizontally_stretchable", true)
   set_style(header, "vertical_align", "center")
 
-  local title = header.add({
-    type = "label",
-    caption = { "turret-xp.skill-tree" },
-    style = "heading_2_label"
-  })
-  set_style(title, "font", "default-bold")
-
   header.add({
     type = "empty-widget",
     style = "flib_horizontal_pusher"
@@ -1222,52 +1389,24 @@ local function add_skill_panel(parent)
   })
   set_style(points, "font_color", COLOR.muted)
 
-  local table_element = skill_panel.add({
-    type = "table",
-    column_count = #SKILLS
+  local scroll = skill_panel.add({
+    type = "scroll-pane",
+    name = GUI.skill_tree_scroll,
+    style = "flib_shallow_scroll_pane"
   })
-  set_style(table_element, "top_margin", 8)
-  set_style(table_element, "horizontally_stretchable", true)
-  set_style(table_element, "horizontal_spacing", 10)
+  set_style(scroll, "top_margin", 6)
+  set_style(scroll, "width", 400)
+  set_style(scroll, "height", 260)
+  pcall(function()
+    scroll.horizontal_scroll_policy = "always"
+    scroll.vertical_scroll_policy = "always"
+  end)
 
-  for _, skill in ipairs(SKILLS) do
-    local node = table_element.add({
-      type = "flow",
-      direction = "vertical"
-    })
-    set_style(node, "horizontal_align", "center")
-    set_style(node, "width", 82)
-
-    local button = node.add({
-      type = "sprite-button",
-      name = skill_button_name(skill.id),
-      sprite = skill.sprite,
-      style = "flib_slot_button_blue",
-      tags = {
-        turret_xp_action = "allocate-skill",
-        skill = skill.id
-      },
-      tooltip = skill.description
-    })
-    set_style(button, "size", 42)
-
-    local label = node.add({
-      type = "label",
-      caption = skill.short_name,
-      style = "caption_label"
-    })
-    set_style(label, "top_margin", 3)
-    set_style(label, "horizontal_align", "center")
-    set_style(label, "single_line", true)
-
-    local rank = node.add({
-      type = "label",
-      name = skill_rank_name(skill.id),
-      caption = "0/" .. tostring(skill.max_rank),
-      style = "caption_label"
-    })
-    set_style(rank, "font_color", COLOR.muted)
-    set_style(rank, "horizontal_align", "center")
+  local root = add_skill_tree_graph(scroll)
+  if root then
+    pcall(function()
+      scroll.scroll_to_element(root, "top-third")
+    end)
   end
 end
 
@@ -1279,22 +1418,18 @@ local function update_skill_panel(panel, state)
   local available = get_available_skill_points(state)
   set_gui_caption(panel, GUI.skill_points, { "turret-xp.skill-points", available })
 
+  local root = find_gui_element(panel, GUI.skill_root)
+  if root then
+    root.tooltip = make_skill_root_tooltip(state)
+  end
+
   for _, skill in ipairs(SKILLS) do
     local rank = get_skill_rank(state, skill.id)
     local button = find_gui_element(panel, skill_button_name(skill.id))
     if button then
       button.tooltip = make_skill_tooltip(skill, state)
-      button.enabled = rank < skill.max_rank
-
-      if rank >= skill.max_rank then
-        set_element_style(button, "flib_selected_slot_button_green")
-      elseif rank > 0 then
-        set_element_style(button, "flib_selected_slot_button_blue")
-      elseif available > 0 then
-        set_element_style(button, "flib_slot_button_blue")
-      else
-        set_element_style(button, "flib_slot_button_grey")
-      end
+      button.enabled = true
+      set_element_style(button, get_skill_node_style(skill, state, available))
     end
 
     set_gui_caption(panel, skill_rank_name(skill.id), tostring(rank) .. "/" .. tostring(skill.max_rank))

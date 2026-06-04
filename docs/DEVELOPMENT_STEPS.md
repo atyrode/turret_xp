@@ -64,14 +64,23 @@
 - [x] Move ammo and turret icon into the title row.
 - [x] Remove the quality text row, top info marker, no-bonuses note, progression section, and XP source rows.
 - [x] Filter hidden `quality-unknown` out of quality summaries.
-- [x] Add a first skill tree panel with four allocatable skill bubbles.
+- [x] Add a first skill tree panel with four allocatable skill nodes.
 - [x] Add active baseline skill effects for XP modifiers and passive repairs.
+
+## Completed For V0.3.1
+
+- [x] Rebuild the skill row into a scrollable technology-style skill tree surface.
+- [x] Center the tree around a gun-turret root node with four branching baseline skills.
+- [x] Reduce skill hover text to the next allocated effect only.
+- [x] Add a root-node tooltip summarizing currently allocated bonuses.
+- [x] Replace the XP progress bar with a custom solid bar style.
+- [x] Inspect `entity-gui-lib` source and document it as the leading candidate for a future full custom turret GUI, not a requirement for the 0.3.x relative panel.
 
 ## Likely Next Work
 
 - Decide first real level bonuses.
 - Decide whether mined turrets retain XP.
-- Evaluate `entity-gui-lib` before any full replacement of the turret GUI.
+- Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.
 - Evaluate `quality-lib` and/or prototype `custom_tooltip_fields` before adding quality-scaled custom stats.
 - Add a lightweight website generator so `docs/index.html` is derived from `info.json`, `changelog.txt`, README content, and docs where practical.
 - Fold website freshness into release validation so public docs and Mod Portal homepage do not drift from the mod.

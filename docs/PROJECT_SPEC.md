@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.3.0
+## Version 0.3.1
 
-V0.3.0 is a UI simplification and first skill-tree prototype. It keeps the vanilla turret GUI as the main interaction while making the Turret XP relative panel cleaner and adding allocatable per-turret skills.
+V0.3.1 is a focused skill-tree and XP-bar polish release. It keeps the vanilla turret GUI as the main interaction while changing the Turret XP relative panel's skill section from a fixed row into a scrollable technology-style tree surface.
 
 ## Runtime Behavior
 
@@ -16,6 +16,8 @@ V0.3.0 is a UI simplification and first skill-tree prototype. It keeps the vanil
 - Kill credit is split proportionally by damage contribution so turrets are not fully denied XP when another source lands the final hit.
 - Skill points equal `level - 1 - spent_points`.
 - Ballistics Drill increases damage XP, Kill Chain increases kill-credit XP, Targeting Data increases all XP, and Field Repairs slowly repairs damaged skilled turrets.
+- Skill hover tooltips show only the next allocated effect, with rich-text coloring.
+- The central gun-turret root node summarizes currently allocated bonuses on hover.
 - Destroyed or mined turrets remove their state.
 
 ## GUI Behavior
@@ -25,11 +27,12 @@ V0.3.0 is a UI simplification and first skill-tree prototype. It keeps the vanil
 - If relative anchoring fails, the panel falls back to `player.gui.left`.
 - `on_gui_closed` destroys the panel and clears the remembered player/turret link.
 - The panel updates named elements every 60 ticks while the turret GUI remains open, without destroying and rebuilding the whole panel.
-- The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and indicator styles.
+- The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, technology-slot, pusher, scroll-pane, and indicator styles.
+- The XP bar uses a custom solid progressbar style defined in `data.lua`.
 
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.3.0`
+- Current version: `0.3.1`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`
