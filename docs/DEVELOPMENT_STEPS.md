@@ -82,10 +82,35 @@
 - [x] Add an embedded click-drag skill-tree pan spike using a hidden `open-gui` custom input and logical tree-cell scroll targets.
 - [x] Keep the skill tree inside the existing Turret XP relative panel with no new window, screen overlay, full GUI replacement, or new library dependency.
 
+## Completed For V0.4.0
+
+- [x] Remove the failed embedded skill-tree drag implementation and data-stage custom input.
+- [x] Replace the skill tree with a five-section Evolution list.
+- [x] Add infinite core upgrades, first/second element projects, specialization choice, and powerful augments.
+- [x] Add material-project progress, carried-item deposits, and dev completion buttons.
+- [x] Add dev level buttons for fast level-gate testing.
+- [x] Add first-draft scripted combat effects for core upgrades, specializations, augments, elements, combos, passive repair, and vampiric healing.
+- [x] Migrate old 0.3.x skill ranks into 0.4.0 core ranks where possible.
+
+## Completed For V0.4.1
+
+- [x] Publish V0.4.0 to the Factorio Mod Portal before continuing V0.4.1 work.
+- [x] Add a non-stackable Veteran Core `item-with-tags` prototype and recipe.
+- [x] Make ordinary gun turrets stay stackable and progression-free until a Veteran Core is installed.
+- [x] Move XP, kills, damage, evolution choices, material projects, and dev XP onto the installed core profile.
+- [x] Add install and extract controls to the Turret XP panel.
+- [x] Return/spill the installed Veteran Core when a turret is mined.
+- [x] Add core-carried custom names and optional floating labels in `name (lvl N)` format.
+- [x] Add a dev core button for local testing.
+- [x] Make the Evolution area vertically scrollable so it does not expand beyond the turret GUI.
+- [x] Move playtest dev controls above the Evolution scroll area.
+- [x] Simplify locked sections, core upgrade rows, and remove the Elements/Specialization summary line.
+
 ## Likely Next Work
 
-- Decide first real level bonuses.
-- Decide whether mined turrets retain XP.
+- Playtest V0.4.1 from the Mod Portal and integrate feedback.
+- Playtest and tune level gates, material costs, point costs, core recipe cost, and scripted effect strength.
+- Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.
 - Evaluate `quality-lib` and/or prototype `custom_tooltip_fields` before adding quality-scaled custom stats.
 - Add a lightweight website generator so `docs/index.html` is derived from `info.json`, `changelog.txt`, README content, and docs where practical.

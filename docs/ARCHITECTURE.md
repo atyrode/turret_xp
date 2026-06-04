@@ -3,8 +3,8 @@
 ## Repository Layout
 
 - `info.json`: Factorio mod metadata.
-- `control.lua`: runtime XP tracking, GUI handling, and command fallback.
-- `data.lua`: data-stage GUI style/input definitions, currently the solid XP progressbar style and hidden skill-tree drag-start custom input.
+- `control.lua`: runtime XP/core tracking, GUI handling, floating labels, and command fallback.
+- `data.lua`: data-stage Veteran Core item/recipe definitions and GUI style definitions.
 - `settings.lua`: runtime-global XP pacing settings.
 - `locale/en/turret-xp.cfg`: English GUI strings.
 - `scripts/`: validation, packaging, install, release, and portal publishing.
@@ -16,17 +16,51 @@
 storage.turret_xp = {
   turrets = {
     [unit_number] = {
+      chip_id = <string>,
+      entity = <LuaEntity>
+    }
+  },
+  chips = {
+    [chip_id] = {
+      chip_id = <string>,
+      chip_quality = "normal",
+      custom_name = "",
+      show_name_label = false,
       xp = 0,
       total_xp = 0,
       level = 1,
       kills = 0,
       kill_credit = 0,
       damage = 0,
-      skills = {
-        [skill_id] = <rank>
-      }
+      dev_xp = 0,
+      evolution = {
+        base = {
+          [upgrade_id] = <rank>
+        },
+        augments = {
+          [augment_id] = <rank>
+        },
+        elements = {
+          [1] = <element_id>,
+          [2] = <element_id>
+        },
+        specialization = <specialization_id>,
+        element_project = {
+          slot = 1|2,
+          element = <element_id>,
+          requirements = {
+            { name = <item_name>, count = <uint> }
+          },
+          delivered = {
+            [item_name] = <uint>
+          }
+        }
+      },
+      entity = <LuaEntity>,
+      name_render = <LuaRenderObject>
     }
   },
+  next_chip_id = 1,
   targets = {
     [unit_number] = {
       total_damage = 0,
@@ -34,7 +68,8 @@ storage.turret_xp = {
       turrets = {
         [unit_number] = {
           damage = 0,
-          entity = <LuaEntity>
+          entity = <LuaEntity>,
+          chip_id = <string>
         }
       }
     }
@@ -42,18 +77,7 @@ storage.turret_xp = {
   players = {
     [player_index] = {
       entity = <LuaEntity>,
-      unit_number = <uint>,
-      skill_tree_focus = {
-        row = <uint>,
-        column = <uint>
-      },
-      skill_tree_drag = {
-        x = <int>,
-        y = <int>,
-        row = <uint>,
-        column = <uint>,
-        tick = <MapTick>
-      }
+      unit_number = <uint>
     }
   }
 }
@@ -61,15 +85,14 @@ storage.turret_xp = {
 
 ## Runtime Responsibilities
 
-- `on_entity_damaged`: track lifetime damage for vanilla gun turrets and cache per-target damage contribution.
-- `on_entity_died`: award proportional kill credit to contributing gun turrets, track kills, and clean up turret state when a turret dies.
+- `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, cache per-target damage contribution, and apply scripted evolution damage effects.
+- `on_entity_died`: award proportional kill credit to contributing core profiles, track kills, and delete installed core profiles when a turret dies.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
-- `on_pre_player_mined_item` and `on_robot_pre_mined`: remove tracked state for mined gun turrets.
+- `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined gun turrets.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI.
 - `on_gui_closed`: remove the panel.
-- `turret-xp-skill-tree-drag-start`: observe normal left-click GUI/open presses to capture embedded skill-tree drag starts without consuming vanilla GUI clicks.
-- `on_gui_hover`: move the embedded skill-tree scroll focus while an active drag crosses named logical tree cells.
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open.
+- `rendering.draw_text`: draw optional chip-carried labels above currently installed turret bodies as `name (lvl N)`.
 - `/turret-xp`: fallback command for opening the selected turret's GUI/panel.
 
 ## Boundaries

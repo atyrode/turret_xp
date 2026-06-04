@@ -5,6 +5,7 @@
 - Factorio 2.0 runtime mod.
 - Lua control-stage implementation with runtime-global settings.
 - Runtime XP settings plus a required `flib >= 0.16.4` dependency for shared GUI styles.
+- V0.4.1 adds a local `item-with-tags` Veteran Core prototype for portable progression profiles.
 - Python packaging script reused from `player_quality`.
 - Shell scripts for checks, packaging, local install, GitHub release, and Mod Portal publishing.
 - Static GitHub Pages homepage served from `docs/index.html`.
@@ -34,7 +35,7 @@
 - `flib` / Factorio Library:
   - Factorio 2.0 compatible internal library mod.
   - Large adoption signal on the Mod Portal, with over 1M downloads and hundreds of dependent mods.
-  - V0.3.x uses `flib` GUI styles for slot buttons, technology-style skill nodes, scroll panes, pushers, and compact panel structure.
+  - V0.4.x uses `flib` GUI styles for slot buttons, pushers, and compact panel structure.
   - Useful future modules for this project may include `gui`, `migration`, `dictionary`, `on-tick-n`, `queue`, `format`, `table`, and position/geometry helpers.
 
 ### Possible But Lower Priority
@@ -51,10 +52,10 @@
   - Source inspection of version 0.1.9 shows registration/priority handling, vanilla replacement or keep-vanilla mode, titlebar/preview/status scaffolding, tab helpers, live update callbacks, interactive inventory displays, and optional player inventory panels.
   - It still composes standard runtime GUI primitives such as frames, tables, scroll panes, and sprite buttons. It does not expose a research-tree canvas or add child-widget drag-panning beyond normal screen-frame dragging.
   - Treat this as the leading candidate if Turret XP moves from a right-side relative panel to a full custom turret GUI that owns inventory/status/preview layout and progression tabs.
-  - Do not add it merely for the skill tree surface; `flib` plus local scroll-pane composition covers the current 0.3.x tree without a lifecycle rewrite.
+  - Do not add it merely for the current Evolution list; `flib` plus local frame/table composition covers the 0.4.x UI without a lifecycle rewrite.
 - `quality-lib`:
   - Factorio 2.0 library for modders to interface with Quality and add quality stats to items/entities.
-  - Consider when Turret XP starts adding quality-scaled custom stats such as crit chance, crit damage, XP gain, or skill-tree effects.
+  - Consider when Turret XP starts adding quality-scaled custom stats such as crit chance, crit damage, XP gain, or evolution effects.
 - `gvv`:
   - Debugging tool, not a production dependency.
   - Consider as a local playtest/dev dependency if inspecting `storage.turret_xp` in game becomes useful.
@@ -77,24 +78,27 @@
 - `LuaEntity::quality`, `sprite-button` quality overlays, and `elem_tooltip` with `entity-with-quality` allow the panel's turret icon to use vanilla quality tooltip behavior.
 - `LuaGuiElement::quality` is only a sprite-button overlay; it is not the same thing as the vanilla blue stat marker plus built-in quality delta popover shown in native entity/tooltips.
 - `Prototype::custom_tooltip_fields` can add quality-aware values to native tooltips and Factoriopedia during the data stage, but it does not provide a direct runtime GUI element for arbitrary custom stat rows.
-- Runtime custom GUI cannot instantiate the native Factoriopedia quality popover as a widget. The 0.3.x panel uses the real `[img=quality_info]` marker with a custom tooltip summary generated from Factorio quality prototypes for HP and range, filtering hidden fallback qualities.
-- Runtime custom GUI also cannot instantiate the engine's internal technology-tree canvas as a reusable widget. V0.3.x approximates the interaction with a larger two-axis scroll pane, `flib` technology-slot styles, branch connectors, and `scroll_to_element` centering on the turret root.
+- Runtime custom GUI cannot instantiate the native Factoriopedia quality popover as a widget. The panel uses the real `[img=quality_info]` marker with a custom tooltip summary generated from Factorio quality prototypes for HP and range, filtering hidden fallback qualities.
+- Runtime custom GUI also cannot instantiate the engine's internal technology-tree canvas as a reusable widget. V0.4.0 removes the experimental tree and uses a simple list while gameplay direction is tested.
 - The local Factorio install exposes data/prototype/style Lua, but not the engine source for the research-tree canvas. Research-tree click-drag panning appears to be engine GUI behavior rather than reusable mod Lua.
-- V0.3.2 adds an embedded drag-pan spike without opening a screen GUI: a hidden custom input linked to `open-gui` captures the left-click press location, hover events on named logical cells can move the tree while the cursor crosses the graph, `on_gui_click` supplies release cleanup/fallback, and the tree scroll pane moves with `scroll_to_element`.
-- This is intentionally documented as a hover/click approximation. Factorio exposes click positions, custom-input cursor positions, and hover transitions, but not continuous drag deltas for child widgets inside a `player.gui.relative` panel.
+- V0.3.2 attempted an embedded drag-pan spike. Playtesting showed no useful drag behavior in the relative turret GUI, so V0.4.0 removes the spike instead of keeping a misleading interaction.
 - `LuaForce::get_gun_speed_modifier` exposes force shooting-speed research bonuses by ammo category.
 - `LuaForce::get_ammo_damage_modifier` exposes force ammo-damage research bonuses by ammo category.
 - `LuaForce::get_turret_attack_modifier` exposes turret-specific force damage bonuses; gun turret damage display needs this in addition to ammo damage.
 - `LuaItemPrototype::ammo_category` and `AttackParameters::ammo_categories` are the correct bonus category sources for loaded ammo and fallback turret attack parameters.
+- `ItemWithTagsPrototype` and `ItemStackDefinition.tags` support storing a core profile directly on a non-stackable item when it is extracted from a turret.
+- `LuaItemStack::get_tag` and `LuaItemStack::set_tag` expose runtime tag access for tagged item stacks.
+- `LuaRendering::draw_text` supports entity targets with offsets, which is used for optional `name (lvl N)` turret labels.
 
 ## Risks
 
 - Damage estimation only covers direct damage effects in ammo prototype data. More complex projectile or nested modded ammo may show `Unknown`.
 - Contribution-based kill credit is based on recent tracked target damage and prunes stale target entries after five minutes.
 - Per-entity combat stat mutation is not designed yet. Factorio exposes force-wide modifiers more readily than individual turret attack modifiers.
-- Mined turret persistence is intentionally out of scope for V0.3.x.
-- Skill points are derived from level and stored per turret as ranks under `state.skills`.
-- V0.3.x skill effects intentionally stay conservative: XP multipliers are internal to Turret XP progression and Field Repairs only heals tracked damaged turrets over time.
+- V0.4.1 implements mined turret persistence through the Veteran Core item. Destroyed turret recovery remains an open design question.
+- Evolution points are derived from core profile level and stored under `state.evolution`.
+- Runtime GUI cannot add a true extra slot inside the vanilla turret inventory, so Veteran Core install/extract uses explicit controls in the attached Turret XP panel.
+- V0.4.x effects are first-draft scripted runtime effects and need playtest balance: bonus damage, crits, bounce, pierce, element procs, passive repair, and vampiric healing.
 - The panel updates named elements in place every 60 ticks; new GUI work should preserve stable hover/read behavior.
 - `flib` adds a dependency, but it is common and handled by the in-game dependency manager.
 - `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than the current relative-panel polish needs.

@@ -1,4 +1,43 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.1
+Date: 2026-06-04
+  Features:
+    - Added the Veteran Core, a non-stackable item-with-tags profile item for choosing which gun turrets become unique progression turrets.
+    - Added Veteran Core install and extract controls to the Turret XP panel.
+    - Moved XP, kills, damage, evolution choices, active material projects, and dev XP onto the installed core profile.
+    - Added safe turret movement: mining a turret with an installed core returns the normal turret item and separately returns or spills the Veteran Core.
+    - Added optional core-carried turret names with floating labels rendered as "name (lvl N)" above the current turret body.
+    - Added a dev button to create a test Veteran Core for local playtesting.
+    - Added compact always-visible dev controls above the Evolution list so playtest level/material buttons are not hidden below scroll content.
+  Changes:
+    - Ordinary gun turrets stay stackable and do not gain XP until a Veteran Core is installed.
+    - Existing 0.4.0 entity-keyed turret progression migrates to an installed legacy Veteran Core when that turret is next opened or touched by runtime logic.
+    - Changed the Evolution list to use a vertically scrollable area so it does not expand beyond the vanilla turret GUI height.
+    - Simplified locked Evolution sections to centered "Unlocks at level ..." gate messages.
+    - Simplified core upgrade rows to name, rank, and a compact "+" allocation button.
+    - Replaced the first core upgrade set with Damage, Regeneration, Lifesteal, Crit Chance, and Crit Damage.
+    - Removed the always-visible Elements/Specialization summary line from the Evolution panel.
+  Notes:
+    - V0.4.0 was uploaded to the Mod Portal for playtesting before this follow-up release.
+    - Destroyed turrets currently lose the installed core/profile; mined turrets return it.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.4.0
+Date: 2026-06-04
+  Features:
+    - Replaced the experimental skill tree with a simpler five-section Evolution list.
+    - Added infinite core upgrades that spend one point per rank: Damage Drills, Field Repair, Siphon Plating, Veteran Logbook, and Lucky Loader.
+    - Added level-gated element unlock projects at levels 10 and 40 for Explosive, Fire, and Electric elements.
+    - Added material project progress bars, carried-item deposit buttons, and permanent element assignment when requirements are complete.
+    - Added a free level-20 specialization choice: Sniper, Machine Gun, or Bulwark.
+    - Added level-30 powerful augments with doubling point costs: Bullet Bounce, Piercing Follow-through, and Longshot Optics.
+    - Added first-draft scripted combat effects for bonus damage, crits, bounce, pierce follow-through, fire, electric arcs, explosive splash, mixed-element combos, passive repair, and vampiric healing.
+    - Added dev buttons in the Turret XP panel to grant quick levels and complete active material projects for playtesting.
+  Changes:
+    - Removed the embedded click-drag skill-tree spike and its custom input because it did not function reliably in the relative turret GUI.
+    - Migrated old 0.3.x skill ranks into equivalent 0.4.0 core upgrade ranks when possible.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.3.2
 Date: 2026-06-04
   Features:

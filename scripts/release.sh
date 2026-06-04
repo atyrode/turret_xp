@@ -13,16 +13,21 @@ cat > "$notes_path" <<NOTES
 Turret XP ${version}.
 
 - Adds a Turret XP panel to the vanilla gun turret GUI.
-- Tracks per-turret XP, level, kills, kill credit, lifetime damage, and skill allocations.
-- Awards configurable XP from gun turret damage and proportional kill credit.
+- Adds non-stackable Veteran Cores that make selected gun turrets unique while ordinary turrets stay stackable.
+- Tracks XP, level, kills, kill credit, lifetime damage, evolution choices, material projects, custom names, and label preference on the installed core profile.
+- Awards configurable XP from cored gun turret damage and proportional kill credit.
+- Lets the player extract a core and install it in another turret, carrying progression with it.
+- Returns or spills the installed core when a turret is mined.
 - Adds runtime-global settings for damage XP, kill-credit XP, base level XP, and level XP growth.
 - Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, damage dealt, and XP progress.
 - Shows force research bonuses for shooting speed and damage in base plus bonus format.
 - Uses Factorio Library (flib) GUI styles for a more vanilla-like relative panel.
 - Shows quality summaries for HP and range while filtering Factorio's hidden unknown quality prototype.
-- Adds a scrollable technology-style skill tree surface with allocatable points from turret levels.
-- Adds an embedded click-drag panning spike for the skill tree without opening a separate window.
-- Uses effect-only skill hover text and a root turret tooltip that summarizes allocated bonuses.
+- Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
+- Adds compact core upgrades, level-gated element projects, specialization choices, powerful augments, and second-element combo text.
+- Adds optional floating turret labels in "name (lvl N)" format.
+- Adds first-draft scripted combat effects for bonus damage, crits, bounce, pierce, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
+- Adds always-visible dev controls for quick level, core, and material-project testing.
 - Uses a custom solid XP bar style.
 - Updates the panel in place while open instead of destroying and rebuilding it every refresh.
 

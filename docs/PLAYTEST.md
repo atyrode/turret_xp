@@ -2,12 +2,16 @@
 
 ## Install
 
+Current portal playtest:
+
+0.4.1 is published on the Factorio Mod Portal.
+
 Preferred once published:
 
 1. Open Factorio.
 2. Go to Mods.
 3. Search for `Turret XP`.
-4. Install version `0.3.2` or newer.
+4. Install version `0.4.0` or newer.
 5. Restart when Factorio asks.
 
 Manual local fallback:
@@ -22,29 +26,40 @@ scripts/install-local.sh
 2. Place a vanilla gun turret.
 3. Add firearm, piercing, or uranium ammo.
 4. Open the turret and confirm the `Turret XP` panel appears to the right of the vanilla GUI.
-5. Check that the panel shows level 1, XP progress, HP, shooting speed, range, loaded ammo, damage, estimated DPS, kills, lifetime damage, and the skill tree.
-6. Confirm the XP bar is one solid bar, not split into a second productivity-looking segment.
-7. Confirm the panel uses vanilla-like shallow/deep frames, flib slot styling, and small blue `[img=info]` markers rather than gray custom buttons.
-8. Confirm shooting speed and damage show research bonuses as base plus bonus when relevant.
-9. If the turret has quality, confirm the turret icon still uses the entity-with-quality tooltip and HP/range rows show `[img=quality_info]` with a quality summary on hover.
-10. Scroll the skill tree horizontally and vertically, then confirm the central gun-turret root and four branch nodes are reachable.
-11. Click-drag inside empty skill-tree space and confirm the embedded tree scrolls in the same direction as the mouse movement without opening a separate window.
-12. Hover each skill node and confirm it only shows the effect gained by allocating the next point.
-13. Let the turret shoot enemies.
-14. Keep the GUI open or reopen it and confirm XP and lifetime damage increase.
-15. Confirm kills increase when the turret lands final hits.
-16. After the turret levels up, allocate a skill node and confirm the rank/points refresh immediately.
-17. Hover the central root and confirm it summarizes allocated bonuses.
-18. Damage a skilled turret and confirm Field Repairs slowly restores HP if that skill is allocated.
-19. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
-20. Select the turret and run `/turret-xp` as a fallback path.
+5. Confirm the panel says no Veteran Core is installed and XP/evolution are inactive.
+6. Craft or dev-create a Veteran Core and install it.
+7. Check that the panel shows level, XP progress, HP, shooting speed, range, loaded ammo, damage, estimated DPS, kills, lifetime damage, and the Evolution list.
+8. Name the core, enable `Show label`, and confirm the floating text appears as `name (lvl N)` above the turret.
+9. Extract the core, install it into another gun turret, and confirm XP, upgrades, name, and label preference move with the core.
+10. Mine a turret with a core installed and confirm the gun turret item and Veteran Core are returned separately.
+11. Confirm the Evolution list has five sections: core upgrades, first element, specialization, powerful augments, and second element/combo.
+12. Confirm level-gated sections show their unlock levels before using dev tools.
+13. Use `+1 level` and `+5 levels` dev buttons to reach levels 10, 20, 30, and 40 quickly.
+14. Spend core upgrade points and confirm ranks and remaining points refresh immediately.
+15. At level 10, start an Explosive, Fire, or Electric element project.
+16. Confirm the active project shows item requirements and a progress bar.
+17. Try `Deposit carried items` with real carried materials if available.
+18. Use `Dev complete` or `Complete materials` and confirm the element becomes active.
+19. At level 20, pick Sniper, Machine Gun, or Bulwark and confirm the choice is locked in.
+20. At level 30, buy a powerful augment and confirm the next cost doubles.
+21. At level 40, start and complete a second element project and confirm the combo text appears.
+22. Let the turret shoot enemies and confirm XP, damage dealt, kills, and scripted effects feel visible enough to judge.
+23. Damage a turret with repair or Bulwark upgrades and confirm passive repair works.
+24. Try Lifesteal or Bulwark in combat and check whether vampiric healing is understandable.
+25. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
+26. Select the turret and run `/turret-xp` as a fallback path.
 
 ## Report Back
 
 Useful feedback:
 
 - Did the panel appear in the right place?
-- Did any stat look wrong or confusing?
-- Did XP, kills, skill points, and skill ranks update at the pace you expected?
+- Did the Veteran Core install/extract flow feel like a natural way to choose which turret becomes unique?
+- Did moving a core between turrets preserve the right information?
+- Did the optional floating label feel useful, and should it be visible only in alt mode or always visible?
+- Did the five-section list feel clearer than the skill tree?
+- Did level gates 10, 20, 30, and 40 feel like the right first draft?
+- Were material project requirements understandable?
+- Which element, specialization, or augment felt confusing or too weak?
+- Did XP, kills, evolution points, and ranks update at the pace you expected?
 - Did the mod fail to load, desync, or throw a runtime error?
-- Which stat bonuses should the next version try first?

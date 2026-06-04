@@ -41,23 +41,29 @@ source_url="https://github.com/atyrode/turret_xp"
 cat > "$description_path" <<DESC
 # Turret XP
 
-Turret XP adds the first layer of per-turret progression for vanilla gun turrets.
+Turret XP adds the first layer of selected-turret progression for vanilla gun turrets.
 
 Current prototype:
 
 - Adds a Turret XP panel to the vanilla gun turret GUI.
-- Tracks XP, level, kills, kill credit, lifetime damage, and skill allocations per turret.
-- Awards configurable XP from damage dealt by gun turrets and proportional kill credit.
+- Adds non-stackable Veteran Cores that make selected gun turrets unique while ordinary turrets stay stackable.
+- Tracks XP, level, kills, kill credit, lifetime damage, evolution choices, material projects, custom names, and label preference on the installed core profile.
+- Awards configurable XP from cored gun turret damage and proportional kill credit.
+- Lets the player extract a core and install it in another turret, carrying progression with it.
+- Returns or spills the installed core when a turret is mined.
 - Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, total damage, and XP progress.
 - Includes runtime-global settings for XP pacing.
 - Uses Factorio Library (flib) styles and richer vanilla-like panel structure.
 - Shows research bonuses in base plus bonus format.
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
-- Adds a scrollable technology-style skill tree surface with four allocatable skills: Ballistics Drill, Kill Chain, Field Repairs, and Targeting Data.
-- Adds an embedded click-drag panning spike for the skill tree without opening a separate window.
-- Uses effect-only skill hover text, a central turret root summary, and a custom solid XP bar style.
+- Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
+- Adds compact core upgrades, element material projects, a free specialization choice, powerful augments, and a second element combo path.
+- Adds optional floating turret labels in "name (lvl N)" format.
+- Adds first-draft scripted combat effects for bonus damage, crits, bounce, pierce, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
+- Adds always-visible dev controls for quick level, core, and material-project testing.
+- Uses a custom solid XP bar style.
 
-This is an early test release intended to validate the simplified GUI, quality summaries, skill-tree shape, embedded panning, and XP pacing before deeper combat bonuses.
+This is an early test release intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, element choices, scripted effects, and XP pacing before deeper balance work.
 
 Source:
 ${source_url}

@@ -25,7 +25,7 @@
           <h1 id="intro-title">Turret XP</h1>
           <p class="lede">
             A lightweight progression layer for vanilla gun turrets, with XP,
-            levels, contribution-aware kill credit, a clean right-side panel, and the first per-turret skill tree.
+            levels, contribution-aware kill credit, a clean right-side panel, and a first per-turret Evolution system.
           </p>
           <div class="actions" aria-label="Project links">
             <a class="button primary" href="https://mods.factorio.com/mod/turret_xp">Download</a>
@@ -57,13 +57,13 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.3.2</h2>
+          <h2 id="current-title">Version 0.4.1</h2>
         </div>
         <p>
-          The current playtest build simplifies the turret panel, keeps quality
-          summaries for HP and range, and changes the first skill tree into a
-          scrollable technology-style surface with a turret root, branching perks,
-          and an embedded click-drag panning spike.
+          The current playtest build makes turret progression an explicit player
+          choice with Veteran Cores, then uses a scrollable five-section
+          Evolution list for upgrades, elements, specialization, augments, and
+          second-element combos.
         </p>
       </section>
 
@@ -71,8 +71,8 @@
         <h2 id="features-title">What It Does</h2>
         <div class="feature-grid">
           <article>
-            <h3>Per-turret progression</h3>
-            <p>Tracks XP, level, kills, kill credit, lifetime damage, and skill ranks for each vanilla gun turret.</p>
+            <h3>Veteran Core profiles</h3>
+            <p>Ordinary gun turrets stay stackable until a Veteran Core is installed. The core carries XP, levels, upgrades, elements, and custom name.</p>
           </article>
           <article>
             <h3>Combat feedback</h3>
@@ -80,7 +80,7 @@
           </article>
           <article>
             <h3>Early balance pass</h3>
-            <p>Awards configurable XP from turret damage and proportional kill credit, then lets level-earned points allocate the first scrollable skill-tree perks.</p>
+            <p>Awards configurable XP from cored turret damage and proportional kill credit, then lets level-earned points buy compact core upgrades and augments.</p>
           </article>
         </div>
       </section>
@@ -94,10 +94,11 @@
           </p>
         </div>
         <ol class="steps">
+          <li>Install or dev-create a Veteran Core.</li>
           <li>Let the turret shoot enemies.</li>
           <li>Check that XP and lifetime damage increase.</li>
-          <li>Confirm kills and damage dealt update from combat.</li>
-          <li>Scroll and click-drag pan the skill tree, allocate a skill point after leveling, and check the tree refresh.</li>
+          <li>Name the core, toggle its floating label, and move it to another turret.</li>
+          <li>Use dev buttons to test level gates, start and complete an element project, then buy an upgrade or augment.</li>
           <li>Report confusing stats, pacing issues, or runtime errors.</li>
         </ol>
       </section>
@@ -120,6 +121,10 @@
           <a href="https://github.com/atyrode/turret_xp/blob/main/docs/DESIGN.md">
             <strong>Design Notes</strong>
             <span>Gameplay, balance, UX, and compatibility direction.</span>
+          </a>
+          <a href="https://github.com/atyrode/turret_xp/blob/main/docs/PROGRESSION_DESIGN.md">
+            <strong>Progression Design</strong>
+            <span>Evolution, material gates, element combos, and infinite scaling.</span>
           </a>
         </div>
       </section>
