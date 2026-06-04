@@ -52,9 +52,10 @@ Current prototype:
 - Shows research bonuses in base plus bonus format.
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
 - Adds a scrollable technology-style skill tree surface with four allocatable skills: Ballistics Drill, Kill Chain, Field Repairs, and Targeting Data.
+- Adds an embedded click-drag panning spike for the skill tree without opening a separate window.
 - Uses effect-only skill hover text, a central turret root summary, and a custom solid XP bar style.
 
-This is an early test release intended to validate the simplified GUI, quality summaries, skill-tree shape, and XP pacing before deeper combat bonuses.
+This is an early test release intended to validate the simplified GUI, quality summaries, skill-tree shape, embedded panning, and XP pacing before deeper combat bonuses.
 
 Source:
 ${source_url}

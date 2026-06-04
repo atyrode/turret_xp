@@ -34,7 +34,7 @@
 - `flib` / Factorio Library:
   - Factorio 2.0 compatible internal library mod.
   - Large adoption signal on the Mod Portal, with over 1M downloads and hundreds of dependent mods.
-  - V0.3.1 uses `flib` GUI styles for slot buttons, technology-style skill nodes, scroll panes, pushers, and compact panel structure.
+  - V0.3.x uses `flib` GUI styles for slot buttons, technology-style skill nodes, scroll panes, pushers, and compact panel structure.
   - Useful future modules for this project may include `gui`, `migration`, `dictionary`, `on-tick-n`, `queue`, `format`, `table`, and position/geometry helpers.
 
 ### Possible But Lower Priority
@@ -78,7 +78,10 @@
 - `LuaGuiElement::quality` is only a sprite-button overlay; it is not the same thing as the vanilla blue stat marker plus built-in quality delta popover shown in native entity/tooltips.
 - `Prototype::custom_tooltip_fields` can add quality-aware values to native tooltips and Factoriopedia during the data stage, but it does not provide a direct runtime GUI element for arbitrary custom stat rows.
 - Runtime custom GUI cannot instantiate the native Factoriopedia quality popover as a widget. The 0.3.x panel uses the real `[img=quality_info]` marker with a custom tooltip summary generated from Factorio quality prototypes for HP and range, filtering hidden fallback qualities.
-- Runtime custom GUI also cannot instantiate the engine's internal technology-tree canvas as a reusable widget. V0.3.1 approximates the interaction with a larger two-axis scroll pane, `flib` technology-slot styles, branch connectors, and `scroll_to_element` centering on the turret root.
+- Runtime custom GUI also cannot instantiate the engine's internal technology-tree canvas as a reusable widget. V0.3.x approximates the interaction with a larger two-axis scroll pane, `flib` technology-slot styles, branch connectors, and `scroll_to_element` centering on the turret root.
+- The local Factorio install exposes data/prototype/style Lua, but not the engine source for the research-tree canvas. Research-tree click-drag panning appears to be engine GUI behavior rather than reusable mod Lua.
+- V0.3.2 adds an embedded drag-pan spike without opening a screen GUI: a hidden custom input linked to `open-gui` captures the left-click press location, hover events on named logical cells can move the tree while the cursor crosses the graph, `on_gui_click` supplies release cleanup/fallback, and the tree scroll pane moves with `scroll_to_element`.
+- This is intentionally documented as a hover/click approximation. Factorio exposes click positions, custom-input cursor positions, and hover transitions, but not continuous drag deltas for child widgets inside a `player.gui.relative` panel.
 - `LuaForce::get_gun_speed_modifier` exposes force shooting-speed research bonuses by ammo category.
 - `LuaForce::get_ammo_damage_modifier` exposes force ammo-damage research bonuses by ammo category.
 - `LuaForce::get_turret_attack_modifier` exposes turret-specific force damage bonuses; gun turret damage display needs this in addition to ammo damage.

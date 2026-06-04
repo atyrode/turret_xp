@@ -76,6 +76,12 @@
 - [x] Replace the XP progress bar with a custom solid bar style.
 - [x] Inspect `entity-gui-lib` source and document it as the leading candidate for a future full custom turret GUI, not a requirement for the 0.3.x relative panel.
 
+## Completed For V0.3.2
+
+- [x] Inspect the local Factorio install for reusable research-tree Lua and confirm the pan behavior is not exposed as moddable source.
+- [x] Add an embedded click-drag skill-tree pan spike using a hidden `open-gui` custom input and logical tree-cell scroll targets.
+- [x] Keep the skill tree inside the existing Turret XP relative panel with no new window, screen overlay, full GUI replacement, or new library dependency.
+
 ## Likely Next Work
 
 - Decide first real level bonuses.

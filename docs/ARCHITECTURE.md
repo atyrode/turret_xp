@@ -4,7 +4,7 @@
 
 - `info.json`: Factorio mod metadata.
 - `control.lua`: runtime XP tracking, GUI handling, and command fallback.
-- `data.lua`: data-stage GUI style definitions, currently the solid XP progressbar style.
+- `data.lua`: data-stage GUI style/input definitions, currently the solid XP progressbar style and hidden skill-tree drag-start custom input.
 - `settings.lua`: runtime-global XP pacing settings.
 - `locale/en/turret-xp.cfg`: English GUI strings.
 - `scripts/`: validation, packaging, install, release, and portal publishing.
@@ -42,7 +42,18 @@ storage.turret_xp = {
   players = {
     [player_index] = {
       entity = <LuaEntity>,
-      unit_number = <uint>
+      unit_number = <uint>,
+      skill_tree_focus = {
+        row = <uint>,
+        column = <uint>
+      },
+      skill_tree_drag = {
+        x = <int>,
+        y = <int>,
+        row = <uint>,
+        column = <uint>,
+        tick = <MapTick>
+      }
     }
   }
 }
@@ -56,6 +67,8 @@ storage.turret_xp = {
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: remove tracked state for mined gun turrets.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI.
 - `on_gui_closed`: remove the panel.
+- `turret-xp-skill-tree-drag-start`: observe normal left-click GUI/open presses to capture embedded skill-tree drag starts without consuming vanilla GUI clicks.
+- `on_gui_hover`: move the embedded skill-tree scroll focus while an active drag crosses named logical tree cells.
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open.
 - `/turret-xp`: fallback command for opening the selected turret's GUI/panel.
 

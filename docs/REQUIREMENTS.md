@@ -27,6 +27,7 @@
 - Show kills, lifetime damage, and skill points.
 - Show a first skill tree with 3-5 allocatable skills.
 - Present the skill tree as a scrollable technology-style surface with a central turret root and branch nodes.
+- Support an embedded click-drag panning spike inside the existing Turret XP skill-tree panel without opening a separate window.
 - Skill node hover text must only show the effect gained by allocating the next rank.
 - Clearly state that V0.3.x skill effects are early baseline effects, not the final combat-bonus design.
 

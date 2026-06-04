@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.3.1 tracks XP, level, kills, kill credit, lifetime damage, and skill allocations for each gun turret, then extends the vanilla gun turret GUI with a polished right-side stats panel.
+`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.3.2 tracks XP, level, kills, kill credit, lifetime damage, and skill allocations for each gun turret, then extends the vanilla gun turret GUI with a polished right-side stats panel.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -18,7 +18,7 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, and lifetime damage.
 - Research bonuses are shown in a vanilla-like base plus bonus format where available.
 - HP and range show the real quality-info marker with a custom hover summary derived from Factorio quality prototypes. The native Factoriopedia popover is not exposed as a reusable runtime GUI widget.
-- The skill tree panel grants points from turret levels and uses a scrollable technology-style tree surface with a central turret root and four baseline branches: damage XP, kill-credit XP, passive repairs, and all-XP targeting data.
+- The skill tree panel grants points from turret levels and uses a scrollable technology-style tree surface with a central turret root, four baseline branches, and an embedded click-drag panning spike.
 
 ## Development
 
@@ -92,7 +92,8 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.3.1 tracks and displays XP/levels and includes early skill allocations. Only XP modifiers and passive repair are active; deeper combat bonuses are still future work.
+- V0.3.2 tracks and displays XP/levels and includes early skill allocations. Only XP modifiers and passive repair are active; deeper combat bonuses are still future work.
+- The embedded skill-tree pan spike uses click press/release positions plus hover transitions across logical tree cells. Factorio's runtime GUI does not expose continuous drag deltas for child widgets inside the relative turret panel, so this is not yet a perfect copy of the vanilla research-tree canvas.
 - XP is currently scoped to vanilla `gun-turret`.
 - Default XP pacing is intentionally conservative: damage gives very little XP, kill credit matters more, and level requirements grow exponentially.
 - Damage shown in the GUI is a best-effort estimate from loaded ammo prototype data.

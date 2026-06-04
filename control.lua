@@ -18,6 +18,19 @@ local GUI = {
   skill_root = MOD_PREFIX .. "skill-root"
 }
 
+local INPUT = {
+  skill_tree_drag_start = MOD_PREFIX .. "skill-tree-drag-start"
+}
+
+local SKILL_TREE = {
+  root_row = 5,
+  root_column = 5,
+  grid_size = 9,
+  drag_deadzone = 14,
+  pixels_per_cell = 78,
+  stale_drag_ticks = 60 * 10
+}
+
 local SETTINGS = {
   xp_per_damage = MOD_PREFIX .. "xp-per-damage",
   xp_per_kill_credit = MOD_PREFIX .. "xp-per-kill-credit",
@@ -82,6 +95,26 @@ local function ensure_storage()
   storage.turret_xp.turrets = storage.turret_xp.turrets or {}
   storage.turret_xp.players = storage.turret_xp.players or {}
   storage.turret_xp.targets = storage.turret_xp.targets or {}
+end
+
+local function clamp(value, min_value, max_value)
+  return math.max(min_value, math.min(max_value, value))
+end
+
+local function ensure_player_state(player)
+  ensure_storage()
+  local player_state = storage.turret_xp.players[player.index]
+  if type(player_state) ~= "table" then
+    player_state = {}
+    storage.turret_xp.players[player.index] = player_state
+  end
+
+  player_state.skill_tree_focus = player_state.skill_tree_focus or {
+    row = SKILL_TREE.root_row,
+    column = SKILL_TREE.root_column
+  }
+
+  return player_state
 end
 
 local function is_gun_turret(entity)
@@ -276,11 +309,10 @@ local function destroy_gui(player)
 end
 
 local function remember_open_turret(player, entity)
-  ensure_storage()
-  storage.turret_xp.players[player.index] = {
-    entity = entity,
-    unit_number = entity.unit_number
-  }
+  local player_state = ensure_player_state(player)
+  player_state.entity = entity
+  player_state.unit_number = entity.unit_number
+  player_state.skill_tree_drag = nil
 end
 
 local function forget_open_turret(player)
@@ -1156,6 +1188,10 @@ local function skill_rank_name(skill_id)
   return MOD_PREFIX .. "skill-rank-" .. skill_id
 end
 
+local function skill_tree_cell_name(row, column)
+  return MOD_PREFIX .. "skill-cell-" .. tostring(row) .. "-" .. tostring(column)
+end
+
 local function make_skill_tooltip(skill, state)
   if get_skill_rank(state, skill.id) >= skill.max_rank then
     return nil
@@ -1220,11 +1256,23 @@ local function get_skill_node_style(skill, state, available)
   return "flib_technology_slot_not_available"
 end
 
-local function add_graph_cell(parent, width, height)
-  local cell = parent.add({
+local function add_graph_cell(parent, width, height, row, column)
+  local definition = {
     type = "flow",
-    direction = "vertical"
-  })
+    direction = "vertical",
+    raise_hover_events = true
+  }
+
+  if row and column then
+    definition.name = skill_tree_cell_name(row, column)
+    definition.tags = {
+      turret_xp_tree_cell = true,
+      row = row,
+      column = column
+    }
+  end
+
+  local cell = parent.add(definition)
   set_style(cell, "width", width)
   set_style(cell, "height", height)
   set_style(cell, "horizontal_align", "center")
@@ -1232,16 +1280,17 @@ local function add_graph_cell(parent, width, height)
   return cell
 end
 
-local function add_graph_spacer(parent)
-  add_graph_cell(parent, 78, 54)
+local function add_graph_spacer(parent, row, column)
+  add_graph_cell(parent, 78, 54, row, column)
 end
 
-local function add_graph_connector(parent, direction)
+local function add_graph_connector(parent, direction, row, column)
   local is_horizontal = direction == "horizontal"
-  local cell = add_graph_cell(parent, is_horizontal and 70 or 92, is_horizontal and 132 or 58)
+  local cell = add_graph_cell(parent, is_horizontal and 70 or 92, is_horizontal and 132 or 58, row, column)
   local line = cell.add({
     type = "line",
-    direction = direction
+    direction = direction,
+    raise_hover_events = true
   })
 
   if is_horizontal then
@@ -1265,8 +1314,8 @@ local function add_technology_slot_icon(button, sprite)
   })
 end
 
-local function add_skill_node(parent, skill)
-  local node = add_graph_cell(parent, 92, 132)
+local function add_skill_node(parent, skill, row, column)
+  local node = add_graph_cell(parent, 92, 132, row, column)
   local button = node.add({
     type = "sprite-button",
     name = skill_button_name(skill.id),
@@ -1301,8 +1350,8 @@ local function add_skill_node(parent, skill)
   return button
 end
 
-local function add_skill_root_node(parent)
-  local node = add_graph_cell(parent, 92, 132)
+local function add_skill_root_node(parent, row, column)
+  local node = add_graph_cell(parent, 92, 132, row, column)
   local root = node.add({
     type = "sprite-button",
     name = GUI.skill_root,
@@ -1338,21 +1387,21 @@ local function add_skill_tree_graph(parent)
   for row = 1, 9 do
     for column = 1, 9 do
       if row == 2 and column == 5 then
-        add_skill_node(graph, SKILL_BY_ID.ballistics)
+        add_skill_node(graph, SKILL_BY_ID.ballistics, row, column)
       elseif row == 5 and column == 2 then
-        add_skill_node(graph, SKILL_BY_ID.kill_chain)
+        add_skill_node(graph, SKILL_BY_ID.kill_chain, row, column)
       elseif row == 5 and column == 5 then
-        root = add_skill_root_node(graph)
+        root = add_skill_root_node(graph, row, column)
       elseif row == 5 and column == 8 then
-        add_skill_node(graph, SKILL_BY_ID.field_repairs)
+        add_skill_node(graph, SKILL_BY_ID.field_repairs, row, column)
       elseif row == 8 and column == 5 then
-        add_skill_node(graph, SKILL_BY_ID.targeting_data)
+        add_skill_node(graph, SKILL_BY_ID.targeting_data, row, column)
       elseif column == 5 and (row == 3 or row == 4 or row == 6 or row == 7) then
-        add_graph_connector(graph, "vertical")
+        add_graph_connector(graph, "vertical", row, column)
       elseif row == 5 and (column == 3 or column == 4 or column == 6 or column == 7) then
-        add_graph_connector(graph, "horizontal")
+        add_graph_connector(graph, "horizontal", row, column)
       else
-        add_graph_spacer(graph)
+        add_graph_spacer(graph, row, column)
       end
     end
   end
@@ -1360,7 +1409,49 @@ local function add_skill_tree_graph(parent)
   return root
 end
 
-local function add_skill_panel(parent)
+local function get_skill_tree_focus(player)
+  local player_state = ensure_player_state(player)
+  local focus = player_state.skill_tree_focus or {}
+  local row = clamp(math.floor(tonumber(focus.row) or SKILL_TREE.root_row), 1, SKILL_TREE.grid_size)
+  local column = clamp(math.floor(tonumber(focus.column) or SKILL_TREE.root_column), 1, SKILL_TREE.grid_size)
+
+  player_state.skill_tree_focus = {
+    row = row,
+    column = column
+  }
+
+  return player_state.skill_tree_focus
+end
+
+local function scroll_skill_tree_to_cell(panel, row, column)
+  local scroll = find_gui_element(panel, GUI.skill_tree_scroll)
+  if not scroll then
+    return false
+  end
+
+  local target = find_gui_element(scroll, skill_tree_cell_name(row, column))
+  if not target then
+    return false
+  end
+
+  local ok = pcall(function()
+    scroll.scroll_to_element(target, "top-third")
+  end)
+
+  return ok
+end
+
+local function scroll_skill_tree_to_player_focus(player)
+  local panel = get_gui_panel(player)
+  if not panel then
+    return false
+  end
+
+  local focus = get_skill_tree_focus(player)
+  return scroll_skill_tree_to_cell(panel, focus.row, focus.column)
+end
+
+local function add_skill_panel(parent, player)
   local skill_panel = parent.add({
     type = "frame",
     direction = "vertical",
@@ -1403,7 +1494,9 @@ local function add_skill_panel(parent)
   end)
 
   local root = add_skill_tree_graph(scroll)
-  if root then
+  if player then
+    scroll_skill_tree_to_player_focus(player)
+  elseif root then
     pcall(function()
       scroll.scroll_to_element(root, "top-third")
     end)
@@ -1635,7 +1728,7 @@ local function build_turret_gui(player, entity)
   add_stat_row(current, { "turret-xp.kills" }, GUI.kills)
   add_stat_row(current, { "turret-xp.damage-dealt" }, GUI.damage_dealt)
 
-  add_skill_panel(frame)
+  add_skill_panel(frame, player)
 
   update_turret_gui(player, entity)
 end
@@ -1683,19 +1776,204 @@ local function on_gui_closed(event)
   forget_open_turret(player)
 end
 
+local function get_gui_location_xy(location)
+  if not location then
+    return nil, nil
+  end
+
+  return location.x or location[1], location.y or location[2]
+end
+
+local function find_tagged_ancestor(element, tag_name)
+  while element and element.valid do
+    local tags = element.tags or {}
+    if tags[tag_name] then
+      return element, tags
+    end
+    element = element.parent
+  end
+
+  return nil, nil
+end
+
+local function find_action_ancestor(element, action)
+  while element and element.valid do
+    local tags = element.tags or {}
+    if tags.turret_xp_action == action then
+      return element, tags
+    end
+    element = element.parent
+  end
+
+  return nil, nil
+end
+
+local function delta_to_skill_tree_cells(delta)
+  local distance = math.abs(delta or 0)
+  if distance < SKILL_TREE.drag_deadzone then
+    return 0
+  end
+
+  local cells = math.floor((distance + (SKILL_TREE.pixels_per_cell / 2)) / SKILL_TREE.pixels_per_cell)
+  cells = math.max(1, cells)
+
+  if delta < 0 then
+    return -cells
+  end
+
+  return cells
+end
+
+local function on_skill_tree_drag_start(event)
+  local player = game.get_player(event.player_index)
+  if not player or not event.element or not event.element.valid then
+    return
+  end
+
+  local entity = get_remembered_turret(player)
+  if not entity or player.opened ~= entity then
+    return
+  end
+
+  if find_action_ancestor(event.element, "allocate-skill") then
+    return
+  end
+
+  local _, cell_tags = find_tagged_ancestor(event.element, "turret_xp_tree_cell")
+  if not cell_tags then
+    return
+  end
+
+  local x, y = get_gui_location_xy(event.cursor_display_location)
+  if not x or not y then
+    return
+  end
+
+  local player_state = ensure_player_state(player)
+  local start_row = clamp(math.floor(tonumber(cell_tags.row) or SKILL_TREE.root_row), 1, SKILL_TREE.grid_size)
+  local start_column = clamp(math.floor(tonumber(cell_tags.column) or SKILL_TREE.root_column), 1, SKILL_TREE.grid_size)
+  local focus = get_skill_tree_focus(player)
+  player_state.skill_tree_drag = {
+    x = x,
+    y = y,
+    row = start_row,
+    column = start_column,
+    focus_row = focus.row,
+    focus_column = focus.column,
+    hover_row = start_row,
+    hover_column = start_column,
+    tick = event.tick
+  }
+end
+
+local function pan_skill_tree_from_hover(player, hovered_row, hovered_column, tick)
+  local player_state = storage.turret_xp and storage.turret_xp.players and storage.turret_xp.players[player.index]
+  local drag = player_state and player_state.skill_tree_drag
+  if not drag then
+    return false
+  end
+
+  if tick and drag.tick and tick - drag.tick > SKILL_TREE.stale_drag_ticks then
+    player_state.skill_tree_drag = nil
+    return false
+  end
+
+  hovered_row = clamp(math.floor(tonumber(hovered_row) or drag.row or SKILL_TREE.root_row), 1, SKILL_TREE.grid_size)
+  hovered_column = clamp(math.floor(tonumber(hovered_column) or drag.column or SKILL_TREE.root_column), 1, SKILL_TREE.grid_size)
+
+  if hovered_row == drag.hover_row and hovered_column == drag.hover_column then
+    return false
+  end
+
+  local row_delta = hovered_row - (drag.row or hovered_row)
+  local column_delta = hovered_column - (drag.column or hovered_column)
+  if row_delta == 0 and column_delta == 0 then
+    return false
+  end
+
+  player_state.skill_tree_focus = {
+    row = clamp((drag.focus_row or drag.row or SKILL_TREE.root_row) + row_delta, 1, SKILL_TREE.grid_size),
+    column = clamp((drag.focus_column or drag.column or SKILL_TREE.root_column) + column_delta, 1, SKILL_TREE.grid_size)
+  }
+  drag.hover_row = hovered_row
+  drag.hover_column = hovered_column
+  drag.hovered = true
+  scroll_skill_tree_to_player_focus(player)
+
+  return true
+end
+
+local function on_gui_hover(event)
+  local player = game.get_player(event.player_index)
+  if not player or not event.element or not event.element.valid then
+    return
+  end
+
+  local _, cell_tags = find_tagged_ancestor(event.element, "turret_xp_tree_cell")
+  if not cell_tags then
+    return
+  end
+
+  pan_skill_tree_from_hover(player, cell_tags.row, cell_tags.column, event.tick)
+end
+
+local function complete_skill_tree_drag(player, cursor_display_location, tick)
+  local player_state = storage.turret_xp and storage.turret_xp.players and storage.turret_xp.players[player.index]
+  local drag = player_state and player_state.skill_tree_drag
+  if not drag then
+    return false
+  end
+
+  player_state.skill_tree_drag = nil
+
+  if tick and drag.tick and tick - drag.tick > SKILL_TREE.stale_drag_ticks then
+    return false
+  end
+
+  if drag.hovered then
+    return true
+  end
+
+  local x, y = get_gui_location_xy(cursor_display_location)
+  if not x or not y then
+    return true
+  end
+
+  local dx = x - drag.x
+  local dy = y - drag.y
+  local column_delta = delta_to_skill_tree_cells(dx)
+  local row_delta = delta_to_skill_tree_cells(dy)
+
+  if column_delta == 0 and row_delta == 0 then
+    return true
+  end
+
+  player_state.skill_tree_focus = {
+    row = clamp((drag.focus_row or drag.row or SKILL_TREE.root_row) + row_delta, 1, SKILL_TREE.grid_size),
+    column = clamp((drag.focus_column or drag.column or SKILL_TREE.root_column) + column_delta, 1, SKILL_TREE.grid_size)
+  }
+  scroll_skill_tree_to_player_focus(player)
+
+  return true
+end
+
 local function on_gui_click(event)
   local element = event.element
   if not element or not element.valid then
     return
   end
 
-  local tags = element.tags or {}
-  if tags.turret_xp_action ~= "allocate-skill" then
+  local player = game.get_player(event.player_index)
+  if not player then
     return
   end
 
-  local player = game.get_player(event.player_index)
-  if not player then
+  if complete_skill_tree_drag(player, event.cursor_display_location, event.tick) then
+    return
+  end
+
+  local tags = element.tags or {}
+  if tags.turret_xp_action ~= "allocate-skill" then
     return
   end
 
@@ -1802,6 +2080,8 @@ end)
 script.on_event(defines.events.on_gui_opened, on_gui_opened)
 script.on_event(defines.events.on_gui_closed, on_gui_closed)
 script.on_event(defines.events.on_gui_click, on_gui_click)
+script.on_event(defines.events.on_gui_hover, on_gui_hover)
+script.on_event(INPUT.skill_tree_drag_start, on_skill_tree_drag_start)
 script.on_event(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_setting_changed)
 script.on_event(defines.events.on_entity_damaged, on_entity_damaged)
 script.on_event(defines.events.on_entity_died, on_entity_died)

@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.2
+Date: 2026-06-04
+  Features:
+    - Added an embedded click-drag panning spike for the skill tree inside the existing Turret XP panel.
+  Changes:
+    - Added logical skill-tree cells so drag gestures can shift the scroll focus without opening a separate window or replacing the turret GUI.
+    - Added a hidden custom input linked to Factorio's normal left-click GUI/open action to capture drag start positions without blocking normal GUI clicks.
+    - Added hover-aware logical tree cells so the scroll focus can move while the cursor crosses the embedded graph.
+  Notes:
+    - The panning uses GUI hover transitions and click release because Factorio runtime GUI events expose click positions, but not continuous child-widget drag deltas for an embedded relative panel.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.3.1
 Date: 2026-06-04
   Changes:

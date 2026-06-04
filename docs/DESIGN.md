@@ -4,13 +4,14 @@
 
 The mod should make defensive infrastructure feel more personal without making early defenses trivial. Individual turrets should gradually become notable because they survived and fought, not because the player opened a separate management screen.
 
-## V0.3.1 UX
+## V0.3.2 UX
 
 - Keep the vanilla turret GUI as the main interaction.
 - Add a compact panel to the right of the vanilla GUI.
 - Use direct labels, one XP bar, restrained info markers, and a separate skill panel; avoid an information-dump table.
 - Show vanilla-aligned stats where possible: attack range, force-modified shooting speed, damage research bonuses, entity-with-quality tooltip on the turret icon, and quality summaries for HP/range.
 - Keep the first skill tree small, but present it as a scrollable technology-style surface with a central turret root and branching perk nodes.
+- Keep the skill tree inside the Turret XP panel and support embedded click-drag panning without a separate screen window.
 - Skill node labels live under their icons; hover text stays limited to the effect gained by allocating the next rank.
 - The central turret root summarizes allocated skill bonuses on hover.
 

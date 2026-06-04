@@ -7,7 +7,7 @@ Preferred once published:
 1. Open Factorio.
 2. Go to Mods.
 3. Search for `Turret XP`.
-4. Install version `0.3.1` or newer.
+4. Install version `0.3.2` or newer.
 5. Restart when Factorio asks.
 
 Manual local fallback:
@@ -28,15 +28,16 @@ scripts/install-local.sh
 8. Confirm shooting speed and damage show research bonuses as base plus bonus when relevant.
 9. If the turret has quality, confirm the turret icon still uses the entity-with-quality tooltip and HP/range rows show `[img=quality_info]` with a quality summary on hover.
 10. Scroll the skill tree horizontally and vertically, then confirm the central gun-turret root and four branch nodes are reachable.
-11. Hover each skill node and confirm it only shows the effect gained by allocating the next point.
-12. Let the turret shoot enemies.
-13. Keep the GUI open or reopen it and confirm XP and lifetime damage increase.
-14. Confirm kills increase when the turret lands final hits.
-15. After the turret levels up, allocate a skill node and confirm the rank/points refresh immediately.
-16. Hover the central root and confirm it summarizes allocated bonuses.
-17. Damage a skilled turret and confirm Field Repairs slowly restores HP if that skill is allocated.
-18. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
-19. Select the turret and run `/turret-xp` as a fallback path.
+11. Click-drag inside empty skill-tree space and confirm the embedded tree scrolls in the same direction as the mouse movement without opening a separate window.
+12. Hover each skill node and confirm it only shows the effect gained by allocating the next point.
+13. Let the turret shoot enemies.
+14. Keep the GUI open or reopen it and confirm XP and lifetime damage increase.
+15. Confirm kills increase when the turret lands final hits.
+16. After the turret levels up, allocate a skill node and confirm the rank/points refresh immediately.
+17. Hover the central root and confirm it summarizes allocated bonuses.
+18. Damage a skilled turret and confirm Field Repairs slowly restores HP if that skill is allocated.
+19. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
+20. Select the turret and run `/turret-xp` as a fallback path.
 
 ## Report Back
 

@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.3.1
+## Version 0.3.2
 
-V0.3.1 is a focused skill-tree and XP-bar polish release. It keeps the vanilla turret GUI as the main interaction while changing the Turret XP relative panel's skill section from a fixed row into a scrollable technology-style tree surface.
+V0.3.2 keeps the vanilla turret GUI as the main interaction and adds an embedded click-drag panning spike to the Turret XP relative panel's technology-style skill tree surface.
 
 ## Runtime Behavior
 
@@ -29,10 +29,12 @@ V0.3.1 is a focused skill-tree and XP-bar polish release. It keeps the vanilla t
 - The panel updates named elements every 60 ticks while the turret GUI remains open, without destroying and rebuilding the whole panel.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, technology-slot, pusher, scroll-pane, and indicator styles.
 - The XP bar uses a custom solid progressbar style defined in `data.lua`.
+- The skill tree remains inside the relative Turret XP panel. A hidden custom input linked to `open-gui` records left-click drag-start positions, hover events on named logical tree cells can shift the scroll focus during movement, and normal GUI click release clears or completes the drag.
+- The panning direction follows mouse movement, matching the observed vanilla research-tree scroll behavior.
 
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.3.1`
+- Current version: `0.3.2`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`
