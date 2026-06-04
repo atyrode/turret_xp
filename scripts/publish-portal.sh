@@ -55,7 +55,7 @@ Source:
 https://github.com/atyrode/turret_xp
 DESC
 
-if curl -fsS "https://mods.factorio.com/api/mods/${mod_name}" >/dev/null; then
+if curl -fsS "https://mods.factorio.com/api/mods/${mod_name}" >/dev/null 2>&1; then
   init_url="https://mods.factorio.com/api/v2/mods/releases/init_upload"
   mode="release"
 else

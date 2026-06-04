@@ -11,13 +11,14 @@
 
 ## Validation
 
-- [ ] Run `scripts/check.sh`.
-- [ ] Run `scripts/package.sh`.
-- [ ] Inspect zip layout.
-- [ ] Initialize git repository and commit.
-- [ ] Create/push `atyrode/turret_xp`.
-- [ ] Create GitHub release `v0.1.0`.
-- [ ] Publish `0.1.0` to the Factorio Mod Portal.
+- [x] Run `scripts/check.sh`.
+- [x] Run `scripts/package.sh`.
+- [x] Inspect zip layout.
+- [x] Initialize git repository and commit.
+- [x] Create/push `atyrode/turret_xp`.
+- [x] Create GitHub release `v0.1.0`.
+- [x] Publish `0.1.0` to the Factorio Mod Portal.
+- [ ] Run an in-game or headless Factorio smoke test once a Factorio binary is available locally.
 
 ## Likely Next Work
 
