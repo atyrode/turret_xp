@@ -20,6 +20,12 @@
 - [x] Publish `0.1.0` to the Factorio Mod Portal.
 - [ ] Run an in-game or headless Factorio smoke test once a Factorio binary is available locally.
 
+## Completed For V0.1.1
+
+- [x] Fix crash when opening a gun turret caused by reading max health from `LuaEntityPrototype`.
+- [x] Move HP stat display to `LuaEntity::max_health` and harden optional prototype stat reads.
+- [x] Document library/framework candidates to consider for future features.
+
 ## Likely Next Work
 
 - Decide first real level bonuses.

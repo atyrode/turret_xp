@@ -4,7 +4,7 @@
 
 The mod should make defensive infrastructure feel more personal without making early defenses trivial. Individual turrets should gradually become notable because they survived and fought, not because the player opened a separate management screen.
 
-## V0.1.0 UX
+## V0.1.x UX
 
 - Keep the vanilla turret GUI as the main interaction.
 - Add a compact panel to the right of the vanilla GUI.

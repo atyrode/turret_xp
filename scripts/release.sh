@@ -16,6 +16,7 @@ Turret XP ${version}.
 - Tracks per-turret XP, level, kills, lifetime damage, and total XP.
 - Awards XP from gun turret damage and a small bonus on kills.
 - Shows HP, attack speed, range, loaded ammo, estimated ammo damage, kills, damage dealt, and XP progress.
+- Fixes the 0.1.0 crash when opening a turret GUI on runtime versions where max health is exposed on the entity instead of the prototype.
 
 Validation:
 - Packaged zip layout checked.

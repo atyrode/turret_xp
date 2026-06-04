@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.1.0 tracks XP, level, kills, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a compact stats panel.
+`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.1.1 tracks XP, level, kills, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a compact stats panel.
 
 ## Current Shape
 
@@ -86,7 +86,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.1.0 tracks and displays XP/levels but does not apply stat bonuses yet.
+- V0.1.x tracks and displays XP/levels but does not apply stat bonuses yet.
 - XP is currently scoped to vanilla `gun-turret`.
 - Damage shown in the GUI is a best-effort estimate from loaded ammo prototype data.
 - Removed or destroyed turrets lose their tracked state.

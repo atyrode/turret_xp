@@ -133,6 +133,22 @@ local function set_style(element, property, value)
   end
 end
 
+local function safe_read(object, property)
+  if not object then
+    return nil
+  end
+
+  local ok, value = pcall(function()
+    return object[property]
+  end)
+
+  if ok then
+    return value
+  end
+
+  return nil
+end
+
 local function as_array(value)
   if not value then
     return {}
@@ -193,11 +209,7 @@ sum_trigger_items = function(items)
 end
 
 local function get_attack_parameters(entity)
-  if entity.prototype and entity.prototype.attack_parameters then
-    return entity.prototype.attack_parameters
-  end
-
-  return {}
+  return safe_read(safe_read(entity, "prototype"), "attack_parameters") or {}
 end
 
 local function get_loaded_ammo(entity)
@@ -281,7 +293,7 @@ end
 
 local function format_range(entity, ammo_name)
   local attack_parameters = get_attack_parameters(entity)
-  local range = entity.prototype.turret_range or attack_parameters.range
+  local range = safe_read(safe_read(entity, "prototype"), "turret_range") or attack_parameters.range
 
   if ammo_name then
     local ammo = prototypes.item[ammo_name]
@@ -395,8 +407,8 @@ local function build_turret_gui(player, entity)
   })
   set_style(stats, "horizontally_stretchable", true)
 
-  local max_health = entity.prototype.max_health or 0
-  local health = entity.health or max_health
+  local max_health = safe_read(entity, "max_health")
+  local health = safe_read(entity, "health") or max_health
 
   add_stat_row(stats, { "turret-xp.hp" }, string.format("%s / %s", format_number(health, 0), format_number(max_health, 0)))
   add_stat_row(stats, { "turret-xp.attack-speed" }, format_shots_per_second(entity, ammo_name))

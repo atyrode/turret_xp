@@ -7,7 +7,7 @@ Preferred once published:
 1. Open Factorio.
 2. Go to Mods.
 3. Search for `Turret XP`.
-4. Install version `0.1.0`.
+4. Install version `0.1.1` or newer.
 5. Restart when Factorio asks.
 
 Manual local fallback:

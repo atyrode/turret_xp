@@ -21,12 +21,12 @@
 - Show loaded ammo and count.
 - Show estimated loaded-ammo damage per shot when it can be derived from prototype data.
 - Show kills, lifetime damage, and total XP.
-- Clearly state that V0.1.0 levels do not apply combat bonuses yet.
+- Clearly state that V0.1.x levels do not apply combat bonuses yet.
 
 ## Operational
 
 - `.env` must remain ignored and must not be committed.
 - `scripts/check.sh` must validate JSON and Lua syntax when `luac` is available.
-- `scripts/package.sh` must create `dist/turret_xp_0.1.0.zip`.
+- `scripts/package.sh` must create `dist/turret_xp_<info.json version>.zip`.
 - `scripts/release.sh` must publish/update the matching GitHub release.
 - `scripts/publish-portal.sh` must publish/update the matching Factorio Mod Portal release.

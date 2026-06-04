@@ -47,7 +47,7 @@ Current prototype:
 - Tracks XP, level, kills, lifetime damage, and total XP per turret.
 - Awards XP from damage dealt by gun turrets and a small kill bonus.
 - Shows HP, attack speed, range, loaded ammo, estimated ammo damage, kills, total damage, and XP progress.
-- Keeps combat balance unchanged for now: V0.1.0 tracks levels but does not apply level bonuses yet.
+- Keeps combat balance unchanged for now: V0.1.x tracks levels but does not apply level bonuses yet.
 
 This is an early test release intended to validate the GUI placement, stat display, and XP pacing before adding actual level bonuses.
 

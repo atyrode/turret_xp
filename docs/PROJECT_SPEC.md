@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.1.0
+## Version 0.1.x
 
-V0.1.0 is a UI and tracking prototype. It proves that per-turret progression can be tracked in live saves and shown in the vanilla gun turret workflow.
+V0.1.x is a UI and tracking prototype. It proves that per-turret progression can be tracked in live saves and shown in the vanilla gun turret workflow.
 
 ## Runtime Behavior
 
@@ -25,6 +25,6 @@ V0.1.0 is a UI and tracking prototype. It proves that per-turret progression can
 ## Release Target
 
 - Mod name: `turret_xp`
-- Version: `0.1.0`
+- Current version: `0.1.1`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`
