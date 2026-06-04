@@ -73,8 +73,13 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - `LuaGuiElement.add` supports `anchor` when adding to `player.gui.relative`.
 - `LuaItemPrototype::get_ammo_type("turret")` exposes loaded ammo prototype data for best-effort damage estimates.
 - `LuaEntity::quality`, `sprite-button` quality overlays, and `elem_tooltip` with `entity-with-quality` allow the panel's turret icon to use vanilla quality tooltip behavior.
+- `LuaGuiElement::quality` is only a sprite-button overlay; it is not the same thing as the vanilla blue stat marker plus built-in quality delta popover shown in native entity/tooltips.
+- `Prototype::custom_tooltip_fields` can add quality-aware values to native tooltips and Factoriopedia during the data stage, but it does not provide a direct runtime GUI element for arbitrary custom stat rows.
+- Do not fake vanilla quality stat markers. Either use a supported API/library path or leave the marker out.
 - `LuaForce::get_gun_speed_modifier` exposes force shooting-speed research bonuses by ammo category.
 - `LuaForce::get_ammo_damage_modifier` exposes force ammo-damage research bonuses by ammo category.
+- `LuaForce::get_turret_attack_modifier` exposes turret-specific force damage bonuses; gun turret damage display needs this in addition to ammo damage.
+- `LuaItemPrototype::ammo_category` and `AttackParameters::ammo_categories` are the correct bonus category sources for loaded ammo and fallback turret attack parameters.
 
 ## Risks
 
@@ -85,7 +90,7 @@ These libraries are not dependencies today. Revisit them when a feature needs en
 - Rebuilding the panel every 60 ticks is simple and reliable for the prototype, but later versions should update named elements in place if the GUI grows.
 - Adding `flib` would make users install an extra dependency, but it is common and handled by the in-game dependency manager.
 - `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than this V0.1.x relative-panel polish needs.
-- `quality-lib` may be valuable once Turret XP owns quality-scaled custom stats; for now the HP marker uses the direct runtime prototype API.
+- `quality-lib` may be valuable once Turret XP owns quality-scaled custom stats, but adding it should be an intentional dependency decision because it changes prototype/data-stage behavior.
 - The website can become stale if it stays hand-maintained; keep generation from mod metadata/docs on the roadmap before the site grows.
 
 ## Validation Path

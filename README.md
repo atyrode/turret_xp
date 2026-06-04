@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.1.3 tracks XP, level, killing blows, kill credit, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a compact stats panel.
+`turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.1.4 tracks XP, level, killing blows, kill credit, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a compact stats panel.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -17,7 +17,7 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - XP pacing is configurable with runtime-global mod settings.
 - The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, lifetime damage, and total XP.
 - Research bonuses are shown in a vanilla-like base plus bonus format where available.
-- Quality markers are shown beside quality-affected stats where the runtime API exposes the quality-scaled value.
+- Vanilla quality stat markers are not faked in the custom panel. They are deferred until a supported Factorio API path or library dependency is confirmed.
 
 ## Development
 

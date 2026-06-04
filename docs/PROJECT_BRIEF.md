@@ -11,7 +11,7 @@ The first playable release should make the progression visible without changing 
 - Provide runtime-global settings for XP per damage, XP per kill credit, base level XP, and level XP growth.
 - Extend the vanilla gun turret GUI with a Turret XP panel.
 - Show HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, damage, total XP, current level, and XP to next level.
-- Package and publish as version `0.1.3` so the mod can be installed from the Factorio Mod Portal.
+- Package and publish as version `0.1.4` so the mod can be installed from the Factorio Mod Portal.
 
 ## Non-Goals For V0.1.x
 

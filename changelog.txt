@@ -1,10 +1,21 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.4
+Date: 2026-06-04
+  Bugfixes:
+    - Fixed shooting speed research bonuses not showing by deriving the ammo category from loaded ammo or attack parameters.
+    - Fixed damage research display to include both ammo damage and gun turret attack research modifiers.
+  Changes:
+    - Removed the experimental custom quality stat marker because it did not reuse Factorio's built-in quality stat marker/popover behavior.
+    - Replaced gray framed custom info buttons with the exposed vanilla `utility/tip_icon` sprite; if that sprite is unavailable, the panel leaves the cell empty instead of showing a fake marker.
+  Notes:
+    - Exact vanilla quality stat pills inside arbitrary custom GUI rows are deferred until a supported API path or dependency is confirmed.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.1.3
 Date: 2026-06-04
   Changes:
     - Reworked the Turret XP panel to better match vanilla GUI structure with an inner shallow frame, slot-style ammo display, simpler section headers, and compact row info buttons.
     - Moved the prototype note behind a top info button instead of showing it as a full paragraph at the bottom of the panel.
-    - Added a hoverable quality marker next to HP, currently the vanilla stat this panel can verify as quality-affected.
     - Updated shooting speed and damage display to show base values plus force research bonuses in a vanilla-like format.
     - Colored positive research bonus values green for easier scanning.
 

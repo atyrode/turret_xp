@@ -36,16 +36,25 @@
 
 ## Completed For V0.1.3
 
-- [x] Rework the panel toward vanilla GUI styling with an inner shallow frame, slot-style ammo, compact section headers, and row info buttons.
+- [x] Rework the panel toward vanilla GUI styling with an inner shallow frame, slot-style ammo, compact section headers, and row info affordances.
 - [x] Move the prototype note behind the top info button.
-- [x] Add an HP quality marker with a hover tooltip.
 - [x] Show force research bonuses for shooting speed and ammo damage in base plus bonus format.
 - [x] Re-check Mod Portal libraries for GUI and quality support; document `entity-gui-lib` and `quality-lib` as future candidates without adding them yet.
+
+## Completed For V0.1.4
+
+- [x] Fix research bonus lookup by deriving ammo category from loaded ammo or attack parameters.
+- [x] Include gun-turret attack research when estimating damage per shot.
+- [x] Remove the experimental custom quality stat marker because it did not reuse vanilla quality stat marker/popover behavior.
+- [x] Replace gray framed info buttons with the exposed vanilla `utility/tip_icon` sprite, and stop rendering a custom fallback marker when that sprite is unavailable.
+- [x] Document that exact vanilla quality stat pills are deferred until a supported API path or dependency is confirmed.
 
 ## Likely Next Work
 
 - Decide first real level bonuses.
 - Decide whether mined turrets retain XP.
+- Evaluate `entity-gui-lib` before any full replacement of the turret GUI.
+- Evaluate `quality-lib` and/or prototype `custom_tooltip_fields` before adding quality-scaled custom stats.
 - Update GUI in place instead of rebuilding every 60 ticks.
 - Add a lightweight website generator so `docs/index.html` is derived from `info.json`, `changelog.txt`, README content, and docs where practical.
 - Fold website freshness into release validation so public docs and Mod Portal homepage do not drift from the mod.

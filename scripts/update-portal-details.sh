@@ -49,6 +49,7 @@ Current prototype:
 - Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, killing blows, kill credit, total damage, and XP progress.
 - Includes runtime-global settings for XP pacing.
 - Shows research bonuses in base plus bonus format and uses a more vanilla-like panel layout.
+- Does not fake vanilla quality stat markers in custom rows; exact quality marker support is deferred until a supported API path or library dependency is confirmed.
 - Keeps combat balance unchanged for now: V0.1.x tracks levels but does not apply level bonuses yet.
 
 This is an early test release intended to validate the GUI placement, stat display, and XP pacing before adding actual level bonuses.

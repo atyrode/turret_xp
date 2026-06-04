@@ -332,6 +332,25 @@ local function get_ammo_type(ammo_name)
   return nil
 end
 
+local function get_ammo_category_name(entity, ammo_name)
+  if ammo_name then
+    local ammo = prototypes.item[ammo_name]
+    local ammo_category = safe_read(ammo, "ammo_category")
+    local ammo_category_name = safe_read(ammo_category, "name")
+    if ammo_category_name then
+      return ammo_category_name
+    end
+  end
+
+  local attack_parameters = get_attack_parameters(entity)
+  local categories = attack_parameters.ammo_categories
+  if categories and categories[1] then
+    return categories[1]
+  end
+
+  return nil
+end
+
 local function format_number(value, decimals)
   if not value then
     return "-"
@@ -369,47 +388,6 @@ local function get_entity_quality_name(entity)
   return quality and quality.name or "normal"
 end
 
-local function quality_rich_text(quality_name)
-  return "[quality=" .. (quality_name or "normal") .. "]"
-end
-
-local function get_max_health_for_quality(entity, quality_name)
-  local prototype = safe_read(entity, "prototype")
-  if not prototype then
-    return nil
-  end
-
-  local ok, health = pcall(function()
-    return prototype.get_max_health(quality_name)
-  end)
-
-  if ok then
-    return health
-  end
-
-  return nil
-end
-
-local function make_health_quality_indicator(entity, current_max_health)
-  local quality_name = get_entity_quality_name(entity)
-  local normal_health = get_max_health_for_quality(entity, "normal")
-  local quality_health = get_max_health_for_quality(entity, quality_name) or current_max_health
-
-  if not normal_health or not quality_health then
-    return nil
-  end
-
-  return {
-    name = quality_name,
-    tooltip = {
-      "turret-xp.quality-health-tooltip",
-      quality_rich_text(quality_name),
-      format_number(normal_health, 0),
-      format_number(quality_health, 0)
-    }
-  }
-end
-
 local function get_shooting_speed_values(entity, ammo_name)
   local attack_parameters = get_attack_parameters(entity)
   if not attack_parameters.cooldown or attack_parameters.cooldown <= 0 then
@@ -428,10 +406,11 @@ local function get_shooting_speed_values(entity, ammo_name)
   local base_speed = 60 / cooldown
   local speed_modifier = 0
   local force = safe_read(entity, "force")
+  local ammo_category_name = get_ammo_category_name(entity, ammo_name)
 
-  if force and attack_parameters.ammo_category then
+  if force and ammo_category_name then
     local ok, modifier = pcall(function()
-      return force.get_gun_speed_modifier(attack_parameters.ammo_category)
+      return force.get_gun_speed_modifier(ammo_category_name)
     end)
 
     if ok and modifier then
@@ -462,16 +441,32 @@ local function get_damage_values(entity, ammo_name)
   local base_damage = sum_trigger_items(ammo_type.action) * (attack_parameters.damage_modifier or 1)
   local bonus_damage = 0
   local force = safe_read(entity, "force")
+  local ammo_category_name = get_ammo_category_name(entity, ammo_name)
+  local ammo_modifier = 0
+  local turret_modifier = 0
 
-  if force and attack_parameters.ammo_category then
+  if force and ammo_category_name then
     local ok, modifier = pcall(function()
-      return force.get_ammo_damage_modifier(attack_parameters.ammo_category)
+      return force.get_ammo_damage_modifier(ammo_category_name)
     end)
 
     if ok and modifier then
-      bonus_damage = base_damage * modifier
+      ammo_modifier = modifier
     end
   end
+
+  if force then
+    local ok, modifier = pcall(function()
+      return force.get_turret_attack_modifier(entity.name)
+    end)
+
+    if ok and modifier then
+      turret_modifier = modifier
+    end
+  end
+
+  local final_damage = base_damage * (1 + ammo_modifier) * (1 + turret_modifier)
+  bonus_damage = final_damage - base_damage
 
   return base_damage, bonus_damage
 end
@@ -617,45 +612,27 @@ local function add_empty_cell(parent, width)
   return element
 end
 
-local function add_info_button(parent, tooltip)
+local function add_info_icon(parent, tooltip)
   if not tooltip then
     return add_empty_cell(parent, 18)
   end
 
-  local ok, button = pcall(function()
+  local ok, icon = pcall(function()
     return parent.add({
-      type = "button",
-      caption = "i",
+      type = "sprite",
+      sprite = "utility/tip_icon",
       tooltip = tooltip
     })
   end)
 
-  if not ok or not button then
-    button = parent.add({
-      type = "label",
-      caption = "[font=default-bold]i[/font]",
-      tooltip = tooltip
-    })
+  if not ok or not icon then
+    return add_empty_cell(parent, 18)
   end
 
-  set_element_style(button, "mini_tool_button")
-  set_style(button, "font", "default-bold")
-  set_style(button, "size", 18)
-  return button
-end
-
-local function add_quality_indicator(parent, indicator)
-  if not indicator then
-    return nil
-  end
-
-  local label = parent.add({
-    type = "label",
-    caption = quality_rich_text(indicator.name),
-    tooltip = indicator.tooltip
-  })
-  set_style(label, "left_margin", 4)
-  return label
+  set_style(icon, "size", 14)
+  set_style(icon, "left_margin", 2)
+  set_style(icon, "top_margin", 2)
+  return icon
 end
 
 local function add_stat_row(parent, label, value, options)
@@ -685,8 +662,7 @@ local function add_stat_row(parent, label, value, options)
   set_style(value_element, "single_line", false)
   set_style(value_element, "maximal_width", 210)
 
-  add_quality_indicator(value_flow, options.quality)
-  add_info_button(parent, options.tooltip)
+  add_info_icon(parent, options.tooltip)
 
   return label_element, value_element
 end
@@ -875,7 +851,7 @@ local function build_turret_gui(player, entity)
     caption = { "turret-xp.level", progression.level }
   })
 
-  add_info_button(header, { "turret-xp.prototype-note" })
+  add_info_icon(header, { "turret-xp.prototype-note" })
 
   local xp_flow = body.add({
     type = "flow",
@@ -903,7 +879,6 @@ local function build_turret_gui(player, entity)
 
   local max_health = safe_read(entity, "max_health")
   local health = safe_read(entity, "health") or max_health
-  local health_quality = make_health_quality_indicator(entity, max_health)
 
   add_section_label(body, { "turret-xp.current-turret" })
   local current = body.add({
@@ -913,9 +888,7 @@ local function build_turret_gui(player, entity)
   })
   set_style(current, "horizontally_stretchable", true)
 
-  add_stat_row(current, { "turret-xp.hp" }, string.format("%s / %s", format_number(health, 0), format_number(max_health, 0)), {
-    quality = health_quality
-  })
+  add_stat_row(current, { "turret-xp.hp" }, string.format("%s / %s", format_number(health, 0), format_number(max_health, 0)))
   add_stat_row(current, { "turret-xp.shooting-speed" }, format_shots_per_second(entity, ammo_name), {
     tooltip = { "turret-xp.shooting-speed-tooltip" }
   })
