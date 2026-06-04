@@ -4,6 +4,8 @@ Factorio mod project workspace.
 
 `turret_xp` adds the first layer of per-turret progression for vanilla gun turrets. Version 0.1.1 tracks XP, level, kills, and lifetime damage for each gun turret, then extends the vanilla gun turret GUI with a compact stats panel.
 
+Homepage: <https://atyrode.github.io/turret_xp/>
+
 ## Current Shape
 
 - Persistent agent/contributor workflow rules: [AGENTS.md](AGENTS.md).
@@ -94,6 +96,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 ## Documents
 
 - [docs/README.md](docs/README.md): documentation index.
+- [docs/index.html](docs/index.html): GitHub Pages homepage.
 - [docs/PROJECT_BRIEF.md](docs/PROJECT_BRIEF.md): high-level mod intent, scope, assumptions, and open decisions.
 - [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md): user-visible behavior and release requirements.
 - [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md): concrete first milestone and implementation target.

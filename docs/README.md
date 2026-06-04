@@ -2,6 +2,10 @@
 
 This directory keeps the working project context for `turret_xp`.
 
+## Homepage
+
+- [index.html](index.html): static GitHub Pages homepage for the mod.
+
 ## Index
 
 - [PROJECT_BRIEF.md](PROJECT_BRIEF.md): product intent, V1 scope, assumptions, and open product boundaries.

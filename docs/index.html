@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Turret XP</title>
+    <meta name="description" content="Turret XP adds per-turret levels, XP, and combat stats to vanilla Factorio gun turrets.">
+    <link rel="stylesheet" href="site.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="./">Turret XP</a>
+      <nav aria-label="Primary">
+        <a href="#playtest">Playtest</a>
+        <a href="#docs">Docs</a>
+        <a href="https://mods.factorio.com/mod/turret_xp">Mod Portal</a>
+        <a href="https://github.com/atyrode/turret_xp">Source</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="intro-title">
+        <div class="intro-copy">
+          <p class="eyebrow">Factorio 2.0 mod</p>
+          <h1 id="intro-title">Turret XP</h1>
+          <p class="lede">
+            A lightweight progression layer for vanilla gun turrets, with XP,
+            levels, kill tracking, and a compact stat panel inside the turret GUI.
+          </p>
+          <div class="actions" aria-label="Project links">
+            <a class="button primary" href="https://mods.factorio.com/mod/turret_xp">Download</a>
+            <a class="button" href="https://github.com/atyrode/turret_xp/releases/latest">Latest Release</a>
+          </div>
+        </div>
+
+        <div class="panel-preview" aria-label="Turret XP panel preview">
+          <div class="panel-title">Turret XP</div>
+          <div class="level-row">
+            <strong>Level 3</strong>
+            <span>124 / 200 XP</span>
+          </div>
+          <div class="xp-bar" aria-hidden="true">
+            <span></span>
+          </div>
+          <div class="stats-grid">
+            <span>HP</span><strong>400 / 400</strong>
+            <span>Attack speed</span><strong>10.00/s</strong>
+            <span>Range</span><strong>18</strong>
+            <span>Ammo</span><strong>piercing x42</strong>
+            <span>Kills</span><strong>18</strong>
+            <span>Damage dealt</span><strong>3,860</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" aria-labelledby="current-title">
+        <div>
+          <p class="eyebrow">Current release</p>
+          <h2 id="current-title">Version 0.1.1</h2>
+        </div>
+        <p>
+          The first playtest build focuses on reliable tracking and GUI feedback.
+          It does not apply combat bonuses yet; that comes after the XP pacing and
+          interface are proven in game.
+        </p>
+      </section>
+
+      <section class="content" aria-labelledby="features-title">
+        <h2 id="features-title">What It Does</h2>
+        <div class="feature-grid">
+          <article>
+            <h3>Per-turret progression</h3>
+            <p>Tracks XP, level, total XP, kills, and lifetime damage for each vanilla gun turret.</p>
+          </article>
+          <article>
+            <h3>Combat feedback</h3>
+            <p>Shows HP, attack speed, range, loaded ammo, and estimated ammo damage in a compact panel.</p>
+          </article>
+          <article>
+            <h3>Early balance pass</h3>
+            <p>Awards XP from turret damage and a small bonus on kills while leaving vanilla stats unchanged.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="playtest" class="content split" aria-labelledby="playtest-title">
+        <div>
+          <h2 id="playtest-title">Playtest Path</h2>
+          <p>
+            Install from the in-game Mods interface, place a vanilla gun turret,
+            add ammo, open it, and confirm the Turret XP panel appears on the right.
+          </p>
+        </div>
+        <ol class="steps">
+          <li>Let the turret shoot enemies.</li>
+          <li>Check that XP and lifetime damage increase.</li>
+          <li>Confirm kills increase when the turret lands killing blows.</li>
+          <li>Report confusing stats, pacing issues, or runtime errors.</li>
+        </ol>
+      </section>
+
+      <section id="docs" class="content" aria-labelledby="docs-title">
+        <h2 id="docs-title">Documentation</h2>
+        <div class="doc-grid">
+          <a href="https://github.com/atyrode/turret_xp/blob/main/docs/PLAYTEST.md">
+            <strong>Playtest Guide</strong>
+            <span>Install path and focused test checklist.</span>
+          </a>
+          <a href="https://github.com/atyrode/turret_xp/blob/main/docs/PROJECT_SPEC.md">
+            <strong>Project Spec</strong>
+            <span>Current milestone and implementation target.</span>
+          </a>
+          <a href="https://github.com/atyrode/turret_xp/blob/main/docs/TECHNICAL_DIRECTION.md">
+            <strong>Technical Direction</strong>
+            <span>Validation path, risks, and library candidates.</span>
+          </a>
+          <a href="https://github.com/atyrode/turret_xp/blob/main/docs/DESIGN.md">
+            <strong>Design Notes</strong>
+            <span>Gameplay, balance, UX, and compatibility direction.</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Turret XP</span>
+      <a href="https://github.com/atyrode/turret_xp">GitHub</a>
+      <a href="https://mods.factorio.com/mod/turret_xp">Factorio Mod Portal</a>
+    </footer>
+  </body>
+</html>
