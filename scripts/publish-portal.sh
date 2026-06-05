@@ -63,6 +63,7 @@ Current prototype:
 - Adds optional floating turret labels in "name (lvl N)" format.
 - Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, pierce, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
 - Adds always-visible dev controls for quick level, core, and material-project testing.
+- Adds respec/reset controls for point allocation and local playtesting.
 - Uses a custom solid XP bar style.
 
 This is an early test release intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.

@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.4.3
+## Version 0.4.4
 
-V0.4.3 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates a nearby inserter-fed Veteran Core feeder inventory for element materials. Specialization choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
+V0.4.4 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates a nearby inserter-fed Veteran Core feeder inventory for element materials. Specialization choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
 
 V0.4.0 was published to the Factorio Mod Portal for playtesting before this follow-up release.
 
@@ -15,12 +15,14 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - New core profiles start at level 1 with zero XP, kills, kill credit, damage, total XP, custom name, display-label flag, and empty evolution choices.
 - Veteran Cores are non-stackable `item-with-tags` items. Extracted cores serialize their profile into item tags.
 - XP is derived from lifetime damage, kill credit, runtime-global XP settings, core XP upgrade ranks, and optional dev XP.
+- Derived level progress is cached after sync so normal combat only applies new XP deltas instead of recalculating every previous level.
 - Default damage XP is `0.02` XP per final damage point.
 - Default kill-credit XP is `20` XP per full kill credit.
 - Default level XP starts at `100` and grows linearly. The default `1.65` growth setting means each level adds `65%` of base XP to the next requirement.
 - Kill credit is split proportionally by damage contribution so turrets are not fully denied XP when another source lands the final hit.
 - Core points equal `level - 1 - spent_core_points`.
 - Core upgrade ranks cost one point each and can be purchased repeatedly.
+- The Respec button refunds core upgrade and augment point allocations. It does not reset element unlocks, element mastery, material projects, or specialization.
 - Powerful augment ranks unlock at level 30, cost one augment point each, and earn one augment point every ten levels.
 - Element choices do not cost points. They start a single-resource material project that permanently assigns the element when complete.
 - Material projects and element mastery milestones consume from the installed core's Veteran Core feeder inventory, not from the player inventory.
@@ -82,11 +84,11 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and panel styles.
 - The XP bar uses a custom solid progressbar style defined in `data.lua`.
-- Dev buttons can create a test core, grant quick levels, complete the active material project, or advance one selected element mastery milestone.
+- Dev buttons can create a test core, grant quick levels, complete the active material project, advance one selected element mastery milestone, or reset the installed core to a fresh zero-XP state.
 
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.4.3`
+- Current version: `0.4.4`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

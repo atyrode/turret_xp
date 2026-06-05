@@ -124,9 +124,16 @@
 - [x] Show feeder status in the Evolution panel.
 - [x] Destroy the feeder and spill leftover feeder contents when the core is extracted or the turret is mined.
 
+## Completed For V0.4.4
+
+- [x] Fix fresh Veteran Core install crash in legacy skill migration.
+- [x] Cache derived level progress so high-level combat damage does not rescan every prior level.
+- [x] Add user Respec and dev Reset controls.
+- [x] Replace cropped text allocation buttons with vanilla-style icon buttons and useful hover text.
+
 ## Likely Next Work
 
-- Playtest V0.4.3 from the Mod Portal and integrate feedback, especially around feeder placement and inserter usability.
+- Playtest V0.4.4 from the Mod Portal and integrate feedback, especially around feeder placement, inserter usability, and high-level turret combat performance.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.

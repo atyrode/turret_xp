@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of progression for vanilla gun turrets. Version 0.4.3 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, adds an inserter-fed Veteran Core feeder inventory, and keeps specialization choices as real prototype-backed turret stat variants.
+`turret_xp` adds the first layer of progression for vanilla gun turrets. Version 0.4.4 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, adds an inserter-fed Veteran Core feeder inventory, and keeps specialization choices as real prototype-backed turret stat variants.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -97,7 +97,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.4.3 adds the Veteran Core feeder inventory. V0.4.2 added real turret-body variants for specializations and kept the simplified scrollable Evolution UI.
+- V0.4.4 fixes fresh-core installation, high-level combat progression performance, cropped allocation buttons, and adds respec/reset controls. V0.4.3 added the Veteran Core feeder inventory.
 - The Veteran Core item currently uses vanilla layered icons; dedicated art can replace it later without changing the profile model.
 - V0.4.x is a first draft of list-based evolution. Core upgrades, augments, elements, and combos still need playtest balance and effect readability passes.
 - The failed embedded skill-tree drag spike was removed. The current progression UI is intentionally simple while the gameplay model is tested.

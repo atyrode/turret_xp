@@ -30,6 +30,7 @@ Turret XP ${version}.
 - Adds optional floating turret labels in "name (lvl N)" format.
 - Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, pierce, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
 - Adds always-visible dev controls for quick level, core, and material-project testing.
+- Adds respec/reset controls for point allocation and local playtesting.
 - Uses a custom solid XP bar style.
 - Updates the panel in place while open instead of destroying and rebuilding it every refresh.
 

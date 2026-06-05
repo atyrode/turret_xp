@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.4
+Date: 2026-06-05
+  Bugfixes:
+    - Fixed a crash when installing a fresh Veteran Core caused by legacy skill migration touching a retired XP upgrade field.
+    - Replaced cropped text "+" allocation buttons with vanilla-style slot icon buttons and added useful allocation hover text.
+  Performance:
+    - Cached derived level progress so high-level turrets no longer recalculate every previous level on normal combat damage.
+  Changes:
+    - Added a Respec button that refunds core upgrade and augment point allocations without resetting elements, mastery, projects, or specialization.
+    - Added a dev Reset button that returns the installed core to a fresh zero-XP state for playtesting.
+  Notes:
+    - Existing headless smoke tests only validate mod load. Combat performance still needs an explicit scenario benchmark or manual playtest save.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.3
 Date: 2026-06-04
   Features:

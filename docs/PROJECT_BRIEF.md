@@ -54,6 +54,13 @@ The first playable releases should make progression visible and testable: select
 - Consume element unlock and mastery materials from the feeder over time, even when the turret GUI is closed.
 - Destroy the feeder and spill leftover feeder contents when the core is extracted or the turret is mined.
 
+## V0.4.4 Scope
+
+- Fix fresh Veteran Core installation after the feeder release.
+- Remove level-scaled progression recalculation from normal combat damage.
+- Add user respec and dev reset controls.
+- Polish allocation button visuals and hover text.
+
 ## Open Product Questions
 
 - Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, or infinite mastery?

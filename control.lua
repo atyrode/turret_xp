@@ -394,7 +394,7 @@ local function ensure_evolution_state(state)
 
   if not evolution.migrated_legacy_skills and type(state.skills) == "table" then
     evolution.base.damage = evolution.base.damage + math.max(0, math.floor(tonumber(state.skills.ballistics) or 0))
-    evolution.base.xp = evolution.base.xp
+    evolution.base.xp = (evolution.base.xp or 0)
       + math.max(0, math.floor(tonumber(state.skills.kill_chain) or 0))
       + math.max(0, math.floor(tonumber(state.skills.targeting_data) or 0))
     evolution.base.repair = evolution.base.repair + math.max(0, math.floor(tonumber(state.skills.field_repairs) or 0))
@@ -509,11 +509,43 @@ local function sync_turret_progression(state)
   local total_xp = (((state.damage or 0) * xp_settings.xp_per_damage)
     + ((state.kill_credit or 0) * xp_settings.xp_per_kill_credit))
     + (state.dev_xp or 0)
-  local level, xp, required = progression_from_total_xp(total_xp)
+  local settings_key = tostring(xp_settings.xp_per_damage)
+    .. ":"
+    .. tostring(xp_settings.xp_per_kill_credit)
+    .. ":"
+    .. tostring(xp_settings.level_base_xp)
+    .. ":"
+    .. tostring(xp_settings.level_growth)
+  local cached_total_xp = state._progress_total_xp
+  local level = nil
+  local xp = nil
+  local required = nil
+
+  if state._progress_settings_key == settings_key
+    and cached_total_xp
+    and total_xp >= cached_total_xp
+    and state.level
+    and state.xp
+  then
+    level = math.max(1, math.floor(tonumber(state.level) or 1))
+    xp = math.max(0, (tonumber(state.xp) or 0) + (total_xp - cached_total_xp))
+    required = math.max(1, math.floor(tonumber(state.required_xp) or xp_required(level)))
+
+    while xp >= required and level < 10000 do
+      xp = xp - required
+      level = level + 1
+      required = xp_required(level)
+    end
+  else
+    level, xp, required = progression_from_total_xp(total_xp)
+  end
 
   state.total_xp = total_xp
   state.level = level
   state.xp = xp
+  state.required_xp = required
+  state._progress_total_xp = total_xp
+  state._progress_settings_key = settings_key
 
   return {
     total_xp = total_xp,
@@ -2245,6 +2277,7 @@ local function add_dev_controls_panel(parent)
   panel.add({
     type = "button",
     caption = "+1 level",
+    tooltip = { "turret-xp.dev-level-1-tooltip" },
     tags = {
       turret_xp_action = "dev-level",
       levels = 1
@@ -2253,6 +2286,7 @@ local function add_dev_controls_panel(parent)
   panel.add({
     type = "button",
     caption = "+5 levels",
+    tooltip = { "turret-xp.dev-level-5-tooltip" },
     tags = {
       turret_xp_action = "dev-level",
       levels = 5
@@ -2261,8 +2295,17 @@ local function add_dev_controls_panel(parent)
   panel.add({
     type = "button",
     caption = "Materials",
+    tooltip = { "turret-xp.dev-materials-tooltip" },
     tags = {
       turret_xp_action = "dev-complete-project"
+    }
+  })
+  panel.add({
+    type = "button",
+    caption = "Reset",
+    tooltip = { "turret-xp.dev-reset-core-tooltip" },
+    tags = {
+      turret_xp_action = "dev-reset-core"
     }
   })
 end
@@ -2347,6 +2390,21 @@ local function update_core_panel(root, player, entity, state)
       caption = "Dev core",
       tags = {
         turret_xp_action = "dev-create-core"
+      }
+    })
+  else
+    local actions = top.add({
+      type = "flow",
+      name = GUI.core_actions,
+      direction = "horizontal"
+    })
+    set_style(actions, "horizontal_spacing", 4)
+    actions.add({
+      type = "button",
+      caption = "Respec",
+      tooltip = { "turret-xp.respec-points-tooltip" },
+      tags = {
+        turret_xp_action = "respec-points"
       }
     })
   end
@@ -2639,7 +2697,7 @@ local function add_row(parent, sprite, name, detail, right_caption, tags, enable
   return value
 end
 
-local function add_allocation_row(parent, sprite, name, value_caption, button_caption, tags, enabled)
+local function add_allocation_row(parent, sprite, name, value_caption, button_caption, tags, enabled, tooltip)
   local row = parent.add({
     type = "table",
     column_count = 4
@@ -2676,15 +2734,30 @@ local function add_allocation_row(parent, sprite, name, value_caption, button_ca
   set_style(value, "font_color", COLOR.bonus)
   set_style(value, "horizontal_align", "right")
 
-  local button = row.add({
-    type = "button",
-    caption = button_caption or "+",
-    tags = tags,
-    enabled = enabled
-  })
-  set_style(button, "size", 28)
-  set_style(button, "minimal_width", 28)
-  set_style(button, "maximal_width", 28)
+  local ok, button = pcall(function()
+    return row.add({
+      type = "sprite-button",
+      sprite = "utility/add",
+      tooltip = tooltip,
+      tags = tags,
+      enabled = enabled
+    })
+  end)
+
+  if not ok or not button then
+    button = row.add({
+      type = "button",
+      caption = button_caption or "+",
+      tooltip = tooltip,
+      tags = tags,
+      enabled = enabled
+    })
+  end
+
+  set_element_style(button, enabled and "flib_slot_button_green" or "slot_button")
+  set_style(button, "size", 32)
+  set_style(button, "minimal_width", 32)
+  set_style(button, "maximal_width", 32)
 
   return button
 end
@@ -2951,7 +3024,17 @@ local function add_base_section(parent, state)
         turret_xp_action = "allocate-base",
         upgrade = upgrade.id
       },
-      available >= 1
+      available >= 1,
+      {
+        "",
+        upgrade.name,
+        "\n[color=0.58,0.82,0.38]",
+        upgrade.value,
+        "[/color]\nRank ",
+        tostring(rank),
+        " -> ",
+        tostring(rank + 1)
+      }
     )
   end
 end
@@ -3058,7 +3141,17 @@ local function add_augments_section(parent, state)
         turret_xp_action = "allocate-augment",
         augment = augment.id
       },
-      available >= cost
+      available >= cost,
+      {
+        "",
+        augment.name,
+        "\n",
+        augment.description,
+        "\nRank ",
+        tostring(rank),
+        " -> ",
+        tostring(rank + 1)
+      }
     )
   end
 end
@@ -3550,6 +3643,51 @@ local function add_dev_levels(player, levels)
 
   state.dev_xp = (state.dev_xp or 0) + math.max(0, needed_total - (state.total_xp or 0))
   sync_turret_progression(state)
+  refresh_open_turret(player, entity)
+end
+
+local function respec_points(player)
+  local entity, state = get_open_turret_state(player)
+  if not state then
+    return
+  end
+
+  local evolution = ensure_evolution_state(state)
+  evolution.base = {}
+  evolution.augments = {}
+  ensure_evolution_state(state)
+  refresh_open_turret(player, entity)
+end
+
+local function dev_reset_core(player)
+  local entity, state = get_open_turret_state(player)
+  if not state then
+    return
+  end
+
+  state.xp = 0
+  state.total_xp = 0
+  state.level = 1
+  state.kills = 0
+  state.kill_credit = 0
+  state.damage = 0
+  state.dev_xp = 0
+  state.skills = {}
+  state.evolution = {}
+  state.required_xp = nil
+  state._progress_total_xp = nil
+  state._progress_settings_key = nil
+  ensure_evolution_state(state)
+  sync_turret_progression(state)
+
+  local new_entity = ensure_specialized_turret_body(entity, state)
+  if new_entity and new_entity ~= entity then
+    player.opened = new_entity
+    remember_open_turret(player, new_entity)
+    build_turret_gui(player, new_entity)
+    return
+  end
+
   refresh_open_turret(player, entity)
 end
 
@@ -4064,6 +4202,8 @@ local function on_gui_click(event)
     dev_create_core(player)
   elseif action == "allocate-base" then
     allocate_base_upgrade(player, tags.upgrade)
+  elseif action == "respec-points" then
+    respec_points(player)
   elseif action == "choose-specialization" then
     choose_specialization(player, tags.specialization)
   elseif action == "allocate-augment" then
@@ -4074,6 +4214,8 @@ local function on_gui_click(event)
     dev_complete_project(player)
   elseif action == "dev-level" then
     add_dev_levels(player, tags.levels)
+  elseif action == "dev-reset-core" then
+    dev_reset_core(player)
   end
 end
 

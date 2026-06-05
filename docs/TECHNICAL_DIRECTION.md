@@ -6,6 +6,7 @@
 - Lua control-stage implementation with runtime-global settings.
 - Runtime XP settings plus a required `flib >= 0.16.4` dependency for shared GUI styles.
 - V0.4.3 adds a real adjacent feeder inventory entity for Veteran Core material inputs. V0.4.2 added local hidden gun-turret variants for specialization choices, while the `item-with-tags` Veteran Core carries portable progression profiles.
+- V0.4.4 caches derived level progress so normal combat applies XP deltas instead of recalculating from level 1 on every damage event.
 - Python packaging script reused from `player_quality`.
 - Shell scripts for checks, packaging, local install, GitHub release, and Mod Portal publishing.
 - Static GitHub Pages homepage served from `docs/index.html`.
