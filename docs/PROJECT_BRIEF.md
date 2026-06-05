@@ -86,11 +86,13 @@ The first playable releases should make progression visible and testable: select
 - Replace post-unlock element mastery ranks with an element fuel buffer consumed by element combat effects.
 - Put the name field and label controls on one row and lower the floating world label from the 0.4.6 offset.
 
-## V0.5.0 Scope
+## V0.6.0 Scope
 
 - Treat the release as the first playable Veteran Core turret playthrough.
 - Hide dev controls by default and add `/turret-xp-dev` to toggle them for testing.
-- Rework unlocked element fuel into a furnace-like burner: inserters refill below five stored resource items, one item burns for 30 seconds, and element effects run while burning.
+- Rework unlocked element fuel into a coherent furnace-like burner: inserters fill to capacity, valid excess fuel is buffered instead of spilled, one item burns for 30 seconds, and element effects run while burning.
+- Add element mastery ranks that spend regular core points after unlock.
+- Show active custom stats only when present, with specialization multipliers next to affected values.
 - Preserve Evolution list context after allocating points by scrolling back to the clicked row.
 - Split naming and floating-label controls into compact rows that fit the attached turret panel.
 - Show explicit technical effect text for augments and specialization choices.

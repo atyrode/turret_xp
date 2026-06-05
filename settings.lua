@@ -12,7 +12,7 @@ data:extend({
     type = "double-setting",
     name = "turret-xp-xp-per-kill-credit",
     setting_type = "runtime-global",
-    default_value = 20,
+    default_value = 25,
     minimum_value = 0,
     maximum_value = 100000,
     order = "b"

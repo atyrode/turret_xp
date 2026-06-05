@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Turret XP</title>
-    <meta name="description" content="Turret XP turns chosen vanilla Factorio gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, and fueled elements.">
+    <meta name="description" content="Turret XP turns chosen vanilla Factorio gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, fueled elements, and mastery.">
     <link rel="stylesheet" href="site.css">
   </head>
   <body>
@@ -25,7 +25,7 @@
           <h1 id="intro-title">Turret XP</h1>
           <p class="lede">
             A first playable progression layer for chosen vanilla gun turrets, with movable Veteran Cores,
-            XP, contribution-aware kill credit, specialization bodies, fueled elements, and a clean right-side panel.
+            XP, contribution-aware kill credit, specialization bodies, fueled elements, mastery ranks, and a clean right-side panel.
           </p>
           <div class="actions" aria-label="Project links">
             <a class="button primary" href="https://mods.factorio.com/mod/turret_xp">Download</a>
@@ -57,14 +57,15 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.5.0</h2>
+          <h2 id="current-title">Version 0.6.0</h2>
         </div>
         <p>
           The current first playable build makes turret progression an explicit player
           choice with Veteran Cores, keeps element materials inserter-fed through
           a hidden turret-tile input, forwards ammo back into the turret, adds
           prototype-backed Range ranks, uses furnace-like element fuel, keeps real
-          multiplier-based specialization bodies, and hides dev tools behind a command.
+          multiplier-based specialization bodies, dynamic active stats, element
+          mastery ranks, display-panel floating labels, and hides dev tools behind a command.
         </p>
       </section>
 
@@ -77,11 +78,11 @@
           </article>
           <article>
             <h3>Feeder input</h3>
-            <p>Installing a core creates a hidden input on the turret tile. Inserters can feed unlock resources and low-threshold element burner fuel into the turret area while ammo is routed back into the turret.</p>
+            <p>Installing a core creates a hidden input on the turret tile. Inserters can feed unlock resources and element burner fuel into the turret area while ammo is routed back into the turret.</p>
           </article>
           <article>
             <h3>Combat feedback</h3>
-            <p>Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, damage dealt, and quality summaries for affected rows.</p>
+            <p>Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, damage dealt, quality summaries, and active custom stats only when present.</p>
           </article>
           <article>
             <h3>Early balance pass</h3>

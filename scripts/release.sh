@@ -22,23 +22,26 @@ Turret XP ${version}.
 - Lets the player extract a core and install it in another turret, carrying progression with it.
 - Returns or spills the installed core when a turret is mined.
 - Adds runtime-global settings for damage XP, kill-credit XP, base level XP, and level XP growth.
-- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, damage dealt, and XP progress.
+- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, damage dealt, active custom stats, and XP progress.
 - Shows force research bonuses for shooting speed and damage in base plus bonus format.
 - Uses Factorio Library (flib) GUI styles for a more vanilla-like relative panel.
 - Shows quality summaries for HP and range while filtering Factorio's hidden unknown quality prototype.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
-- Adds compact core upgrades, level-gated element projects, specialization choices, Double Shot/Veteran Training/Range augments, furnace-like element fuel, and second-element combo text.
+- Adds compact core upgrades, level-gated element projects, specialization choices, Double Shot/Veteran Training/Range augments, furnace-like element fuel, element mastery ranks, and second-element combo text.
 - Shows element material requirements with item icons and hides feeder implementation status from the panel.
 - Specialization choices and Range ranks use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
-- Adds optional floating turret labels in "name (lvl N)" format.
-- Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, double shots, XP gain, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
+- Adds optional floating turret labels in "name (lvl N)" format, using hidden display-panel labels when available.
+- Adds first-draft runtime upgrade effects and visuals for bonus damage, crits, bounce, double shots, XP gain, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
 - Adds command-toggled dev controls for quick level, core, and material-project testing.
 - Adds respec/reset controls for point allocation and local playtesting.
 - Fixes hidden-input ammo detection for Factorio 2.0 runtime prototypes.
 - Keeps Evolution scroll context after point allocation.
-- Shows technical effect text for augments and specialization choices.
+- Shows technical effect text for augments, elements, and specialization choices.
 - Uses a custom solid XP bar style.
 - Updates the panel in place while open instead of destroying and rebuilding it every refresh.
+- Fixes element fuel overflow by filling to capacity and buffering valid excess fuel in the hidden input.
+- Respec now resets elements, element mastery, active projects, specialization, and hidden feeder contents.
+- Removes hidden baseline crit chance; crit chance starts at 0% until upgraded.
 
 Validation:
 - Packaged zip layout checked.

@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.5.0
+## Version 0.6.0
 
-V0.5.0 is the first playable pass for a full Veteran Core turret loop. It keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates an invisible inserter-fed input on the turret tile for element materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Specialization and Range augment choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
+V0.6.0 is the first playable pass for a full Veteran Core turret loop after initial playtest feedback. It keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates an invisible inserter-fed input on the turret tile for element materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Specialization and Range augment choices swap the current turret into hidden gun-turret variants with prototype stat changes.
 
 Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the UI and Veteran Core foundations before this first playable line.
 
@@ -17,17 +17,18 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - XP is derived from lifetime damage, kill credit, runtime-global XP settings, core XP upgrade ranks, and optional dev XP.
 - Derived level progress is cached after sync so normal combat only applies new XP deltas instead of recalculating every previous level.
 - Default damage XP is `0.02` XP per final damage point.
-- Default kill-credit XP is `20` XP per full kill credit.
+- Default kill-credit XP is `25` XP per full kill credit.
 - Default level XP starts at `100` and grows linearly. The default `1.65` growth setting means each level adds `65%` of base XP to the next requirement.
 - Kill credit is split proportionally by damage contribution so turrets are not fully denied XP when another source lands the final hit.
 - Core points equal `level - 1 - spent_core_points`.
 - Core upgrade ranks cost one point each and can be purchased repeatedly.
-- The Respec button refunds core upgrade and augment point allocations. It does not reset element unlocks, element fuel, material projects, or specialization.
+- The Respec button refunds core upgrades, element mastery, augment point allocations, element choices, element fuel, material projects, specialization, and hidden feeder contents.
 - Powerful augment ranks unlock at level 30, cost one augment point each, and earn one augment point every ten levels.
 - Element choices do not cost points. They start a single-resource material project that permanently assigns the element when complete.
 - Material projects and element fuel consume from the installed core's hidden turret-tile input, not from the player inventory.
 - Inserter-fed ammo that lands in the hidden input is moved into the turret ammo inventory; unrelated non-ammo items are spilled back out.
-- Unlocked elements use their matching resource as burner fuel. Inserters top up stored fuel only when it drops below five items, and one stored fuel item burns for 30 seconds to power that element.
+- Unlocked elements use their matching resource as burner fuel. Inserters can fill stored fuel up to the burner capacity, valid excess fuel stays buffered in the hidden input instead of spilling, and one stored fuel item burns for 30 seconds to power that element.
+- Unlocked elements start at mastery rank 1. Further element mastery ranks cost 5 regular core points each and improve proc chance, damage efficiency, and electric arc count.
 - Specialization unlocks at level 20 and is a free one-time choice.
 - Specialization swaps the turret body between vanilla `gun-turret` and hidden `turret-xp-gun-turret-*` variants. Removing the Veteran Core returns the turret body to vanilla `gun-turret`.
 - Mined turrets return the installed Veteran Core as a separate item or spill it if there is no inventory room.
@@ -46,7 +47,7 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - If the turret is mined, the normal gun turret item returns through vanilla behavior and the mod separately returns/spills the Veteran Core.
 - The profile can be named. If the player enables the label, the world label renders above the current turret body, with configurable color and optional level suffix.
 - Installing a core creates a hidden `turret-xp-veteran-feeder` inventory entity colocated with the turret.
-- The hidden feeder is not a player-facing container. It accepts inserter drops, forwards ammo into the turret, and only keeps resources needed for the current element project or low element-fuel storage.
+- The hidden feeder is not a player-facing container. It accepts inserter drops, forwards ammo into the turret, and keeps resources needed for the current element project or unlocked element fuel buffering.
 - Extracting or mining a core destroys the hidden feeder and spills any leftover feeder contents.
 
 ## Evolution Sections
@@ -68,7 +69,7 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - Bullet Bounce can damage a nearby enemy.
 - Double Shot can apply a second physical hit to the same target.
 - Veteran Training increases combat XP gained from damage and kill credit.
-- Range adds +1 real attack range per rank, up to rank 20, through hidden prototype-backed turret variants.
+- Range adds +1 attack range per rank, up to rank 20, through hidden prototype-backed turret variants. Specialization range multipliers apply after Range augment ranks.
 - Fire can add fire damage.
 - Electric can arc damage to a nearby enemy.
 - Explosive can splash damage around the target.
@@ -91,6 +92,6 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.5.0`
+- Current version: `0.6.0`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

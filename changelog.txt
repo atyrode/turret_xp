@@ -1,4 +1,26 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.6.0
+Date: 2026-06-05
+  Changes:
+    - Rebuilt the turret stats panel as a scrollable dynamic summary that shows active custom stats only when the turret has them.
+    - Added colored specialization multipliers next to affected HP, shooting speed, range, and damage values in the stat summary.
+    - Changed specialization Range math so Range augment ranks are multiplied by the chosen specialization instead of being added after the multiplier.
+    - Moved the floating-label color button next to the name field and kept label visibility toggles on the row below.
+    - Replaced rendered floating text with hidden display-panel label entities when available, reusing Factorio's display-panel text background behavior.
+    - Reworked element fuel input to fill the burner to capacity and buffer valid excess fuel in the hidden input instead of spilling it around the turret.
+    - Switched element burn bars to Factorio's vanilla `burning_progressbar` style.
+    - Added visible, throttled elemental impact/tracer feedback using vanilla fire, lightning, and explosion visual language.
+    - Added element mastery ranks: unlocked elements start at rank 1, and each further rank costs 5 regular core points.
+    - Added technical element effect summaries in the stats panel and element burner card.
+    - Made electric mastery add more possible arc targets as rank increases.
+    - Separated specialization option rows into clearer icon/name/multiplier/description/action blocks.
+    - Increased default kill-credit XP from 20 to 25 while keeping damage XP as a slow trickle.
+    - Removed the hidden baseline crit chance; crit chance now starts at 0% until upgraded.
+  Bugfixes:
+    - Respec now resets base upgrades, element mastery, elements, element projects, specialization, augments, and hidden feeder contents.
+    - Improved kill tracking for deaths caused by scripted element damage by crediting the most relevant contributing turret.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.5.0
 Date: 2026-06-05
   Changes:

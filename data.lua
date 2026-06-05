@@ -1,6 +1,15 @@
 local CHIP_NAME = "turret-xp-veteran-core"
 local FEEDER_NAME = "turret-xp-veteran-feeder"
+local LABEL_PANEL_PREFIX = "turret-xp-label-panel-"
 local RANGE_AUGMENT_MAX = 20
+local LABEL_PRESETS = {
+  { id = "gold", color = { 1, 0.86, 0.46, 1 } },
+  { id = "white", color = { 1, 1, 1, 1 } },
+  { id = "green", color = { 0.45, 1, 0.45, 1 } },
+  { id = "blue", color = { 0.45, 0.78, 1, 1 } },
+  { id = "red", color = { 1, 0.36, 0.30, 1 } },
+  { id = "purple", color = { 0.86, 0.48, 1, 1 } }
+}
 local SPECIALIZATIONS = {
   sniper = {
     range_multiplier = 1.8889,
@@ -50,7 +59,7 @@ local function make_turret_variant(id, settings, range_bonus)
   variant.rotation_speed = (variant.rotation_speed or 0) * (settings.rotation_speed_multiplier or 1)
 
   variant.attack_parameters = table.deepcopy(variant.attack_parameters)
-  variant.attack_parameters.range = (variant.attack_parameters.range or 0) * (settings.range_multiplier or 1) + (range_bonus or 0)
+  variant.attack_parameters.range = ((variant.attack_parameters.range or 0) + (range_bonus or 0)) * (settings.range_multiplier or 1)
   variant.attack_parameters.cooldown = (variant.attack_parameters.cooldown or 1) * (settings.cooldown_multiplier or 1)
   variant.attack_parameters.damage_modifier = (variant.attack_parameters.damage_modifier or 1) * (settings.damage_multiplier or 1)
 
@@ -111,7 +120,7 @@ feeder.minable = nil
 feeder.next_upgrade = nil
 feeder.fast_replaceable_group = nil
 feeder.max_health = 250
-feeder.inventory_size = 6
+feeder.inventory_size = 1
 feeder.inventory_type = "normal"
 feeder.collision_box = { { -0.35, -0.35 }, { 0.35, 0.35 } }
 feeder.selection_box = { { -0.5, -0.5 }, { 0.5, 0.5 } }
@@ -139,6 +148,39 @@ feeder.picture = {
 }
 
 data:extend({ feeder })
+
+local label_panel_base = data.raw["display-panel"] and data.raw["display-panel"]["display-panel"]
+if label_panel_base then
+  local label_panels = {}
+  for _, preset in ipairs(LABEL_PRESETS) do
+    local panel = table.deepcopy(label_panel_base)
+    panel.name = LABEL_PANEL_PREFIX .. preset.id
+    panel.localised_name = { "entity-name." .. panel.name }
+    panel.localised_description = { "entity-description.turret-xp-label-panel" }
+    panel.hidden = true
+    panel.hidden_in_factoriopedia = true
+    panel.flags = { "placeable-off-grid", "not-blueprintable", "not-deconstructable", "not-on-map" }
+    panel.selectable_in_game = false
+    panel.minable = nil
+    panel.collision_box = { { -0.05, -0.05 }, { 0.05, 0.05 } }
+    panel.selection_box = { { -0.05, -0.05 }, { 0.05, 0.05 } }
+    panel.collision_mask = { layers = {}, not_colliding_with_itself = true }
+    panel.circuit_connector = nil
+    panel.circuit_wire_max_distance = 0
+    panel.draw_copper_wires = false
+    panel.draw_circuit_wires = false
+    panel.sprites = util.empty_sprite()
+    panel.icon = "__core__/graphics/empty.png"
+    panel.icon_size = 1
+    panel.icons = nil
+    panel.max_text_width = 360
+    panel.text_shift = util.by_pixel(0, -62)
+    panel.text_color = preset.color
+    panel.background_color = { 0, 0, 0, 0.38 }
+    label_panels[#label_panels + 1] = panel
+  end
+  data:extend(label_panels)
+end
 
 data:extend({
   {

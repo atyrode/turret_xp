@@ -25,7 +25,7 @@
 - Clicking an element option must start a material project when the corresponding level gate is unlocked.
 - Feeding required items into the turret's hidden material input must advance the active material project and unlock the element when requirements are complete.
 - After an element is unlocked, feeding that element's resource must fill a bounded burner fuel buffer used by element combat effects.
-- Inserter-fed element resources must only be accepted for post-unlock fuel when stored fuel is below the refill threshold.
+- Inserter-fed element resources must fill the post-unlock fuel buffer up to capacity, while valid excess fuel remains buffered in the hidden input instead of spilling around the turret.
 - Dev buttons must be hidden by default and toggleable with `/turret-xp-dev` for local playtesting.
 - The GUI must refresh while the turret GUI remains open.
 - Selecting a gun turret and running `/turret-xp` must open the same panel as a fallback.

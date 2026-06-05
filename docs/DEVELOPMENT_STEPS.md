@@ -160,19 +160,24 @@
 - [x] Put the name field and label controls on one row.
 - [x] Move floating labels lower than 0.4.6 while keeping them above the turret.
 
-## Completed For V0.5.0
+## Completed For V0.6.0
 
 - [x] Preserve Evolution list context after point allocation.
 - [x] Split core name and label controls into two rows so they fit the attached panel.
 - [x] Show technical effect text for augments and specialization choices.
-- [x] Rework element fuel into a furnace-like burner buffer that refills below five stored fuel items.
+- [x] Rework element fuel into a furnace-like burner buffer that fills to capacity and does not spill valid excess fuel around the turret.
+- [x] Add scrollable dynamic stats that reveal only active custom bonuses.
+- [x] Add element mastery ranks that spend regular core points after unlock.
+- [x] Show specialization multipliers next to affected stat values and multiply Range augments before specialization range scaling.
+- [x] Rework floating labels to use hidden display-panel labels when available.
+- [x] Improve kill accounting for scripted element damage.
 - [x] Hide dev controls by default and add `/turret-xp-dev` to toggle them.
 - [x] Fix invalid killed-target reads in runtime upgrade visual feedback.
 - [x] Enlarge allocation buttons to avoid cropped `+` labels.
 
 ## Likely Next Work
 
-- Playtest V0.5.0 from the Mod Portal as the first playable run and integrate feedback, especially around hidden input ammo forwarding, burner-style element fuel, range stacking, specialization multipliers, core slot feel, label controls, and high-level turret combat performance.
+- Playtest V0.6.0 from the Mod Portal as the first playable run after feedback integration, especially around hidden input ammo forwarding, burner-style element fuel, range stacking, specialization multipliers, element mastery value, label controls, and high-level turret combat performance.
 - Plan a Mod Portal identity pass: final name, short description, category, and a simple Factorio-native portal image that avoids generic AI-generated key art.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.

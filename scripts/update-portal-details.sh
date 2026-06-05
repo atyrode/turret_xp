@@ -39,7 +39,7 @@ mkdir -p dist
 cat > "$description_path" <<DESC
 # Turret XP
 
-Turret XP turns chosen vanilla gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, and fueled elements.
+Turret XP turns chosen vanilla gun turrets into movable Veteran Core defenses with XP, active stat upgrades, specializations, fueled elements, and element mastery.
 
 Current prototype:
 
@@ -50,25 +50,25 @@ Current prototype:
 - Awards configurable XP from cored gun turret damage and proportional kill credit.
 - Lets the player extract a core and install it in another turret, carrying progression with it.
 - Returns or spills the installed core when a turret is mined.
-- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, total damage, and XP progress.
+- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, total damage, active custom stats, and XP progress.
 - Includes runtime-global settings for XP pacing.
 - Uses Factorio Library (flib) styles and richer vanilla-like panel structure.
 - Shows research bonuses in base plus bonus format.
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
 - Shows element material requirements with item icons and hides feeder implementation status from the panel.
-- Adds compact core upgrades, element material projects, furnace-like element fuel, a free specialization choice, Double Shot/Veteran Training/Range augments, and a second element combo path.
+- Adds compact core upgrades, element material projects, furnace-like element fuel, element mastery ranks, a free specialization choice, Double Shot/Veteran Training/Range augments, and a second element combo path.
 - Specialization choices and Range ranks now use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
-- Adds optional floating turret labels in "name (lvl N)" format.
-- Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, double shots, XP gain, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
+- Adds optional floating turret labels in "name (lvl N)" format, using hidden display-panel labels when available.
+- Adds first-draft runtime upgrade effects and visuals for bonus damage, crits, bounce, double shots, XP gain, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
 - Adds command-toggled dev controls for quick level, core, and material-project testing.
 - Keeps Evolution scroll context after point allocation.
-- Shows technical effect text for augments and specialization choices.
+- Shows technical effect text for augments, elements, and specialization choices.
 - Uses a custom solid XP bar style.
 
 This is the first playable release line intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, furnace-like element fuel, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.
 
-0.5.0 hides dev tools behind \`/turret-xp-dev\`, keeps the Evolution panel near the clicked row after point allocation, reworks element fuel into a low-refill burner, and fixes killed-target visual feedback crashes.
+0.6.0 adds dynamic active stats, element mastery ranks, display-panel floating labels, clearer specialization rows, vanilla burn bars, stronger element visuals, full respec reset, better kill accounting, and coherent fuel buffering.
 
 Source:
 ${source_url}
@@ -82,7 +82,7 @@ response="$(
     -H "Authorization: Bearer ${api_key}" \
     -F "mod=${mod_name}" \
     -F "title=Turret XP" \
-    -F "summary=Turn chosen gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, and fueled elements." \
+    -F "summary=Turn chosen gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, fueled elements, and mastery." \
     -F "description=<${description_path}" \
     -F "category=tweaks" \
     -F "tags=combat" \

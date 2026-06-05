@@ -21,6 +21,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer a comp
 - Element sections show explicit material projects and progress bars.
 - Specialization and augment sections should feel like meaningful milestones, not passive background stats.
 - Dev buttons are hidden by default as of V0.5.0 and toggled with `/turret-xp-dev` so normal playthroughs are not dominated by test controls.
+- V0.6.0 stat rows should reveal active custom bonuses only when present, with specialization multipliers colored next to affected base values.
 
 ## V0.4.1 UX
 

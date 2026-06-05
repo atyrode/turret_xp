@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first playable progression layer for vanilla gun turrets. Version 0.5.0 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, keeps material progression inserter-fed through a hidden turret-tile input that routes ammo back into the turret, and keeps specialization/range choices as real prototype-backed turret stat variants.
+`turret_xp` adds the first playable progression layer for vanilla gun turrets. Version 0.6.0 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, keeps material progression inserter-fed through a hidden turret-tile input that routes ammo back into the turret, and keeps specialization/range choices as prototype-backed turret stat variants.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -15,7 +15,7 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - Current prototype: runtime-only XP tracking and a `flib`-styled right-side relative GUI panel for vanilla `gun-turret`.
 - Ordinary gun turrets stay stackable and do not gain progression until a Veteran Core is installed.
 - A Veteran Core is an `item-with-tags` profile item. Installing it makes the current turret unique; extracting or mining the turret returns the core with its XP, upgrades, element projects, custom name, and display-label preference.
-- Installing a Veteran Core creates a hidden feeder input on the turret tile. Inserters can feed the turret area; ammo is routed into the turret ammo inventory, element unlock projects consume matching resources from the hidden input, and unlocked elements use a furnace-like resource burner that refills below five stored fuel items.
+- Installing a Veteran Core creates a hidden feeder input on the turret tile. Inserters can feed the turret area; ammo is routed into the turret ammo inventory, element unlock projects consume matching resources from the hidden input, and unlocked elements use a furnace-like resource burner that fills to capacity and buffers valid excess fuel instead of spilling it.
 - XP is awarded from damage dealt by gun turrets with an installed core plus proportional kill credit based on damage contribution.
 - XP pacing is configurable with runtime-global mod settings.
 - The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, and lifetime damage.
@@ -97,7 +97,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.5.0 is the first playable pass: dev tools are command-toggled, element fuel burns over time, Evolution allocation keeps its scroll context, and runtime upgrade visuals avoid invalid killed-entity reads.
+- V0.6.0 is the first playable pass after playtest feedback: active custom stats are dynamic, element fuel is coherent, element mastery costs core points, specialization multipliers are visible, floating labels use display-panel behavior where possible, and respec fully resets evolution choices.
 - The Veteran Core item currently uses vanilla layered icons; dedicated art can replace it later without changing the profile model.
 - V0.5.x is still a first playable draft of list-based evolution. Core upgrades, augments, elements, and combos still need playtest balance and effect readability passes.
 - The failed embedded skill-tree drag spike was removed. The current progression UI is intentionally simple while the gameplay model is tested.

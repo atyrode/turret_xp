@@ -46,7 +46,7 @@ storage.turret_xp = {
         },
         element_mastery = {
           [element_id] = {
-            rank = 0|1,
+            rank = <uint>,
             delivered = 0,
             fuel = <uint>,
             burn_remaining = <ticks>
@@ -103,8 +103,8 @@ storage.turret_xp = {
 ## Runtime Responsibilities
 
 - `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, cache per-target damage contribution, and apply runtime evolution damage effects.
-- `on_entity_died`: award proportional kill credit to contributing core profiles, track kills, and delete installed core profiles when a turret dies.
-- Feeder lifecycle: create a hidden Veteran Core feeder inventory colocated with installed-core turrets, forward ammo from that hidden inventory into the turret ammo inventory, consume project materials and low-threshold element burner fuel from it, spill unsupported non-ammo items, and destroy/spill it when the core leaves the turret.
+- `on_entity_died`: award proportional kill credit to contributing core profiles, track visible kills including scripted element-damage kills, and delete installed core profiles when a turret dies.
+- Feeder lifecycle: create a hidden Veteran Core feeder inventory colocated with installed-core turrets, forward ammo from that hidden inventory into the turret ammo inventory, consume project materials and element burner fuel from it, buffer valid excess fuel, spill unsupported non-ammo items, and destroy/spill it when the core leaves the turret.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined gun turrets.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI.

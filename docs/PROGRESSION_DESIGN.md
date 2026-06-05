@@ -52,7 +52,7 @@ Examples:
 
 Material investment should answer: **what did the factory build into this turret?**
 
-The intended feel for major unlocks is closer to localized research or a construction contract than fuel. A turret might need `1k` iron plate to unlock a branch, then much later `1m` iron plate as part of an infinite mastery sink. Element effects are now the exception: V0.5.0 treats an unlocked element as a small furnace-like burner that refills from matching items only when low. The exact numbers should scale with game stage and must be playtested.
+The intended feel for major unlocks is closer to localized research or a construction contract than fuel. A turret might need `1k` iron plate to unlock a branch, then much later `1m` iron plate as part of an infinite mastery sink. Element effects are now the exception: V0.6.0 treats an unlocked element as a small furnace-like burner that fills from matching items up to capacity, while mastery ranks spend regular core points after unlock. The exact numbers should scale with game stage and must be playtested.
 
 ### 3. Element Slots
 
@@ -326,7 +326,7 @@ Skill points and materials should both matter. A turret with XP but no materials
 
 ## Portable Veteran Core
 
-Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, V0.4.2 makes specialization stats travel with the core by swapping the current turret body, V0.4.3 adds a feeder inventory so material progression is supplied like machine input, V0.4.6 hides that input on the turret tile while forwarding ammo back into the turret, and V0.5.0 uses the same input for low-threshold element burner fuel.
+Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, V0.4.2 makes specialization stats travel with the core by swapping the current turret body, V0.4.3 adds a feeder inventory so material progression is supplied like machine input, V0.4.6 hides that input on the turret tile while forwarding ammo back into the turret, and V0.6.0 uses the same input for buffered element burner fuel.
 
 The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. When the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret.
 
