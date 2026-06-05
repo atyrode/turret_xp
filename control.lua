@@ -15,6 +15,7 @@ local GUI = {
   core_name = MOD_PREFIX .. "core-name",
   core_name_visible = MOD_PREFIX .. "core-name-visible",
   core_name_level_visible = MOD_PREFIX .. "core-name-level-visible",
+  platform_cores = MOD_PREFIX .. "platform-cores",
   level = MOD_PREFIX .. "level",
   xp = MOD_PREFIX .. "xp",
   xp_bar = MOD_PREFIX .. "xp-bar",
@@ -199,6 +200,13 @@ local AUGMENTS = {
     description = "+4% chance per rank to fire a second shot at the same target."
   },
   {
+    id = "luck",
+    sprite = "virtual-signal/signal-anything",
+    name = "Luck",
+    value = "+5% proc odds",
+    description = "+5% relative chance per rank for crits, bounce, double shot, and element procs."
+  },
+  {
     id = "veteran_training",
     sprite = "item/automation-science-pack",
     name = "Veteran training",
@@ -257,7 +265,9 @@ local destroy_name_render
 local get_element_effect_summary
 local get_combo_caption
 local element_name
+local get_platform_hub_inventory
 local feeder = {}
+local combat = {}
 
 local function ensure_storage()
   storage.turret_xp = storage.turret_xp or {}
@@ -268,6 +278,7 @@ local function ensure_storage()
   storage.turret_xp.player_settings = storage.turret_xp.player_settings or {}
   storage.turret_xp.targets = storage.turret_xp.targets or {}
   storage.turret_xp.feeders = storage.turret_xp.feeders or {}
+  storage.turret_xp.pending_visuals = storage.turret_xp.pending_visuals or {}
 end
 
 local function ensure_player_settings(player)
@@ -1016,6 +1027,72 @@ local function insert_chip_item(player, profile)
   return inserted and inserted > 0
 end
 
+local function can_insert_chip_inventory(inventory, profile)
+  if not inventory or not inventory.valid then
+    return false
+  end
+
+  local stack = make_chip_item_stack(profile)
+  local ok, can_insert = pcall(function()
+    return inventory.can_insert(stack)
+  end)
+
+  if not ok or not can_insert then
+    return false
+  end
+
+  return true
+end
+
+get_platform_hub_inventory = function(entity)
+  if not is_gun_turret(entity) then
+    return nil
+  end
+
+  local surface = safe_read(entity, "surface")
+  local platform = surface and safe_read(surface, "platform") or nil
+  local hub = platform and safe_read(platform, "hub") or nil
+  if not hub or not hub.valid then
+    return nil
+  end
+
+  local ok, inventory = pcall(function()
+    return hub.get_inventory(defines.inventory.hub_main)
+  end)
+  if ok and inventory and inventory.valid then
+    return inventory
+  end
+
+  return nil
+end
+
+local function get_platform_core_options(entity)
+  local options = {}
+  local inventory = get_platform_hub_inventory(entity)
+  if not inventory then
+    return options
+  end
+
+  for index = 1, #inventory do
+    local stack = inventory[index]
+    if stack and stack.valid_for_read and stack.name == CHIP_NAME then
+      local quality = "normal"
+      pcall(function()
+        if stack.quality and stack.quality.name then
+          quality = stack.quality.name
+        end
+      end)
+      options[#options + 1] = {
+        index = index,
+        quality = quality,
+        profile = read_profile_from_chip_stack(stack)
+      }
+    end
+  end
+
+  return options
+end
+
 local function spill_chip_item(entity, profile)
   if not entity or not entity.valid then
     return false
@@ -1671,7 +1748,6 @@ function feeder.get_allowed_items(state)
         allowed[requirement.name] = true
       end
     end
-    return allowed
   end
 
   for _, element_id in ipairs(evolution.elements or {}) do
@@ -1685,29 +1761,41 @@ function feeder.get_allowed_items(state)
   return allowed
 end
 
-function feeder.get_buffered_feed_items(state)
-  local buffered = {}
-  if not state then
-    return buffered
+function feeder.needs_input(state)
+  for _ in pairs(feeder.get_allowed_items(state)) do
+    return true
   end
 
-  local evolution = ensure_evolution_state(state)
-  local project = evolution.element_project
-  if project then
-    for _, requirement in ipairs(project.requirements or {}) do
-      buffered[requirement.name] = true
-    end
+  return false
+end
+
+function feeder.set_input_open(inventory, open)
+  if not inventory then
+    return
   end
 
-  for _, element_id in ipairs(evolution.elements or {}) do
-    local element = ELEMENT_BY_ID[element_id]
-    local mastery = element and evolution.element_mastery[element_id] or nil
-    if mastery and (mastery.rank or 0) > 0 then
-      buffered[element.resource] = true
-    end
+  local ok, supports_bar = pcall(function()
+    return inventory.supports_bar()
+  end)
+  if not ok or not supports_bar then
+    return
   end
 
-  return buffered
+  pcall(function()
+    inventory.set_bar(open and (#inventory + 1) or 1)
+  end)
+end
+
+function feeder.inventory_is_empty(inventory)
+  if not inventory then
+    return true
+  end
+
+  local ok, empty = pcall(function()
+    return inventory.is_empty()
+  end)
+
+  return ok and empty == true
 end
 
 function feeder.ensure(entity, state)
@@ -1717,11 +1805,18 @@ function feeder.ensure(entity, state)
 
   ensure_storage()
 
+  local needs_input = feeder.needs_input(state)
   local current = state.feeder
   if current and current.valid and current.name == FEEDER_NAME and current.surface == entity.surface then
     local dx = math.abs((current.position.x or 0) - (entity.position.x or 0))
     local dy = math.abs((current.position.y or 0) - (entity.position.y or 0))
     if dx <= 0.1 and dy <= 0.1 then
+      local inventory = feeder.get_inventory(current)
+      feeder.set_input_open(inventory, needs_input)
+      if not needs_input and feeder.inventory_is_empty(inventory) then
+        feeder.destroy(state, current.position, false)
+        return nil
+      end
       if current.unit_number and state.chip_id then
         storage.turret_xp.feeders[current.unit_number] = state.chip_id
       end
@@ -1733,6 +1828,10 @@ function feeder.ensure(entity, state)
     feeder.destroy(state, current.position, true)
   else
     state.feeder = nil
+  end
+
+  if not needs_input then
+    return nil
   end
 
   local position = feeder.find_position(entity)
@@ -1833,12 +1932,16 @@ function feeder.route_contents(state)
     return
   end
 
+  local needs_input = feeder.needs_input(state)
   local entity = state.feeder
-  entity = feeder.ensure(state.entity, state) or entity
+  if needs_input then
+    entity = feeder.ensure(state.entity, state) or entity
+  end
   local inventory = feeder.get_inventory(entity)
   if not inventory then
     return
   end
+  feeder.set_input_open(inventory, needs_input)
 
   local turret_inventory = nil
   pcall(function()
@@ -1846,7 +1949,6 @@ function feeder.route_contents(state)
   end)
 
   local allowed_feed_items = feeder.get_allowed_items(state)
-  local buffered_feed_items = feeder.get_buffered_feed_items(state)
   for index = 1, #inventory do
     local stack = inventory[index]
     if stack and stack.valid_for_read then
@@ -1870,6 +1972,9 @@ function feeder.route_contents(state)
             end)
           end
         end
+        if stack.valid_for_read then
+          feeder.spill_stack(entity, stack, state.entity.position)
+        end
       end
     end
   end
@@ -1879,11 +1984,17 @@ function feeder.route_contents(state)
     if stack and stack.valid_for_read then
       local item_name = stack.name
       if not allowed_feed_items[item_name]
-        and not buffered_feed_items[item_name]
         and not feeder.is_ammo_item(item_name)
       then
         feeder.spill_stack(entity, stack, state.entity.position)
       end
+    end
+  end
+
+  if not feeder.needs_input(state) then
+    feeder.set_input_open(inventory, false)
+    if feeder.inventory_is_empty(inventory) then
+      feeder.destroy(state, entity.position, false)
     end
   end
 end
@@ -2120,6 +2231,55 @@ local function append_multiplier(caption, multiplier)
   return { "", caption, " ", formatted }
 end
 
+local function format_stat_formula(base, additive, multiplier, total, suffix, decimals)
+  if not total then
+    return "-"
+  end
+
+  suffix = suffix or ""
+  local has_additive = additive and math.abs(additive) >= 0.005
+  local has_multiplier = multiplier and math.abs(multiplier - 1) >= 0.005
+  if not has_additive and not has_multiplier then
+    return format_number(total, decimals) .. suffix
+  end
+
+  local base_text = format_number(base or 0, decimals)
+  local total_text = format_number(total, decimals) .. suffix
+  if has_additive and has_multiplier then
+    return {
+      "",
+      "(",
+      base_text,
+      " ",
+      format_colored_bonus(additive, decimals),
+      ") ",
+      format_colored_multiplier(multiplier),
+      " = ",
+      total_text
+    }
+  end
+
+  if has_additive then
+    return {
+      "",
+      base_text,
+      " ",
+      format_colored_bonus(additive, decimals),
+      " = ",
+      total_text
+    }
+  end
+
+  return {
+    "",
+    base_text,
+    " ",
+    format_colored_multiplier(multiplier),
+    " = ",
+    total_text
+  }
+end
+
 local function get_specialization(state)
   if not state then
     return nil
@@ -2127,6 +2287,14 @@ local function get_specialization(state)
 
   local specialization_id = ensure_evolution_state(state).specialization
   return specialization_id and SPECIALIZATION_BY_ID[specialization_id] or nil
+end
+
+local function get_luck_multiplier(state)
+  return 1 + (get_augment_rank(state, "luck") * 0.05)
+end
+
+local function apply_luck_to_chance(state, chance)
+  return math.min(0.95, math.max(0, (chance or 0) * get_luck_multiplier(state)))
 end
 
 local function get_entity_quality_name(entity)
@@ -2324,14 +2492,148 @@ local function get_final_shots_per_second(entity, ammo_name)
   return base_speed + (bonus_speed or 0)
 end
 
-local function format_estimated_dps(entity, ammo_name)
-  local damage = get_final_damage_per_shot(entity, ammo_name)
+local get_range_for_quality
+
+local function get_shooting_speed_formula_values(entity, state, ammo_name)
+  local base_speed, bonus_speed = get_shooting_speed_values(entity, ammo_name)
+  if not base_speed then
+    return nil
+  end
+
+  local specialization = get_specialization(state)
+  local multiplier = specialization and (1 / (specialization.cooldown_multiplier or 1)) or 1
+  return {
+    base = base_speed / multiplier,
+    additive = (bonus_speed or 0) / multiplier,
+    multiplier = multiplier,
+    total = base_speed + (bonus_speed or 0)
+  }
+end
+
+local function get_damage_formula_values(entity, state, ammo_name)
+  local base_damage, bonus_damage, damage_type = get_damage_values(entity, ammo_name)
+  if not base_damage then
+    return nil
+  end
+
+  local specialization = get_specialization(state)
+  local multiplier = specialization and (specialization.damage_multiplier or 1) or 1
+  local core_additive = get_base_rank(state, "damage") * 0.5
+  local vanilla_base = base_damage / multiplier
+  local vanilla_bonus = (bonus_damage or 0) / multiplier
+  local additive = vanilla_bonus + core_additive
+
+  return {
+    base = vanilla_base,
+    additive = additive,
+    multiplier = multiplier,
+    total = (vanilla_base + additive) * multiplier,
+    damage_type = damage_type,
+    core_additive = core_additive,
+    research_additive = vanilla_bonus
+  }
+end
+
+local function get_expected_damage_per_shot(entity, state, ammo_name)
+  local values = get_damage_formula_values(entity, state, ammo_name)
+  if not values then
+    return nil
+  end
+
+  local shot_damage = values.total
+  local crit_chance = apply_luck_to_chance(state, get_base_rank(state, "crit_chance") * 0.0025)
+  local crit_extra = shot_damage * crit_chance * (0.50 + (get_base_rank(state, "crit_damage") * 0.01))
+  local double_extra = shot_damage * apply_luck_to_chance(state, get_augment_rank(state, "double_shot") * 0.04)
+  local bounce_extra = shot_damage * 0.35 * apply_luck_to_chance(state, get_augment_rank(state, "bounce") * 0.05)
+
+  return {
+    base = shot_damage,
+    expected_bonus = crit_extra + double_extra + bounce_extra,
+    total = shot_damage + crit_extra + double_extra + bounce_extra
+  }
+end
+
+local function format_estimated_dps(entity, ammo_name, state)
+  local expected = get_expected_damage_per_shot(entity, state, ammo_name)
   local speed = get_final_shots_per_second(entity, ammo_name)
-  if not damage or not speed then
+  if not expected or not speed then
     return "-"
   end
 
-  return format_number(damage * speed, 1) .. "/s"
+  local damage = expected.total
+  local total = damage * speed
+  if expected.expected_bonus and expected.expected_bonus >= 0.005 then
+    return {
+      "",
+      "(",
+      format_number(expected.base, 1),
+      " ",
+      format_colored_bonus(expected.expected_bonus, 1),
+      ") x ",
+      format_number(speed, 2),
+      "/s = ",
+      format_number(total, 1),
+      "/s"
+    }
+  end
+
+  return format_number(total, 1) .. "/s"
+end
+
+local function get_range_formula_values(entity, state, quality_name)
+  local total = get_range_for_quality(entity, quality_name)
+  if not total then
+    return nil
+  end
+
+  local specialization = get_specialization(state)
+  local multiplier = specialization and (specialization.range_multiplier or 1) or 1
+  local range_rank = get_augment_rank(state, "range")
+  local quality = safe_read(prototypes.quality, quality_name or "normal")
+  local quality_multiplier = quality and get_quality_multiplier(quality, "range_multiplier") or 1
+  local base_range = nil
+  local base_prototype = prototypes.entity[BASE_TURRET_NAME]
+  local base_attack_parameters = safe_read(base_prototype, "attack_parameters")
+  if base_attack_parameters then
+    base_range = (base_attack_parameters.range or 0) * quality_multiplier
+  end
+
+  if not base_range then
+    base_range = (total / multiplier) - (range_rank * quality_multiplier)
+  end
+
+  return {
+    base = base_range,
+    additive = range_rank * quality_multiplier,
+    multiplier = multiplier,
+    total = total
+  }
+end
+
+local function get_health_formula_values(entity, state, quality_name, max_health)
+  if not max_health then
+    return nil
+  end
+
+  local specialization = get_specialization(state)
+  local multiplier = specialization and (specialization.health_multiplier or 1) or 1
+  local base_health = nil
+  local base_prototype = prototypes.entity[BASE_TURRET_NAME]
+  if base_prototype then
+    local ok, value = pcall(function()
+      return base_prototype.get_max_health(quality_name or "normal")
+    end)
+    if ok then
+      base_health = value
+    end
+  end
+
+  return {
+    base = base_health or (max_health / multiplier),
+    additive = 0,
+    multiplier = multiplier,
+    total = max_health
+  }
 end
 
 local function get_max_health_for_quality(entity, quality_name)
@@ -2357,7 +2659,7 @@ local function format_range(entity)
   return format_range_for_quality(entity, get_entity_quality_name(entity))
 end
 
-local function get_range_for_quality(entity, quality_name)
+get_range_for_quality = function(entity, quality_name)
   local attack_parameters = get_attack_parameters(entity)
   if not attack_parameters.range then
     return nil
@@ -2667,19 +2969,148 @@ local function add_core_panel(parent)
 end
 
 local function core_panel_key(player, state)
+  local entity = get_remembered_turret(player)
+  local platform_core_count = #get_platform_core_options(entity)
+  local platform_inventory_present = get_platform_hub_inventory(entity) ~= nil
   if state then
     local color = state.label_color or {}
     return table.concat({
       "installed",
       tostring(state.chip_id or ""),
       tostring(state.show_label_level ~= false),
+      tostring(platform_inventory_present),
       tostring(color[1] or ""),
       tostring(color[2] or ""),
       tostring(color[3] or "")
     }, ":")
   end
 
-  return "empty:" .. (find_carried_chip_stack(player) and "ready" or "none")
+  return "empty:"
+    .. (find_carried_chip_stack(player) and "ready" or "none")
+    .. ":platform:"
+    .. tostring(platform_core_count)
+end
+
+local function add_platform_core_list(core_panel, entity, state)
+  local hub_inventory = get_platform_hub_inventory(entity)
+  if not hub_inventory then
+    return
+  end
+
+  local frame = core_panel.add({
+    type = "frame",
+    name = GUI.platform_cores,
+    direction = "vertical",
+    style = "inside_shallow_frame_with_padding"
+  })
+  set_style(frame, "top_margin", 6)
+  set_style(frame, "horizontally_stretchable", true)
+
+  if state then
+    local flow = frame.add({
+      type = "flow",
+      direction = "horizontal"
+    })
+    set_style(flow, "horizontally_stretchable", true)
+    set_style(flow, "vertical_align", "center")
+    local label = flow.add({
+      type = "label",
+      caption = { "turret-xp.platform-core-installed" },
+      style = "caption_label"
+    })
+    set_style(label, "font_color", COLOR.muted)
+    flow.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher"
+    })
+    flow.add({
+      type = "button",
+      caption = { "turret-xp.platform-core-send" },
+      tooltip = { "turret-xp.platform-core-send-tooltip" },
+      tags = {
+        turret_xp_action = "platform-send-core"
+      }
+    })
+    return
+  end
+
+  local options = get_platform_core_options(entity)
+  if #options == 0 then
+    local label = frame.add({
+      type = "label",
+      caption = { "turret-xp.platform-core-empty" },
+      style = "caption_label"
+    })
+    set_style(label, "font_color", COLOR.muted)
+    set_style(label, "single_line", false)
+    return
+  end
+
+  local title = frame.add({
+    type = "label",
+    caption = { "turret-xp.platform-core-title" },
+    style = "caption_label"
+  })
+  set_style(title, "font", "default-bold")
+
+  for _, option in ipairs(options) do
+    local profile = option.profile or create_blank_profile()
+    local row = frame.add({
+      type = "table",
+      column_count = 3
+    })
+    set_style(row, "horizontally_stretchable", true)
+    set_style(row, "horizontal_spacing", 8)
+    set_style(row, "vertical_spacing", 2)
+    pcall(function()
+      row.style.column_alignments[1] = "left"
+      row.style.column_alignments[2] = "left"
+      row.style.column_alignments[3] = "right"
+    end)
+
+    local button_definition = {
+      type = "sprite-button",
+      sprite = "item/" .. CHIP_NAME,
+      quality = option.quality or profile.chip_quality or "normal",
+      elem_tooltip = {
+        type = "item-with-quality",
+        name = CHIP_NAME,
+        quality = option.quality or profile.chip_quality or "normal"
+      }
+    }
+    local icon = row.add(button_definition)
+    set_element_style(icon, "slot_button")
+    set_style(icon, "size", 34)
+
+    local details = row.add({
+      type = "flow",
+      direction = "vertical"
+    })
+    set_style(details, "horizontally_stretchable", true)
+    local core_name = profile.custom_name and profile.custom_name ~= "" and profile.custom_name or { "turret-xp.platform-core-unnamed" }
+    local name = details.add({
+      type = "label",
+      caption = core_name,
+      style = "caption_label"
+    })
+    set_style(name, "font", "default-bold")
+    local summary = details.add({
+      type = "label",
+      caption = { "turret-xp.platform-core-summary", profile.level or 1, math.floor(profile.kills or 0), math.floor(profile.damage or 0) },
+      style = "caption_label"
+    })
+    set_style(summary, "font_color", COLOR.muted)
+
+    row.add({
+      type = "button",
+      caption = { "turret-xp.platform-core-install" },
+      tooltip = { "turret-xp.platform-core-install-tooltip" },
+      tags = {
+        turret_xp_action = "platform-install-core",
+        slot = option.index
+      }
+    })
+  end
 end
 
 local function add_dev_controls_panel(parent, player)
@@ -2858,6 +3289,7 @@ local function update_core_panel(root, player, entity, state)
     })
     set_style(note, "font_color", COLOR.muted)
     set_style(note, "single_line", false)
+    add_platform_core_list(core_panel, entity, state)
     return
   end
 
@@ -2934,6 +3366,7 @@ local function update_core_panel(root, player, entity, state)
   })
 
   update_name_render(entity, state)
+  add_platform_core_list(core_panel, entity, state)
 end
 
 function render_ammo_flow(flow, ammo_name, ammo_count, ammo_quality)
@@ -3073,7 +3506,7 @@ function add_active_custom_stats(stats, state)
 
   local crit_chance_rank = get_base_rank(state, "crit_chance")
   if crit_chance_rank > 0 then
-    add_custom_stat(stats, "Crit chance", format_percent(crit_chance_rank * 0.0025, 2) .. " / shot")
+    add_custom_stat(stats, "Crit chance", format_percent(apply_luck_to_chance(state, crit_chance_rank * 0.0025), 2) .. " / shot")
   end
 
   local crit_damage_rank = get_base_rank(state, "crit_damage")
@@ -3083,12 +3516,17 @@ function add_active_custom_stats(stats, state)
 
   local bounce_rank = get_augment_rank(state, "bounce")
   if bounce_rank > 0 then
-    add_custom_stat(stats, "Bullet bounce", format_percent(bounce_rank * 0.05, 1) .. ", 35% shot damage")
+    add_custom_stat(stats, "Bullet bounce", format_percent(apply_luck_to_chance(state, bounce_rank * 0.05), 1) .. ", 35% shot damage")
   end
 
   local double_shot_rank = get_augment_rank(state, "double_shot")
   if double_shot_rank > 0 then
-    add_custom_stat(stats, "Double shot", format_percent(double_shot_rank * 0.04, 1) .. " chance")
+    add_custom_stat(stats, "Double shot", format_percent(apply_luck_to_chance(state, double_shot_rank * 0.04), 1) .. " chance")
+  end
+
+  local luck_rank = get_augment_rank(state, "luck")
+  if luck_rank > 0 then
+    add_custom_stat(stats, "Luck", format_colored_multiplier(get_luck_multiplier(state)) .. " proc odds")
   end
 
   local training_rank = get_augment_rank(state, "veteran_training")
@@ -3126,42 +3564,50 @@ function update_stats_panel(panel, entity, state, ammo_name, ammo_count, ammo_qu
   end
 
   stats.clear()
-  local specialization = get_specialization(state)
 
   local health_tooltip = make_quality_tooltip(function(quality)
     return format_number(get_max_health_for_quality(entity, quality.name), 0)
   end)
+  local health_values = get_health_formula_values(entity, state, quality_name, max_health)
+  local health_caption = health_values
+    and {
+      "",
+      format_number(health, 0),
+      " / ",
+      format_stat_formula(health_values.base, health_values.additive, health_values.multiplier, health_values.total, "", 0)
+    }
+    or string.format("%s / %s", format_number(health, 0), format_number(max_health, 0))
   add_stat_value(
     stats,
     { "turret-xp.hp" },
     with_quality_marker(
-      append_multiplier(
-        string.format("%s / %s", format_number(health, 0), format_number(max_health, 0)),
-        specialization and specialization.health_multiplier or nil
-      ),
+      health_caption,
       health_tooltip
     ),
     health_tooltip
   )
 
+  local speed_values = get_shooting_speed_formula_values(entity, state, ammo_name)
   add_stat_value(
     stats,
     { "turret-xp.shooting-speed" },
-    append_multiplier(
-      format_shots_per_second(entity, ammo_name),
-      specialization and (1 / (specialization.cooldown_multiplier or 1)) or nil
-    ),
+    speed_values
+      and format_stat_formula(speed_values.base, speed_values.additive, speed_values.multiplier, speed_values.total, "/s", 2)
+      or format_shots_per_second(entity, ammo_name),
     { "turret-xp.shooting-speed-tooltip" }
   )
 
   local range_tooltip = make_quality_tooltip(function(quality)
     return format_range_for_quality(entity, quality.name)
   end)
+  local range_values = get_range_formula_values(entity, state, quality_name)
   add_stat_value(
     stats,
     { "turret-xp.range" },
     with_quality_marker(
-      append_multiplier(format_range(entity), specialization and specialization.range_multiplier or nil),
+      range_values
+        and format_stat_formula(range_values.base, range_values.additive, range_values.multiplier, range_values.total, "", 1)
+        or format_range(entity),
       range_tooltip
     ),
     range_tooltip
@@ -3175,13 +3621,24 @@ function update_stats_panel(panel, entity, state, ammo_name, ammo_count, ammo_qu
   render_ammo_flow(ammo_flow, ammo_name, ammo_count, ammo_quality)
 
   if ammo_name then
+    local damage_values = get_damage_formula_values(entity, state, ammo_name)
+    local damage_caption = damage_values
+      and {
+        "turret-xp.damage-value",
+        {
+          "turret-xp.damage-value-with-type",
+          format_stat_formula(damage_values.base, damage_values.additive, damage_values.multiplier, damage_values.total, "", 1),
+          { "damage-type-name." .. damage_values.damage_type }
+        }
+      }
+      or { "turret-xp.damage-value", format_damage_per_shot(entity, ammo_name) }
     add_stat_value(
       stats,
       { "turret-xp.damage" },
-      { "turret-xp.damage-value", append_multiplier(format_damage_per_shot(entity, ammo_name), specialization and specialization.damage_multiplier or nil) },
+      damage_caption,
       { "turret-xp.damage-tooltip" }
     )
-    add_stat_value(stats, { "turret-xp.dps" }, format_estimated_dps(entity, ammo_name), { "turret-xp.dps-tooltip" })
+    add_stat_value(stats, { "turret-xp.dps" }, format_estimated_dps(entity, ammo_name, state), { "turret-xp.dps-tooltip" })
   else
     add_stat_value(stats, { "turret-xp.damage" }, { "turret-xp.damage-no-ammo" }, nil)
     add_stat_value(stats, { "turret-xp.dps" }, "-", nil)
@@ -4118,6 +4575,92 @@ local function extract_core(player)
   refresh_open_turret(player, new_entity or entity)
 end
 
+local function install_core_from_platform(player, slot)
+  slot = math.floor(tonumber(slot) or 0)
+  if slot <= 0 then
+    return
+  end
+
+  local entity, existing = get_open_turret_state(player)
+  if not entity or existing then
+    refresh_open_turret(player, entity)
+    return
+  end
+
+  local inventory = get_platform_hub_inventory(entity)
+  local stack = inventory and inventory[slot] or nil
+  if not stack or not stack.valid_for_read or stack.name ~= CHIP_NAME then
+    refresh_open_turret(player, entity)
+    return
+  end
+
+  local profile = read_profile_from_chip_stack(stack) or create_blank_profile()
+  if not remove_one_chip_stack(stack) then
+    refresh_open_turret(player, entity)
+    return
+  end
+
+  local installed = install_profile_on_turret(entity, profile)
+  if not installed then
+    pcall(function()
+      inventory.insert(make_chip_item_stack(profile))
+    end)
+    refresh_open_turret(player, entity)
+    return
+  end
+
+  local new_entity = ensure_specialized_turret_body(entity, installed)
+  if new_entity and new_entity ~= entity then
+    player.opened = new_entity
+    remember_open_turret(player, new_entity)
+    build_turret_gui(player, new_entity)
+    return
+  end
+
+  refresh_open_turret(player, entity)
+end
+
+local function send_core_to_platform(player)
+  local entity, state = get_open_turret_state(player)
+  if not state then
+    return
+  end
+
+  local inventory = get_platform_hub_inventory(entity)
+  if not inventory or not can_insert_chip_inventory(inventory, state) then
+    player.print({ "turret-xp.platform-core-no-room" })
+    refresh_open_turret(player, entity)
+    return
+  end
+
+  local profile = detach_profile_from_turret(entity)
+  if not profile then
+    refresh_open_turret(player, entity)
+    return
+  end
+
+  local inserted = 0
+  local ok = pcall(function()
+    inserted = inventory.insert(make_chip_item_stack(profile))
+  end)
+  if not ok or not inserted or inserted <= 0 then
+    install_profile_on_turret(entity, profile)
+    player.print({ "turret-xp.platform-core-no-room" })
+    refresh_open_turret(player, entity)
+    return
+  end
+
+  local new_entity = swap_turret_body(entity, BASE_TURRET_NAME)
+  if new_entity and new_entity ~= entity then
+    player.opened = new_entity
+    remember_open_turret(player, new_entity)
+    build_turret_gui(player, new_entity)
+    return
+  end
+
+  refresh_open_turret(player, new_entity or entity)
+end
+
 local function handle_core_slot_click(player, event)
   local entity, state = get_open_turret_state(player)
   if not entity then
@@ -4403,6 +4946,7 @@ local function allocate_element_mastery(player, element_id)
 
   mastery.rank = (mastery.rank or 1) + 1
   sync_turret_progression(state)
+  feeder.ensure(entity, state)
   refresh_open_turret(player, entity, anchor)
 end
 
@@ -4442,6 +4986,7 @@ local function start_element_project(player, slot, element_id)
     delivered = {}
   }
   ensure_evolution_state(state)
+  feeder.ensure(entity, state)
   refresh_open_turret(player, entity, anchor)
 end
 
@@ -4501,6 +5046,7 @@ local function auto_feed_open_turret(state)
   feeder.route_contents(state)
   local changed_project = auto_feed_element_project(state)
   local changed_mastery = auto_feed_element_mastery(state)
+  feeder.route_contents(state)
   return changed_project or changed_mastery
 end
 
@@ -4571,6 +5117,7 @@ local function respec_points(player)
       inventory.clear()
     end
   end
+  feeder.destroy(state, entity.position, false)
   ensure_evolution_state(state)
   local new_entity = ensure_specialized_turret_body(entity, state)
   if new_entity and new_entity ~= entity then
@@ -4600,6 +5147,7 @@ local function dev_reset_core(player)
   state.required_xp = nil
   state._progress_total_xp = nil
   state._progress_settings_key = nil
+  feeder.destroy(state, entity.position, false)
   ensure_evolution_state(state)
   sync_turret_progression(state)
 
@@ -4621,7 +5169,6 @@ local function apply_passive_evolution_effects()
     ensure_evolution_state(state)
     local entity = state.entity
     if is_gun_turret(entity) then
-      feeder.ensure(entity, state)
       auto_feed_open_turret(state)
       tick_element_burners(state)
       local repair_rank = get_base_rank(state, "repair")
@@ -4641,12 +5188,12 @@ local function apply_passive_evolution_effects()
   end
 end
 
-local function chance_roll(chance)
+function combat.chance_roll(chance)
   chance = math.max(0, math.min(0.95, chance or 0))
   return chance > 0 and math.random() < chance
 end
 
-local function get_distance(a, b)
+function combat.get_distance(a, b)
   if not a or not b then
     return 0
   end
@@ -4656,7 +5203,7 @@ local function get_distance(a, b)
   return math.sqrt((dx * dx) + (dy * dy))
 end
 
-local function apply_runtime_damage(target, amount, force, damage_type)
+function combat.apply_runtime_damage(target, amount, force, damage_type)
   if not target or not target.valid or amount <= 0 then
     return false
   end
@@ -4668,7 +5215,57 @@ local function apply_runtime_damage(target, amount, force, damage_type)
   return ok
 end
 
-local function heal_turret(entity, amount)
+function combat.record_scripted_damage_contribution(target_key, turret, damage)
+  if not target_key or not is_gun_turret(turret) or damage <= 0 then
+    return
+  end
+
+  local profile = get_turret_state(turret)
+  if not profile then
+    return
+  end
+
+  ensure_storage()
+  local entry = storage.turret_xp.targets[target_key]
+  if not entry then
+    entry = {
+      total_damage = 0,
+      turrets = {},
+      tick = game.tick
+    }
+    storage.turret_xp.targets[target_key] = entry
+  end
+
+  entry.total_damage = (entry.total_damage or 0) + damage
+  entry.tick = game.tick
+
+  local key = turret_key(turret)
+  local contributor = entry.turrets[key]
+  if not contributor then
+    contributor = {
+      damage = 0,
+      entity = turret,
+      chip_id = profile.chip_id
+    }
+    entry.turrets[key] = contributor
+  end
+
+  contributor.damage = (contributor.damage or 0) + damage
+  contributor.entity = turret
+  contributor.chip_id = profile.chip_id
+end
+
+function combat.apply_tracked_runtime_damage(target, amount, force, damage_type, turret)
+  local target_key = entity_tracking_key(target)
+  local ok = combat.apply_runtime_damage(target, amount, force, damage_type)
+  if ok then
+    combat.record_scripted_damage_contribution(target_key, turret, amount)
+  end
+
+  return ok
+end
+
+function combat.heal_turret(entity, amount)
   if not is_gun_turret(entity) or amount <= 0 then
     return
   end
@@ -4680,7 +5277,7 @@ local function heal_turret(entity, amount)
   end
 end
 
-local function find_nearby_enemy(surface, position, force, radius, exclude)
+function combat.find_nearby_enemy(surface, position, force, radius, exclude)
   if not surface or not position then
     return nil
   end
@@ -4702,7 +5299,7 @@ local function find_nearby_enemy(surface, position, force, radius, exclude)
       and not excluded
       and safe_read(entity, "health")
       and entity.force ~= force
-      and get_distance(position, entity.position) <= radius
+      and combat.get_distance(position, entity.position) <= radius
     then
       return entity
     end
@@ -4711,7 +5308,7 @@ local function find_nearby_enemy(surface, position, force, radius, exclude)
   return nil
 end
 
-local function draw_attack_line(surface, from, to, color, width, ttl)
+function combat.draw_attack_line(surface, from, to, color, width, ttl)
   if not surface or not from or not to then
     return
   end
@@ -4730,7 +5327,55 @@ local function draw_attack_line(surface, from, to, color, width, ttl)
   end)
 end
 
-local function draw_effect_sprite(surface, target, sprite, scale, ttl)
+function combat.copy_position(position)
+  if not position then
+    return nil
+  end
+
+  return {
+    x = position.x or position[1] or 0,
+    y = position.y or position[2] or 0
+  }
+end
+
+function combat.schedule_attack_line(surface, from, to, color, width, ttl, delay)
+  if not surface or not from or not to then
+    return
+  end
+
+  ensure_storage()
+  local visuals = storage.turret_xp.pending_visuals
+  visuals[#visuals + 1] = {
+    tick = game.tick + math.max(0, math.floor(delay or 0)),
+    surface_index = surface.index,
+    from = combat.copy_position(from),
+    to = combat.copy_position(to),
+    color = color,
+    width = width or 2,
+    ttl = ttl or 20
+  }
+end
+
+function combat.process_pending_visuals()
+  local mod_storage = storage and storage.turret_xp
+  local visuals = mod_storage and mod_storage.pending_visuals
+  if not visuals or #visuals == 0 then
+    return
+  end
+
+  for index = #visuals, 1, -1 do
+    local visual = visuals[index]
+    if not visual or not visual.tick or game.tick >= visual.tick then
+      if visual then
+        local surface = game.get_surface(visual.surface_index)
+        combat.draw_attack_line(surface, visual.from, visual.to, visual.color, visual.width, visual.ttl)
+      end
+      table.remove(visuals, index)
+    end
+  end
+end
+
+function combat.draw_effect_sprite(surface, target, sprite, scale, ttl)
   if not surface or not target or not sprite then
     return
   end
@@ -4748,7 +5393,7 @@ local function draw_effect_sprite(surface, target, sprite, scale, ttl)
   end)
 end
 
-local function create_short_effect(surface, name, position)
+function combat.create_short_effect(surface, name, position)
   if not surface or not name or not position then
     return
   end
@@ -4761,7 +5406,7 @@ local function create_short_effect(surface, name, position)
   end)
 end
 
-local function get_element_effect_multiplier(state, element_id)
+function combat.get_element_effect_multiplier(state, element_id)
   local rank = get_element_rank(state, element_id)
   if rank <= 0 then
     return 0
@@ -4770,7 +5415,7 @@ local function get_element_effect_multiplier(state, element_id)
   return 1 + ((rank - 1) * 0.18)
 end
 
-local function get_element_proc_chance(state, element_id)
+function combat.get_element_proc_chance(state, element_id)
   local rank = get_element_rank(state, element_id)
   if rank <= 0 then
     return 0
@@ -4779,7 +5424,7 @@ local function get_element_proc_chance(state, element_id)
   return math.min(0.60, 0.10 + (rank * 0.02))
 end
 
-local function get_electric_arc_count(state)
+function combat.get_electric_arc_count(state)
   local rank = get_element_rank(state, "electric")
   if rank <= 0 then
     return 0
@@ -4794,8 +5439,8 @@ get_element_effect_summary = function(state, element_id)
     return nil
   end
 
-  local chance = format_percent(get_element_proc_chance(state, element_id), 1)
-  local multiplier = get_element_effect_multiplier(state, element_id)
+  local chance = format_percent(apply_luck_to_chance(state, combat.get_element_proc_chance(state, element_id)), 1)
+  local multiplier = combat.get_element_effect_multiplier(state, element_id)
 
   if element_id == "fire" then
     return chance .. " proc, " .. format_number(20 * multiplier, 1) .. "% shot fire damage"
@@ -4804,9 +5449,9 @@ get_element_effect_summary = function(state, element_id)
   if element_id == "electric" then
     return chance
       .. " proc, "
-      .. tostring(get_electric_arc_count(state))
+      .. tostring(combat.get_electric_arc_count(state))
       .. " arc"
-      .. (get_electric_arc_count(state) == 1 and "" or "s")
+      .. (combat.get_electric_arc_count(state) == 1 and "" or "s")
       .. ", "
       .. format_number(25 * multiplier, 1)
       .. "% shot electric damage"
@@ -4824,7 +5469,7 @@ get_element_effect_summary = function(state, element_id)
   return chance .. " proc"
 end
 
-local function draw_element_feedback(state, element_id, surface, from, to)
+function combat.draw_element_feedback(state, element_id, surface, from, to)
   if not state or not surface or not from or not to then
     return
   end
@@ -4837,18 +5482,17 @@ local function draw_element_feedback(state, element_id, surface, from, to)
   state._last_element_visual_tick[element_id] = game.tick
 
   if element_id == "fire" then
-    draw_attack_line(surface, from, to, { 1, 0.28, 0.05 }, 1, 10)
-    draw_effect_sprite(surface, to, "virtual-signal/signal-fire", 0.26, 12)
+    combat.draw_attack_line(surface, from, to, { 1, 0.28, 0.05 }, 1, 10)
+    combat.draw_effect_sprite(surface, to, "virtual-signal/signal-fire", 0.26, 12)
   elseif element_id == "electric" then
-    draw_attack_line(surface, from, to, { 0.35, 0.75, 1 }, 1, 10)
-    draw_effect_sprite(surface, to, "virtual-signal/signal-lightning", 0.25, 12)
+    combat.draw_effect_sprite(surface, to, "virtual-signal/signal-lightning", 0.25, 12)
   elseif element_id == "explosive" then
-    draw_attack_line(surface, from, to, { 1, 0.58, 0.15 }, 1, 10)
-    draw_effect_sprite(surface, to, "virtual-signal/signal-explosion", 0.25, 12)
+    combat.draw_attack_line(surface, from, to, { 1, 0.58, 0.15 }, 1, 10)
+    combat.draw_effect_sprite(surface, to, "virtual-signal/signal-explosion", 0.25, 12)
   end
 end
 
-local function get_active_elements(state)
+function combat.get_active_elements(state)
   local evolution = ensure_evolution_state(state)
   local elements = {}
   for slot = 1, 2 do
@@ -4859,8 +5503,8 @@ local function get_active_elements(state)
   return elements
 end
 
-local function has_element_pair(state, a, b)
-  local elements = get_active_elements(state)
+function combat.has_element_pair(state, a, b)
+  local elements = combat.get_active_elements(state)
   if #elements < 2 then
     return false
   end
@@ -4868,94 +5512,36 @@ local function has_element_pair(state, a, b)
   return (elements[1] == a and elements[2] == b) or (elements[1] == b and elements[2] == a)
 end
 
-local function apply_evolution_damage_effects(event, turret, state, base_damage)
-  if not event.entity or not event.entity.valid or base_damage <= 0 then
-    return
-  end
-
-  local force = turret.force
-  local target = event.entity
+function combat.apply_element_effects_to_target(turret, state, target, base_damage, force, source_position)
   local upgrade_damage = 0
+  local flags = {
+    fire = false,
+    electric = false,
+    explosive = false
+  }
 
-  local bonus_damage = get_base_rank(state, "damage") * 0.5
-  if bonus_damage > 0 and apply_runtime_damage(target, bonus_damage, force, "physical") then
-    upgrade_damage = upgrade_damage + bonus_damage
-    record_damage_contribution(event, turret, bonus_damage)
-  end
-
-  local crit_chance = get_base_rank(state, "crit_chance") * 0.0025
-  if chance_roll(crit_chance) then
-    local crit_damage = base_damage * (0.50 + (get_base_rank(state, "crit_damage") * 0.01))
-    if apply_runtime_damage(target, crit_damage, force, "physical") then
-      upgrade_damage = upgrade_damage + crit_damage
-      record_damage_contribution(event, turret, crit_damage)
-    end
-  end
-
-  if target.valid then
-    local double_shot_rank = get_augment_rank(state, "double_shot")
-    if double_shot_rank > 0 and chance_roll(double_shot_rank * 0.04) then
-      local line_surface = safe_read(target, "surface")
-      local line_from = safe_read(turret, "position")
-      local line_to = safe_read(target, "position")
-      if apply_runtime_damage(target, base_damage, force, "physical") then
-        upgrade_damage = upgrade_damage + base_damage
-        record_damage_contribution(event, turret, base_damage)
-        draw_attack_line(line_surface, line_from, line_to, { 1, 0.92, 0.45 }, 2, 14)
-      end
-    end
-  end
-
-  if not target.valid then
-    if upgrade_damage > 0 then
-      state.damage = (state.damage or 0) + upgrade_damage
-      sync_turret_progression(state)
-      local siphon_rate = (get_base_rank(state, "siphon") * 0.004)
-      heal_turret(turret, (base_damage + upgrade_damage) * siphon_rate)
-    end
-    return
-  end
-
-  local bounce_rank = get_augment_rank(state, "bounce")
-  local bounce_chance = bounce_rank * 0.05
-  if bounce_rank > 0 and chance_roll(bounce_chance) then
-    local bounce_surface = safe_read(target, "surface")
-    local bounce_from = safe_read(target, "position")
-    local bounce_target = find_nearby_enemy(bounce_surface, bounce_from, force, 6, target)
-    local bounce_to = safe_read(bounce_target, "position")
-    if bounce_target and apply_runtime_damage(bounce_target, base_damage * 0.35, force, "physical") then
-      upgrade_damage = upgrade_damage + (base_damage * 0.35)
-      draw_attack_line(bounce_surface, bounce_from, bounce_to, { 1, 0.85, 0.25 }, 2, 18)
-    end
-  end
-
-  local fire_active = false
-  local electric_active = false
-  local explosive_active = false
-
-  for _, element_id in ipairs(get_active_elements(state)) do
-    if not target.valid then
+  for _, element_id in ipairs(combat.get_active_elements(state)) do
+    if not target or not target.valid then
       break
     end
 
     if element_is_powered(state, element_id) then
-      local element_multiplier = get_element_effect_multiplier(state, element_id)
-      local element_proc_chance = get_element_proc_chance(state, element_id)
+      local element_multiplier = combat.get_element_effect_multiplier(state, element_id)
+      local element_proc_chance = apply_luck_to_chance(state, combat.get_element_proc_chance(state, element_id))
       local effect_surface = safe_read(target, "surface")
       local effect_position = safe_read(target, "position")
-      local turret_position = safe_read(turret, "position")
-      draw_element_feedback(state, element_id, effect_surface, turret_position, effect_position)
+      local visual_from = source_position or safe_read(turret, "position")
+      combat.draw_element_feedback(state, element_id, effect_surface, visual_from, effect_position)
 
-      if element_id == "fire" and chance_roll(element_proc_chance) then
-        fire_active = true
+      if element_id == "fire" and combat.chance_roll(element_proc_chance) then
+        flags.fire = true
         local amount = base_damage * 0.20 * element_multiplier
-        if apply_runtime_damage(target, amount, force, "fire") then
+        if combat.apply_tracked_runtime_damage(target, amount, force, "fire", turret) then
           upgrade_damage = upgrade_damage + amount
-          record_damage_contribution(event, turret, amount)
-          draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.45, 24)
+          combat.draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.45, 24)
         end
-      elseif element_id == "electric" and chance_roll(element_proc_chance) then
-        electric_active = true
+      elseif element_id == "electric" and combat.chance_roll(element_proc_chance) then
+        flags.electric = true
         local arc_surface = safe_read(target, "surface")
         local arc_from = safe_read(target, "position")
         local amount = base_damage * 0.25 * element_multiplier
@@ -4968,8 +5554,8 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
         if target_unit_number then
           excluded[target_unit_number] = true
         end
-        for _ = 1, get_electric_arc_count(state) do
-          local arc_target = find_nearby_enemy(arc_surface, arc_from, force, 7, excluded)
+        for _ = 1, combat.get_electric_arc_count(state) do
+          local arc_target = combat.find_nearby_enemy(arc_surface, arc_from, force, 7, excluded)
           local arc_to = safe_read(arc_target, "position")
           if not arc_target then
             break
@@ -4982,14 +5568,14 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
           if arc_unit_number then
             excluded[arc_unit_number] = true
           end
-          if apply_runtime_damage(arc_target, amount, force, "electric") then
+          if combat.apply_tracked_runtime_damage(arc_target, amount, force, "electric", turret) then
             upgrade_damage = upgrade_damage + amount
-            draw_attack_line(arc_surface, arc_from, arc_to, { 0.35, 0.75, 1 }, 2, 18)
-            draw_effect_sprite(arc_surface, arc_to, "virtual-signal/signal-lightning", 0.45, 24)
+            combat.draw_attack_line(arc_surface, arc_from, arc_to, { 0.35, 0.75, 1 }, 2, 18)
+            combat.draw_effect_sprite(arc_surface, arc_to, "virtual-signal/signal-lightning", 0.45, 24)
           end
         end
-      elseif element_id == "explosive" and chance_roll(element_proc_chance) then
-        explosive_active = true
+      elseif element_id == "explosive" and combat.chance_roll(element_proc_chance) then
+        flags.explosive = true
         local splashed = 0
         local splash_radius = 3 + math.min(3, get_element_rank(state, "explosive") * 0.15)
         local splash_surface = safe_read(target, "surface")
@@ -5000,15 +5586,15 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
             { splash_position.x + splash_radius, splash_position.y + splash_radius }
           }
         }) or {}
-        create_short_effect(splash_surface, "explosion", splash_position)
-        draw_effect_sprite(splash_surface, splash_position, "virtual-signal/signal-explosion", 0.45, 24)
+        combat.create_short_effect(splash_surface, "explosion", splash_position)
+        combat.draw_effect_sprite(splash_surface, splash_position, "virtual-signal/signal-explosion", 0.45, 24)
         for _, nearby in pairs(entities) do
           if splashed >= 4 then
             break
           end
           if nearby.valid and nearby ~= target and safe_read(nearby, "health") and nearby.force ~= force then
             local amount = base_damage * 0.20 * element_multiplier
-            if apply_runtime_damage(nearby, amount, force, "explosion") then
+            if combat.apply_tracked_runtime_damage(nearby, amount, force, "explosion", turret) then
               upgrade_damage = upgrade_damage + amount
               splashed = splashed + 1
             end
@@ -5018,44 +5604,126 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
     end
   end
 
-  if not target.valid then
-    fire_active = false
-    electric_active = false
-    explosive_active = false
+  if not target or not target.valid then
+    flags.fire = false
+    flags.electric = false
+    flags.explosive = false
   end
 
-  if fire_active and electric_active and has_element_pair(state, "fire", "electric") then
+  return upgrade_damage, flags
+end
+
+function combat.apply_combo_effects_to_target(turret, state, target, base_damage, force, flags)
+  if not target or not target.valid or not flags then
+    return 0
+  end
+
+  local upgrade_damage = 0
+  if flags.fire and flags.electric and combat.has_element_pair(state, "fire", "electric") then
     local stormfire = base_damage * 0.15
     local effect_surface = safe_read(target, "surface")
     local effect_position = safe_read(target, "position")
-    if apply_runtime_damage(target, stormfire, force, "fire") then
+    if combat.apply_tracked_runtime_damage(target, stormfire, force, "fire", turret) then
       upgrade_damage = upgrade_damage + stormfire
-      record_damage_contribution(event, turret, stormfire)
-      draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.55, 30)
+      combat.draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.55, 30)
     end
-  elseif fire_active and explosive_active and has_element_pair(state, "fire", "explosive") then
+  elseif flags.fire and flags.explosive and combat.has_element_pair(state, "fire", "explosive") then
     local incendiary = base_damage * 0.20
     local effect_surface = safe_read(target, "surface")
     local effect_position = safe_read(target, "position")
-    if apply_runtime_damage(target, incendiary, force, "fire") then
+    if combat.apply_tracked_runtime_damage(target, incendiary, force, "fire", turret) then
       upgrade_damage = upgrade_damage + incendiary
-      record_damage_contribution(event, turret, incendiary)
-      draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.55, 30)
+      combat.draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.55, 30)
     end
-  elseif electric_active and explosive_active and has_element_pair(state, "electric", "explosive") then
+  elseif flags.electric and flags.explosive and combat.has_element_pair(state, "electric", "explosive") then
     local shock_surface = safe_read(target, "surface")
     local shock_from = safe_read(target, "position")
-    local shockburst_target = find_nearby_enemy(shock_surface, shock_from, force, 8, target)
+    local shockburst_target = combat.find_nearby_enemy(shock_surface, shock_from, force, 8, target)
     local shock_to = safe_read(shockburst_target, "position")
-    if shockburst_target and apply_runtime_damage(shockburst_target, base_damage * 0.25, force, "electric") then
+    if shockburst_target and combat.apply_tracked_runtime_damage(shockburst_target, base_damage * 0.25, force, "electric", turret) then
       upgrade_damage = upgrade_damage + (base_damage * 0.25)
-      draw_attack_line(shock_surface, shock_from, shock_to, { 0.35, 0.75, 1 }, 2, 18)
+      combat.draw_attack_line(shock_surface, shock_from, shock_to, { 0.35, 0.75, 1 }, 2, 18)
     end
+  end
+
+  return upgrade_damage
+end
+
+function combat.apply_evolution_damage_effects(event, turret, state, base_damage)
+  if not event.entity or not event.entity.valid or base_damage <= 0 then
+    return
+  end
+
+  local force = turret.force
+  local target = event.entity
+  local upgrade_damage = 0
+
+  local specialization = get_specialization(state)
+  local damage_multiplier = specialization and (specialization.damage_multiplier or 1) or 1
+  local bonus_damage = get_base_rank(state, "damage") * 0.5 * damage_multiplier
+  local shot_damage = base_damage + bonus_damage
+
+  if bonus_damage > 0 and combat.apply_tracked_runtime_damage(target, bonus_damage, force, "physical", turret) then
+    upgrade_damage = upgrade_damage + bonus_damage
+  end
+
+  local crit_chance = apply_luck_to_chance(state, get_base_rank(state, "crit_chance") * 0.0025)
+  if combat.chance_roll(crit_chance) then
+    local crit_damage = shot_damage * (0.50 + (get_base_rank(state, "crit_damage") * 0.01))
+    if combat.apply_tracked_runtime_damage(target, crit_damage, force, "physical", turret) then
+      upgrade_damage = upgrade_damage + crit_damage
+    end
+  end
+
+  if target.valid then
+    local double_shot_rank = get_augment_rank(state, "double_shot")
+    if double_shot_rank > 0 and combat.chance_roll(apply_luck_to_chance(state, double_shot_rank * 0.04)) then
+      local line_surface = safe_read(target, "surface")
+      local line_from = safe_read(turret, "position")
+      local line_to = safe_read(target, "position")
+      if combat.apply_tracked_runtime_damage(target, shot_damage, force, "physical", turret) then
+        upgrade_damage = upgrade_damage + shot_damage
+        combat.schedule_attack_line(line_surface, line_from, line_to, { 1, 0.92, 0.45 }, 3, 12, 3)
+      end
+    end
+  end
+
+  if not target.valid then
+    if upgrade_damage > 0 then
+      state.damage = (state.damage or 0) + upgrade_damage
+      sync_turret_progression(state)
+      local siphon_rate = (get_base_rank(state, "siphon") * 0.004)
+      combat.heal_turret(turret, (base_damage + upgrade_damage) * siphon_rate)
+    end
+    return
+  end
+
+  local bounce_rank = get_augment_rank(state, "bounce")
+  local bounce_chance = apply_luck_to_chance(state, bounce_rank * 0.05)
+  if bounce_rank > 0 and combat.chance_roll(bounce_chance) then
+    local bounce_surface = safe_read(target, "surface")
+    local bounce_from = safe_read(target, "position")
+    local bounce_target = combat.find_nearby_enemy(bounce_surface, bounce_from, force, 6, target)
+    local bounce_to = safe_read(bounce_target, "position")
+    local bounce_damage = shot_damage * 0.35
+    if bounce_target and combat.apply_tracked_runtime_damage(bounce_target, bounce_damage, force, "physical", turret) then
+      upgrade_damage = upgrade_damage + bounce_damage
+      combat.draw_attack_line(bounce_surface, bounce_from, bounce_to, { 1, 0.85, 0.25 }, 2, 18)
+      local bounced_element_damage, bounced_flags = combat.apply_element_effects_to_target(turret, state, bounce_target, bounce_damage, force, bounce_from)
+      upgrade_damage = upgrade_damage + bounced_element_damage
+      upgrade_damage = upgrade_damage + combat.apply_combo_effects_to_target(turret, state, bounce_target, bounce_damage, force, bounced_flags)
+    end
+  end
+
+  if target.valid then
+    local element_damage, element_flags = combat.apply_element_effects_to_target(turret, state, target, shot_damage, force, safe_read(turret, "position"))
+    upgrade_damage = upgrade_damage + element_damage
+    upgrade_damage = upgrade_damage + combat.apply_combo_effects_to_target(turret, state, target, shot_damage, force, element_flags)
   end
 
   local siphon_rate = (get_base_rank(state, "siphon") * 0.004)
   if siphon_rate > 0 then
-    heal_turret(turret, (base_damage + upgrade_damage) * siphon_rate)
+    combat.heal_turret(turret, (base_damage + upgrade_damage) * siphon_rate)
   end
 
   if upgrade_damage > 0 then
@@ -5198,6 +5866,10 @@ function handlers.on_gui_click(event)
     install_core(player)
   elseif action == "extract-core" then
     extract_core(player)
+  elseif action == "platform-install-core" then
+    install_core_from_platform(player, tags.slot)
+  elseif action == "platform-send-core" then
+    send_core_to_platform(player)
   elseif action == "cycle-label-color" then
     local entity, state = get_open_turret_state(player)
     if state then
@@ -5321,7 +5993,7 @@ function handlers.on_entity_damaged(event)
     local state = get_turret_state(cause)
     if state then
       state.damage = state.damage + damage
-      apply_evolution_damage_effects(event, cause, state, damage)
+      combat.apply_evolution_damage_effects(event, cause, state, damage)
       sync_turret_progression(state)
       update_name_render(cause, state)
     end
@@ -5373,6 +6045,36 @@ function handlers.on_turret_removed(event)
   remove_turret_state(entity, false)
 end
 
+function handlers.on_space_platform_mined_entity(event)
+  local entity = event.entity
+  if not is_gun_turret(entity) then
+    return
+  end
+
+  local profile = detach_profile_from_turret(entity)
+  if profile then
+    local inserted = 0
+    local buffer = event.buffer
+    if buffer and buffer.valid then
+      local ok, result = pcall(function()
+        return buffer.insert(make_chip_item_stack(profile))
+      end)
+      if ok and result then
+        inserted = result
+      end
+    end
+    if inserted <= 0 then
+      spill_chip_item(entity, profile)
+    end
+  end
+
+  remove_turret_state(entity, false)
+end
+
+function handlers.on_tick()
+  combat.process_pending_visuals()
+end
+
 function handlers.on_refresh_tick()
   ensure_storage()
   cleanup_target_damage()
@@ -5420,7 +6122,13 @@ script.on_event(defines.events.on_entity_damaged, handlers.on_entity_damaged)
 script.on_event(defines.events.on_entity_died, handlers.on_entity_died)
 script.on_event(defines.events.on_pre_player_mined_item, handlers.on_turret_removed)
 script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed)
+script.on_event(defines.events.on_tick, handlers.on_tick)
 script.on_nth_tick(REFRESH_TICKS, handlers.on_refresh_tick)
+
+local space_platform_mined_event = defines.events.on_space_platform_mined_entity
+if space_platform_mined_event then
+  script.on_event(space_platform_mined_event, handlers.on_space_platform_mined_entity)
+end
 
 commands.add_command("turret-xp", { "turret-xp.command-help" }, function(command)
   local player = command.player_index and game.get_player(command.player_index)

@@ -4,7 +4,7 @@
 
 Current portal playtest:
 
-0.6.0 is published on the Factorio Mod Portal.
+0.6.1 is published on the Factorio Mod Portal.
 
 Preferred once published:
 
@@ -61,6 +61,8 @@ scripts/install-local.sh
 37. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
 38. Spend points while scrolled down in the Evolution panel and confirm the panel stays near the clicked row.
 39. Select the turret and run `/turret-xp` as a fallback path.
+40. On a space platform, place one or more Veteran Cores in the platform hub inventory, open a platform turret, and confirm the panel lists the exact available cores.
+41. Install a specific listed platform core, then send it back to the hub and confirm the same profile returns when hub inventory space is available.
 
 ## Report Back
 
@@ -81,4 +83,5 @@ Useful feedback:
 - Which element, specialization, or augment felt confusing or too weak?
 - Did Range ranks and specialization multipliers feel meaningful without breaking the turret role?
 - Did XP, kills, evolution points, and ranks update at the pace you expected?
+- Did the platform hub core selector make it clear which Veteran Core was being installed?
 - Did the mod fail to load, desync, or throw a runtime error?

@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first playable progression layer for vanilla gun turrets. Version 0.6.0 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, keeps material progression inserter-fed through a hidden turret-tile input that routes ammo back into the turret, and keeps specialization/range choices as prototype-backed turret stat variants.
+`turret_xp` adds the first playable progression layer for vanilla gun turrets. Version 0.6.1 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, keeps material progression inserter-fed through a hidden turret-tile input that routes ammo back into the turret, and keeps specialization/range choices as prototype-backed turret stat variants.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -15,10 +15,12 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - Current prototype: runtime-only XP tracking and a `flib`-styled right-side relative GUI panel for vanilla `gun-turret`.
 - Ordinary gun turrets stay stackable and do not gain progression until a Veteran Core is installed.
 - A Veteran Core is an `item-with-tags` profile item. Installing it makes the current turret unique; extracting or mining the turret returns the core with its XP, upgrades, element projects, custom name, and display-label preference.
-- Installing a Veteran Core creates a hidden feeder input on the turret tile. Inserters can feed the turret area; ammo is routed into the turret ammo inventory, element unlock projects consume matching resources from the hidden input, and unlocked elements use a furnace-like resource burner that fills to capacity and buffers valid excess fuel instead of spilling it.
+- On space platforms, the Turret XP panel can list Veteran Cores stored in the platform hub inventory, install the exact selected core into the opened turret, and send an installed core back to the hub when there is room.
+- Installing a Veteran Core creates a hidden feeder input on the turret tile only while the turret needs material input. Inserters can feed the turret area; ammo is routed into the turret ammo inventory, element unlock projects consume matching resources from the hidden input, and unlocked elements use a furnace-like resource burner that closes at the visible fuel cap instead of keeping ghost fuel.
 - XP is awarded from damage dealt by gun turrets with an installed core plus proportional kill credit based on damage contribution.
 - XP pacing is configurable with runtime-global mod settings.
 - The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, and lifetime damage.
+- Stat rows expand into formula form when research, core additive bonuses, Range ranks, expected proc output, or specialization multipliers affect the value.
 - Research bonuses are shown in a vanilla-like base plus bonus format where available.
 - HP and range show the real quality-info marker with a custom hover summary derived from Factorio quality prototypes. The native Factoriopedia popover is not exposed as a reusable runtime GUI widget.
 - The Evolution panel replaces the experimental skill tree with five list sections: core upgrades, first element, specialization, powerful augments, and second element/combo.
@@ -97,7 +99,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.6.0 is the first playable pass after playtest feedback: active custom stats are dynamic, element fuel is coherent, element mastery costs core points, specialization multipliers are visible, floating labels use display-panel behavior where possible, and respec fully resets evolution choices.
+- V0.6.1 is the current first playable patch after playtest feedback: element fuel closes at the visible cap, active custom stats are dynamic, element mastery costs core points, Luck affects proc odds, specialization formulas are visible, space-platform turrets can pick cores from the platform hub, floating labels use display-panel behavior where possible, and respec fully resets evolution choices.
 - The Veteran Core item currently uses vanilla layered icons; dedicated art can replace it later without changing the profile model.
 - V0.5.x is still a first playable draft of list-based evolution. Core upgrades, augments, elements, and combos still need playtest balance and effect readability passes.
 - The failed embedded skill-tree drag spike was removed. The current progression UI is intentionally simple while the gameplay model is tested.

@@ -90,7 +90,7 @@ The first playable releases should make progression visible and testable: select
 
 - Treat the release as the first playable Veteran Core turret playthrough.
 - Hide dev controls by default and add `/turret-xp-dev` to toggle them for testing.
-- Rework unlocked element fuel into a coherent furnace-like burner: inserters fill to capacity, valid excess fuel is buffered instead of spilled, one item burns for 30 seconds, and element effects run while burning.
+- Rework unlocked element fuel into a coherent furnace-like burner: inserters fill to capacity, the hidden input closes at the cap instead of holding ghost excess, one item burns for 30 seconds, and element effects run while burning.
 - Add element mastery ranks that spend regular core points after unlock.
 - Show active custom stats only when present, with specialization multipliers next to affected values.
 - Preserve Evolution list context after allocating points by scrolling back to the clicked row.
@@ -98,6 +98,16 @@ The first playable releases should make progression visible and testable: select
 - Show explicit technical effect text for augments and specialization choices.
 - Fix killed-target runtime crashes in upgrade visual feedback.
 - Enlarge allocation controls so the `+` button is not cropped.
+
+## V0.6.1 Scope
+
+- Patch the first playable line after fuel/proc/platform feedback.
+- Add formula-style stats for additive bonuses and specialization multipliers.
+- Add Luck as a proc-odds augment.
+- Make Double Shot and elemental impacts clearer through lightweight visual feedback.
+- Make bounced hits able to proc element effects, including Electric arcs from the bounced impact.
+- Keep hidden element fuel capped without buffering excess valid fuel.
+- Support explicit Veteran Core selection from a space-platform hub inventory and sending installed cores back to that hub.
 
 ## Open Product Questions
 

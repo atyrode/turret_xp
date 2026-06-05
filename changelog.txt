@@ -1,4 +1,20 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.6.1
+Date: 2026-06-05
+  Changes:
+    - Added a Luck augment that increases crit, bounce, double-shot, and element proc odds.
+    - Updated the stats panel to show real formulas when research, core additives, Range ranks, or specialization multipliers apply.
+    - Updated estimated DPS to include specialization math, core damage, and expected crit, double-shot, and bounce output.
+    - Made bounced bullets run element proc logic, so powered Electric can arc from a bounced hit.
+    - Changed electric hit feedback so the effect starts at the bullet impact point instead of drawing a turret-origin beam.
+    - Made Double Shot show a delayed second tracer so the proc reads as a second shot.
+    - Added space-platform core management: the turret panel can list exact Veteran Cores from the platform hub inventory, install the chosen one, and send an installed core back to the hub.
+  Bugfixes:
+    - Fixed hidden element fuel input so it closes at the visible fuel cap instead of accepting extra ghost fuel.
+    - Fixed active second-element projects so the existing element's fuel can still be accepted while the project is in progress.
+    - Added a space-platform mining fallback so mined platform turrets return the installed Veteran Core to the mining buffer when the event is available.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.6.0
 Date: 2026-06-05
   Changes:
@@ -7,7 +23,7 @@ Date: 2026-06-05
     - Changed specialization Range math so Range augment ranks are multiplied by the chosen specialization instead of being added after the multiplier.
     - Moved the floating-label color button next to the name field and kept label visibility toggles on the row below.
     - Replaced rendered floating text with hidden display-panel label entities when available, reusing Factorio's display-panel text background behavior.
-    - Reworked element fuel input to fill the burner to capacity and buffer valid excess fuel in the hidden input instead of spilling it around the turret.
+    - Reworked element fuel input to fill the burner to capacity without spilling valid excess fuel around the turret.
     - Switched element burn bars to Factorio's vanilla `burning_progressbar` style.
     - Added visible, throttled elemental impact/tracer feedback using vanilla fire, lightning, and explosion visual language.
     - Added element mastery ranks: unlocked elements start at rank 1, and each further rank costs 5 regular core points.

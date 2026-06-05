@@ -121,7 +121,12 @@ feeder.next_upgrade = nil
 feeder.fast_replaceable_group = nil
 feeder.max_health = 250
 feeder.inventory_size = 1
-feeder.inventory_type = "normal"
+feeder.inventory_type = "with_custom_stack_size"
+feeder.inventory_properties = {
+  stack_size_min = 1,
+  stack_size_max = 1,
+  with_bar = true
+}
 feeder.collision_box = { { -0.35, -0.35 }, { 0.35, 0.35 } }
 feeder.selection_box = { { -0.5, -0.5 }, { 0.5, 0.5 } }
 feeder.collision_mask = { layers = {}, not_colliding_with_itself = true }

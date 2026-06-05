@@ -73,6 +73,16 @@ storage.turret_xp = {
   feeders = {
     [unit_number] = <chip_id>
   },
+  pending_visuals = {
+    {
+      tick = <MapTick>,
+      surface = <LuaSurface>,
+      from = <MapPosition>,
+      to = <MapPosition>,
+      color = <Color>,
+      width = <double>
+    }
+  },
   targets = {
     [unit_number] = {
       total_damage = 0,
@@ -104,9 +114,11 @@ storage.turret_xp = {
 
 - `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, cache per-target damage contribution, and apply runtime evolution damage effects.
 - `on_entity_died`: award proportional kill credit to contributing core profiles, track visible kills including scripted element-damage kills, and delete installed core profiles when a turret dies.
-- Feeder lifecycle: create a hidden Veteran Core feeder inventory colocated with installed-core turrets, forward ammo from that hidden inventory into the turret ammo inventory, consume project materials and element burner fuel from it, buffer valid excess fuel, spill unsupported non-ammo items, and destroy/spill it when the core leaves the turret.
+- Feeder lifecycle: create a hidden Veteran Core feeder inventory colocated with installed-core turrets only while input is needed, forward ammo from that hidden inventory into the turret ammo inventory, consume project materials and element burner fuel from it, close the input at the visible fuel cap, spill unsupported non-ammo items, and destroy/spill it when the core leaves the turret.
+- Platform core transfer: when the opened turret is on a space platform, list Veteran Cores from the platform hub inventory for exact install selection and allow sending the installed core back to that hub.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined gun turrets.
+- `on_space_platform_mined_entity`, when available: return/spill installed Veteran Cores for platform-mined gun turrets.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI.
 - `on_gui_closed`: remove the panel.
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open.

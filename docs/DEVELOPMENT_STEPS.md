@@ -175,9 +175,19 @@
 - [x] Fix invalid killed-target reads in runtime upgrade visual feedback.
 - [x] Enlarge allocation buttons to avoid cropped `+` labels.
 
+## Completed For V0.6.1
+
+- [x] Add formula-style stat rows for additive bonuses and specialization multipliers.
+- [x] Add Luck as a proc-odds augment and apply it to crits, bounce, double shot, and elements.
+- [x] Make bounced hits run element proc logic and show electric feedback from bullet impact points.
+- [x] Make Double Shot read visually as a delayed second shot.
+- [x] Close the hidden feeder input at the visible element fuel cap instead of accepting extra ghost fuel.
+- [x] Keep existing element fuel accepted while a second-element project is active.
+- [x] Add explicit platform hub Veteran Core selection and return controls for space-platform turrets.
+
 ## Likely Next Work
 
-- Playtest V0.6.0 from the Mod Portal as the first playable run after feedback integration, especially around hidden input ammo forwarding, burner-style element fuel, range stacking, specialization multipliers, element mastery value, label controls, and high-level turret combat performance.
+- Playtest V0.6.1 from the Mod Portal as the first playable run after feedback integration, especially around hidden input ammo forwarding, burner-style element fuel, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, label controls, and high-level turret combat performance.
 - Plan a Mod Portal identity pass: final name, short description, category, and a simple Factorio-native portal image that avoids generic AI-generated key art.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
