@@ -73,7 +73,7 @@ Current prototype:
 
 This is the first playable release line intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, furnace-like element fuel, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.
 
-0.5.0 hides dev tools behind `/turret-xp-dev`, keeps the Evolution panel near the clicked row after point allocation, reworks element fuel into a low-refill burner, and fixes killed-target visual feedback crashes.
+0.5.0 hides dev tools behind \`/turret-xp-dev\`, keeps the Evolution panel near the clicked row after point allocation, reworks element fuel into a low-refill burner, and fixes killed-target visual feedback crashes.
 
 Source:
 ${source_url}
