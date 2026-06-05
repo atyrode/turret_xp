@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.5
+Date: 2026-06-05
+  Features:
+    - Reworked the Veteran Core control into a tag-preserving slot-style interaction: click to take the installed core to the cursor, click with a carried core to install or swap, and Shift/Ctrl-click to move the installed core to inventory.
+    - Added core-carried floating label options for color, size, and whether the level suffix is shown.
+  Changes:
+    - Made the dev controls compact so they no longer overflow the panel width.
+    - Removed the redundant visible "Core core-N" profile summary line from the installed core panel.
+  Notes:
+    - `entity-gui-lib` was inspected for this slot work, but its current inventory transfer helper moves name/count/quality only and would drop Veteran Core item tags, so the core slot uses local tag-preserving transfer logic for now.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.4
 Date: 2026-06-05
   Bugfixes:

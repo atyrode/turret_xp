@@ -13,7 +13,7 @@ local GUI = {
   core_actions = MOD_PREFIX .. "core-actions",
   core_name = MOD_PREFIX .. "core-name",
   core_name_visible = MOD_PREFIX .. "core-name-visible",
-  core_profile = MOD_PREFIX .. "core-profile",
+  core_name_level_visible = MOD_PREFIX .. "core-name-level-visible",
   level = MOD_PREFIX .. "level",
   xp = MOD_PREFIX .. "xp",
   xp_bar = MOD_PREFIX .. "xp-bar",
@@ -199,7 +199,15 @@ local DEFAULTS = {
 local COLOR = {
   caption = { 0.62, 0.62, 0.62 },
   muted = { 0.74, 0.74, 0.74 },
-  bonus = { 0.58, 0.82, 0.38 }
+  bonus = { 0.58, 0.82, 0.38 },
+  label_presets = {
+    { name = "Gold", color = { 1, 0.86, 0.46 } },
+    { name = "White", color = { 1, 1, 1 } },
+    { name = "Green", color = { 0.45, 1, 0.45 } },
+    { name = "Blue", color = { 0.45, 0.78, 1 } },
+    { name = "Red", color = { 1, 0.36, 0.30 } },
+    { name = "Purple", color = { 0.86, 0.48, 1 } }
+  }
 }
 
 local REFRESH_TICKS = 60
@@ -567,7 +575,10 @@ local function create_blank_profile()
     evolution = {},
     chip_quality = "normal",
     custom_name = "",
-    show_name_label = false
+    show_name_label = false,
+    show_label_level = true,
+    label_color = { 1, 0.86, 0.46 },
+    label_scale = 0.9
   }
 end
 
@@ -586,6 +597,11 @@ local function normalize_profile(profile)
   profile.chip_quality = profile.chip_quality or "normal"
   profile.custom_name = profile.custom_name or ""
   profile.show_name_label = profile.show_name_label == true
+  profile.show_label_level = profile.show_label_level ~= false
+  if type(profile.label_color) ~= "table" then
+    profile.label_color = { 1, 0.86, 0.46 }
+  end
+  profile.label_scale = math.max(0.5, math.min(2, tonumber(profile.label_scale) or 0.9))
   ensure_evolution_state(profile)
   sync_turret_progression(profile)
   return profile
@@ -689,6 +705,9 @@ local function serialize_profile(profile)
     chip_quality = profile.chip_quality or "normal",
     custom_name = profile.custom_name or "",
     show_name_label = profile.show_name_label == true,
+    show_label_level = profile.show_label_level ~= false,
+    label_color = copy_serializable(profile.label_color or { 1, 0.86, 0.46 }),
+    label_scale = profile.label_scale or 0.9,
     xp = profile.xp or 0,
     total_xp = profile.total_xp or 0,
     level = profile.level or 1,
@@ -717,6 +736,9 @@ local function deserialize_profile(data)
     profile.chip_quality = data.chip_quality or "normal"
     profile.custom_name = data.custom_name or ""
     profile.show_name_label = data.show_name_label == true
+    profile.show_label_level = data.show_label_level ~= false
+    profile.label_color = copy_serializable(data.label_color or { 1, 0.86, 0.46 })
+    profile.label_scale = data.label_scale or 0.9
     profile.xp = data.xp or 0
     profile.total_xp = data.total_xp or 0
     profile.level = data.level or 1
@@ -864,6 +886,10 @@ local function get_profile_label_text(profile)
     return nil
   end
 
+  if profile.show_label_level == false then
+    return name
+  end
+
   return name .. " (lvl " .. tostring(profile.level or 1) .. ")"
 end
 
@@ -892,6 +918,8 @@ local function update_name_render(entity, profile)
       }
       profile.name_render.surface = entity.surface
       profile.name_render.forces = { entity.force }
+      profile.name_render.color = profile.label_color or { 1, 0.86, 0.46 }
+      profile.name_render.scale = profile.label_scale or 0.9
     end)
     if ok then
       return
@@ -907,8 +935,8 @@ local function update_name_render(entity, profile)
         entity = entity,
         offset = { 0, -1.55 }
       },
-      color = { 1, 0.86, 0.46 },
-      scale = 0.9,
+      color = profile.label_color or { 1, 0.86, 0.46 },
+      scale = profile.label_scale or 0.9,
       font = "default-bold",
       alignment = "center",
       vertical_alignment = "middle",
@@ -2258,7 +2286,7 @@ local function add_dev_controls_panel(parent)
   local panel = parent.add({
     type = "frame",
     name = GUI.dev,
-    direction = "horizontal",
+    direction = "vertical",
     style = "deep_frame_in_shallow_frame"
   })
   set_style(panel, "horizontally_stretchable", true)
@@ -2266,7 +2294,14 @@ local function add_dev_controls_panel(parent)
   set_style(panel, "bottom_margin", 6)
   set_style(panel, "vertical_align", "center")
 
-  local label = panel.add({
+  local top = panel.add({
+    type = "flow",
+    direction = "horizontal"
+  })
+  set_style(top, "horizontally_stretchable", true)
+  set_style(top, "vertical_align", "center")
+
+  local label = top.add({
     type = "label",
     caption = "Dev",
     style = "caption_label"
@@ -2274,25 +2309,33 @@ local function add_dev_controls_panel(parent)
   set_style(label, "font", "default-bold")
   set_style(label, "right_margin", 4)
 
-  panel.add({
+  local buttons = panel.add({
+    type = "table",
+    column_count = 2
+  })
+  set_style(buttons, "horizontally_stretchable", true)
+  set_style(buttons, "horizontal_spacing", 4)
+  set_style(buttons, "vertical_spacing", 4)
+
+  buttons.add({
     type = "button",
-    caption = "+1 level",
+    caption = "+1",
     tooltip = { "turret-xp.dev-level-1-tooltip" },
     tags = {
       turret_xp_action = "dev-level",
       levels = 1
     }
   })
-  panel.add({
+  buttons.add({
     type = "button",
-    caption = "+5 levels",
+    caption = "+5",
     tooltip = { "turret-xp.dev-level-5-tooltip" },
     tags = {
       turret_xp_action = "dev-level",
       levels = 5
     }
   })
-  panel.add({
+  buttons.add({
     type = "button",
     caption = "Materials",
     tooltip = { "turret-xp.dev-materials-tooltip" },
@@ -2300,7 +2343,7 @@ local function add_dev_controls_panel(parent)
       turret_xp_action = "dev-complete-project"
     }
   })
-  panel.add({
+  buttons.add({
     type = "button",
     caption = "Reset",
     tooltip = { "turret-xp.dev-reset-core-tooltip" },
@@ -2318,16 +2361,6 @@ local function update_core_panel(root, player, entity, state)
 
   local key = core_panel_key(player, state)
   if (core_panel.tags or {}).key == key then
-    local profile_line = find_gui_element(core_panel, GUI.core_profile)
-    if profile_line and state then
-      profile_line.caption = {
-        "turret-xp.core-profile-summary",
-        state.chip_id or "-",
-        state.level or 1,
-        state.kills or 0,
-        format_number(state.damage or 0, 0)
-      }
-    end
     if state then
       update_name_render(entity, state)
     end
@@ -2346,23 +2379,26 @@ local function update_core_panel(root, player, entity, state)
   set_style(top, "horizontally_stretchable", true)
   set_style(top, "vertical_align", "center")
 
-  local icon = top.add({
+  local slot_definition = {
     type = "sprite-button",
     name = GUI.core_slot,
-    sprite = "item/" .. CHIP_NAME,
-    quality = state and (state.chip_quality or "normal") or "normal",
-    elem_tooltip = {
-      type = "item-with-quality",
-      name = CHIP_NAME,
-      quality = state and (state.chip_quality or "normal") or "normal"
-    },
     tooltip = state and { "turret-xp.extract-core-tooltip" } or { "turret-xp.install-core-tooltip" },
     tags = {
-      turret_xp_action = state and "extract-core" or "install-core"
-    },
-    enabled = state ~= nil or find_carried_chip_stack(player) ~= nil
-  })
-  set_element_style(icon, state and "flib_slot_button_green" or "slot_button")
+      turret_xp_action = "core-slot"
+    }
+  }
+  if state then
+    slot_definition.sprite = "item/" .. CHIP_NAME
+    slot_definition.quality = state.chip_quality or "normal"
+    slot_definition.elem_tooltip = {
+      type = "item-with-quality",
+      name = CHIP_NAME,
+      quality = state.chip_quality or "normal"
+    }
+  end
+
+  local icon = top.add(slot_definition)
+  set_element_style(icon, "slot_button")
   set_style(icon, "size", 40)
 
   local label = top.add({
@@ -2420,21 +2456,6 @@ local function update_core_panel(root, player, entity, state)
     return
   end
 
-  local profile_line = core_panel.add({
-    type = "label",
-    name = GUI.core_profile,
-    caption = {
-      "turret-xp.core-profile-summary",
-      state.chip_id or "-",
-      state.level or 1,
-      state.kills or 0,
-      format_number(state.damage or 0, 0)
-    },
-    style = "caption_label"
-  })
-  set_style(profile_line, "font_color", COLOR.muted)
-  set_style(profile_line, "single_line", false)
-
   local name_flow = core_panel.add({
     type = "flow",
     direction = "horizontal"
@@ -2465,6 +2486,81 @@ local function update_core_panel(root, player, entity, state)
     state = state.show_name_label == true,
     tags = {
       turret_xp_action = "toggle-core-label"
+    }
+  })
+
+  name_flow.add({
+    type = "checkbox",
+    name = GUI.core_name_level_visible,
+    caption = "Level",
+    state = state.show_label_level ~= false,
+    tags = {
+      turret_xp_action = "toggle-label-level"
+    }
+  })
+
+  local label_controls = core_panel.add({
+    type = "flow",
+    direction = "horizontal"
+  })
+  set_style(label_controls, "top_margin", 4)
+  set_style(label_controls, "vertical_align", "center")
+
+  label_controls.add({
+    type = "label",
+    caption = "Label",
+    style = "caption_label"
+  })
+
+  local presets = COLOR.label_presets
+  local color_index = 1
+  for index, preset in ipairs(presets) do
+    local state_color = state.label_color or {}
+    if math.abs((state_color[1] or 0) - preset.color[1]) < 0.01
+      and math.abs((state_color[2] or 0) - preset.color[2]) < 0.01
+      and math.abs((state_color[3] or 0) - preset.color[3]) < 0.01
+    then
+      color_index = index
+      break
+    end
+  end
+  local color = presets[color_index].color
+  local color_button = label_controls.add({
+    type = "button",
+    caption = presets[color_index].name,
+    tooltip = { "turret-xp.label-color-tooltip" },
+    tags = {
+      turret_xp_action = "cycle-label-color"
+    }
+  })
+  set_style(color_button, "font_color", color)
+  set_style(color_button, "minimal_width", 70)
+
+  label_controls.add({
+    type = "button",
+    caption = "-",
+    tooltip = { "turret-xp.label-size-minus-tooltip" },
+    tags = {
+      turret_xp_action = "adjust-label-size",
+      delta = -0.1
+    }
+  })
+
+  local size_label = label_controls.add({
+    type = "label",
+    caption = string.format("%.1fx", state.label_scale or 0.9),
+    style = "caption_label"
+  })
+  set_style(size_label, "minimal_width", 38)
+  set_style(size_label, "horizontal_align", "center")
+
+  label_controls.add({
+    type = "button",
+    caption = "+",
+    tooltip = { "turret-xp.label-size-plus-tooltip" },
+    tags = {
+      turret_xp_action = "adjust-label-size",
+      delta = 0.1
     }
   })
 
@@ -3383,6 +3479,125 @@ local function extract_core(player)
   refresh_open_turret(player, new_entity or entity)
 end
 
+local function handle_core_slot_click(player, event)
+  local entity, state = get_open_turret_state(player)
+  if not entity then
+    return
+  end
+
+  local cursor = player.cursor_stack
+  local cursor_has_stack = cursor and cursor.valid_for_read
+
+  if state then
+    if cursor_has_stack then
+      if cursor.name ~= CHIP_NAME then
+        player.print({ "turret-xp.core-slot-reject" })
+        refresh_open_turret(player, entity)
+        return
+      end
+
+      local incoming_profile = read_profile_from_chip_stack(cursor)
+      local outgoing_stack = make_chip_item_stack(state)
+      local outgoing_profile = detach_profile_from_turret(entity)
+      if not outgoing_profile then
+        refresh_open_turret(player, entity)
+        return
+      end
+
+      local installed = install_profile_on_turret(entity, incoming_profile)
+      if not installed then
+        install_profile_on_turret(entity, outgoing_profile)
+        refresh_open_turret(player, entity)
+        return
+      end
+
+      cursor.set_stack(outgoing_stack)
+      local new_entity = ensure_specialized_turret_body(entity, installed)
+      if new_entity and new_entity ~= entity then
+        player.opened = new_entity
+        remember_open_turret(player, new_entity)
+        build_turret_gui(player, new_entity)
+        return
+      end
+
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    if event.shift or event.control then
+      extract_core(player)
+      return
+    end
+
+    local stack = make_chip_item_stack(state)
+    local ok = pcall(function()
+      cursor.set_stack(stack)
+    end)
+    if not ok or not cursor.valid_for_read then
+      player.print({ "turret-xp.no-room-for-core" })
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local profile = detach_profile_from_turret(entity)
+    if not profile then
+      cursor.clear()
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local new_entity = swap_turret_body(entity, BASE_TURRET_NAME)
+    if new_entity and new_entity ~= entity then
+      player.opened = new_entity
+      remember_open_turret(player, new_entity)
+      build_turret_gui(player, new_entity)
+      return
+    end
+
+    refresh_open_turret(player, new_entity or entity)
+    return
+  end
+
+  if cursor_has_stack then
+    if cursor.name ~= CHIP_NAME then
+      player.print({ "turret-xp.core-slot-reject" })
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local profile = read_profile_from_chip_stack(cursor) or create_blank_profile()
+    if not remove_one_chip_stack(cursor) then
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local installed = install_profile_on_turret(entity, profile)
+    if not installed then
+      cursor.set_stack(make_chip_item_stack(profile))
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local new_entity = ensure_specialized_turret_body(entity, installed)
+    if new_entity and new_entity ~= entity then
+      player.opened = new_entity
+      remember_open_turret(player, new_entity)
+      build_turret_gui(player, new_entity)
+      return
+    end
+
+    refresh_open_turret(player, entity)
+    return
+  end
+
+  if event.shift or event.control then
+    install_core(player)
+  else
+    player.print({ "turret-xp.no-core-to-install" })
+    refresh_open_turret(player, entity)
+  end
+end
+
 local function dev_create_core(player)
   local profile = create_blank_profile()
   if not insert_chip_item(player, profile) then
@@ -4194,10 +4409,42 @@ local function on_gui_click(event)
 
   local tags = element.tags or {}
   local action = tags.turret_xp_action
-  if action == "install-core" then
+  if action == "core-slot" then
+    handle_core_slot_click(player, event)
+  elseif action == "install-core" then
     install_core(player)
   elseif action == "extract-core" then
     extract_core(player)
+  elseif action == "cycle-label-color" then
+    local entity, state = get_open_turret_state(player)
+    if state then
+      local presets = COLOR.label_presets
+      local next_index = 1
+      for index, preset in ipairs(presets) do
+        local color = state.label_color or {}
+        if math.abs((color[1] or 0) - preset.color[1]) < 0.01
+          and math.abs((color[2] or 0) - preset.color[2]) < 0.01
+          and math.abs((color[3] or 0) - preset.color[3]) < 0.01
+        then
+          next_index = (index % #presets) + 1
+          break
+        end
+      end
+      state.label_color = {
+        presets[next_index].color[1],
+        presets[next_index].color[2],
+        presets[next_index].color[3]
+      }
+      update_name_render(entity, state)
+      refresh_open_turret(player, entity)
+    end
+  elseif action == "adjust-label-size" then
+    local entity, state = get_open_turret_state(player)
+    if state then
+      state.label_scale = math.max(0.5, math.min(2, (tonumber(state.label_scale) or 0.9) + (tonumber(tags.delta) or 0)))
+      update_name_render(entity, state)
+      refresh_open_turret(player, entity)
+    end
   elseif action == "dev-create-core" then
     dev_create_core(player)
   elseif action == "allocate-base" then
@@ -4226,13 +4473,20 @@ local function on_gui_checked_state_changed(event)
   end
 
   local tags = element.tags or {}
-  if tags.turret_xp_action ~= "toggle-core-label" then
+  local player = game.get_player(event.player_index)
+  if not player then
     return
   end
 
-  local player = game.get_player(event.player_index)
-  if player then
+  if tags.turret_xp_action == "toggle-core-label" then
     set_core_label_visibility(player, element.state == true)
+  elseif tags.turret_xp_action == "toggle-label-level" then
+    local entity, state = get_open_turret_state(player)
+    if state then
+      state.show_label_level = element.state == true
+      update_name_render(entity, state)
+      refresh_open_turret(player, entity)
+    end
   end
 end
 

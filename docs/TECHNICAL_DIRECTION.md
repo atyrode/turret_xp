@@ -7,6 +7,7 @@
 - Runtime XP settings plus a required `flib >= 0.16.4` dependency for shared GUI styles.
 - V0.4.3 adds a real adjacent feeder inventory entity for Veteran Core material inputs. V0.4.2 added local hidden gun-turret variants for specialization choices, while the `item-with-tags` Veteran Core carries portable progression profiles.
 - V0.4.4 caches derived level progress so normal combat applies XP deltas instead of recalculating from level 1 on every damage event.
+- V0.4.5 uses local tag-preserving Veteran Core slot transfer logic. `entity-gui-lib` inventory display was inspected, but its current transfer helper copies name/count/quality and would not preserve Veteran Core item tags.
 - Python packaging script reused from `player_quality`.
 - Shell scripts for checks, packaging, local install, GitHub release, and Mod Portal publishing.
 - Static GitHub Pages homepage served from `docs/index.html`.
@@ -105,6 +106,7 @@
 - The panel updates named elements in place every 60 ticks; new GUI work should preserve stable hover/read behavior.
 - `flib` adds a dependency, but it is common and handled by the in-game dependency manager.
 - `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than the current relative-panel polish needs.
+- `entity-gui-lib` may still be useful for non-profile inventories or a full GUI replacement, but do not use its current inventory transfer helper for `item-with-tags` Veteran Cores unless tag preservation is added or wrapped.
 - `quality-lib` may be valuable once Turret XP owns quality-scaled custom stats, but adding it should be an intentional dependency decision because it changes prototype/data-stage behavior.
 - The website can become stale if it stays hand-maintained; keep generation from mod metadata/docs on the roadmap before the site grows.
 

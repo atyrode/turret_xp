@@ -131,9 +131,17 @@
 - [x] Add user Respec and dev Reset controls.
 - [x] Replace cropped text allocation buttons with vanilla-style icon buttons and useful hover text.
 
+## Completed For V0.4.5
+
+- [x] Inspect `entity-gui-lib` inventory display and document why its current transfer helper is not safe for tagged Veteran Cores.
+- [x] Add tag-preserving slot-style cursor install, extract, and swap behavior for Veteran Cores.
+- [x] Add floating label color, size, and level-suffix controls.
+- [x] Compact dev controls so they fit within the Turret XP panel.
+- [x] Remove redundant installed-core profile id text from the visible panel.
+
 ## Likely Next Work
 
-- Playtest V0.4.4 from the Mod Portal and integrate feedback, especially around feeder placement, inserter usability, and high-level turret combat performance.
+- Playtest V0.4.5 from the Mod Portal and integrate feedback, especially around core slot feel, label controls, feeder placement, inserter usability, and high-level turret combat performance.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.

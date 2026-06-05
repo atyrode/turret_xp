@@ -61,6 +61,12 @@ The first playable releases should make progression visible and testable: select
 - Add user respec and dev reset controls.
 - Polish allocation button visuals and hover text.
 
+## V0.4.5 Scope
+
+- Make the Veteran Core control behave more like an inventory slot while preserving tagged profile data.
+- Add floating label color, size, and level-suffix controls.
+- Compact dev controls and remove redundant installed-core profile id text from the panel.
+
 ## Open Product Questions
 
 - Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, or infinite mastery?

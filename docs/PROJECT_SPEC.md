@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.4.4
+## Version 0.4.5
 
-V0.4.4 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates a nearby inserter-fed Veteran Core feeder inventory for element materials. Specialization choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
+V0.4.5 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates a nearby inserter-fed Veteran Core feeder inventory for element materials. Specialization choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
 
 V0.4.0 was published to the Factorio Mod Portal for playtesting before this follow-up release.
 
@@ -41,8 +41,9 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - First draft recipe: `20` electronic circuits, `10` steel plates, `40` copper cable, and `2` repair packs.
 - Installing a carried core removes the item and binds its profile to the opened gun turret.
 - Extracting a core returns the profile item to the player inventory.
+- The core slot supports tag-preserving cursor transfer and swap behavior for installed/carried Veteran Cores.
 - If the turret is mined, the normal gun turret item returns through vanilla behavior and the mod separately returns/spills the Veteran Core.
-- The profile can be named. If the player enables the label, the world label renders as `name (lvl N)` above the current turret body.
+- The profile can be named. If the player enables the label, the world label renders above the current turret body, with configurable color, size, and optional level suffix.
 - Installing a core creates a `turret-xp-veteran-feeder` entity near the turret when an adjacent tile is available.
 - Extracting or mining a core destroys the feeder and spills any leftover feeder contents.
 
@@ -89,6 +90,6 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.4.4`
+- Current version: `0.4.5`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`
