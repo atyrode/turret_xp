@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.4.5
+## Version 0.4.6
 
-V0.4.5 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates a nearby inserter-fed Veteran Core feeder inventory for element materials. Specialization choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
+V0.4.6 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates an invisible inserter-fed input on the turret tile for element materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Specialization choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
 
 V0.4.0 was published to the Factorio Mod Portal for playtesting before this follow-up release.
 
@@ -25,7 +25,8 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - The Respec button refunds core upgrade and augment point allocations. It does not reset element unlocks, element mastery, material projects, or specialization.
 - Powerful augment ranks unlock at level 30, cost one augment point each, and earn one augment point every ten levels.
 - Element choices do not cost points. They start a single-resource material project that permanently assigns the element when complete.
-- Material projects and element mastery milestones consume from the installed core's Veteran Core feeder inventory, not from the player inventory.
+- Material projects and element mastery milestones consume from the installed core's hidden turret-tile input, not from the player inventory.
+- Inserter-fed ammo that lands in the hidden input is moved into the turret ammo inventory; unrelated non-ammo items are spilled back out.
 - Unlocked elements can continue consuming their matching resource to advance element mastery milestones.
 - Specialization unlocks at level 20 and is a free one-time choice.
 - Specialization swaps the turret body between vanilla `gun-turret` and hidden `turret-xp-gun-turret-*` variants. Removing the Veteran Core returns the turret body to vanilla `gun-turret`.
@@ -43,16 +44,17 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - Extracting a core returns the profile item to the player inventory.
 - The core slot supports tag-preserving cursor transfer and swap behavior for installed/carried Veteran Cores.
 - If the turret is mined, the normal gun turret item returns through vanilla behavior and the mod separately returns/spills the Veteran Core.
-- The profile can be named. If the player enables the label, the world label renders above the current turret body, with configurable color, size, and optional level suffix.
-- Installing a core creates a `turret-xp-veteran-feeder` entity near the turret when an adjacent tile is available.
-- Extracting or mining a core destroys the feeder and spills any leftover feeder contents.
+- The profile can be named. If the player enables the label, the world label renders above the current turret body, with configurable color and optional level suffix.
+- Installing a core creates a hidden `turret-xp-veteran-feeder` inventory entity colocated with the turret.
+- The hidden feeder is not a player-facing container. It accepts inserter drops, forwards ammo into the turret, and only keeps resources needed for the current element project or mastery milestone.
+- Extracting or mining a core destroys the hidden feeder and spills any leftover feeder contents.
 
 ## Evolution Sections
 
 - `Core upgrades`: unlocked from level 1. Includes Damage, Regeneration, Lifesteal, Crit Chance, and Crit Damage.
 - `First element`: unlocks at level 10. Starts a material project for Explosive, Fire, or Electric.
 - `Specialization`: unlocks at level 20. Picks Sniper, Machine Gun, Bulwark, or Brawler for free.
-- `Powerful augments`: unlocks at level 30. Includes Bullet Bounce, Piercing Follow-through, and Longshot Optics. Augment points are earned every ten levels.
+- `Powerful augments`: unlocks at level 30. Includes Bullet Bounce, Double Shot, and Veteran Training. Augment points are earned every ten levels.
 - `Second element and combo`: unlocks at level 40. Starts a second material project and derives a combo from the two selected elements.
 
 ## Combat Effects
@@ -67,8 +69,8 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - Bulwark is a real turret body variant: range `17`, cooldown `8`, damage modifier `0.65`, max HP `1200`.
 - Brawler is a real turret body variant: range `7`, cooldown `8`, damage modifier `4.0`, max HP `650`.
 - Bullet Bounce can damage a nearby enemy.
-- Piercing Follow-through can damage an enemy behind the target.
-- Longshot Optics adds damage when the target is near the turret's current range limit. It benefits from the current turret body's real range.
+- Double Shot can apply a second physical hit to the same target.
+- Veteran Training increases combat XP gained from damage and kill credit.
 - Fire can add fire damage.
 - Electric can arc damage to a nearby enemy.
 - Explosive can splash damage around the target.
@@ -80,8 +82,8 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - The mod creates a frame in `player.gui.relative` anchored to `defines.relative_gui_type.turret_gui` on the right side.
 - If relative anchoring fails, the panel falls back to `player.gui.left`.
 - `on_gui_closed` destroys the panel and clears the remembered player/turret link.
-- The panel includes a Veteran Core slot-style control for install/extract, dev core creation, naming, and floating-label toggle.
-- The Evolution panel includes feeder status: feeder availability, slot usage, and relevant element resources currently waiting in the feeder.
+- The panel includes a Veteran Core slot-style control for install/extract, dev core creation, naming, floating-label toggle, label color, and optional level suffix.
+- The Evolution panel does not show feeder status; material project panels show the current requirement and progress.
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and panel styles.
 - The XP bar uses a custom solid progressbar style defined in `data.lua`.
@@ -90,6 +92,6 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.4.5`
+- Current version: `0.4.6`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

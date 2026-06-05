@@ -139,9 +139,20 @@
 - [x] Compact dev controls so they fit within the Turret XP panel.
 - [x] Remove redundant installed-core profile id text from the visible panel.
 
+## Completed For V0.4.6
+
+- [x] Replace the visible adjacent feeder chest with an invisible hidden input colocated with the turret.
+- [x] Forward ammo from the hidden input into the turret ammo inventory and spill unsupported non-ammo items.
+- [x] Remove feeder status from the Evolution panel.
+- [x] Fix the label color button rebuild and standardize floating labels on the larger readable size.
+- [x] Polish core upgrade rows with separate rank/effect text and compact vanilla-gray allocation buttons.
+- [x] Show element material requirements with rich-text item icons.
+- [x] Show `No ammo` instead of `Unknown` when damage cannot be estimated because no ammo is loaded.
+- [x] Replace Longshot and Piercing augments with Double Shot and Veteran Training.
+
 ## Likely Next Work
 
-- Playtest V0.4.5 from the Mod Portal and integrate feedback, especially around core slot feel, label controls, feeder placement, inserter usability, and high-level turret combat performance.
+- Playtest V0.4.6 from the Mod Portal and integrate feedback, especially around hidden input ammo forwarding, core slot feel, label controls, and high-level turret combat performance.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.

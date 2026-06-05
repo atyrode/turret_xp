@@ -67,9 +67,19 @@ The first playable releases should make progression visible and testable: select
 - Add floating label color, size, and level-suffix controls.
 - Compact dev controls and remove redundant installed-core profile id text from the panel.
 
+## V0.4.6 Scope
+
+- Remove the visible adjacent feeder chest from play.
+- Keep material progression inserter-fed by using an invisible hidden input colocated with the turret.
+- Forward inserter-fed ammo from the hidden input into the turret ammo inventory so normal turret ammo logistics still work.
+- Remove feeder status from the Evolution panel.
+- Standardize floating labels to the larger readable size, keep color and level-suffix controls, and move labels higher above the turret.
+- Polish core upgrade rows, allocation button styling, material requirement icons, and no-ammo damage text.
+- Replace Longshot and Piercing augments with Double Shot and Veteran Training.
+
 ## Open Product Questions
 
 - Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, or infinite mastery?
 - Should destroyed turrets destroy their installed core, drop a damaged core, or have a recovery chance?
 - Should XP eventually include waves survived, ammo consumed, or other behavior beyond damage and kill credit?
-- Should the feeder stay as an adjacent port, or should a future proxy-container pass make the turret tile itself feel like the feed target?
+- Does the hidden turret-tile input plus ammo-forwarding behavior feel reliable with inserters in practical layouts, or does the material input need a clearer visible design later?

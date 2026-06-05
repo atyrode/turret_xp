@@ -29,7 +29,6 @@ local GUI = {
   dev = MOD_PREFIX .. "dev",
   skill_points = MOD_PREFIX .. "skill-points",
   evolution = MOD_PREFIX .. "evolution",
-  feeder_status = MOD_PREFIX .. "feeder-status",
   active_elements = MOD_PREFIX .. "active-elements",
   active_specialization = MOD_PREFIX .. "active-specialization",
   active_combo = MOD_PREFIX .. "active-combo",
@@ -161,19 +160,19 @@ local AUGMENTS = {
     id = "bounce",
     sprite = "item/piercing-rounds-magazine",
     name = "Bullet bounce",
-    description = "Chance for a shot to bounce to a nearby enemy."
+    description = "+5% chance per rank for a shot to bounce to a nearby enemy."
   },
   {
-    id = "piercing",
-    sprite = "item/uranium-rounds-magazine",
-    name = "Piercing follow-through",
-    description = "Chance for a shot to hit another enemy behind the target."
+    id = "double_shot",
+    sprite = "item/firearm-magazine",
+    name = "Double shot",
+    description = "+4% chance per rank to fire a second shot at the same target."
   },
   {
-    id = "longshot",
-    sprite = "entity/radar",
-    name = "Longshot optics",
-    description = "Bonus damage against targets near the turret's current range limit."
+    id = "veteran_training",
+    sprite = "item/automation-science-pack",
+    name = "Veteran training",
+    description = "+5% combat XP gained per rank."
   }
 }
 
@@ -352,6 +351,8 @@ local function ensure_evolution_state(state)
   for _, augment in ipairs(AUGMENTS) do
     evolution.augments[augment.id] = math.max(0, math.floor(tonumber(evolution.augments[augment.id]) or 0))
   end
+  evolution.augments.piercing = nil
+  evolution.augments.longshot = nil
 
   if evolution.specialization and not SPECIALIZATION_BY_ID[evolution.specialization] then
     evolution.specialization = nil
@@ -514,8 +515,10 @@ local function sync_turret_progression(state)
   ensure_evolution_state(state)
 
   local xp_settings = get_xp_settings()
-  local total_xp = (((state.damage or 0) * xp_settings.xp_per_damage)
-    + ((state.kill_credit or 0) * xp_settings.xp_per_kill_credit))
+  local veteran_training_rank = get_augment_rank(state, "veteran_training")
+  local combat_xp = ((state.damage or 0) * xp_settings.xp_per_damage)
+    + ((state.kill_credit or 0) * xp_settings.xp_per_kill_credit)
+  local total_xp = (combat_xp * (1 + (veteran_training_rank * 0.05)))
     + (state.dev_xp or 0)
   local settings_key = tostring(xp_settings.xp_per_damage)
     .. ":"
@@ -524,6 +527,8 @@ local function sync_turret_progression(state)
     .. tostring(xp_settings.level_base_xp)
     .. ":"
     .. tostring(xp_settings.level_growth)
+    .. ":"
+    .. tostring(veteran_training_rank)
   local cached_total_xp = state._progress_total_xp
   local level = nil
   local xp = nil
@@ -578,7 +583,7 @@ local function create_blank_profile()
     show_name_label = false,
     show_label_level = true,
     label_color = { 1, 0.86, 0.46 },
-    label_scale = 0.9
+    label_scale = 2
   }
 end
 
@@ -601,7 +606,7 @@ local function normalize_profile(profile)
   if type(profile.label_color) ~= "table" then
     profile.label_color = { 1, 0.86, 0.46 }
   end
-  profile.label_scale = math.max(0.5, math.min(2, tonumber(profile.label_scale) or 0.9))
+  profile.label_scale = 2
   ensure_evolution_state(profile)
   sync_turret_progression(profile)
   return profile
@@ -707,7 +712,7 @@ local function serialize_profile(profile)
     show_name_label = profile.show_name_label == true,
     show_label_level = profile.show_label_level ~= false,
     label_color = copy_serializable(profile.label_color or { 1, 0.86, 0.46 }),
-    label_scale = profile.label_scale or 0.9,
+    label_scale = profile.label_scale or 2,
     xp = profile.xp or 0,
     total_xp = profile.total_xp or 0,
     level = profile.level or 1,
@@ -738,7 +743,7 @@ local function deserialize_profile(data)
     profile.show_name_label = data.show_name_label == true
     profile.show_label_level = data.show_label_level ~= false
     profile.label_color = copy_serializable(data.label_color or { 1, 0.86, 0.46 })
-    profile.label_scale = data.label_scale or 0.9
+    profile.label_scale = data.label_scale or 2
     profile.xp = data.xp or 0
     profile.total_xp = data.total_xp or 0
     profile.level = data.level or 1
@@ -914,12 +919,12 @@ local function update_name_render(entity, profile)
       profile.name_render.text = text
       profile.name_render.target = {
         entity = entity,
-        offset = { 0, -1.55 }
+        offset = { 0, -2.6 }
       }
       profile.name_render.surface = entity.surface
       profile.name_render.forces = { entity.force }
       profile.name_render.color = profile.label_color or { 1, 0.86, 0.46 }
-      profile.name_render.scale = profile.label_scale or 0.9
+      profile.name_render.scale = profile.label_scale or 2
     end)
     if ok then
       return
@@ -933,10 +938,10 @@ local function update_name_render(entity, profile)
       surface = entity.surface,
       target = {
         entity = entity,
-        offset = { 0, -1.55 }
+        offset = { 0, -2.6 }
       },
       color = profile.label_color or { 1, 0.86, 0.46 },
-      scale = profile.label_scale or 0.9,
+      scale = profile.label_scale or 2,
       font = "default-bold",
       alignment = "center",
       vertical_alignment = "middle",
@@ -1270,13 +1275,16 @@ safe_read = function(object, property)
   return nil
 end
 
-function feeder.get_inventory(entity)
+function feeder.get_entity_inventory(entity, inventory_id)
   if not entity or not entity.valid then
+    return nil
+  end
+  if not inventory_id then
     return nil
   end
 
   local ok, inventory = pcall(function()
-    return entity.get_inventory(defines.inventory.chest)
+    return entity.get_inventory(inventory_id)
   end)
 
   if ok and inventory and inventory.valid then
@@ -1286,35 +1294,49 @@ function feeder.get_inventory(entity)
   return nil
 end
 
-function feeder.spill_contents(entity, position)
-  local inventory = feeder.get_inventory(entity)
-  if not inventory then
+function feeder.get_inventory(entity)
+  return feeder.get_entity_inventory(entity, defines.inventory.chest)
+end
+
+function feeder.spill_stack(entity, stack, position)
+  if not entity or not entity.valid or not stack or not stack.valid_for_read then
     return
   end
 
+  local item = {
+    name = stack.name,
+    count = stack.count
+  }
+  pcall(function()
+    if stack.quality and stack.quality.name then
+      item.quality = stack.quality.name
+    end
+  end)
+  pcall(function()
+    entity.surface.spill_item_stack({
+      position = position or entity.position,
+      stack = item,
+      enable_looted = true,
+      allow_belts = false
+    })
+  end)
+  stack.clear()
+end
+
+function feeder.spill_inventory_contents(entity, inventory, position)
+  if not inventory then
+    return
+  end
   for index = 1, #inventory do
     local stack = inventory[index]
     if stack and stack.valid_for_read then
-      local item = {
-        name = stack.name,
-        count = stack.count
-      }
-      pcall(function()
-        if stack.quality and stack.quality.name then
-          item.quality = stack.quality.name
-        end
-      end)
-      pcall(function()
-        entity.surface.spill_item_stack({
-          position = position or entity.position,
-          stack = item,
-          enable_looted = true,
-          allow_belts = false
-        })
-      end)
-      stack.clear()
+      feeder.spill_stack(entity, stack, position)
     end
   end
+end
+
+function feeder.spill_contents(entity, position)
+  feeder.spill_inventory_contents(entity, feeder.get_inventory(entity), position)
 end
 
 function feeder.destroy(state, position, spill)
@@ -1347,42 +1369,42 @@ function feeder.find_position(entity)
     return nil
   end
 
-  local offsets = {
-    { 1.5, 0 },
-    { -1.5, 0 },
-    { 0, 1.5 },
-    { 0, -1.5 },
-    { 1.5, 1.5 },
-    { -1.5, 1.5 },
-    { 1.5, -1.5 },
-    { -1.5, -1.5 }
+  return {
+    x = entity.position.x,
+    y = entity.position.y
   }
+end
 
-  for _, offset in ipairs(offsets) do
-    local position = {
-      x = entity.position.x + offset[1],
-      y = entity.position.y + offset[2]
-    }
-    local ok, can_place = pcall(function()
-      return entity.surface.can_place_entity({
-        name = FEEDER_NAME,
-        position = position,
-        force = entity.force
-      })
-    end)
-    if ok and can_place then
-      return position
+function feeder.get_allowed_items(state)
+  local allowed = {}
+  if not state then
+    return allowed
+  end
+
+  local evolution = ensure_evolution_state(state)
+  local project = evolution.element_project
+  if project then
+    for _, requirement in ipairs(project.requirements or {}) do
+      local delivered = (project.delivered and project.delivered[requirement.name]) or 0
+      if delivered < requirement.count then
+        allowed[requirement.name] = true
+      end
+    end
+    return allowed
+  end
+
+  for _, element_id in ipairs(evolution.elements or {}) do
+    local element = ELEMENT_BY_ID[element_id]
+    local mastery = element and evolution.element_mastery[element_id] or nil
+    if mastery and (mastery.rank or 0) > 0 then
+      local required = get_element_requirement_count(element, (mastery.rank or 0) + 1)
+      if (mastery.delivered or 0) < required then
+        allowed[element.resource] = true
+      end
     end
   end
 
-  local ok, position = pcall(function()
-    return entity.surface.find_non_colliding_position(FEEDER_NAME, entity.position, 4, 0.5)
-  end)
-  if ok then
-    return position
-  end
-
-  return nil
+  return allowed
 end
 
 function feeder.ensure(entity, state)
@@ -1396,7 +1418,7 @@ function feeder.ensure(entity, state)
   if current and current.valid and current.name == FEEDER_NAME and current.surface == entity.surface then
     local dx = math.abs((current.position.x or 0) - (entity.position.x or 0))
     local dy = math.abs((current.position.y or 0) - (entity.position.y or 0))
-    if dx <= 4 and dy <= 4 then
+    if dx <= 0.1 and dy <= 0.1 then
       if current.unit_number and state.chip_id then
         storage.turret_xp.feeders[current.unit_number] = state.chip_id
       end
@@ -1474,111 +1496,89 @@ function feeder.remove_items(state, item_name, count)
   return 0
 end
 
-function feeder.describe(state)
-  local entity = state and state.feeder
-  if state and is_gun_turret(state.entity) then
-    entity = feeder.ensure(state.entity, state) or entity
-  end
-  local inventory = feeder.get_inventory(entity)
-  if not inventory then
-    return {
-      valid = false,
-      used = 0,
-      total = 0,
-      summary = { "turret-xp.feeder-missing" }
-    }
+function feeder.make_item_stack(stack, count)
+  if not stack or not stack.valid_for_read then
+    return nil
   end
 
-  local used = 0
-  local counts = {}
-  for index = 1, #inventory do
-    local stack = inventory[index]
-    if stack and stack.valid_for_read then
-      used = used + 1
-      counts[stack.name] = (counts[stack.name] or 0) + stack.count
-    end
-  end
-
-  local parts = {}
-  for _, element in ipairs(ELEMENTS) do
-    local count = counts[element.resource] or 0
-    if count > 0 then
-      parts[#parts + 1] = "[item=" .. element.resource .. "] " .. tostring(math.floor(count + 0.5))
-    end
-  end
-
-  local summary = #parts > 0 and table.concat(parts, "   ") or { "turret-xp.feeder-empty" }
-  return {
-    valid = true,
-    used = used,
-    total = #inventory,
-    summary = summary
+  local item = {
+    name = stack.name,
+    count = count or stack.count
   }
+  pcall(function()
+    if stack.quality and stack.quality.name then
+      item.quality = stack.quality.name
+    end
+  end)
+  return item
 end
 
-function feeder.add_status(parent, state)
-  if not parent or not parent.valid then
+function feeder.is_ammo_item(item_name)
+  local prototype = item_name and game.item_prototypes[item_name] or nil
+  if not prototype then
+    return false
+  end
+
+  local ok, ammo_category = pcall(function()
+    return prototype.ammo_category
+  end)
+  return ok and ammo_category ~= nil
+end
+
+function feeder.route_contents(state)
+  if not state or not is_gun_turret(state.entity) then
     return
   end
 
-  local status = feeder.describe(state)
-  local frame = parent.add({
-    type = "frame",
-    name = GUI.feeder_status,
-    direction = "vertical",
-    style = "inside_shallow_frame_with_padding"
-  })
-  set_style(frame, "top_margin", 6)
-  set_style(frame, "horizontally_stretchable", true)
-
-  local row = frame.add({
-    type = "flow",
-    direction = "horizontal"
-  })
-  set_style(row, "horizontally_stretchable", true)
-  set_style(row, "vertical_align", "center")
-
-  local ok = pcall(function()
-    row.add({
-      type = "sprite",
-      sprite = "entity/" .. FEEDER_NAME
-    })
-  end)
-  if not ok then
-    row.add({
-      type = "sprite",
-      sprite = "item/iron-chest"
-    })
+  local entity = state.feeder
+  entity = feeder.ensure(state.entity, state) or entity
+  local inventory = feeder.get_inventory(entity)
+  if not inventory then
+    return
   end
 
-  local title = row.add({
-    type = "label",
-    caption = { "turret-xp.feeder-title" },
-    style = "caption_label"
-  })
-  set_style(title, "font", "default-bold")
+  local turret_inventory = nil
+  pcall(function()
+    turret_inventory = state.entity.get_inventory(defines.inventory.turret_ammo)
+  end)
 
-  row.add({
-    type = "empty-widget",
-    style = "flib_horizontal_pusher"
-  })
+  local allowed_feed_items = feeder.get_allowed_items(state)
+  for index = 1, #inventory do
+    local stack = inventory[index]
+    if stack and stack.valid_for_read then
+      local item_name = stack.name
+      if turret_inventory and feeder.is_ammo_item(item_name) then
+        local item = feeder.make_item_stack(stack)
+        local inserted = 0
+        if item then
+          local ok, result = pcall(function()
+            return turret_inventory.insert(item)
+          end)
+          if ok and result then
+            inserted = result
+          end
+        end
+        if inserted > 0 then
+          local removed = feeder.make_item_stack(stack, inserted)
+          if removed then
+            pcall(function()
+              inventory.remove(removed)
+            end)
+          end
+        end
+      end
+    end
+  end
 
-  local slots = row.add({
-    type = "label",
-    caption = status.valid
-      and { "turret-xp.feeder-slots", status.used, status.total }
-      or { "turret-xp.feeder-no-slots" },
-    style = "caption_label"
-  })
-  set_style(slots, "font_color", status.valid and COLOR.muted or { 1, 0.55, 0.45 })
-
-  local contents = frame.add({
-    type = "label",
-    caption = status.summary,
-    style = "caption_label"
-  })
-  set_style(contents, "font_color", status.valid and COLOR.muted or { 1, 0.55, 0.45 })
-  set_style(contents, "single_line", false)
+  for index = 1, #inventory do
+    local stack = inventory[index]
+    if stack and stack.valid_for_read then
+      local item_name = stack.name
+      if not allowed_feed_items[item_name] and not feeder.is_ammo_item(item_name) then
+        feeder.spill_stack(entity, stack, state.entity.position)
+      end
+    end
+  end
 end
 
 local function as_array(value)
@@ -2276,7 +2276,15 @@ end
 
 local function core_panel_key(player, state)
   if state then
-    return "installed:" .. tostring(state.chip_id or "")
+    local color = state.label_color or {}
+    return table.concat({
+      "installed",
+      tostring(state.chip_id or ""),
+      tostring(state.show_label_level ~= false),
+      tostring(color[1] or ""),
+      tostring(color[2] or ""),
+      tostring(color[3] or "")
+    }, ":")
   end
 
   return "empty:" .. (find_carried_chip_stack(player) and "ready" or "none")
@@ -2536,34 +2544,6 @@ local function update_core_panel(root, player, entity, state)
   set_style(color_button, "font_color", color)
   set_style(color_button, "minimal_width", 70)
 
-  label_controls.add({
-    type = "button",
-    caption = "-",
-    tooltip = { "turret-xp.label-size-minus-tooltip" },
-    tags = {
-      turret_xp_action = "adjust-label-size",
-      delta = -0.1
-    }
-  })
-
-  local size_label = label_controls.add({
-    type = "label",
-    caption = string.format("%.1fx", state.label_scale or 0.9),
-    style = "caption_label"
-  })
-  set_style(size_label, "minimal_width", 38)
-  set_style(size_label, "horizontal_align", "center")
-
-  label_controls.add({
-    type = "button",
-    caption = "+",
-    tooltip = { "turret-xp.label-size-plus-tooltip" },
-    tags = {
-      turret_xp_action = "adjust-label-size",
-      delta = 0.1
-    }
-  })
-
   update_name_render(entity, state)
 end
 
@@ -2793,7 +2773,7 @@ local function add_row(parent, sprite, name, detail, right_caption, tags, enable
   return value
 end
 
-local function add_allocation_row(parent, sprite, name, value_caption, button_caption, tags, enabled, tooltip)
+local function add_allocation_row(parent, sprite, name, rank_caption, value_caption, button_caption, tags, enabled, tooltip)
   local row = parent.add({
     type = "table",
     column_count = 4
@@ -2814,13 +2794,25 @@ local function add_allocation_row(parent, sprite, name, value_caption, button_ca
   })
   set_style(icon, "size", 28)
 
-  local title = row.add({
+  local details = row.add({
+    type = "flow",
+    direction = "vertical"
+  })
+  set_style(details, "horizontally_stretchable", true)
+
+  local title = details.add({
     type = "label",
     caption = name,
     style = "caption_label"
   })
   set_style(title, "font", "default-bold")
-  set_style(title, "horizontally_stretchable", true)
+
+  local rank = details.add({
+    type = "label",
+    caption = rank_caption or "",
+    style = "caption_label"
+  })
+  set_style(rank, "font_color", COLOR.muted)
 
   local value = row.add({
     type = "label",
@@ -2830,30 +2822,17 @@ local function add_allocation_row(parent, sprite, name, value_caption, button_ca
   set_style(value, "font_color", COLOR.bonus)
   set_style(value, "horizontal_align", "right")
 
-  local ok, button = pcall(function()
-    return row.add({
-      type = "sprite-button",
-      sprite = "utility/add",
-      tooltip = tooltip,
-      tags = tags,
-      enabled = enabled
-    })
-  end)
+  local button = row.add({
+    type = "button",
+    caption = button_caption or "+",
+    tooltip = tooltip,
+    tags = tags,
+    enabled = enabled
+  })
 
-  if not ok or not button then
-    button = row.add({
-      type = "button",
-      caption = button_caption or "+",
-      tooltip = tooltip,
-      tags = tags,
-      enabled = enabled
-    })
-  end
-
-  set_element_style(button, enabled and "flib_slot_button_green" or "slot_button")
-  set_style(button, "size", 32)
-  set_style(button, "minimal_width", 32)
-  set_style(button, "maximal_width", 32)
+  set_style(button, "size", 30)
+  set_style(button, "minimal_width", 30)
+  set_style(button, "maximal_width", 30)
 
   return button
 end
@@ -2943,7 +2922,7 @@ end
 local function make_requirement_summary(requirements)
   local parts = {}
   for _, requirement in ipairs(requirements or {}) do
-    parts[#parts + 1] = requirement.name .. " x" .. tostring(requirement.count)
+    parts[#parts + 1] = "[item=" .. requirement.name .. "] x" .. tostring(requirement.count)
   end
 
   if #parts == 0 then
@@ -3113,7 +3092,8 @@ local function add_base_section(parent, state)
     add_allocation_row(
       section,
       upgrade.sprite,
-      upgrade.name .. "  Rank " .. tostring(rank),
+      upgrade.name,
+      "Rank " .. tostring(rank),
       upgrade.value,
       "+",
       {
@@ -3230,7 +3210,8 @@ local function add_augments_section(parent, state)
     add_allocation_row(
       section,
       augment.sprite,
-      augment.name .. "  Rank " .. tostring(rank),
+      augment.name,
+      "Rank " .. tostring(rank),
       tostring(cost) .. " AP",
       "+",
       {
@@ -3303,7 +3284,6 @@ local function update_evolution_panel(panel, state)
 
   ensure_evolution_state(state)
   add_header(evolution_panel, "Evolution", state)
-  feeder.add_status(evolution_panel, state)
 
   add_base_section(evolution_panel, state)
   add_first_element_section(evolution_panel, state)
@@ -3362,7 +3342,7 @@ local function update_turret_gui(player, entity)
     set_gui_caption(panel, GUI.damage, { "turret-xp.damage-value", format_damage_per_shot(entity, ammo_name) }, { "turret-xp.damage-tooltip" })
     set_gui_caption(panel, GUI.dps, format_estimated_dps(entity, ammo_name), { "turret-xp.dps-tooltip" })
   else
-    set_gui_caption(panel, GUI.damage, { "turret-xp.damage-unknown" }, nil)
+    set_gui_caption(panel, GUI.damage, { "turret-xp.damage-no-ammo" }, nil)
     set_gui_caption(panel, GUI.dps, "-", nil)
   end
 
@@ -3717,6 +3697,7 @@ local function allocate_augment(player, augment_id)
 
   local evolution = ensure_evolution_state(state)
   evolution.augments[augment_id] = (evolution.augments[augment_id] or 0) + 1
+  sync_turret_progression(state)
   refresh_open_turret(player, entity)
 end
 
@@ -3809,6 +3790,7 @@ local function auto_feed_open_turret(state)
     return false
   end
 
+  feeder.route_contents(state)
   local changed_project = auto_feed_element_project(state)
   local changed_mastery = auto_feed_element_mastery(state)
   return changed_project or changed_mastery
@@ -3997,28 +3979,6 @@ local function find_nearby_enemy(surface, position, force, radius, exclude)
   return nil
 end
 
-local function find_pierce_target(turret, target, force)
-  if not is_gun_turret(turret) or not target or not target.valid then
-    return nil
-  end
-
-  local tx = target.position.x - turret.position.x
-  local ty = target.position.y - turret.position.y
-  local length = math.sqrt((tx * tx) + (ty * ty))
-  if length <= 0 then
-    return nil
-  end
-
-  local nx = tx / length
-  local ny = ty / length
-  local probe = {
-    x = target.position.x + (nx * 2.5),
-    y = target.position.y + (ny * 2.5)
-  }
-
-  return find_nearby_enemy(target.surface, probe, force, 2.5, target)
-end
-
 local function draw_attack_line(surface, from, to, color, width, ttl)
   if not surface or not from or not to then
     return
@@ -4117,18 +4077,7 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
   local target = event.entity
   local upgrade_damage = 0
 
-  local bonus_multiplier = 0
-
-  local longshot_rank = get_augment_rank(state, "longshot")
-  if longshot_rank > 0 then
-    local range = get_range_for_quality(turret, get_entity_quality_name(turret)) or 0
-    local distance = get_distance(turret.position, target.position)
-    if range > 0 and distance >= range * 0.75 then
-      bonus_multiplier = bonus_multiplier + (longshot_rank * 0.08)
-    end
-  end
-
-  local bonus_damage = (base_damage * bonus_multiplier) + (get_base_rank(state, "damage") * 0.5)
+  local bonus_damage = get_base_rank(state, "damage") * 0.5
   if bonus_damage > 0 and apply_runtime_damage(target, bonus_damage, force, "physical") then
     upgrade_damage = upgrade_damage + bonus_damage
     record_damage_contribution(event, turret, bonus_damage)
@@ -4140,6 +4089,17 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
     if apply_runtime_damage(target, crit_damage, force, "physical") then
       upgrade_damage = upgrade_damage + crit_damage
       record_damage_contribution(event, turret, crit_damage)
+    end
+  end
+
+  if target.valid then
+    local double_shot_rank = get_augment_rank(state, "double_shot")
+    if double_shot_rank > 0 and chance_roll(double_shot_rank * 0.04) then
+      if apply_runtime_damage(target, base_damage, force, "physical") then
+        upgrade_damage = upgrade_damage + base_damage
+        record_damage_contribution(event, turret, base_damage)
+        draw_attack_line(target.surface, turret.position, target.position, { 1, 0.92, 0.45 }, 2, 14)
+      end
     end
   end
 
@@ -4160,15 +4120,6 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
     if bounce_target and apply_runtime_damage(bounce_target, base_damage * 0.35, force, "physical") then
       upgrade_damage = upgrade_damage + (base_damage * 0.35)
       draw_attack_line(target.surface, target.position, bounce_target.position, { 1, 0.85, 0.25 }, 2, 18)
-    end
-  end
-
-  local pierce_rank = get_augment_rank(state, "piercing")
-  if pierce_rank > 0 and chance_roll(pierce_rank * 0.05) then
-    local pierce_target = find_pierce_target(turret, target, force)
-    if pierce_target and apply_runtime_damage(pierce_target, base_damage * 0.50, force, "physical") then
-      upgrade_damage = upgrade_damage + (base_damage * 0.50)
-      draw_attack_line(target.surface, target.position, pierce_target.position, { 0.78, 0.92, 1 }, 2, 18)
     end
   end
 
@@ -4435,13 +4386,6 @@ local function on_gui_click(event)
         presets[next_index].color[2],
         presets[next_index].color[3]
       }
-      update_name_render(entity, state)
-      refresh_open_turret(player, entity)
-    end
-  elseif action == "adjust-label-size" then
-    local entity, state = get_open_turret_state(player)
-    if state then
-      state.label_scale = math.max(0.5, math.min(2, (tonumber(state.label_scale) or 0.9) + (tonumber(tags.delta) or 0)))
       update_name_render(entity, state)
       refresh_open_turret(player, entity)
     end

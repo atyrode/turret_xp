@@ -57,10 +57,14 @@ storage.turret_xp = {
         }
       },
       entity = <LuaEntity>,
-      name_render = <LuaRenderObject>
+      name_render = <LuaRenderObject>,
+      feeder = <LuaEntity>
     }
   },
   next_chip_id = 1,
+  feeders = {
+    [unit_number] = <chip_id>
+  },
   targets = {
     [unit_number] = {
       total_damage = 0,
@@ -87,7 +91,7 @@ storage.turret_xp = {
 
 - `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, cache per-target damage contribution, and apply runtime evolution damage effects.
 - `on_entity_died`: award proportional kill credit to contributing core profiles, track kills, and delete installed core profiles when a turret dies.
-- Feeder lifecycle: create a Veteran Core feeder entity for installed cores, consume project materials from its chest inventory, and destroy/spill it when the core leaves the turret.
+- Feeder lifecycle: create a hidden Veteran Core feeder inventory colocated with installed-core turrets, forward ammo from that hidden inventory into the turret ammo inventory, consume project materials from it, spill unsupported non-ammo items, and destroy/spill it when the core leaves the turret.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined gun turrets.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI.

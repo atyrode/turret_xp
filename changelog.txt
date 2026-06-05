@@ -1,4 +1,22 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.6
+Date: 2026-06-05
+  Changes:
+    - Replaced the visible adjacent Veteran Core feeder chest with an invisible hidden input colocated with the turret.
+    - Inserter-fed ammo that lands in the hidden input is now routed back into the turret ammo inventory.
+    - Removed the feeder status block from the Evolution panel.
+    - Fixed the floating label color button so its text and color update immediately when clicked.
+    - Removed floating label size controls and standardized labels on the larger readable size, placed higher above the turret.
+    - Split core upgrade row rank and effect text into distinct visual areas.
+    - Replaced green allocation buttons with compact vanilla-gray "+" buttons.
+    - Element material previews now use rich-text item icons instead of raw item-name text.
+    - Replaced the Piercing Follow-through and Longshot Optics augments with Double Shot and Veteran Training.
+  Bugfixes:
+    - Damage now shows "No ammo" instead of "Unknown" when the turret has no loaded ammo.
+  Notes:
+    - Runtime GUI slots still cannot be targets for inserters, so material feeding uses a real hidden input entity. Unsupported non-ammo items are spilled back out instead of being trapped invisibly.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.5
 Date: 2026-06-05
   Features:

@@ -2,7 +2,7 @@
 
 Factorio mod project workspace.
 
-`turret_xp` adds the first layer of progression for vanilla gun turrets. Version 0.4.5 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, adds an inserter-fed Veteran Core feeder inventory, and keeps specialization choices as real prototype-backed turret stat variants.
+`turret_xp` adds the first layer of progression for vanilla gun turrets. Version 0.4.6 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, keeps material progression inserter-fed through a hidden turret-tile input that routes ammo back into the turret, and keeps specialization choices as real prototype-backed turret stat variants.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -15,14 +15,14 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - Current prototype: runtime-only XP tracking and a `flib`-styled right-side relative GUI panel for vanilla `gun-turret`.
 - Ordinary gun turrets stay stackable and do not gain progression until a Veteran Core is installed.
 - A Veteran Core is an `item-with-tags` profile item. Installing it makes the current turret unique; extracting or mining the turret returns the core with its XP, upgrades, element projects, custom name, and display-label preference.
-- Installing a Veteran Core creates a nearby Veteran Core feeder inventory. Element projects and element mastery consume matching resources from that feeder instead of from the player inventory.
+- Installing a Veteran Core creates a hidden feeder input on the turret tile. Inserters can feed the turret area; ammo is routed into the turret ammo inventory, and element projects/mastery consume matching resources from the hidden input instead of from the player inventory.
 - XP is awarded from damage dealt by gun turrets with an installed core plus proportional kill credit based on damage contribution.
 - XP pacing is configurable with runtime-global mod settings.
 - The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, and lifetime damage.
 - Research bonuses are shown in a vanilla-like base plus bonus format where available.
 - HP and range show the real quality-info marker with a custom hover summary derived from Factorio quality prototypes. The native Factoriopedia popover is not exposed as a reusable runtime GUI widget.
 - The Evolution panel replaces the experimental skill tree with five list sections: core upgrades, first element, specialization, powerful augments, and second element/combo.
-- Element choices start material projects that can be filled by inserting resources into the feeder; dev buttons can quickly grant levels, create cores, or complete the active project for playtesting.
+- Element choices start material projects that can be filled by feeding resources into the turret with inserters; dev buttons can quickly grant levels, create cores, or complete the active project for playtesting.
 
 ## Development
 
@@ -97,7 +97,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.4.5 adds tag-preserving slot-style Veteran Core transfer and floating label customization. V0.4.4 fixed fresh-core installation, high-level combat progression performance, cropped allocation buttons, and added respec/reset controls.
+- V0.4.6 hides the material input, forwards inserter-fed ammo into the turret, simplifies label controls, and polishes Evolution rows. V0.4.5 added tag-preserving slot-style Veteran Core transfer and floating label customization.
 - The Veteran Core item currently uses vanilla layered icons; dedicated art can replace it later without changing the profile model.
 - V0.4.x is a first draft of list-based evolution. Core upgrades, augments, elements, and combos still need playtest balance and effect readability passes.
 - The failed embedded skill-tree drag spike was removed. The current progression UI is intentionally simple while the gameplay model is tested.
