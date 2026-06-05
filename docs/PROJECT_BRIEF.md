@@ -86,8 +86,20 @@ The first playable releases should make progression visible and testable: select
 - Replace post-unlock element mastery ranks with an element fuel buffer consumed by element combat effects.
 - Put the name field and label controls on one row and lower the floating world label from the 0.4.6 offset.
 
+## V0.5.0 Scope
+
+- Treat the release as the first playable Veteran Core turret playthrough.
+- Hide dev controls by default and add `/turret-xp-dev` to toggle them for testing.
+- Rework unlocked element fuel into a furnace-like burner: inserters refill below five stored resource items, one item burns for 30 seconds, and element effects run while burning.
+- Preserve Evolution list context after allocating points by scrolling back to the clicked row.
+- Split naming and floating-label controls into compact rows that fit the attached turret panel.
+- Show explicit technical effect text for augments and specialization choices.
+- Fix killed-target runtime crashes in upgrade visual feedback.
+- Enlarge allocation controls so the `+` button is not cropped.
+
 ## Open Product Questions
 
+- What final mod name, short description, portal category, and sober Factorio-native portal image best communicate Veteran Core turret progression once the core loop stabilizes?
 - Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, element fuel, or infinite mastery?
 - Should destroyed turrets destroy their installed core, drop a damaged core, or have a recovery chance?
 - Should XP eventually include waves survived, ammo consumed, or other behavior beyond damage and kill credit?

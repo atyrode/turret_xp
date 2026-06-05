@@ -44,9 +44,9 @@ local GATES = {
 }
 
 local RANGE_AUGMENT_MAX = 20
-local ELEMENT_FUEL_CAPACITY = 600
-local ELEMENT_FUEL_PER_ITEM = 60
-local ELEMENT_FUEL_PER_SHOT = 1
+local ELEMENT_FUEL_CAPACITY = 10
+local ELEMENT_FUEL_LOW_WATERMARK = 5
+local ELEMENT_BURN_TICKS_PER_FUEL = 60 * 30
 
 local BASE_UPGRADES = {
   {
@@ -133,24 +133,28 @@ local SPECIALIZATIONS = {
     id = "sniper",
     sprite = "entity/radar",
     name = "Sniper",
+    value = "x1.89 range, x2.8 damage, x0.4 fire rate, x0.88 HP",
     description = "Very high range and shot damage, much slower fire rate, lower durability."
   },
   {
     id = "machine_gun",
     sprite = "item/submachine-gun",
     name = "Machine gun",
+    value = "x2 fire rate, x0.58 damage, x0.89 range, x0.9 HP",
     description = "Much faster fire rate, slightly shorter range, lower shot damage."
   },
   {
     id = "bulwark",
     sprite = "item/stone-wall",
     name = "Bulwark",
+    value = "x3 HP, x0.65 damage, x0.75 fire rate",
     description = "Triple durability, lower shot damage, slightly shorter range."
   },
   {
     id = "brawler",
     sprite = "item/shotgun",
     name = "Brawler",
+    value = "x4 damage, x0.39 range, x1.63 HP",
     description = "Very short range, very high shot damage, stronger durability."
   }
 }
@@ -165,24 +169,28 @@ local AUGMENTS = {
     id = "bounce",
     sprite = "item/piercing-rounds-magazine",
     name = "Bullet bounce",
+    value = "+5% bounce chance",
     description = "+5% chance per rank for a shot to bounce to a nearby enemy."
   },
   {
     id = "double_shot",
     sprite = "item/firearm-magazine",
     name = "Double shot",
+    value = "+4% double-shot chance",
     description = "+4% chance per rank to fire a second shot at the same target."
   },
   {
     id = "veteran_training",
     sprite = "item/automation-science-pack",
     name = "Veteran training",
+    value = "+5% combat XP",
     description = "+5% combat XP gained per rank."
   },
   {
     id = "range",
     sprite = "entity/radar",
     name = "Range",
+    value = "+1 real attack range",
     description = "+1 tile real attack range per rank. Max rank 20.",
     max_rank = RANGE_AUGMENT_MAX
   }
@@ -234,8 +242,24 @@ local function ensure_storage()
   storage.turret_xp.chips = storage.turret_xp.chips or {}
   storage.turret_xp.next_chip_id = storage.turret_xp.next_chip_id or 1
   storage.turret_xp.players = storage.turret_xp.players or {}
+  storage.turret_xp.player_settings = storage.turret_xp.player_settings or {}
   storage.turret_xp.targets = storage.turret_xp.targets or {}
   storage.turret_xp.feeders = storage.turret_xp.feeders or {}
+end
+
+local function ensure_player_settings(player)
+  ensure_storage()
+  local settings_table = storage.turret_xp.player_settings[player.index]
+  if type(settings_table) ~= "table" then
+    settings_table = {}
+    storage.turret_xp.player_settings[player.index] = settings_table
+  end
+
+  return settings_table
+end
+
+local function dev_controls_enabled(player)
+  return player and ensure_player_settings(player).dev_controls == true
 end
 
 local function unlock_core_recipes_for_existing_tech()
@@ -394,7 +418,8 @@ local function ensure_evolution_state(state)
       mastery = {
         rank = 0,
         delivered = 0,
-        fuel = 0
+        fuel = 0,
+        burn_remaining = 0
       }
       evolution.element_mastery[element.id] = mastery
     end
@@ -403,7 +428,12 @@ local function ensure_evolution_state(state)
       mastery.rank = 1
     end
     mastery.delivered = math.max(0, math.floor(tonumber(mastery.delivered) or 0))
-    mastery.fuel = math.max(0, math.min(ELEMENT_FUEL_CAPACITY, math.floor(tonumber(mastery.fuel) or mastery.delivered or 0)))
+    local fuel = math.max(0, math.floor(tonumber(mastery.fuel) or mastery.delivered or 0))
+    if fuel > ELEMENT_FUEL_CAPACITY then
+      fuel = math.ceil(fuel / 60)
+    end
+    mastery.fuel = math.max(0, math.min(ELEMENT_FUEL_CAPACITY, fuel))
+    mastery.burn_remaining = math.max(0, math.min(ELEMENT_BURN_TICKS_PER_FUEL, math.floor(tonumber(mastery.burn_remaining) or 0)))
   end
 
   local project = evolution.element_project
@@ -483,18 +513,50 @@ local function add_element_fuel(state, element_id, amount)
   return mastery.fuel - before
 end
 
-local function consume_element_fuel(state, element_id, amount)
-  if not state or not ELEMENT_BY_ID[element_id] or amount <= 0 then
+local function element_is_powered(state, element_id)
+  if not state or not ELEMENT_BY_ID[element_id] then
     return false
   end
 
   local mastery = ensure_evolution_state(state).element_mastery[element_id]
-  if not mastery or (mastery.rank or 0) <= 0 or (mastery.fuel or 0) < amount then
+  if not mastery or (mastery.rank or 0) <= 0 then
     return false
   end
 
-  mastery.fuel = math.max(0, (mastery.fuel or 0) - amount)
+  if (mastery.burn_remaining or 0) > 0 then
+    return true
+  end
+
+  if (mastery.fuel or 0) <= 0 then
+    return false
+  end
+
+  mastery.fuel = math.max(0, (mastery.fuel or 0) - 1)
+  mastery.burn_remaining = ELEMENT_BURN_TICKS_PER_FUEL
   return true
+end
+
+local function tick_element_burners(state)
+  local evolution = ensure_evolution_state(state)
+  local changed = false
+
+  for _, element in ipairs(ELEMENTS) do
+    local mastery = evolution.element_mastery[element.id]
+    if mastery and (mastery.rank or 0) > 0 then
+      local before_burn = mastery.burn_remaining or 0
+      if before_burn > 0 then
+        mastery.burn_remaining = math.max(0, before_burn - REFRESH_TICKS)
+        changed = changed or mastery.burn_remaining ~= before_burn
+      end
+      if (mastery.burn_remaining or 0) <= 0 and (mastery.fuel or 0) > 0 then
+        mastery.fuel = math.max(0, (mastery.fuel or 0) - 1)
+        mastery.burn_remaining = ELEMENT_BURN_TICKS_PER_FUEL
+        changed = true
+      end
+    end
+  end
+
+  return changed
 end
 
 local function get_spent_core_points(state)
@@ -1317,6 +1379,32 @@ local function set_gui_progress(panel, name, value)
   end
 end
 
+local function evolution_anchor_name(kind, id, slot)
+  if not kind or not id then
+    return nil
+  end
+
+  local key = tostring(id):gsub("[^%w_-]", "-")
+  if slot then
+    key = tostring(slot) .. "-" .. key
+  end
+  return GUI.evolution .. "-anchor-" .. tostring(kind) .. "-" .. key
+end
+
+local function scroll_evolution_to_anchor(panel, anchor_name)
+  if not anchor_name then
+    return
+  end
+
+  local evolution_panel = find_gui_element(panel, GUI.evolution)
+  local anchor = evolution_panel and find_gui_element(evolution_panel, anchor_name) or nil
+  if evolution_panel and anchor then
+    pcall(function()
+      evolution_panel.scroll_to_element(anchor)
+    end)
+  end
+end
+
 safe_read = function(object, property)
   if not object then
     return nil
@@ -1454,7 +1542,7 @@ function feeder.get_allowed_items(state)
   for _, element_id in ipairs(evolution.elements or {}) do
     local element = ELEMENT_BY_ID[element_id]
     local mastery = element and evolution.element_mastery[element_id] or nil
-    if mastery and (mastery.rank or 0) > 0 then
+    if mastery and (mastery.rank or 0) > 0 and (mastery.fuel or 0) < ELEMENT_FUEL_LOW_WATERMARK then
       allowed[element.resource] = true
     end
   end
@@ -2345,7 +2433,11 @@ local function core_panel_key(player, state)
   return "empty:" .. (find_carried_chip_stack(player) and "ready" or "none")
 end
 
-local function add_dev_controls_panel(parent)
+local function add_dev_controls_panel(parent, player)
+  if not dev_controls_enabled(player) then
+    return nil
+  end
+
   local panel = parent.add({
     type = "frame",
     name = GUI.dev,
@@ -2414,6 +2506,7 @@ local function add_dev_controls_panel(parent)
       turret_xp_action = "dev-reset-core"
     }
   })
+  return panel
 end
 
 local function update_core_panel(root, player, entity, state)
@@ -2477,7 +2570,7 @@ local function update_core_panel(root, player, entity, state)
     style = "flib_horizontal_pusher"
   })
 
-  if not state then
+  if not state and dev_controls_enabled(player) then
     local actions = top.add({
       type = "flow",
       name = GUI.core_actions,
@@ -2491,7 +2584,7 @@ local function update_core_panel(root, player, entity, state)
         turret_xp_action = "dev-create-core"
       }
     })
-  else
+  elseif state then
     local actions = top.add({
       type = "flow",
       name = GUI.core_actions,
@@ -2526,6 +2619,7 @@ local function update_core_panel(root, player, entity, state)
   set_style(name_flow, "top_margin", 4)
   set_style(name_flow, "vertical_align", "center")
   set_style(name_flow, "horizontally_stretchable", true)
+  set_style(name_flow, "horizontal_spacing", 8)
 
   name_flow.add({
     type = "label",
@@ -2540,30 +2634,19 @@ local function update_core_panel(root, player, entity, state)
     clear_and_focus_on_right_click = true,
     lose_focus_on_confirm = true
   })
-  set_style(textfield, "minimal_width", 120)
-  set_style(textfield, "maximal_width", 150)
+  set_style(textfield, "minimal_width", 220)
+  set_style(textfield, "horizontally_stretchable", true)
 
-  name_flow.add({
-    type = "checkbox",
-    name = GUI.core_name_visible,
-    caption = "Show",
-    state = state.show_name_label == true,
-    tags = {
-      turret_xp_action = "toggle-core-label"
-    }
+  local label_flow = core_panel.add({
+    type = "flow",
+    direction = "horizontal"
   })
+  set_style(label_flow, "top_margin", 4)
+  set_style(label_flow, "vertical_align", "center")
+  set_style(label_flow, "horizontally_stretchable", true)
+  set_style(label_flow, "horizontal_spacing", 8)
 
-  name_flow.add({
-    type = "checkbox",
-    name = GUI.core_name_level_visible,
-    caption = "Level",
-    state = state.show_label_level ~= false,
-    tags = {
-      turret_xp_action = "toggle-label-level"
-    }
-  })
-
-  name_flow.add({
+  label_flow.add({
     type = "label",
     caption = "Label",
     style = "caption_label"
@@ -2582,7 +2665,7 @@ local function update_core_panel(root, player, entity, state)
     end
   end
   local color = presets[color_index].color
-  local color_button = name_flow.add({
+  local color_button = label_flow.add({
     type = "button",
     caption = presets[color_index].name,
     tooltip = { "turret-xp.label-color-tooltip" },
@@ -2591,7 +2674,27 @@ local function update_core_panel(root, player, entity, state)
     }
   })
   set_style(color_button, "font_color", color)
-  set_style(color_button, "minimal_width", 64)
+  set_style(color_button, "minimal_width", 72)
+
+  label_flow.add({
+    type = "checkbox",
+    name = GUI.core_name_visible,
+    caption = "Show name",
+    state = state.show_name_label == true,
+    tags = {
+      turret_xp_action = "toggle-core-label"
+    }
+  })
+
+  label_flow.add({
+    type = "checkbox",
+    name = GUI.core_name_level_visible,
+    caption = "Show level",
+    state = state.show_label_level ~= false,
+    tags = {
+      turret_xp_action = "toggle-label-level"
+    }
+  })
 
   update_name_render(entity, state)
 end
@@ -2758,11 +2861,15 @@ local function add_section(parent, title, unlocked, gate_level)
   return section
 end
 
-local function add_row(parent, sprite, name, detail, right_caption, tags, enabled)
-  local row = parent.add({
+local function add_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name)
+  local row_definition = {
     type = "table",
     column_count = 3
-  })
+  }
+  if row_name then
+    row_definition.name = row_name
+  end
+  local row = parent.add(row_definition)
   set_style(row, "horizontally_stretchable", true)
   set_style(row, "horizontal_spacing", 8)
   set_style(row, "vertical_spacing", 2)
@@ -2822,11 +2929,15 @@ local function add_row(parent, sprite, name, detail, right_caption, tags, enable
   return value
 end
 
-local function add_allocation_row(parent, sprite, name, rank_caption, value_caption, button_caption, tags, enabled, tooltip)
-  local row = parent.add({
+local function add_allocation_row(parent, sprite, name, rank_caption, value_caption, button_caption, tags, enabled, tooltip, row_name)
+  local row_definition = {
     type = "table",
     column_count = 4
-  })
+  }
+  if row_name then
+    row_definition.name = row_name
+  end
+  local row = parent.add(row_definition)
   set_style(row, "horizontally_stretchable", true)
   set_style(row, "horizontal_spacing", 8)
   set_style(row, "vertical_spacing", 2)
@@ -2879,9 +2990,10 @@ local function add_allocation_row(parent, sprite, name, rank_caption, value_capt
     enabled = enabled
   })
 
-  set_style(button, "size", 30)
-  set_style(button, "minimal_width", 30)
-  set_style(button, "maximal_width", 30)
+  set_style(button, "font", "default-bold")
+  set_style(button, "width", 40)
+  set_style(button, "height", 32)
+  set_style(button, "minimal_width", 40)
 
   return button
 end
@@ -3026,6 +3138,8 @@ local function add_element_mastery_panel(parent, state, element_id)
   end
 
   local fuel = math.min(ELEMENT_FUEL_CAPACITY, mastery.fuel or 0)
+  local burn_remaining = math.max(0, mastery.burn_remaining or 0)
+  local burn_seconds = math.ceil(burn_remaining / 60)
 
   local frame = parent.add({
     type = "frame",
@@ -3042,17 +3156,36 @@ local function add_element_mastery_panel(parent, state, element_id)
   set_style(top, "horizontally_stretchable", true)
   set_style(top, "vertical_align", "center")
 
-  top.add({
-    type = "sprite",
-    sprite = element.sprite
+  local slot = top.add({
+    type = "sprite-button",
+    sprite = "item/" .. element.resource,
+    tooltip = { "item-name." .. element.resource }
   })
+  set_element_style(slot, "slot_button")
+  set_style(slot, "size", 36)
 
-  local title = top.add({
+  local labels = top.add({
+    type = "flow",
+    direction = "vertical"
+  })
+  set_style(labels, "horizontally_stretchable", true)
+
+  local title = labels.add({
     type = "label",
-    caption = element.name .. " fuel",
+    caption = element.name .. " burner",
     style = "caption_label"
   })
   set_style(title, "font", "default-bold")
+
+  local status_caption = burn_remaining > 0
+    and ("Burning: " .. tostring(burn_seconds) .. "s")
+    or (fuel > 0 and "Ready to burn" or "No fuel")
+  local status = labels.add({
+    type = "label",
+    caption = status_caption,
+    style = "caption_label"
+  })
+  set_style(status, "font_color", burn_remaining > 0 and COLOR.bonus or COLOR.muted)
 
   top.add({
     type = "empty-widget",
@@ -3061,20 +3194,20 @@ local function add_element_mastery_panel(parent, state, element_id)
 
   local requirement = top.add({
     type = "label",
-    caption = "[item=" .. element.resource .. "] " .. format_number(fuel, 0) .. " / " .. format_number(ELEMENT_FUEL_CAPACITY, 0),
+    caption = "[item=" .. element.resource .. "] x" .. format_number(fuel, 0) .. " / " .. format_number(ELEMENT_FUEL_CAPACITY, 0),
     style = "caption_label"
   })
   set_style(requirement, "font_color", COLOR.muted)
 
   local bar = frame.add({
     type = "progressbar",
-    value = ELEMENT_FUEL_CAPACITY > 0 and math.min(1, fuel / ELEMENT_FUEL_CAPACITY) or 0
+    value = ELEMENT_BURN_TICKS_PER_FUEL > 0 and math.min(1, burn_remaining / ELEMENT_BURN_TICKS_PER_FUEL) or 0
   })
   set_style(bar, "horizontally_stretchable", true)
 
   local note = frame.add({
     type = "label",
-    caption = { "turret-xp.element-fuel-note", "[item=" .. element.resource .. "]" },
+    caption = { "turret-xp.element-fuel-note", "[item=" .. element.resource .. "]", tostring(ELEMENT_FUEL_LOW_WATERMARK), tostring(ELEMENT_BURN_TICKS_PER_FUEL / 60) },
     style = "caption_label"
   })
   set_style(note, "font_color", COLOR.muted)
@@ -3136,7 +3269,8 @@ local function add_base_section(parent, state)
         tostring(rank),
         " -> ",
         tostring(rank + 1)
-      }
+      },
+      evolution_anchor_name("base", upgrade.id)
     )
   end
 end
@@ -3169,7 +3303,8 @@ local function add_element_choices(section, state, slot)
         element = element.id,
         slot = slot
       },
-      true
+      true,
+      evolution_anchor_name("element", element.id, slot)
     )
   end
 end
@@ -3192,7 +3327,16 @@ local function add_specialization_section(parent, state)
   local evolution = ensure_evolution_state(state)
   if evolution.specialization then
     local specialization = SPECIALIZATION_BY_ID[evolution.specialization]
-    add_row(section, specialization.sprite, "Selected: " .. specialization.name, specialization.description, "Active")
+    add_row(
+      section,
+      specialization.sprite,
+      "Selected: " .. specialization.name,
+      "[color=0.58,0.82,0.38]" .. specialization.value .. "[/color]\n" .. specialization.description,
+      "Active",
+      nil,
+      nil,
+      evolution_anchor_name("specialization", specialization.id)
+    )
     return
   end
 
@@ -3201,13 +3345,14 @@ local function add_specialization_section(parent, state)
       section,
       specialization.sprite,
       specialization.name,
-      specialization.description,
+      "[color=0.58,0.82,0.38]" .. specialization.value .. "[/color]\n" .. specialization.description,
       "Pick",
       {
         turret_xp_action = "choose-specialization",
         specialization = specialization.id
       },
-      true
+      true,
+      evolution_anchor_name("specialization", specialization.id)
     )
   end
 end
@@ -3240,7 +3385,7 @@ local function add_augments_section(parent, state)
       augment.sprite,
       augment.name,
       augment.max_rank and ("Rank " .. tostring(rank) .. " / " .. tostring(augment.max_rank)) or ("Rank " .. tostring(rank)),
-      at_max and "Max" or (tostring(cost) .. " AP"),
+      at_max and "Max" or augment.value,
       "+",
       {
         turret_xp_action = "allocate-augment",
@@ -3256,7 +3401,8 @@ local function add_augments_section(parent, state)
         tostring(rank),
         " -> ",
         tostring(at_max and rank or (rank + 1))
-      }
+      },
+      evolution_anchor_name("augment", augment.id)
     )
   end
 end
@@ -3291,7 +3437,7 @@ local function add_second_element_section(parent, state)
   set_style(combo, "top_margin", 4)
 end
 
-local function update_evolution_panel(panel, state)
+local function update_evolution_panel(panel, state, anchor_name)
   local evolution_panel = find_gui_element(panel, GUI.evolution)
   if not evolution_panel then
     return
@@ -3318,9 +3464,10 @@ local function update_evolution_panel(panel, state)
   add_specialization_section(evolution_panel, state)
   add_augments_section(evolution_panel, state)
   add_second_element_section(evolution_panel, state)
+  scroll_evolution_to_anchor(panel, anchor_name)
 end
 
-local function update_turret_gui(player, entity)
+local function update_turret_gui(player, entity, evolution_anchor)
   local panel = get_gui_panel(player)
   if not panel then
     return false
@@ -3376,7 +3523,7 @@ local function update_turret_gui(player, entity)
 
   set_gui_caption(panel, GUI.kills, state and format_number(state.kills, 0) or "-")
   set_gui_caption(panel, GUI.damage_dealt, state and format_number(state.damage, 0) or "-")
-  update_evolution_panel(panel, state)
+  update_evolution_panel(panel, state, evolution_anchor)
 
   return true
 end
@@ -3390,9 +3537,9 @@ local function get_open_turret_state(player)
   return entity, get_turret_state(entity)
 end
 
-local function refresh_open_turret(player, entity)
+local function refresh_open_turret(player, entity, evolution_anchor)
   if entity and entity.valid then
-    update_turret_gui(player, entity)
+    update_turret_gui(player, entity, evolution_anchor)
   end
 end
 
@@ -3653,6 +3800,7 @@ local function allocate_base_upgrade(player, upgrade_id)
   if not BASE_UPGRADE_BY_ID[upgrade_id] then
     return
   end
+  local anchor = evolution_anchor_name("base", upgrade_id)
 
   local entity, state = get_open_turret_state(player)
   if not state then
@@ -3660,20 +3808,21 @@ local function allocate_base_upgrade(player, upgrade_id)
   end
 
   if get_available_skill_points(state) < 1 then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
   local evolution = ensure_evolution_state(state)
   evolution.base[upgrade_id] = (evolution.base[upgrade_id] or 0) + 1
   sync_turret_progression(state)
-  refresh_open_turret(player, entity)
+  refresh_open_turret(player, entity, anchor)
 end
 
 local function choose_specialization(player, specialization_id)
   if not SPECIALIZATION_BY_ID[specialization_id] then
     return
   end
+  local anchor = evolution_anchor_name("specialization", specialization_id)
 
   local entity, state = get_open_turret_state(player)
   if not state then
@@ -3681,13 +3830,13 @@ local function choose_specialization(player, specialization_id)
   end
 
   if not has_level(state, GATES.specialization) then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
   local evolution = ensure_evolution_state(state)
   if evolution.specialization then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
@@ -3696,10 +3845,10 @@ local function choose_specialization(player, specialization_id)
   if new_entity and new_entity ~= entity then
     player.opened = new_entity
     remember_open_turret(player, new_entity)
-    build_turret_gui(player, new_entity)
+    build_turret_gui(player, new_entity, anchor)
     return
   end
-  refresh_open_turret(player, entity)
+  refresh_open_turret(player, entity, anchor)
 end
 
 local function allocate_augment(player, augment_id)
@@ -3707,6 +3856,7 @@ local function allocate_augment(player, augment_id)
   if not augment then
     return
   end
+  local anchor = evolution_anchor_name("augment", augment_id)
 
   local entity, state = get_open_turret_state(player)
   if not state then
@@ -3714,19 +3864,19 @@ local function allocate_augment(player, augment_id)
   end
 
   if not has_level(state, GATES.augments) then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
   local cost = 1
   if get_available_augment_points(state) < cost then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
   local evolution = ensure_evolution_state(state)
   if augment.max_rank and (evolution.augments[augment_id] or 0) >= augment.max_rank then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
@@ -3737,11 +3887,11 @@ local function allocate_augment(player, augment_id)
     if new_entity and new_entity ~= entity then
       player.opened = new_entity
       remember_open_turret(player, new_entity)
-      build_turret_gui(player, new_entity)
+      build_turret_gui(player, new_entity, anchor)
       return
     end
   end
-  refresh_open_turret(player, entity)
+  refresh_open_turret(player, entity, anchor)
 end
 
 local function start_element_project(player, slot, element_id)
@@ -3749,6 +3899,7 @@ local function start_element_project(player, slot, element_id)
   if (slot ~= 1 and slot ~= 2) or not ELEMENT_BY_ID[element_id] then
     return
   end
+  local anchor = evolution_anchor_name("element", element_id, slot)
 
   local entity, state = get_open_turret_state(player)
   if not state then
@@ -3756,18 +3907,18 @@ local function start_element_project(player, slot, element_id)
   end
 
   if slot == 1 and not has_level(state, GATES.first_element) then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
   if slot == 2 and (not has_level(state, GATES.second_element) or not ensure_evolution_state(state).elements[1]) then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
   local evolution = ensure_evolution_state(state)
   if evolution.elements[slot] or evolution.element_project then
-    refresh_open_turret(player, entity)
+    refresh_open_turret(player, entity, anchor)
     return
   end
 
@@ -3779,7 +3930,7 @@ local function start_element_project(player, slot, element_id)
     delivered = {}
   }
   ensure_evolution_state(state)
-  refresh_open_turret(player, entity)
+  refresh_open_turret(player, entity, anchor)
 end
 
 local function auto_feed_element_project(state)
@@ -3814,13 +3965,15 @@ local function auto_feed_element_mastery(state)
   for _, element in ipairs(ELEMENTS) do
     local mastery = evolution.element_mastery[element.id]
     if mastery and (mastery.rank or 0) > 0 then
-      local fuel_needed = math.max(0, ELEMENT_FUEL_CAPACITY - (mastery.fuel or 0))
-      local items_needed = math.ceil(fuel_needed / ELEMENT_FUEL_PER_ITEM)
-      local removed = feeder.remove_items(state, element.resource, math.min(items_needed, FEEDER_CONSUME_LIMIT))
-      if removed > 0 then
-        add_element_fuel(state, element.id, removed * ELEMENT_FUEL_PER_ITEM)
-        mastery.delivered = 0
-        changed = true
+      local fuel = mastery.fuel or 0
+      if fuel < ELEMENT_FUEL_LOW_WATERMARK then
+        local items_needed = math.max(0, ELEMENT_FUEL_CAPACITY - fuel)
+        local removed = feeder.remove_items(state, element.resource, math.min(items_needed, FEEDER_CONSUME_LIMIT))
+        if removed > 0 then
+          add_element_fuel(state, element.id, removed)
+          mastery.delivered = 0
+          changed = true
+        end
       end
     end
   end
@@ -3858,6 +4011,7 @@ local function dev_complete_project(player)
       local mastery = element and evolution.element_mastery[element_id] or nil
       if mastery and (mastery.rank or 0) > 0 then
         mastery.fuel = ELEMENT_FUEL_CAPACITY
+        mastery.burn_remaining = ELEMENT_BURN_TICKS_PER_FUEL
         mastery.delivered = 0
         break
       end
@@ -3947,6 +4101,7 @@ local function apply_passive_evolution_effects()
     if is_gun_turret(entity) then
       feeder.ensure(entity, state)
       auto_feed_open_turret(state)
+      tick_element_burners(state)
       local repair_rank = get_base_rank(state, "repair")
       local repair_per_second = 0.2 * repair_rank
       if repair_per_second > 0 then
@@ -4122,7 +4277,6 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
     return
   end
 
-  local evolution = ensure_evolution_state(state)
   local force = turret.force
   local target = event.entity
   local upgrade_damage = 0
@@ -4145,10 +4299,13 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
   if target.valid then
     local double_shot_rank = get_augment_rank(state, "double_shot")
     if double_shot_rank > 0 and chance_roll(double_shot_rank * 0.04) then
+      local line_surface = safe_read(target, "surface")
+      local line_from = safe_read(turret, "position")
+      local line_to = safe_read(target, "position")
       if apply_runtime_damage(target, base_damage, force, "physical") then
         upgrade_damage = upgrade_damage + base_damage
         record_damage_contribution(event, turret, base_damage)
-        draw_attack_line(target.surface, turret.position, target.position, { 1, 0.92, 0.45 }, 2, 14)
+        draw_attack_line(line_surface, line_from, line_to, { 1, 0.92, 0.45 }, 2, 14)
       end
     end
   end
@@ -4166,10 +4323,13 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
   local bounce_rank = get_augment_rank(state, "bounce")
   local bounce_chance = bounce_rank * 0.05
   if bounce_rank > 0 and chance_roll(bounce_chance) then
-    local bounce_target = find_nearby_enemy(target.surface, target.position, force, 6, target)
+    local bounce_surface = safe_read(target, "surface")
+    local bounce_from = safe_read(target, "position")
+    local bounce_target = find_nearby_enemy(bounce_surface, bounce_from, force, 6, target)
+    local bounce_to = safe_read(bounce_target, "position")
     if bounce_target and apply_runtime_damage(bounce_target, base_damage * 0.35, force, "physical") then
       upgrade_damage = upgrade_damage + (base_damage * 0.35)
-      draw_attack_line(target.surface, target.position, bounce_target.position, { 1, 0.85, 0.25 }, 2, 18)
+      draw_attack_line(bounce_surface, bounce_from, bounce_to, { 1, 0.85, 0.25 }, 2, 18)
     end
   end
 
@@ -4182,39 +4342,46 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
       break
     end
 
-    if consume_element_fuel(state, element_id, ELEMENT_FUEL_PER_SHOT) then
+    if element_is_powered(state, element_id) then
       local element_multiplier = get_element_effect_multiplier(state, element_id)
       local element_proc_chance = get_element_proc_chance(state, element_id)
 
       if element_id == "fire" and chance_roll(element_proc_chance) then
         fire_active = true
         local amount = base_damage * 0.20 * element_multiplier
+        local effect_surface = safe_read(target, "surface")
+        local effect_position = safe_read(target, "position")
         if apply_runtime_damage(target, amount, force, "fire") then
           upgrade_damage = upgrade_damage + amount
           record_damage_contribution(event, turret, amount)
-          draw_effect_sprite(target.surface, target, "virtual-signal/signal-fire", 0.45, 24)
+          draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.45, 24)
         end
       elseif element_id == "electric" and chance_roll(element_proc_chance) then
         electric_active = true
-        local arc_target = find_nearby_enemy(target.surface, target.position, force, 7, target)
+        local arc_surface = safe_read(target, "surface")
+        local arc_from = safe_read(target, "position")
+        local arc_target = find_nearby_enemy(arc_surface, arc_from, force, 7, target)
+        local arc_to = safe_read(arc_target, "position")
         local amount = base_damage * 0.25 * element_multiplier
         if arc_target and apply_runtime_damage(arc_target, amount, force, "electric") then
           upgrade_damage = upgrade_damage + amount
-          draw_attack_line(target.surface, target.position, arc_target.position, { 0.35, 0.75, 1 }, 2, 18)
-          draw_effect_sprite(target.surface, arc_target, "virtual-signal/signal-lightning", 0.45, 24)
+          draw_attack_line(arc_surface, arc_from, arc_to, { 0.35, 0.75, 1 }, 2, 18)
+          draw_effect_sprite(arc_surface, arc_to, "virtual-signal/signal-lightning", 0.45, 24)
         end
       elseif element_id == "explosive" and chance_roll(element_proc_chance) then
         explosive_active = true
         local splashed = 0
         local splash_radius = 3 + math.min(3, get_element_rank(state, "explosive") * 0.15)
-        local entities = target.surface.find_entities_filtered({
+        local splash_surface = safe_read(target, "surface")
+        local splash_position = safe_read(target, "position")
+        local entities = splash_surface and splash_position and splash_surface.find_entities_filtered({
           area = {
-            { target.position.x - splash_radius, target.position.y - splash_radius },
-            { target.position.x + splash_radius, target.position.y + splash_radius }
+            { splash_position.x - splash_radius, splash_position.y - splash_radius },
+            { splash_position.x + splash_radius, splash_position.y + splash_radius }
           }
-        })
-        create_short_effect(target.surface, "explosion", target.position)
-        draw_effect_sprite(target.surface, target, "virtual-signal/signal-explosion", 0.45, 24)
+        }) or {}
+        create_short_effect(splash_surface, "explosion", splash_position)
+        draw_effect_sprite(splash_surface, splash_position, "virtual-signal/signal-explosion", 0.45, 24)
         for _, nearby in pairs(entities) do
           if splashed >= 4 then
             break
@@ -4239,23 +4406,30 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
 
   if fire_active and electric_active and has_element_pair(state, "fire", "electric") then
     local stormfire = base_damage * 0.15
+    local effect_surface = safe_read(target, "surface")
+    local effect_position = safe_read(target, "position")
     if apply_runtime_damage(target, stormfire, force, "fire") then
       upgrade_damage = upgrade_damage + stormfire
       record_damage_contribution(event, turret, stormfire)
-      draw_effect_sprite(target.surface, target, "virtual-signal/signal-fire", 0.55, 30)
+      draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.55, 30)
     end
   elseif fire_active and explosive_active and has_element_pair(state, "fire", "explosive") then
     local incendiary = base_damage * 0.20
+    local effect_surface = safe_read(target, "surface")
+    local effect_position = safe_read(target, "position")
     if apply_runtime_damage(target, incendiary, force, "fire") then
       upgrade_damage = upgrade_damage + incendiary
       record_damage_contribution(event, turret, incendiary)
-      draw_effect_sprite(target.surface, target, "virtual-signal/signal-fire", 0.55, 30)
+      draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.55, 30)
     end
   elseif electric_active and explosive_active and has_element_pair(state, "electric", "explosive") then
-    local shockburst_target = find_nearby_enemy(target.surface, target.position, force, 8, target)
+    local shock_surface = safe_read(target, "surface")
+    local shock_from = safe_read(target, "position")
+    local shockburst_target = find_nearby_enemy(shock_surface, shock_from, force, 8, target)
+    local shock_to = safe_read(shockburst_target, "position")
     if shockburst_target and apply_runtime_damage(shockburst_target, base_damage * 0.25, force, "electric") then
       upgrade_damage = upgrade_damage + (base_damage * 0.25)
-      draw_attack_line(target.surface, target.position, shockburst_target.position, { 0.35, 0.75, 1 }, 2, 18)
+      draw_attack_line(shock_surface, shock_from, shock_to, { 0.35, 0.75, 1 }, 2, 18)
     end
   end
 
@@ -4296,7 +4470,7 @@ local function make_gui_frame(player)
   })
 end
 
-build_turret_gui = function(player, entity)
+build_turret_gui = function(player, entity, evolution_anchor)
   destroy_gui(player)
 
   if not is_gun_turret(entity) then
@@ -4319,7 +4493,7 @@ build_turret_gui = function(player, entity)
 
   add_core_panel(body)
   add_xp_panel(body)
-  add_dev_controls_panel(body)
+  add_dev_controls_panel(body, player)
 
   local current = make_stats_table(body)
   set_style(current, "top_margin", 8)
@@ -4341,7 +4515,7 @@ build_turret_gui = function(player, entity)
 
   add_evolution_panel(frame)
 
-  update_turret_gui(player, entity)
+  update_turret_gui(player, entity, evolution_anchor)
 end
 
 local function refresh_player_gui(player)
@@ -4663,4 +4837,20 @@ commands.add_command("turret-xp", { "turret-xp.command-help" }, function(command
 
   player.opened = player.selected
   build_turret_gui(player, player.selected)
+end)
+
+commands.add_command("turret-xp-dev", { "turret-xp.dev-command-help" }, function(command)
+  local player = command.player_index and game.get_player(command.player_index)
+  if not player then
+    return
+  end
+
+  local player_settings = ensure_player_settings(player)
+  player_settings.dev_controls = player_settings.dev_controls ~= true
+  player.print(player_settings.dev_controls and { "turret-xp.dev-enabled" } or { "turret-xp.dev-disabled" })
+
+  local entity = get_remembered_turret(player)
+  if entity and player.opened == entity then
+    build_turret_gui(player, entity)
+  end
 end)

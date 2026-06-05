@@ -1,10 +1,10 @@
 # Project Spec
 
-## Version 0.4.7
+## Version 0.5.0
 
-V0.4.7 keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates an invisible inserter-fed input on the turret tile for element materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Specialization and Range augment choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
+V0.5.0 is the first playable pass for a full Veteran Core turret loop. It keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates an invisible inserter-fed input on the turret tile for element materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Specialization and Range augment choices swap the current turret into hidden gun-turret variants with real prototype stat changes.
 
-V0.4.0 was published to the Factorio Mod Portal for playtesting before this follow-up release.
+Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the UI and Veteran Core foundations before this first playable line.
 
 ## Runtime Behavior
 
@@ -27,7 +27,7 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - Element choices do not cost points. They start a single-resource material project that permanently assigns the element when complete.
 - Material projects and element fuel consume from the installed core's hidden turret-tile input, not from the player inventory.
 - Inserter-fed ammo that lands in the hidden input is moved into the turret ammo inventory; unrelated non-ammo items are spilled back out.
-- Unlocked elements continue consuming their matching resource as a bounded fuel buffer for element combat effects.
+- Unlocked elements use their matching resource as burner fuel. Inserters top up stored fuel only when it drops below five items, and one stored fuel item burns for 30 seconds to power that element.
 - Specialization unlocks at level 20 and is a free one-time choice.
 - Specialization swaps the turret body between vanilla `gun-turret` and hidden `turret-xp-gun-turret-*` variants. Removing the Veteran Core returns the turret body to vanilla `gun-turret`.
 - Mined turrets return the installed Veteran Core as a separate item or spill it if there is no inventory room.
@@ -46,7 +46,7 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - If the turret is mined, the normal gun turret item returns through vanilla behavior and the mod separately returns/spills the Veteran Core.
 - The profile can be named. If the player enables the label, the world label renders above the current turret body, with configurable color and optional level suffix.
 - Installing a core creates a hidden `turret-xp-veteran-feeder` inventory entity colocated with the turret.
-- The hidden feeder is not a player-facing container. It accepts inserter drops, forwards ammo into the turret, and only keeps resources needed for the current element project or element fuel.
+- The hidden feeder is not a player-facing container. It accepts inserter drops, forwards ammo into the turret, and only keeps resources needed for the current element project or low element-fuel storage.
 - Extracting or mining a core destroys the hidden feeder and spills any leftover feeder contents.
 
 ## Evolution Sections
@@ -72,7 +72,7 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - Fire can add fire damage.
 - Electric can arc damage to a nearby enemy.
 - Explosive can splash damage around the target.
-- Mixed or duplicate element pairs derive simple combo behavior. Element effects only run while that element has fuel.
+- Mixed or duplicate element pairs derive simple combo behavior. Element effects only run while that element has fuel burning.
 
 ## GUI Behavior
 
@@ -80,16 +80,17 @@ V0.4.0 was published to the Factorio Mod Portal for playtesting before this foll
 - The mod creates a frame in `player.gui.relative` anchored to `defines.relative_gui_type.turret_gui` on the right side.
 - If relative anchoring fails, the panel falls back to `player.gui.left`.
 - `on_gui_closed` destroys the panel and clears the remembered player/turret link.
-- The panel includes a Veteran Core slot-style control for install/extract, dev core creation, naming, floating-label toggle, label color, and optional level suffix.
-- The Evolution panel does not show feeder status; material project panels show the current requirement and progress.
+- The panel includes a Veteran Core slot-style control for install/extract, naming, floating-label toggle, label color, and optional level suffix.
+- The Evolution panel does not show feeder status; material project panels show the current requirement and progress. Unlocked element panels show a resource slot, burn progress, stored fuel count, and burner state.
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
+- Point allocation refreshes scroll the rebuilt Evolution list back to the clicked row so spending points does not jump back to the top.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and panel styles.
 - The XP bar uses a custom solid progressbar style defined in `data.lua`.
-- Dev buttons can create a test core, grant quick levels, complete the active material project, fill one selected element fuel buffer, or reset the installed core to a fresh zero-XP state.
+- Dev buttons are hidden by default. `/turret-xp-dev` toggles controls that can create a test core, grant quick levels, complete the active material project, fill one selected element fuel buffer, or reset the installed core to a fresh zero-XP state.
 
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.4.7`
+- Current version: `0.5.0`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

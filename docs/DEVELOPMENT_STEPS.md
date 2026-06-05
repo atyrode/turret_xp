@@ -160,9 +160,20 @@
 - [x] Put the name field and label controls on one row.
 - [x] Move floating labels lower than 0.4.6 while keeping them above the turret.
 
+## Completed For V0.5.0
+
+- [x] Preserve Evolution list context after point allocation.
+- [x] Split core name and label controls into two rows so they fit the attached panel.
+- [x] Show technical effect text for augments and specialization choices.
+- [x] Rework element fuel into a furnace-like burner buffer that refills below five stored fuel items.
+- [x] Hide dev controls by default and add `/turret-xp-dev` to toggle them.
+- [x] Fix invalid killed-target reads in runtime upgrade visual feedback.
+- [x] Enlarge allocation buttons to avoid cropped `+` labels.
+
 ## Likely Next Work
 
-- Playtest V0.4.7 from the Mod Portal and integrate feedback, especially around hidden input ammo forwarding, element fuel readability, range stacking, specialization multipliers, core slot feel, label controls, and high-level turret combat performance.
+- Playtest V0.5.0 from the Mod Portal as the first playable run and integrate feedback, especially around hidden input ammo forwarding, burner-style element fuel, range stacking, specialization multipliers, core slot feel, label controls, and high-level turret combat performance.
+- Plan a Mod Portal identity pass: final name, short description, category, and a simple Factorio-native portal image that avoids generic AI-generated key art.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.

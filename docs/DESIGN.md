@@ -4,6 +4,12 @@
 
 The mod should make defensive infrastructure feel more personal without making early defenses trivial or turning every cheap turret into inventory metadata. A turret becomes notable when the player installs a Veteran Core and that core survives, fights, and moves between turret bodies.
 
+## Portal Identity Direction
+
+The current public name, short description, category, and portal presentation are serviceable for playtesting, but they should get a deliberate identity pass once the core loop is clearer. The Mod Portal listing should immediately tell players that the mod adds chosen, movable gun-turret progression through Veteran Cores, element feeding, specialization, XP, and upgrades. Avoid vague XP-only wording if the mod identity has shifted toward turret evolution and core-based customization.
+
+The portal image should be simple, sober, and specific to the mod. Prefer a composition built from Factorio-native visual language: a gun turret, a Veteran Core/chip motif, an XP or level accent, and maybe one restrained elemental indicator. Do not use a generic AI-generated action scene, cinematic turret battle, or illustration that looks detached from Factorio's UI and item art. If custom art is needed, it should feel like an icon or clean key art derived from in-game sprites, screenshots, or hand-composed Factorio-style assets.
+
 ## V0.4.0 UX
 
 - Keep the vanilla turret GUI as the main interaction.
@@ -14,7 +20,7 @@ The mod should make defensive infrastructure feel more personal without making e
 - Core upgrades are visible from the start and can be ranked repeatedly.
 - Element sections show explicit material projects and progress bars.
 - Specialization and augment sections should feel like meaningful milestones, not passive background stats.
-- Dev buttons are visible in this draft so playtest feedback can focus on section flow and effects instead of real-time grinding.
+- Dev buttons are hidden by default as of V0.5.0 and toggled with `/turret-xp-dev` so normal playthroughs are not dominated by test controls.
 
 ## V0.4.1 UX
 

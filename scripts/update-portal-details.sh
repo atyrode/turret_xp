@@ -39,7 +39,7 @@ mkdir -p dist
 cat > "$description_path" <<DESC
 # Turret XP
 
-Turret XP adds the first layer of selected-turret progression for vanilla gun turrets.
+Turret XP turns chosen vanilla gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, and fueled elements.
 
 Current prototype:
 
@@ -57,16 +57,18 @@ Current prototype:
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
 - Shows element material requirements with item icons and hides feeder implementation status from the panel.
-- Adds compact core upgrades, element material projects, element fuel, a free specialization choice, Double Shot/Veteran Training/Range augments, and a second element combo path.
+- Adds compact core upgrades, element material projects, furnace-like element fuel, a free specialization choice, Double Shot/Veteran Training/Range augments, and a second element combo path.
 - Specialization choices and Range ranks now use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
 - Adds optional floating turret labels in "name (lvl N)" format.
 - Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, double shots, XP gain, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
-- Adds always-visible dev controls for quick level, core, and material-project testing.
+- Adds command-toggled dev controls for quick level, core, and material-project testing.
+- Keeps Evolution scroll context after point allocation.
+- Shows technical effect text for augments and specialization choices.
 - Uses a custom solid XP bar style.
 
-This is an early test release intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.
+This is the first playable release line intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, furnace-like element fuel, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.
 
-0.4.7 fixes hidden-input ammo detection for Factorio 2.0 runtime prototypes, makes specialization bodies multiplier-based, adds Range ranks up to +20, and replaces post-unlock element mastery with element fuel.
+0.5.0 hides dev tools behind `/turret-xp-dev`, keeps the Evolution panel near the clicked row after point allocation, reworks element fuel into a low-refill burner, and fixes killed-target visual feedback crashes.
 
 Source:
 ${source_url}
@@ -80,7 +82,7 @@ response="$(
     -H "Authorization: Bearer ${api_key}" \
     -F "mod=${mod_name}" \
     -F "title=Turret XP" \
-    -F "summary=Track XP, levels, and combat stats for vanilla gun turrets." \
+    -F "summary=Turn chosen gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, and fueled elements." \
     -F "description=<${description_path}" \
     -F "category=tweaks" \
     -F "tags=combat" \

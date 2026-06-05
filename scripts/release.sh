@@ -27,14 +27,16 @@ Turret XP ${version}.
 - Uses Factorio Library (flib) GUI styles for a more vanilla-like relative panel.
 - Shows quality summaries for HP and range while filtering Factorio's hidden unknown quality prototype.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
-- Adds compact core upgrades, level-gated element projects, specialization choices, Double Shot/Veteran Training/Range augments, element fuel, and second-element combo text.
+- Adds compact core upgrades, level-gated element projects, specialization choices, Double Shot/Veteran Training/Range augments, furnace-like element fuel, and second-element combo text.
 - Shows element material requirements with item icons and hides feeder implementation status from the panel.
 - Specialization choices and Range ranks use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
 - Adds optional floating turret labels in "name (lvl N)" format.
 - Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, double shots, XP gain, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
-- Adds always-visible dev controls for quick level, core, and material-project testing.
+- Adds command-toggled dev controls for quick level, core, and material-project testing.
 - Adds respec/reset controls for point allocation and local playtesting.
 - Fixes hidden-input ammo detection for Factorio 2.0 runtime prototypes.
+- Keeps Evolution scroll context after point allocation.
+- Shows technical effect text for augments and specialization choices.
 - Uses a custom solid XP bar style.
 - Updates the panel in place while open instead of destroying and rebuilding it every refresh.
 

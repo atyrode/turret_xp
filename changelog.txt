@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.5.0
+Date: 2026-06-05
+  Changes:
+    - Promoted the mod to a first playable 0.5 line focused on Veteran Core turret playthroughs.
+    - Added `/turret-xp-dev` to toggle dev controls instead of showing test buttons in normal play.
+    - Reworked unlocked element fuel into a burner-style buffer. Inserters refill below five stored fuel items, and one fuel item burns over time to power the element.
+    - Preserved the Evolution panel position after point allocation by scrolling the rebuilt list back to the clicked row.
+    - Split turret naming and floating-label controls into two compact rows to avoid panel overflow.
+    - Added explicit technical effect text for augments and specialization choices.
+    - Enlarged allocation buttons so the `+` glyph no longer clips.
+  Bugfixes:
+    - Fixed a crash when runtime upgrade damage killed a target before visual feedback read that target's surface or position.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.7
 Date: 2026-06-05
   Changes:

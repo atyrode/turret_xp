@@ -24,8 +24,9 @@
 - Range augment ranks must change real turret attack range, not only the displayed range value.
 - Clicking an element option must start a material project when the corresponding level gate is unlocked.
 - Feeding required items into the turret's hidden material input must advance the active material project and unlock the element when requirements are complete.
-- After an element is unlocked, feeding that element's resource must fill a bounded fuel buffer used by element combat effects.
-- Dev buttons must allow test core creation, quick level grants, and active material-project completion for playtesting.
+- After an element is unlocked, feeding that element's resource must fill a bounded burner fuel buffer used by element combat effects.
+- Inserter-fed element resources must only be accepted for post-unlock fuel when stored fuel is below the refill threshold.
+- Dev buttons must be hidden by default and toggleable with `/turret-xp-dev` for local playtesting.
 - The GUI must refresh while the turret GUI remains open.
 - Selecting a gun turret and running `/turret-xp` must open the same panel as a fallback.
 - The packaged zip must include `info.json`, Lua files, locale, docs, README, and changelog.
@@ -42,9 +43,10 @@
 - Show kills, lifetime damage, and evolution points.
 - Show a five-section Evolution list: core upgrades, first element, specialization, powerful augments, and second element/combo.
 - Show locked section level gates before the turret reaches them.
-- Show material requirements and progress for the active element project, plus fuel progress for unlocked elements.
+- Show material requirements and progress for the active element project, plus burner state, burn progress, and stored fuel for unlocked elements.
 - Show a core naming field and a floating-label toggle when a core is installed.
-- Clearly state that V0.4.x evolution effects are early draft effects, not final balance.
+- Preserve Evolution list context after point allocation so the panel does not jump back to the top.
+- Clearly state that V0.5.x evolution effects are early draft effects, not final balance.
 
 ## Operational
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Turret XP</title>
-    <meta name="description" content="Turret XP adds per-turret levels, XP, and combat stats to vanilla Factorio gun turrets.">
+    <meta name="description" content="Turret XP turns chosen vanilla Factorio gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, and fueled elements.">
     <link rel="stylesheet" href="site.css">
   </head>
   <body>
@@ -24,8 +24,8 @@
           <p class="eyebrow">Factorio 2.0 mod</p>
           <h1 id="intro-title">Turret XP</h1>
           <p class="lede">
-            A lightweight progression layer for vanilla gun turrets, with XP,
-            levels, contribution-aware kill credit, a clean right-side panel, and a first per-turret Evolution system.
+            A first playable progression layer for chosen vanilla gun turrets, with movable Veteran Cores,
+            XP, contribution-aware kill credit, specialization bodies, fueled elements, and a clean right-side panel.
           </p>
           <div class="actions" aria-label="Project links">
             <a class="button primary" href="https://mods.factorio.com/mod/turret_xp">Download</a>
@@ -57,14 +57,14 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.4.7</h2>
+          <h2 id="current-title">Version 0.5.0</h2>
         </div>
         <p>
-          The current playtest build makes turret progression an explicit player
+          The current first playable build makes turret progression an explicit player
           choice with Veteran Cores, keeps element materials inserter-fed through
           a hidden turret-tile input, forwards ammo back into the turret, adds
-          prototype-backed Range ranks, introduces element fuel, and keeps real
-          multiplier-based specialization bodies.
+          prototype-backed Range ranks, uses furnace-like element fuel, keeps real
+          multiplier-based specialization bodies, and hides dev tools behind a command.
         </p>
       </section>
 
@@ -77,7 +77,7 @@
           </article>
           <article>
             <h3>Feeder input</h3>
-            <p>Installing a core creates a hidden input on the turret tile. Inserters can feed unlock resources and element fuel into the turret area while ammo is routed back into the turret.</p>
+            <p>Installing a core creates a hidden input on the turret tile. Inserters can feed unlock resources and low-threshold element burner fuel into the turret area while ammo is routed back into the turret.</p>
           </article>
           <article>
             <h3>Combat feedback</h3>
@@ -103,7 +103,7 @@
           <li>Let the turret shoot enemies.</li>
           <li>Check that XP and lifetime damage increase.</li>
           <li>Name the core, toggle its floating label, and move it to another turret.</li>
-          <li>Use dev buttons to test level gates, start and complete an element project, then buy an upgrade or augment.</li>
+          <li>Run <code>/turret-xp-dev</code> to test level gates, start and complete an element project, then buy an upgrade or augment.</li>
           <li>Report confusing stats, pacing issues, or runtime errors.</li>
         </ol>
       </section>

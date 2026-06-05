@@ -48,7 +48,8 @@ storage.turret_xp = {
           [element_id] = {
             rank = 0|1,
             delivered = 0,
-            fuel = <uint>
+            fuel = <uint>,
+            burn_remaining = <ticks>
           }
         },
         specialization = <specialization_id>,
@@ -90,6 +91,11 @@ storage.turret_xp = {
       entity = <LuaEntity>,
       unit_number = <uint>
     }
+  },
+  player_settings = {
+    [player_index] = {
+      dev_controls = <boolean>
+    }
   }
 }
 ```
@@ -98,7 +104,7 @@ storage.turret_xp = {
 
 - `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, cache per-target damage contribution, and apply runtime evolution damage effects.
 - `on_entity_died`: award proportional kill credit to contributing core profiles, track kills, and delete installed core profiles when a turret dies.
-- Feeder lifecycle: create a hidden Veteran Core feeder inventory colocated with installed-core turrets, forward ammo from that hidden inventory into the turret ammo inventory, consume project materials and element fuel from it, spill unsupported non-ammo items, and destroy/spill it when the core leaves the turret.
+- Feeder lifecycle: create a hidden Veteran Core feeder inventory colocated with installed-core turrets, forward ammo from that hidden inventory into the turret ammo inventory, consume project materials and low-threshold element burner fuel from it, spill unsupported non-ammo items, and destroy/spill it when the core leaves the turret.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined gun turrets.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI.
@@ -106,6 +112,7 @@ storage.turret_xp = {
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open.
 - `rendering.draw_text`: draw optional chip-carried labels above currently installed turret bodies as `name (lvl N)`.
 - `/turret-xp`: fallback command for opening the selected turret's GUI/panel.
+- `/turret-xp-dev`: per-player toggle for dev controls in the attached panel.
 
 ## Boundaries
 
