@@ -4,7 +4,7 @@
 
 Current portal playtest:
 
-0.4.6 is published on the Factorio Mod Portal.
+0.4.7 is published on the Factorio Mod Portal.
 
 Preferred once published:
 
@@ -48,16 +48,18 @@ scripts/install-local.sh
 24. Confirm no visible feeder chest appears near the turret and the Evolution panel does not show feeder status text.
 25. Feed ammo into the turret with inserters and confirm the turret still receives ammo with a Veteran Core installed.
 26. Feed the required material into the turret area with an inserter and confirm the project progress advances without a deposit button.
-27. Use `Materials` and confirm the element becomes active, or advances the selected element's next mastery milestone if no unlock project is active.
+27. Use `Materials` and confirm the element becomes active, or fills the selected element's fuel bar if no unlock project is active.
 28. At level 20, pick Sniper, Machine Gun, Bulwark, or Brawler and confirm the choice is locked in and the turret stats change.
 29. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
-30. At level 40, start and complete a second element project and confirm the combo text appears.
-31. Extract or mine the core and confirm leftover feeder contents spill instead of disappearing.
-32. Let the turret shoot enemies and confirm XP, damage dealt, kills, and upgrade effect feedback feel visible enough to judge.
-33. Damage a turret with regeneration ranks and confirm passive repair works.
-34. Try Lifesteal in combat and check whether vampiric healing is understandable.
-35. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
-36. Select the turret and run `/turret-xp` as a fallback path.
+30. Buy Range ranks and confirm the displayed range changes and the turret can actually fire farther.
+31. Feed the unlocked element's resource after unlock and confirm its fuel bar fills; then let the turret shoot and confirm fuel drains.
+32. At level 40, start and complete a second element project and confirm the combo text appears.
+33. Extract or mine the core and confirm leftover feeder contents spill instead of disappearing.
+34. Let the turret shoot enemies and confirm XP, damage dealt, kills, and upgrade effect feedback feel visible enough to judge.
+35. Damage a turret with regeneration ranks and confirm passive repair works.
+36. Try Lifesteal in combat and check whether vampiric healing is understandable.
+37. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
+38. Select the turret and run `/turret-xp` as a fallback path.
 
 ## Report Back
 
@@ -69,11 +71,13 @@ Useful feedback:
 - Did the core slot feel close enough to an inventory slot, especially cursor transfer and swap?
 - Did label color and level visibility cover the customization you need now that label size is fixed?
 - Did the hidden turret-tile input accept element materials and forward ammo reliably enough, or did it feel too invisible/unclear?
+- Did element fuel feel readable enough, or did it need clearer furnace-like communication?
 - Did the optional floating label feel useful, and should it be visible only in alt mode or always visible?
 - Did the five-section list feel clearer than the skill tree?
 - Did the Respec and dev Reset controls behave as expected?
 - Did level gates 10, 20, 30, and 40 feel like the right first draft?
 - Were material project requirements understandable?
 - Which element, specialization, or augment felt confusing or too weak?
+- Did Range ranks and specialization multipliers feel meaningful without breaking the turret role?
 - Did XP, kills, evolution points, and ranks update at the pace you expected?
 - Did the mod fail to load, desync, or throw a runtime error?

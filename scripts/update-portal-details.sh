@@ -45,8 +45,8 @@ Current prototype:
 
 - Adds a Turret XP panel to the vanilla gun turret GUI.
 - Adds non-stackable Veteran Cores that make selected gun turrets unique while ordinary turrets stay stackable.
-- Tracks XP, level, kills, kill credit, lifetime damage, evolution choices, material projects, custom names, and label preference on the installed core profile.
-- Adds a hidden turret-tile feeder inventory for inserter-fed element materials and forwards ammo back into the turret.
+- Tracks XP, level, kills, kill credit, lifetime damage, evolution choices, material projects, element fuel, custom names, and label preference on the installed core profile.
+- Adds a hidden turret-tile feeder inventory for inserter-fed element materials, element fuel, and ammo forwarding.
 - Awards configurable XP from cored gun turret damage and proportional kill credit.
 - Lets the player extract a core and install it in another turret, carrying progression with it.
 - Returns or spills the installed core when a turret is mined.
@@ -57,14 +57,16 @@ Current prototype:
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
 - Shows element material requirements with item icons and hides feeder implementation status from the panel.
-- Adds compact core upgrades, element material projects, a free specialization choice, Double Shot/Veteran Training augments, and a second element combo path.
-- Specialization choices now use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
+- Adds compact core upgrades, element material projects, element fuel, a free specialization choice, Double Shot/Veteran Training/Range augments, and a second element combo path.
+- Specialization choices and Range ranks now use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
 - Adds optional floating turret labels in "name (lvl N)" format.
 - Adds first-draft runtime upgrade effects for bonus damage, crits, bounce, double shots, XP gain, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
 - Adds always-visible dev controls for quick level, core, and material-project testing.
 - Uses a custom solid XP bar style.
 
 This is an early test release intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.
+
+0.4.7 fixes hidden-input ammo detection for Factorio 2.0 runtime prototypes, makes specialization bodies multiplier-based, adds Range ranks up to +20, and replaces post-unlock element mastery with element fuel.
 
 Source:
 ${source_url}

@@ -5,7 +5,7 @@
 - Factorio 2.0 runtime mod.
 - Lua control-stage implementation with runtime-global settings.
 - Runtime XP settings plus a required `flib >= 0.16.4` dependency for shared GUI styles.
-- V0.4.6 uses an invisible hidden feeder inventory entity colocated with the turret for Veteran Core material inputs, with runtime routing that moves inserter-fed ammo back into the turret ammo inventory. V0.4.2 added local hidden gun-turret variants for specialization choices, while the `item-with-tags` Veteran Core carries portable progression profiles.
+- V0.4.7 uses an invisible hidden feeder inventory entity colocated with the turret for Veteran Core material inputs and element fuel, with runtime routing that moves inserter-fed ammo back into the turret ammo inventory. V0.4.7 also extends hidden gun-turret body variants so specialization multipliers and Range augment ranks change real turret prototype stats, while the `item-with-tags` Veteran Core carries portable progression profiles.
 - V0.4.4 caches derived level progress so normal combat applies XP deltas instead of recalculating from level 1 on every damage event.
 - V0.4.5 uses local tag-preserving Veteran Core slot transfer logic. `entity-gui-lib` inventory display was inspected, but its current transfer helper copies name/count/quality and would not preserve Veteran Core item tags.
 - Python packaging script reused from `player_quality`.
@@ -91,7 +91,7 @@
 - `ItemWithTagsPrototype` and `ItemStackDefinition.tags` support storing a core profile directly on a non-stackable item when it is extracted from a turret.
 - `LuaItemStack::get_tag` and `LuaItemStack::set_tag` expose runtime tag access for tagged item stacks.
 - `LuaRendering::draw_text` supports entity targets with offsets, which is used for optional `name (lvl N)` turret labels.
-- Runtime GUI rows are not inserter-targetable inventories. V0.4.6 uses a real hidden chest-like feeder entity on the turret tile so material inputs can be fed like machine inventory without showing a fake chest. Because overlapping inserter targets can receive ammo first, the runtime routes ammo stacks from the hidden input into the turret ammo inventory.
+- Runtime GUI rows are not inserter-targetable inventories. V0.4.7 uses a real hidden chest-like feeder entity on the turret tile so material inputs and element fuel can be fed like machine inventory without showing a fake chest. Because overlapping inserter targets can receive ammo first, the runtime routes ammo stacks from the hidden input into the turret ammo inventory.
 
 ## Risks
 
@@ -101,7 +101,7 @@
 - V0.4.1 implements mined turret persistence through the Veteran Core item. Destroyed turret recovery remains an open design question.
 - Evolution points are derived from core profile level and stored under `state.evolution`.
 - Runtime GUI cannot add a true extra slot inside the vanilla turret inventory, so Veteran Core install/extract uses explicit controls in the attached Turret XP panel.
-- V0.4.2 specialization stats are prototype-backed. V0.4.6 feeder placement is an invisible colocated input with ammo forwarding; edge cases around full turret ammo inventories, unsupported ammo, or unusual inserter layouts still need playtesting.
+- V0.4.7 specialization and Range augment stats are prototype-backed. Feeder placement is an invisible colocated input with ammo forwarding; edge cases around full turret ammo inventories, unsupported ammo, element fuel readability, or unusual inserter layouts still need playtesting.
 - Core upgrades, augments, elements, combos, passive repair, and vampiric healing still need playtest balance and clearer feedback.
 - The panel updates named elements in place every 60 ticks; new GUI work should preserve stable hover/read behavior.
 - `flib` adds a dependency, but it is common and handled by the in-game dependency manager.

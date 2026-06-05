@@ -1,4 +1,17 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.7
+Date: 2026-06-05
+  Changes:
+    - Added a real Range augment with up to 20 ranks. Each rank swaps to a hidden prototype-backed turret body with +1 real attack range.
+    - Reworked specialization turret bodies to be generated from multipliers on vanilla gun turret stats instead of fixed flat stat assignments.
+    - Increased first element unlock material costs by 10x.
+    - Replaced post-unlock infinite element mastery ranks with an element fuel buffer. Unlocked elements now consume their matching resource as shot fuel.
+    - Put the core name field, floating label toggle, level toggle, and label color control on the same row.
+    - Moved floating labels lower than 0.4.6 while keeping them above the turret.
+  Bugfixes:
+    - Fixed a crash when the hidden input tried to detect ammo through `game.item_prototypes`; Factorio 2.0 exposes runtime item prototypes through `prototypes.item`.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.6
 Date: 2026-06-05
   Changes:

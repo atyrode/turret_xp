@@ -150,9 +150,19 @@
 - [x] Show `No ammo` instead of `Unknown` when damage cannot be estimated because no ammo is loaded.
 - [x] Replace Longshot and Piercing augments with Double Shot and Veteran Training.
 
+## Completed For V0.4.7
+
+- [x] Fix hidden-input ammo detection against Factorio 2.0 runtime prototypes.
+- [x] Add a real prototype-backed Range augment up to +20 range.
+- [x] Generate specialization bodies from vanilla-stat multipliers.
+- [x] Increase initial element unlock material costs by 10x.
+- [x] Replace post-unlock element mastery ranks with bounded element fuel.
+- [x] Put the name field and label controls on one row.
+- [x] Move floating labels lower than 0.4.6 while keeping them above the turret.
+
 ## Likely Next Work
 
-- Playtest V0.4.6 from the Mod Portal and integrate feedback, especially around hidden input ammo forwarding, core slot feel, label controls, and high-level turret combat performance.
+- Playtest V0.4.7 from the Mod Portal and integrate feedback, especially around hidden input ammo forwarding, element fuel readability, range stacking, specialization multipliers, core slot feel, label controls, and high-level turret combat performance.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.

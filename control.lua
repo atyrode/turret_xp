@@ -43,6 +43,11 @@ local GATES = {
   second_element = 40
 }
 
+local RANGE_AUGMENT_MAX = 20
+local ELEMENT_FUEL_CAPACITY = 600
+local ELEMENT_FUEL_PER_ITEM = 60
+local ELEMENT_FUEL_PER_SHOT = 1
+
 local BASE_UPGRADES = {
   {
     id = "damage",
@@ -98,7 +103,7 @@ local ELEMENTS = {
     name = "Explosive",
     description = "Shots can splash explosion damage around the target.",
     resource = "grenade",
-    base_requirement = 50
+    base_requirement = 500
   },
   {
     id = "fire",
@@ -106,7 +111,7 @@ local ELEMENTS = {
     name = "Fire",
     description = "Shots can add fire damage and power incendiary combos.",
     resource = "sulfur",
-    base_requirement = 250
+    base_requirement = 2500
   },
   {
     id = "electric",
@@ -114,7 +119,7 @@ local ELEMENTS = {
     name = "Electric",
     description = "Shots can arc electric damage to a nearby enemy.",
     resource = "battery",
-    base_requirement = 75
+    base_requirement = 750
   }
 }
 
@@ -128,25 +133,25 @@ local SPECIALIZATIONS = {
     id = "sniper",
     sprite = "entity/radar",
     name = "Sniper",
-    description = "Range 34, slower fire rate, much higher shot damage, lower durability."
+    description = "Very high range and shot damage, much slower fire rate, lower durability."
   },
   {
     id = "machine_gun",
     sprite = "item/submachine-gun",
     name = "Machine gun",
-    description = "Very fast fire rate, slightly shorter range, lower shot damage."
+    description = "Much faster fire rate, slightly shorter range, lower shot damage."
   },
   {
     id = "bulwark",
     sprite = "item/stone-wall",
     name = "Bulwark",
-    description = "1200 HP, lower shot damage, slightly shorter range."
+    description = "Triple durability, lower shot damage, slightly shorter range."
   },
   {
     id = "brawler",
     sprite = "item/shotgun",
     name = "Brawler",
-    description = "Range 7, very high shot damage, stronger durability."
+    description = "Very short range, very high shot damage, stronger durability."
   }
 }
 
@@ -173,6 +178,13 @@ local AUGMENTS = {
     sprite = "item/automation-science-pack",
     name = "Veteran training",
     description = "+5% combat XP gained per rank."
+  },
+  {
+    id = "range",
+    sprite = "entity/radar",
+    name = "Range",
+    description = "+1 tile real attack range per rank. Max rank 20.",
+    max_rank = RANGE_AUGMENT_MAX
   }
 }
 
@@ -258,9 +270,17 @@ local function is_gun_turret(entity)
     and (entity.name == BASE_TURRET_NAME or string.sub(entity.name, 1, #SPECIALIZED_TURRET_PREFIX) == SPECIALIZED_TURRET_PREFIX)
 end
 
-local function get_specialized_turret_name(specialization_id)
+local function get_specialized_turret_name(specialization_id, range_rank)
+  range_rank = math.max(0, math.min(RANGE_AUGMENT_MAX, math.floor(tonumber(range_rank) or 0)))
   if specialization_id and SPECIALIZATION_BY_ID[specialization_id] then
+    if range_rank > 0 then
+      return SPECIALIZED_TURRET_PREFIX .. specialization_id .. "-range-" .. tostring(range_rank)
+    end
     return SPECIALIZED_TURRET_PREFIX .. specialization_id
+  end
+
+  if range_rank > 0 then
+    return SPECIALIZED_TURRET_PREFIX .. "range-" .. tostring(range_rank)
   end
 
   return BASE_TURRET_NAME
@@ -350,6 +370,9 @@ local function ensure_evolution_state(state)
 
   for _, augment in ipairs(AUGMENTS) do
     evolution.augments[augment.id] = math.max(0, math.floor(tonumber(evolution.augments[augment.id]) or 0))
+    if augment.max_rank then
+      evolution.augments[augment.id] = math.min(augment.max_rank, evolution.augments[augment.id])
+    end
   end
   evolution.augments.piercing = nil
   evolution.augments.longshot = nil
@@ -370,12 +393,17 @@ local function ensure_evolution_state(state)
     if type(mastery) ~= "table" then
       mastery = {
         rank = 0,
-        delivered = 0
+        delivered = 0,
+        fuel = 0
       }
       evolution.element_mastery[element.id] = mastery
     end
     mastery.rank = math.max(0, math.floor(tonumber(mastery.rank) or 0))
+    if mastery.rank > 0 then
+      mastery.rank = 1
+    end
     mastery.delivered = math.max(0, math.floor(tonumber(mastery.delivered) or 0))
+    mastery.fuel = math.max(0, math.min(ELEMENT_FUEL_CAPACITY, math.floor(tonumber(mastery.fuel) or mastery.delivered or 0)))
   end
 
   local project = evolution.element_project
@@ -438,6 +466,35 @@ local function get_element_rank(state, element_id)
 
   local mastery = ensure_evolution_state(state).element_mastery[element_id]
   return mastery and mastery.rank or 0
+end
+
+local function add_element_fuel(state, element_id, amount)
+  if not state or not ELEMENT_BY_ID[element_id] or amount <= 0 then
+    return 0
+  end
+
+  local mastery = ensure_evolution_state(state).element_mastery[element_id]
+  if not mastery or (mastery.rank or 0) <= 0 then
+    return 0
+  end
+
+  local before = mastery.fuel or 0
+  mastery.fuel = math.min(ELEMENT_FUEL_CAPACITY, before + amount)
+  return mastery.fuel - before
+end
+
+local function consume_element_fuel(state, element_id, amount)
+  if not state or not ELEMENT_BY_ID[element_id] or amount <= 0 then
+    return false
+  end
+
+  local mastery = ensure_evolution_state(state).element_mastery[element_id]
+  if not mastery or (mastery.rank or 0) <= 0 or (mastery.fuel or 0) < amount then
+    return false
+  end
+
+  mastery.fuel = math.max(0, (mastery.fuel or 0) - amount)
+  return true
 end
 
 local function get_spent_core_points(state)
@@ -919,7 +976,7 @@ local function update_name_render(entity, profile)
       profile.name_render.text = text
       profile.name_render.target = {
         entity = entity,
-        offset = { 0, -2.6 }
+        offset = { 0, -2.05 }
       }
       profile.name_render.surface = entity.surface
       profile.name_render.forces = { entity.force }
@@ -938,7 +995,7 @@ local function update_name_render(entity, profile)
       surface = entity.surface,
       target = {
         entity = entity,
-        offset = { 0, -2.6 }
+        offset = { 0, -2.05 }
       },
       color = profile.label_color or { 1, 0.86, 0.46 },
       scale = profile.label_scale or 2,
@@ -1152,7 +1209,8 @@ local function ensure_specialized_turret_body(entity, state)
   end
 
   local specialization = state and ensure_evolution_state(state).specialization or nil
-  local target_name = get_specialized_turret_name(specialization)
+  local range_rank = state and get_augment_rank(state, "range") or 0
+  local target_name = get_specialized_turret_name(specialization, range_rank)
   return swap_turret_body(entity, target_name)
 end
 
@@ -1397,10 +1455,7 @@ function feeder.get_allowed_items(state)
     local element = ELEMENT_BY_ID[element_id]
     local mastery = element and evolution.element_mastery[element_id] or nil
     if mastery and (mastery.rank or 0) > 0 then
-      local required = get_element_requirement_count(element, (mastery.rank or 0) + 1)
-      if (mastery.delivered or 0) < required then
-        allowed[element.resource] = true
-      end
+      allowed[element.resource] = true
     end
   end
 
@@ -1514,7 +1569,7 @@ function feeder.make_item_stack(stack, count)
 end
 
 function feeder.is_ammo_item(item_name)
-  local prototype = item_name and game.item_prototypes[item_name] or nil
+  local prototype = item_name and prototypes.item[item_name] or nil
   if not prototype then
     return false
   end
@@ -2470,6 +2525,7 @@ local function update_core_panel(root, player, entity, state)
   })
   set_style(name_flow, "top_margin", 4)
   set_style(name_flow, "vertical_align", "center")
+  set_style(name_flow, "horizontally_stretchable", true)
 
   name_flow.add({
     type = "label",
@@ -2484,13 +2540,13 @@ local function update_core_panel(root, player, entity, state)
     clear_and_focus_on_right_click = true,
     lose_focus_on_confirm = true
   })
-  set_style(textfield, "minimal_width", 150)
-  set_style(textfield, "maximal_width", 190)
+  set_style(textfield, "minimal_width", 120)
+  set_style(textfield, "maximal_width", 150)
 
   name_flow.add({
     type = "checkbox",
     name = GUI.core_name_visible,
-    caption = "Show label",
+    caption = "Show",
     state = state.show_name_label == true,
     tags = {
       turret_xp_action = "toggle-core-label"
@@ -2507,14 +2563,7 @@ local function update_core_panel(root, player, entity, state)
     }
   })
 
-  local label_controls = core_panel.add({
-    type = "flow",
-    direction = "horizontal"
-  })
-  set_style(label_controls, "top_margin", 4)
-  set_style(label_controls, "vertical_align", "center")
-
-  label_controls.add({
+  name_flow.add({
     type = "label",
     caption = "Label",
     style = "caption_label"
@@ -2533,7 +2582,7 @@ local function update_core_panel(root, player, entity, state)
     end
   end
   local color = presets[color_index].color
-  local color_button = label_controls.add({
+  local color_button = name_flow.add({
     type = "button",
     caption = presets[color_index].name,
     tooltip = { "turret-xp.label-color-tooltip" },
@@ -2542,7 +2591,7 @@ local function update_core_panel(root, player, entity, state)
     }
   })
   set_style(color_button, "font_color", color)
-  set_style(color_button, "minimal_width", 70)
+  set_style(color_button, "minimal_width", 64)
 
   update_name_render(entity, state)
 end
@@ -2866,31 +2915,10 @@ local function finish_element_project(state)
   if mastery then
     mastery.rank = math.max(1, mastery.rank or 0)
     mastery.delivered = 0
+    mastery.fuel = 0
   end
   evolution.element_project = nil
   return true
-end
-
-local function advance_element_mastery(state, element_id)
-  local element = ELEMENT_BY_ID[element_id]
-  if not state or not element then
-    return
-  end
-
-  local evolution = ensure_evolution_state(state)
-  local mastery = evolution.element_mastery[element_id]
-  if not mastery or (mastery.rank or 0) <= 0 then
-    return
-  end
-
-  while true do
-    local required = get_element_requirement_count(element, (mastery.rank or 0) + 1)
-    if (mastery.delivered or 0) < required then
-      break
-    end
-    mastery.delivered = mastery.delivered - required
-    mastery.rank = mastery.rank + 1
-  end
 end
 
 local function make_project_requirement_text(project)
@@ -2997,9 +3025,7 @@ local function add_element_mastery_panel(parent, state, element_id)
     return
   end
 
-  local next_rank = mastery.rank + 1
-  local required = get_element_requirement_count(element, next_rank)
-  local delivered = math.min(required, mastery.delivered or 0)
+  local fuel = math.min(ELEMENT_FUEL_CAPACITY, mastery.fuel or 0)
 
   local frame = parent.add({
     type = "frame",
@@ -3023,7 +3049,7 @@ local function add_element_mastery_panel(parent, state, element_id)
 
   local title = top.add({
     type = "label",
-    caption = element.name .. " rank " .. tostring(mastery.rank),
+    caption = element.name .. " fuel",
     style = "caption_label"
   })
   set_style(title, "font", "default-bold")
@@ -3035,20 +3061,20 @@ local function add_element_mastery_panel(parent, state, element_id)
 
   local requirement = top.add({
     type = "label",
-    caption = "[item=" .. element.resource .. "] " .. format_number(delivered, 0) .. " / " .. format_number(required, 0),
+    caption = "[item=" .. element.resource .. "] " .. format_number(fuel, 0) .. " / " .. format_number(ELEMENT_FUEL_CAPACITY, 0),
     style = "caption_label"
   })
   set_style(requirement, "font_color", COLOR.muted)
 
   local bar = frame.add({
     type = "progressbar",
-    value = required > 0 and math.min(1, delivered / required) or 0
+    value = ELEMENT_FUEL_CAPACITY > 0 and math.min(1, fuel / ELEMENT_FUEL_CAPACITY) or 0
   })
   set_style(bar, "horizontally_stretchable", true)
 
   local note = frame.add({
     type = "label",
-    caption = { "turret-xp.feeder-project-note" },
+    caption = { "turret-xp.element-fuel-note", "[item=" .. element.resource .. "]" },
     style = "caption_label"
   })
   set_style(note, "font_color", COLOR.muted)
@@ -3207,18 +3233,20 @@ local function add_augments_section(parent, state)
   for _, augment in ipairs(AUGMENTS) do
     local rank = get_augment_rank(state, augment.id)
     local cost = 1
+    local at_max = augment.max_rank and rank >= augment.max_rank
+    local enabled = available >= cost and not at_max
     add_allocation_row(
       section,
       augment.sprite,
       augment.name,
-      "Rank " .. tostring(rank),
-      tostring(cost) .. " AP",
+      augment.max_rank and ("Rank " .. tostring(rank) .. " / " .. tostring(augment.max_rank)) or ("Rank " .. tostring(rank)),
+      at_max and "Max" or (tostring(cost) .. " AP"),
       "+",
       {
         turret_xp_action = "allocate-augment",
         augment = augment.id
       },
-      available >= cost,
+      enabled,
       {
         "",
         augment.name,
@@ -3227,7 +3255,7 @@ local function add_augments_section(parent, state)
         "\nRank ",
         tostring(rank),
         " -> ",
-        tostring(rank + 1)
+        tostring(at_max and rank or (rank + 1))
       }
     )
   end
@@ -3675,7 +3703,8 @@ local function choose_specialization(player, specialization_id)
 end
 
 local function allocate_augment(player, augment_id)
-  if not AUGMENT_BY_ID[augment_id] then
+  local augment = AUGMENT_BY_ID[augment_id]
+  if not augment then
     return
   end
 
@@ -3696,8 +3725,22 @@ local function allocate_augment(player, augment_id)
   end
 
   local evolution = ensure_evolution_state(state)
+  if augment.max_rank and (evolution.augments[augment_id] or 0) >= augment.max_rank then
+    refresh_open_turret(player, entity)
+    return
+  end
+
   evolution.augments[augment_id] = (evolution.augments[augment_id] or 0) + 1
   sync_turret_progression(state)
+  if augment_id == "range" then
+    local new_entity = ensure_specialized_turret_body(entity, state)
+    if new_entity and new_entity ~= entity then
+      player.opened = new_entity
+      remember_open_turret(player, new_entity)
+      build_turret_gui(player, new_entity)
+      return
+    end
+  end
   refresh_open_turret(player, entity)
 end
 
@@ -3771,12 +3814,12 @@ local function auto_feed_element_mastery(state)
   for _, element in ipairs(ELEMENTS) do
     local mastery = evolution.element_mastery[element.id]
     if mastery and (mastery.rank or 0) > 0 then
-      local required = get_element_requirement_count(element, mastery.rank + 1)
-      local needed = math.max(0, required - (mastery.delivered or 0))
-      local removed = feeder.remove_items(state, element.resource, math.min(needed, FEEDER_CONSUME_LIMIT))
+      local fuel_needed = math.max(0, ELEMENT_FUEL_CAPACITY - (mastery.fuel or 0))
+      local items_needed = math.ceil(fuel_needed / ELEMENT_FUEL_PER_ITEM)
+      local removed = feeder.remove_items(state, element.resource, math.min(items_needed, FEEDER_CONSUME_LIMIT))
       if removed > 0 then
-        mastery.delivered = (mastery.delivered or 0) + removed
-        advance_element_mastery(state, element.id)
+        add_element_fuel(state, element.id, removed * ELEMENT_FUEL_PER_ITEM)
+        mastery.delivered = 0
         changed = true
       end
     end
@@ -3814,8 +3857,8 @@ local function dev_complete_project(player)
       local element = ELEMENT_BY_ID[element_id]
       local mastery = element and evolution.element_mastery[element_id] or nil
       if mastery and (mastery.rank or 0) > 0 then
-        mastery.delivered = get_element_requirement_count(element, mastery.rank + 1)
-        advance_element_mastery(state, element_id)
+        mastery.fuel = ELEMENT_FUEL_CAPACITY
+        mastery.delivered = 0
         break
       end
     end
@@ -3853,6 +3896,13 @@ local function respec_points(player)
   evolution.base = {}
   evolution.augments = {}
   ensure_evolution_state(state)
+  local new_entity = ensure_specialized_turret_body(entity, state)
+  if new_entity and new_entity ~= entity then
+    player.opened = new_entity
+    remember_open_turret(player, new_entity)
+    build_turret_gui(player, new_entity)
+    return
+  end
   refresh_open_turret(player, entity)
 end
 
@@ -4132,47 +4182,49 @@ local function apply_evolution_damage_effects(event, turret, state, base_damage)
       break
     end
 
-    local element_multiplier = get_element_effect_multiplier(state, element_id)
-    local element_proc_chance = get_element_proc_chance(state, element_id)
+    if consume_element_fuel(state, element_id, ELEMENT_FUEL_PER_SHOT) then
+      local element_multiplier = get_element_effect_multiplier(state, element_id)
+      local element_proc_chance = get_element_proc_chance(state, element_id)
 
-    if element_id == "fire" and chance_roll(element_proc_chance) then
-      fire_active = true
-      local amount = base_damage * 0.20 * element_multiplier
-      if apply_runtime_damage(target, amount, force, "fire") then
-        upgrade_damage = upgrade_damage + amount
-        record_damage_contribution(event, turret, amount)
-        draw_effect_sprite(target.surface, target, "virtual-signal/signal-fire", 0.45, 24)
-      end
-    elseif element_id == "electric" and chance_roll(element_proc_chance) then
-      electric_active = true
-      local arc_target = find_nearby_enemy(target.surface, target.position, force, 7, target)
-      local amount = base_damage * 0.25 * element_multiplier
-      if arc_target and apply_runtime_damage(arc_target, amount, force, "electric") then
-        upgrade_damage = upgrade_damage + amount
-        draw_attack_line(target.surface, target.position, arc_target.position, { 0.35, 0.75, 1 }, 2, 18)
-        draw_effect_sprite(target.surface, arc_target, "virtual-signal/signal-lightning", 0.45, 24)
-      end
-    elseif element_id == "explosive" and chance_roll(element_proc_chance) then
-      explosive_active = true
-      local splashed = 0
-      local splash_radius = 3 + math.min(3, get_element_rank(state, "explosive") * 0.15)
-      local entities = target.surface.find_entities_filtered({
-        area = {
-          { target.position.x - splash_radius, target.position.y - splash_radius },
-          { target.position.x + splash_radius, target.position.y + splash_radius }
-        }
-      })
-      create_short_effect(target.surface, "explosion", target.position)
-      draw_effect_sprite(target.surface, target, "virtual-signal/signal-explosion", 0.45, 24)
-      for _, nearby in pairs(entities) do
-        if splashed >= 4 then
-          break
+      if element_id == "fire" and chance_roll(element_proc_chance) then
+        fire_active = true
+        local amount = base_damage * 0.20 * element_multiplier
+        if apply_runtime_damage(target, amount, force, "fire") then
+          upgrade_damage = upgrade_damage + amount
+          record_damage_contribution(event, turret, amount)
+          draw_effect_sprite(target.surface, target, "virtual-signal/signal-fire", 0.45, 24)
         end
-        if nearby.valid and nearby ~= target and safe_read(nearby, "health") and nearby.force ~= force then
-          local amount = base_damage * 0.20 * element_multiplier
-          if apply_runtime_damage(nearby, amount, force, "explosion") then
-            upgrade_damage = upgrade_damage + amount
-            splashed = splashed + 1
+      elseif element_id == "electric" and chance_roll(element_proc_chance) then
+        electric_active = true
+        local arc_target = find_nearby_enemy(target.surface, target.position, force, 7, target)
+        local amount = base_damage * 0.25 * element_multiplier
+        if arc_target and apply_runtime_damage(arc_target, amount, force, "electric") then
+          upgrade_damage = upgrade_damage + amount
+          draw_attack_line(target.surface, target.position, arc_target.position, { 0.35, 0.75, 1 }, 2, 18)
+          draw_effect_sprite(target.surface, arc_target, "virtual-signal/signal-lightning", 0.45, 24)
+        end
+      elseif element_id == "explosive" and chance_roll(element_proc_chance) then
+        explosive_active = true
+        local splashed = 0
+        local splash_radius = 3 + math.min(3, get_element_rank(state, "explosive") * 0.15)
+        local entities = target.surface.find_entities_filtered({
+          area = {
+            { target.position.x - splash_radius, target.position.y - splash_radius },
+            { target.position.x + splash_radius, target.position.y + splash_radius }
+          }
+        })
+        create_short_effect(target.surface, "explosion", target.position)
+        draw_effect_sprite(target.surface, target, "virtual-signal/signal-explosion", 0.45, 24)
+        for _, nearby in pairs(entities) do
+          if splashed >= 4 then
+            break
+          end
+          if nearby.valid and nearby ~= target and safe_read(nearby, "health") and nearby.force ~= force then
+            local amount = base_damage * 0.20 * element_multiplier
+            if apply_runtime_damage(nearby, amount, force, "explosion") then
+              upgrade_damage = upgrade_damage + amount
+              splashed = splashed + 1
+            end
           end
         end
       end
@@ -4323,7 +4375,9 @@ local function refresh_player_gui(player)
   end
 end
 
-local function on_gui_opened(event)
+local handlers = {}
+
+function handlers.on_gui_opened(event)
   local player = game.get_player(event.player_index)
   if not player then
     return
@@ -4337,7 +4391,7 @@ local function on_gui_opened(event)
   end
 end
 
-local function on_gui_closed(event)
+function handlers.on_gui_closed(event)
   local player = game.get_player(event.player_index)
   if not player then
     return
@@ -4347,7 +4401,7 @@ local function on_gui_closed(event)
   forget_open_turret(player)
 end
 
-local function on_gui_click(event)
+function handlers.on_gui_click(event)
   local element = event.element
   if not element or not element.valid then
     return
@@ -4410,7 +4464,7 @@ local function on_gui_click(event)
   end
 end
 
-local function on_gui_checked_state_changed(event)
+function handlers.on_gui_checked_state_changed(event)
   local element = event.element
   if not element or not element.valid then
     return
@@ -4434,7 +4488,7 @@ local function on_gui_checked_state_changed(event)
   end
 end
 
-local function on_gui_text_changed(event)
+function handlers.on_gui_text_changed(event)
   local element = event.element
   if not element or not element.valid then
     return
@@ -4446,7 +4500,7 @@ local function on_gui_text_changed(event)
   end
 end
 
-local function on_runtime_mod_setting_changed(event)
+function handlers.on_runtime_mod_setting_changed(event)
   if not event.setting or string.sub(event.setting, 1, #MOD_PREFIX) ~= MOD_PREFIX then
     return
   end
@@ -4465,7 +4519,7 @@ local function on_runtime_mod_setting_changed(event)
   end
 end
 
-local function on_entity_damaged(event)
+function handlers.on_entity_damaged(event)
   local cause = event.cause
   local damage = event.final_damage_amount or 0
   if damage <= 0 or not event.entity or not event.entity.valid then
@@ -4494,7 +4548,7 @@ local function on_entity_damaged(event)
   end
 end
 
-local function on_entity_died(event)
+function handlers.on_entity_died(event)
   if is_gun_turret(event.entity) then
     local profile = get_turret_state(event.entity)
     destroy_name_render(profile)
@@ -4529,7 +4583,7 @@ local function on_entity_died(event)
   award_kill_credit(event.entity, cause)
 end
 
-local function on_turret_removed(event)
+function handlers.on_turret_removed(event)
   local entity = event.entity
   if not is_gun_turret(entity) then
     return
@@ -4547,7 +4601,7 @@ local function on_turret_removed(event)
   remove_turret_state(entity, false)
 end
 
-local function on_refresh_tick()
+function handlers.on_refresh_tick()
   ensure_storage()
   cleanup_target_damage()
   apply_passive_evolution_effects()
@@ -4584,17 +4638,17 @@ script.on_configuration_changed(function()
   end
 end)
 
-script.on_event(defines.events.on_gui_opened, on_gui_opened)
-script.on_event(defines.events.on_gui_closed, on_gui_closed)
-script.on_event(defines.events.on_gui_click, on_gui_click)
-script.on_event(defines.events.on_gui_checked_state_changed, on_gui_checked_state_changed)
-script.on_event(defines.events.on_gui_text_changed, on_gui_text_changed)
-script.on_event(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_setting_changed)
-script.on_event(defines.events.on_entity_damaged, on_entity_damaged)
-script.on_event(defines.events.on_entity_died, on_entity_died)
-script.on_event(defines.events.on_pre_player_mined_item, on_turret_removed)
-script.on_event(defines.events.on_robot_pre_mined, on_turret_removed)
-script.on_nth_tick(REFRESH_TICKS, on_refresh_tick)
+script.on_event(defines.events.on_gui_opened, handlers.on_gui_opened)
+script.on_event(defines.events.on_gui_closed, handlers.on_gui_closed)
+script.on_event(defines.events.on_gui_click, handlers.on_gui_click)
+script.on_event(defines.events.on_gui_checked_state_changed, handlers.on_gui_checked_state_changed)
+script.on_event(defines.events.on_gui_text_changed, handlers.on_gui_text_changed)
+script.on_event(defines.events.on_runtime_mod_setting_changed, handlers.on_runtime_mod_setting_changed)
+script.on_event(defines.events.on_entity_damaged, handlers.on_entity_damaged)
+script.on_event(defines.events.on_entity_died, handlers.on_entity_died)
+script.on_event(defines.events.on_pre_player_mined_item, handlers.on_turret_removed)
+script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed)
+script.on_nth_tick(REFRESH_TICKS, handlers.on_refresh_tick)
 
 commands.add_command("turret-xp", { "turret-xp.command-help" }, function(command)
   local player = command.player_index and game.get_player(command.player_index)

@@ -15,7 +15,7 @@ The player should look at two gun turrets that started from the same vanilla pro
 - **Specialization over universal upgrades.** A high-level turret should not simply be better at everything. Strong choices should usually close or weaken other paths.
 - **Combat earns direction.** XP and levels should grant skill points, and skill points should express what the turret learned by fighting.
 - **Materials express commitment.** One-time or milestone material costs should unlock major hardware changes, branch caps, elemental slots, sustain systems, risky overdrives, and infinite sinks.
-- **No constant upkeep tax.** Material delivery should feel like a construction project or research-style goal, not like another fuel type the player must babysit.
+- **Element upkeep should be intentional.** Most material delivery should still feel like a construction project or research-style goal, but unlocked elements may use their matching resource as a bounded fuel buffer when the element effect is strong enough to justify ongoing logistics.
 - **Visible identity.** The GUI should show the turret's archetype, elements, spent points, material gates, and next meaningful goal without burying the player in raw numbers.
 - **Infinite scaling stays narrow.** Repeatable investment should exist, but it should be slow, focused, and subject to diminishing returns.
 
@@ -52,7 +52,7 @@ Examples:
 
 Material investment should answer: **what did the factory build into this turret?**
 
-The intended feel is closer to localized research or a construction contract than fuel. A turret might need `1k` iron plate to unlock a branch, then much later `1m` iron plate as part of an infinite mastery sink. The exact numbers should scale with game stage and must be playtested.
+The intended feel for major unlocks is closer to localized research or a construction contract than fuel. A turret might need `1k` iron plate to unlock a branch, then much later `1m` iron plate as part of an infinite mastery sink. Element effects are now the exception: V0.4.7 treats an unlocked element as a bounded resource buffer that is refilled by feeding the matching item into the turret. The exact numbers should scale with game stage and must be playtested.
 
 ### 3. Element Slots
 
@@ -326,7 +326,7 @@ Skill points and materials should both matter. A turret with XP but no materials
 
 ## Portable Veteran Core
 
-Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, V0.4.2 makes specialization stats travel with the core by swapping the current turret body, V0.4.3 adds a feeder inventory so material progression is supplied like machine input, and V0.4.6 hides that input on the turret tile while forwarding ammo back into the turret so it no longer appears as a separate chest.
+Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, V0.4.2 makes specialization stats travel with the core by swapping the current turret body, V0.4.3 adds a feeder inventory so material progression is supplied like machine input, V0.4.6 hides that input on the turret tile while forwarding ammo back into the turret, and V0.4.7 uses the same input for bounded element fuel.
 
 The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. When the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret.
 
@@ -370,8 +370,8 @@ Implemented first pass:
 - On installation, reads the core tags and restores the profile to the new turret host.
 - Does not allow two active turrets to share the same core ID.
 - Lets the player name the core profile and optionally draw a floating `name (lvl N)` label above the current turret body.
-- Creates a hidden Veteran Core feeder on the turret tile for element unlock and mastery materials.
-- Consumes matching material from the hidden feeder inventory over time and forwards ammo stacks into the turret ammo inventory.
+- Creates a hidden Veteran Core feeder on the turret tile for element unlock materials and element fuel.
+- Consumes matching material from the hidden feeder inventory for element unlocks and element fuel, and forwards ammo stacks into the turret ammo inventory.
 - Destroys the feeder and spills leftover contents when the core is removed or the turret is mined.
 
 Open design questions:

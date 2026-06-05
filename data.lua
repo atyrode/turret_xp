@@ -1,37 +1,38 @@
 local CHIP_NAME = "turret-xp-veteran-core"
 local FEEDER_NAME = "turret-xp-veteran-feeder"
+local RANGE_AUGMENT_MAX = 20
 local SPECIALIZATIONS = {
   sniper = {
-    range = 34,
-    cooldown = 15,
-    damage_modifier = 2.8,
-    max_health = 350,
-    rotation_speed = 0.01
+    range_multiplier = 1.8889,
+    cooldown_multiplier = 2.5,
+    damage_multiplier = 2.8,
+    health_multiplier = 0.875,
+    rotation_speed_multiplier = 0.6667
   },
   machine_gun = {
-    range = 16,
-    cooldown = 3,
-    damage_modifier = 0.58,
-    max_health = 360,
-    rotation_speed = 0.025
+    range_multiplier = 0.8889,
+    cooldown_multiplier = 0.5,
+    damage_multiplier = 0.58,
+    health_multiplier = 0.9,
+    rotation_speed_multiplier = 1.6667
   },
   bulwark = {
-    range = 17,
-    cooldown = 8,
-    damage_modifier = 0.65,
-    max_health = 1200,
-    rotation_speed = 0.012
+    range_multiplier = 0.9445,
+    cooldown_multiplier = 1.3334,
+    damage_multiplier = 0.65,
+    health_multiplier = 3.0,
+    rotation_speed_multiplier = 0.8
   },
   brawler = {
-    range = 7,
-    cooldown = 8,
-    damage_modifier = 4.0,
-    max_health = 650,
-    rotation_speed = 0.02
+    range_multiplier = 0.3889,
+    cooldown_multiplier = 1.3334,
+    damage_multiplier = 4.0,
+    health_multiplier = 1.625,
+    rotation_speed_multiplier = 1.3334
   }
 }
 
-local function make_turret_variant(id, settings)
+local function make_turret_variant(id, settings, range_bonus)
   local base = data.raw["ammo-turret"]["gun-turret"]
   if not base then
     return nil
@@ -45,24 +46,38 @@ local function make_turret_variant(id, settings)
   variant.hidden_in_factoriopedia = true
   variant.placeable_by = { item = "gun-turret", count = 1 }
   variant.minable = { mining_time = 0.5, result = "gun-turret" }
-  variant.max_health = settings.max_health or variant.max_health
-  variant.rotation_speed = settings.rotation_speed or variant.rotation_speed
+  variant.max_health = math.floor((variant.max_health or 1) * (settings.health_multiplier or 1) + 0.5)
+  variant.rotation_speed = (variant.rotation_speed or 0) * (settings.rotation_speed_multiplier or 1)
 
   variant.attack_parameters = table.deepcopy(variant.attack_parameters)
-  variant.attack_parameters.range = settings.range or variant.attack_parameters.range
-  variant.attack_parameters.cooldown = settings.cooldown or variant.attack_parameters.cooldown
-  variant.attack_parameters.damage_modifier = settings.damage_modifier or variant.attack_parameters.damage_modifier or 1
+  variant.attack_parameters.range = (variant.attack_parameters.range or 0) * (settings.range_multiplier or 1) + (range_bonus or 0)
+  variant.attack_parameters.cooldown = (variant.attack_parameters.cooldown or 1) * (settings.cooldown_multiplier or 1)
+  variant.attack_parameters.damage_modifier = (variant.attack_parameters.damage_modifier or 1) * (settings.damage_multiplier or 1)
 
   return variant
 end
 
 local variants = {}
 local variant_names = {}
-for id, settings in pairs(SPECIALIZATIONS) do
-  local variant = make_turret_variant(id, settings)
+for range_bonus = 1, RANGE_AUGMENT_MAX do
+  local variant = make_turret_variant("range-" .. tostring(range_bonus), {}, range_bonus)
   if variant then
     variants[#variants + 1] = variant
     variant_names[#variant_names + 1] = variant.name
+  end
+end
+
+for id, settings in pairs(SPECIALIZATIONS) do
+  for range_bonus = 0, RANGE_AUGMENT_MAX do
+    local variant_id = id
+    if range_bonus > 0 then
+      variant_id = id .. "-range-" .. tostring(range_bonus)
+    end
+    local variant = make_turret_variant(variant_id, settings, range_bonus)
+    if variant then
+      variants[#variants + 1] = variant
+      variant_names[#variant_names + 1] = variant.name
+    end
   end
 end
 

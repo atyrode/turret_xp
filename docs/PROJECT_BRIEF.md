@@ -40,18 +40,18 @@ The first playable releases should make progression visible and testable: select
 ## V0.4.2 Scope
 
 - Make specialization choices change real turret stats through hidden gun-turret prototype variants.
-- Add Sniper, Machine Gun, Bulwark, and Brawler turret bodies with distinct range, cooldown, damage modifier, and health values.
+- Add Sniper, Machine Gun, Bulwark, and Brawler turret bodies generated from multipliers on vanilla turret range, cooldown, damage modifier, health, and rotation speed.
 - Revert specialized bodies back to the normal gun turret when the Veteran Core is extracted.
 - Replace exponential level scaling with linear per-level scaling.
 - Replace doubling augment costs with one augment point every ten levels.
 - Remove material deposit buttons and consume the matching carried element resource automatically during open-panel playtesting.
-- Add first-pass element mastery milestones and visual feedback for bounce, pierce, fire, electric, explosive, and combo effects.
+- Add first-pass element fuel and visual feedback for bounce, double shot, fire, electric, explosive, and combo effects.
 
 ## V0.4.3 Scope
 
 - Replace player-inventory material feeding with a real Veteran Core feeder inventory entity.
 - Create the feeder next to the turret when a Veteran Core is installed, and show its status in the Evolution panel.
-- Consume element unlock and mastery materials from the feeder over time, even when the turret GUI is closed.
+- Consume element unlock materials and element fuel from the feeder over time, even when the turret GUI is closed.
 - Destroy the feeder and spill leftover feeder contents when the core is extracted or the turret is mined.
 
 ## V0.4.4 Scope
@@ -77,9 +77,18 @@ The first playable releases should make progression visible and testable: select
 - Polish core upgrade rows, allocation button styling, material requirement icons, and no-ammo damage text.
 - Replace Longshot and Piercing augments with Double Shot and Veteran Training.
 
+## V0.4.7 Scope
+
+- Fix hidden-input ammo detection by using `prototypes.item` instead of `game.item_prototypes`.
+- Add a prototype-backed Range augment with up to 20 ranks.
+- Generate specialization bodies from multipliers on vanilla turret stats instead of fixed flat stat assignments.
+- Increase first element unlock material costs by 10x.
+- Replace post-unlock element mastery ranks with an element fuel buffer consumed by element combat effects.
+- Put the name field and label controls on one row and lower the floating world label from the 0.4.6 offset.
+
 ## Open Product Questions
 
-- Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, or infinite mastery?
+- Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, element fuel, or infinite mastery?
 - Should destroyed turrets destroy their installed core, drop a damaged core, or have a recovery chance?
 - Should XP eventually include waves survived, ammo consumed, or other behavior beyond damage and kill credit?
 - Does the hidden turret-tile input plus ammo-forwarding behavior feel reliable with inserters in practical layouts, or does the material input need a clearer visible design later?
