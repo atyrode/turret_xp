@@ -259,6 +259,7 @@ local COLOR = {
 local REFRESH_TICKS = 60
 local TARGET_DAMAGE_TTL = 60 * 60 * 5
 local FEEDER_CONSUME_LIMIT = 100
+local SPACE_COMBAT_XP_MULTIPLIER = 0.1
 local safe_read
 local build_turret_gui
 local destroy_name_render
@@ -389,6 +390,49 @@ local function get_xp_settings()
     level_base_xp = math.max(1, get_setting(SETTINGS.level_base_xp, DEFAULTS.level_base_xp)),
     level_growth = math.max(1.01, get_setting(SETTINGS.level_growth, DEFAULTS.level_growth))
   }
+end
+
+local function ensure_xp_counters(state)
+  if not state then
+    return
+  end
+
+  state.damage = state.damage or 0
+  state.kill_credit = state.kill_credit or state.kills or 0
+  if state.xp_damage == nil then
+    state.xp_damage = state.damage
+  end
+  if state.xp_kill_credit == nil then
+    state.xp_kill_credit = state.kill_credit
+  end
+end
+
+local function get_combat_xp_multiplier(turret)
+  local surface = turret and turret.valid and safe_read(turret, "surface") or nil
+  local platform = surface and safe_read(surface, "platform") or nil
+  return platform and SPACE_COMBAT_XP_MULTIPLIER or 1
+end
+
+local function add_profile_damage(state, amount, turret)
+  amount = math.max(0, tonumber(amount) or 0)
+  if amount <= 0 then
+    return
+  end
+
+  ensure_xp_counters(state)
+  state.damage = (state.damage or 0) + amount
+  state.xp_damage = (state.xp_damage or 0) + (amount * get_combat_xp_multiplier(turret))
+end
+
+local function add_profile_kill_credit(state, credit, turret)
+  credit = math.max(0, tonumber(credit) or 0)
+  if credit <= 0 then
+    return
+  end
+
+  ensure_xp_counters(state)
+  state.kill_credit = (state.kill_credit or state.kills or 0) + credit
+  state.xp_kill_credit = (state.xp_kill_credit or 0) + (credit * get_combat_xp_multiplier(turret))
 end
 
 local function get_element_requirement_count(element, next_rank)
@@ -669,12 +713,13 @@ end
 
 local function sync_turret_progression(state)
   state.kill_credit = state.kill_credit or state.kills or 0
+  ensure_xp_counters(state)
   ensure_evolution_state(state)
 
   local xp_settings = get_xp_settings()
   local veteran_training_rank = get_augment_rank(state, "veteran_training")
-  local combat_xp = ((state.damage or 0) * xp_settings.xp_per_damage)
-    + ((state.kill_credit or 0) * xp_settings.xp_per_kill_credit)
+  local combat_xp = ((state.xp_damage or state.damage or 0) * xp_settings.xp_per_damage)
+    + ((state.xp_kill_credit or state.kill_credit or 0) * xp_settings.xp_per_kill_credit)
   local total_xp = (combat_xp * (1 + (veteran_training_rank * 0.05)))
     + (state.dev_xp or 0)
   local settings_key = tostring(xp_settings.xp_per_damage)
@@ -733,6 +778,8 @@ local function create_blank_profile()
     kills = 0,
     kill_credit = 0,
     damage = 0,
+    xp_damage = 0,
+    xp_kill_credit = 0,
     skills = {},
     evolution = {},
     chip_quality = "normal",
@@ -755,6 +802,7 @@ local function normalize_profile(profile)
   profile.kills = profile.kills or 0
   profile.kill_credit = profile.kill_credit or profile.kills or 0
   profile.damage = profile.damage or 0
+  ensure_xp_counters(profile)
   profile.dev_xp = profile.dev_xp or 0
   profile.chip_quality = profile.chip_quality or "normal"
   profile.custom_name = profile.custom_name or ""
@@ -888,6 +936,8 @@ local function serialize_profile(profile)
     kills = profile.kills or 0,
     kill_credit = profile.kill_credit or 0,
     damage = profile.damage or 0,
+    xp_damage = profile.xp_damage or profile.damage or 0,
+    xp_kill_credit = profile.xp_kill_credit or profile.kill_credit or 0,
     dev_xp = profile.dev_xp or 0,
     evolution = {
       base = copy_serializable(evolution.base or {}),
@@ -919,6 +969,8 @@ local function deserialize_profile(data)
     profile.kills = data.kills or 0
     profile.kill_credit = data.kill_credit or data.kills or 0
     profile.damage = data.damage or 0
+    profile.xp_damage = data.xp_damage
+    profile.xp_kill_credit = data.xp_kill_credit
     profile.dev_xp = data.dev_xp or 0
     profile.evolution = copy_serializable(data.evolution or {})
   end
@@ -2787,7 +2839,7 @@ local function award_kill_credit(target, killing_turret)
         end
 
         if state then
-          state.kill_credit = (state.kill_credit or state.kills or 0) + credit
+          add_profile_kill_credit(state, credit, turret)
           sync_turret_progression(state)
           if is_gun_turret(state.entity) then
             update_name_render(state.entity, state)
@@ -2803,7 +2855,7 @@ local function award_kill_credit(target, killing_turret)
   if is_gun_turret(killing_turret) then
     local state = get_turret_state(killing_turret)
     if state then
-      state.kill_credit = (state.kill_credit or state.kills or 0) + 1
+      add_profile_kill_credit(state, 1, killing_turret)
       sync_turret_progression(state)
       if is_gun_turret(state.entity) then
         update_name_render(state.entity, state)
@@ -3754,6 +3806,17 @@ function add_section(parent, title, unlocked, gate_level)
   return section
 end
 
+function add_choice_delimiter(parent)
+  local delimiter = parent.add({
+    type = "line",
+    direction = "horizontal"
+  })
+  set_style(delimiter, "horizontally_stretchable", true)
+  set_style(delimiter, "top_margin", 4)
+  set_style(delimiter, "bottom_margin", 4)
+  return delimiter
+end
+
 function add_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name)
   local row_definition = {
     type = "table",
@@ -4167,7 +4230,10 @@ local function add_base_section(parent, state)
   local section = add_section(parent, nil, true)
   local available = get_available_skill_points(state)
 
-  for _, upgrade in ipairs(BASE_UPGRADES) do
+  for index, upgrade in ipairs(BASE_UPGRADES) do
+    if index > 1 then
+      add_choice_delimiter(section)
+    end
     local rank = get_base_rank(state, upgrade.id)
     add_allocation_row(
       section,
@@ -4208,7 +4274,10 @@ local function add_element_choices(section, state, slot)
     return
   end
 
-  for _, element in ipairs(ELEMENTS) do
+  for index, element in ipairs(ELEMENTS) do
+    if index > 1 then
+      add_choice_delimiter(section)
+    end
     local detail = element.description .. "\n" .. make_requirement_summary(get_element_requirements(element, 1))
     if slot == 2 and evolution.elements[1] then
       detail = detail .. "\nCombo: " .. get_combo_caption_for_pair(evolution.elements[1], element.id)
@@ -4321,7 +4390,10 @@ local function add_specialization_section(parent, state)
     return
   end
 
-  for _, specialization in ipairs(SPECIALIZATIONS) do
+  for index, specialization in ipairs(SPECIALIZATIONS) do
+    if index > 1 then
+      add_choice_delimiter(section)
+    end
     add_specialization_option(section, specialization, false)
   end
 end
@@ -4344,7 +4416,10 @@ local function add_augments_section(parent, state)
   set_style(info, "horizontal_align", "center")
   set_style(info, "horizontally_stretchable", true)
 
-  for _, augment in ipairs(AUGMENTS) do
+  for index, augment in ipairs(AUGMENTS) do
+    if index > 1 then
+      add_choice_delimiter(section)
+    end
     local rank = get_augment_rank(state, augment.id)
     local cost = 1
     local at_max = augment.max_rank and rank >= augment.max_rank
@@ -5141,6 +5216,8 @@ local function dev_reset_core(player)
   state.kills = 0
   state.kill_credit = 0
   state.damage = 0
+  state.xp_damage = 0
+  state.xp_kill_credit = 0
   state.dev_xp = 0
   state.skills = {}
   state.evolution = {}
@@ -5690,7 +5767,7 @@ function combat.apply_evolution_damage_effects(event, turret, state, base_damage
 
   if not target.valid then
     if upgrade_damage > 0 then
-      state.damage = (state.damage or 0) + upgrade_damage
+      add_profile_damage(state, upgrade_damage, turret)
       sync_turret_progression(state)
       local siphon_rate = (get_base_rank(state, "siphon") * 0.004)
       combat.heal_turret(turret, (base_damage + upgrade_damage) * siphon_rate)
@@ -5727,7 +5804,7 @@ function combat.apply_evolution_damage_effects(event, turret, state, base_damage
   end
 
   if upgrade_damage > 0 then
-    state.damage = (state.damage or 0) + upgrade_damage
+    add_profile_damage(state, upgrade_damage, turret)
     sync_turret_progression(state)
   end
 end
@@ -5992,7 +6069,7 @@ function handlers.on_entity_damaged(event)
   if is_gun_turret(cause) then
     local state = get_turret_state(cause)
     if state then
-      state.damage = state.damage + damage
+      add_profile_damage(state, damage, cause)
       combat.apply_evolution_damage_effects(event, cause, state, damage)
       sync_turret_progression(state)
       update_name_render(cause, state)

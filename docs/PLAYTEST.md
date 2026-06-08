@@ -4,7 +4,7 @@
 
 Current portal playtest:
 
-0.6.1 is published on the Factorio Mod Portal.
+0.6.2 is published on the Factorio Mod Portal.
 
 Preferred once published:
 
@@ -40,29 +40,31 @@ scripts/install-local.sh
 16. Run `/turret-xp-dev` and use `+1` and `+5` dev buttons to reach levels 10, 20, 30, and 40 quickly.
 17. Run `/turret-xp-dev` again and confirm dev controls hide/show without breaking the panel layout.
 18. Spend core upgrade points and confirm ranks and remaining points refresh immediately.
-19. Hover allocation buttons and confirm the tooltip describes the specific upgrade and next rank.
-20. Use `Respec` and confirm core upgrades, element mastery, elements, active projects, specialization, augments, and hidden feeder contents reset.
-21. Use dev `Reset` and confirm the installed core returns to a fresh zero-XP state.
-22. At level 10, start an Explosive, Fire, or Electric element project.
-23. Confirm the active project shows item requirements and a progress bar.
-24. Confirm no visible feeder chest appears near the turret and the Evolution panel does not show feeder status text.
-25. Feed ammo into the turret with inserters and confirm the turret still receives ammo with a Veteran Core installed.
-26. Feed the required material into the turret area with an inserter and confirm the project progress advances without a deposit button.
-27. Use `Materials` and confirm the element becomes active, or fills the selected element's burner fuel if no unlock project is active.
-28. At level 20, pick Sniper, Machine Gun, Bulwark, or Brawler and confirm the choice is locked in and the turret stats change.
-29. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
-30. Buy Range ranks and confirm the displayed range changes and the turret can actually fire farther.
-31. Feed the unlocked element's resource after unlock and confirm storage fills up to capacity without ground overflow; then wait and confirm one fuel item burns over time while the element stays powered.
-32. At level 40, start and complete a second element project and confirm the combo text appears.
-33. Extract or mine the core and confirm leftover feeder contents spill instead of disappearing.
-34. Let the turret shoot enemies and confirm XP, damage dealt, kills, active custom stat rows, and upgrade/element visual feedback feel visible enough to judge.
-35. Damage a turret with regeneration ranks and confirm passive repair works.
-36. Try Lifesteal in combat and check whether vampiric healing is understandable.
-37. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
-38. Spend points while scrolled down in the Evolution panel and confirm the panel stays near the clicked row.
-39. Select the turret and run `/turret-xp` as a fallback path.
-40. On a space platform, place one or more Veteran Cores in the platform hub inventory, open a platform turret, and confirm the panel lists the exact available cores.
-41. Install a specific listed platform core, then send it back to the hub and confirm the same profile returns when hub inventory space is available.
+19. Confirm unlocked Evolution choices are separated by horizontal delimiters and are easier to scan.
+20. Hover allocation buttons and confirm the tooltip describes the specific upgrade and next rank.
+21. Use `Respec` and confirm core upgrades, element mastery, elements, active projects, specialization, augments, and hidden feeder contents reset.
+22. Use dev `Reset` and confirm the installed core returns to a fresh zero-XP state.
+23. At level 10, start an Explosive, Fire, or Electric element project.
+24. Confirm the active project shows item requirements and a progress bar.
+25. Confirm no visible feeder chest appears near the turret and the Evolution panel does not show feeder status text.
+26. Feed ammo into the turret with inserters and confirm the turret still receives ammo with a Veteran Core installed.
+27. Feed the required material into the turret area with an inserter and confirm the project progress advances without a deposit button.
+28. Use `Materials` and confirm the element becomes active, or fills the selected element's burner fuel if no unlock project is active.
+29. At level 20, pick Sniper, Machine Gun, Bulwark, or Brawler and confirm the choice is locked in and the turret stats change.
+30. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
+31. Buy Range ranks and confirm the displayed range changes and the turret can actually fire farther.
+32. Feed the unlocked element's resource after unlock and confirm storage fills up to capacity without ground overflow; then wait and confirm one fuel item burns over time while the element stays powered.
+33. At level 40, start and complete a second element project and confirm the combo text appears.
+34. Extract or mine the core and confirm leftover feeder contents spill instead of disappearing.
+35. Let the turret shoot enemies and confirm XP, damage dealt, kills, active custom stat rows, and upgrade/element visual feedback feel visible enough to judge.
+36. Damage a turret with regeneration ranks and confirm passive repair works.
+37. Try Lifesteal in combat and check whether vampiric healing is understandable.
+38. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
+39. Spend points while scrolled down in the Evolution panel and confirm the panel stays near the clicked row.
+40. Select the turret and run `/turret-xp` as a fallback path.
+41. On a space platform, place one or more Veteran Cores in the platform hub inventory, open a platform turret, and confirm the panel lists the exact available cores.
+42. Install a specific listed platform core, then send it back to the hub and confirm the same profile returns when hub inventory space is available.
+43. Let a platform turret fight and confirm XP rises much more slowly than comparable surface combat while damage/kills still show raw totals.
 
 ## Report Back
 
@@ -77,6 +79,7 @@ Useful feedback:
 - Did element fuel feel like a clear furnace-like burner, including fill-to-capacity behavior and no ground overflow?
 - Did the optional floating label feel useful, and should it be visible only in alt mode or always visible?
 - Did the five-section list feel clearer than the skill tree?
+- Did the delimiters make the Evolution choices easier to parse?
 - Did the Respec and dev Reset controls behave as expected?
 - Did level gates 10, 20, 30, and 40 feel like the right first draft?
 - Were material project requirements understandable?
@@ -84,4 +87,5 @@ Useful feedback:
 - Did Range ranks and specialization multipliers feel meaningful without breaking the turret role?
 - Did XP, kills, evolution points, and ranks update at the pace you expected?
 - Did the platform hub core selector make it clear which Veteran Core was being installed?
+- Did the 10% space-platform XP pacing feel closer to the intended progression speed?
 - Did the mod fail to load, desync, or throw a runtime error?

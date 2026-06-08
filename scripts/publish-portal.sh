@@ -53,6 +53,7 @@ Current prototype:
 - Adds a hidden turret-tile feeder inventory for inserter-fed element materials, element fuel, and ammo forwarding.
 - Closes the hidden feeder at the visible element fuel cap instead of accepting excess ghost fuel.
 - On space platforms, lists Veteran Cores from the platform hub inventory so a player can install the exact core they choose and send installed cores back to that hub.
+- Reduces space-platform combat XP to 10% while keeping displayed damage and kill-credit stats as raw totals.
 - Awards configurable XP from cored gun turret damage and proportional kill credit.
 - Lets the player extract a core and install it in another turret, carrying progression with it.
 - Returns or spills the installed core when a turret is mined.
@@ -62,6 +63,7 @@ Current prototype:
 - Shows research bonuses in base plus bonus format.
 - Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
+- Adds horizontal delimiters between Evolution choices for easier scanning.
 - Shows element material requirements with item icons and hides feeder implementation status from the panel.
 - Adds compact core upgrades, element material projects, furnace-like element fuel, element mastery ranks, a free specialization choice, Double Shot/Veteran Training/Range/Luck augments, and a second element combo path.
 - Specialization choices and Range ranks now use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
@@ -75,7 +77,7 @@ Current prototype:
 
 This is the first playable release line intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, furnace-like element fuel, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.
 
-0.6.1 adds Luck, formula-style stat breakdowns, expected DPS from proc output, impact-origin Electric feedback, delayed Double Shot tracers, bounced-hit element procs, hidden fuel cap fixes, second-element fuel acceptance fixes, and explicit space-platform hub core selection.
+0.6.2 reduces space-platform combat XP to 10% and adds Evolution choice delimiters. 0.6.1 added Luck, formula-style stat breakdowns, expected DPS from proc output, impact-origin Electric feedback, delayed Double Shot tracers, bounced-hit element procs, hidden fuel cap fixes, second-element fuel acceptance fixes, and explicit space-platform hub core selection.
 
 Source:
 ${source_url}

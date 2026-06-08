@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.6.2
+Date: 2026-06-08
+  Changes:
+    - Reduced XP gained by turrets fighting on space-platform surfaces to 10% of normal combat XP while keeping displayed damage and kill credit unchanged.
+    - Added horizontal delimiters between choices in the Evolution sections so core upgrades, element picks, specializations, and augments are easier to scan.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.6.1
 Date: 2026-06-05
   Changes:

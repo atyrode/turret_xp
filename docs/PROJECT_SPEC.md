@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.6.1
+## Version 0.6.2
 
-V0.6.1 is the current first playable patch for a full Veteran Core turret loop after initial playtest feedback. It keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates an invisible inserter-fed input on the turret tile only while element materials or fuel are needed, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Specialization and Range augment choices swap the current turret into hidden gun-turret variants with prototype stat changes.
+V0.6.2 is the current first playable patch for a full Veteran Core turret loop after initial playtest feedback. It keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates an invisible inserter-fed input on the turret tile only while element materials or fuel are needed, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Specialization and Range augment choices swap the current turret into hidden gun-turret variants with prototype stat changes. Space-platform combat XP is weighted down to 10% of normal combat XP.
 
 Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the UI and Veteran Core foundations before this first playable line.
 
@@ -15,10 +15,12 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - New core profiles start at level 1 with zero XP, kills, kill credit, damage, total XP, custom name, display-label flag, and empty evolution choices.
 - Veteran Cores are non-stackable `item-with-tags` items. Extracted cores serialize their profile into item tags.
 - On space platforms, Veteran Cores stay in the platform hub inventory until the player chooses a specific core from the opened turret panel. This avoids inserter ambiguity when multiple cores exist and keeps normal inserters focused on ammo/material feeding.
-- XP is derived from lifetime damage, kill credit, runtime-global XP settings, core XP upgrade ranks, and optional dev XP.
+- XP is derived from XP-weighted lifetime damage, XP-weighted kill credit, runtime-global XP settings, core XP upgrade ranks, and optional dev XP.
+- Displayed damage and kill credit remain raw combat totals. Separate `xp_damage` and `xp_kill_credit` counters preserve XP balance, with space-platform combat adding only 10% of its raw damage or kill credit into those XP counters.
 - Derived level progress is cached after sync so normal combat only applies new XP deltas instead of recalculating every previous level.
 - Default damage XP is `0.02` XP per final damage point.
 - Default kill-credit XP is `25` XP per full kill credit.
+- Combat by turrets on a space-platform surface applies a `0.1x` multiplier before damage or kill credit reaches the XP counters.
 - Default level XP starts at `100` and grows linearly. The default `1.65` growth setting means each level adds `65%` of base XP to the next requirement.
 - Kill credit is split proportionally by damage contribution so turrets are not fully denied XP when another source lands the final hit.
 - Core points equal `level - 1 - spent_core_points`.
@@ -90,6 +92,7 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - When the opened turret is on a space platform, the Veteran Core panel also lists tagged cores found in that platform's hub inventory. Each row represents the exact hub inventory slot, with level/kills/damage summary and an install button. Installed platform cores can be sent back to the same hub if it has room.
 - The Evolution panel does not show feeder status; material project panels show the current requirement and progress. Unlocked element panels show a resource slot, burn progress, stored fuel count, and burner state.
 - Stats show formula-style rows only when an additive value, multiplier, or expected proc output affects the displayed number.
+- Evolution choices inside the unlocked list sections use horizontal delimiters to improve readability without adding extra explanatory text.
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
 - Point allocation refreshes scroll the rebuilt Evolution list back to the clicked row so spending points does not jump back to the top.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and panel styles.
@@ -99,6 +102,6 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.6.1`
+- Current version: `0.6.2`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`

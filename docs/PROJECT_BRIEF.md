@@ -109,6 +109,12 @@ The first playable releases should make progression visible and testable: select
 - Keep hidden element fuel capped without buffering excess valid fuel.
 - Support explicit Veteran Core selection from a space-platform hub inventory and sending installed cores back to that hub.
 
+## V0.6.2 Scope
+
+- Patch first-playable balance and readability.
+- Reduce combat XP gained by turrets fighting on space-platform surfaces to 10% of normal without changing displayed raw damage or kill-credit stats.
+- Add clear delimiters between choices inside the Evolution sections.
+
 ## Open Product Questions
 
 - What final mod name, short description, portal category, and sober Factorio-native portal image best communicate Veteran Core turret progression once the core loop stabilizes?

@@ -185,9 +185,14 @@
 - [x] Keep existing element fuel accepted while a second-element project is active.
 - [x] Add explicit platform hub Veteran Core selection and return controls for space-platform turrets.
 
+## Completed For V0.6.2
+
+- [x] Reduce space-platform combat XP to 10% while preserving raw displayed damage and kill-credit totals.
+- [x] Add delimiters between choices in Evolution sections for readability.
+
 ## Likely Next Work
 
-- Playtest V0.6.1 from the Mod Portal as the first playable run after feedback integration, especially around hidden input ammo forwarding, burner-style element fuel, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, label controls, and high-level turret combat performance.
+- Playtest V0.6.2 from the Mod Portal as the first playable run after feedback integration, especially around hidden input ammo forwarding, burner-style element fuel, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, space-combat XP pacing, label controls, and high-level turret combat performance.
 - Plan a Mod Portal identity pass: final name, short description, category, and a simple Factorio-native portal image that avoids generic AI-generated key art.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.

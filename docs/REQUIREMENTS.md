@@ -9,6 +9,7 @@
 - A Veteran Core must be extractable and reinstallable into another gun turret while retaining XP, upgrades, element projects, custom name, and label preference.
 - On space platforms, the attached turret panel must allow selecting a specific Veteran Core from the platform hub inventory and sending an installed core back to the hub when there is room.
 - Gun turret damage against non-friendly entities must add lifetime damage and damage-derived XP only when the attacking turret has an installed core.
+- Gun turret combat on space-platform surfaces must add only 10% of normal damage-derived and kill-credit-derived XP while preserving raw displayed damage and kill-credit totals.
 - Enemy deaths must add proportional kill-credit XP to contributing installed cores, even when another source lands the final hit.
 - Gun turret final hits must add a killing-blow count to the installed core.
 - Mining a turret with an installed core must return the normal turret item through vanilla behavior and return or spill the core separately.
@@ -44,6 +45,7 @@
 - Show estimated loaded-ammo damage per shot and estimated DPS when they can be derived from prototype data.
 - Show kills, lifetime damage, and evolution points.
 - Show a five-section Evolution list: core upgrades, first element, specialization, powerful augments, and second element/combo.
+- Show clear delimiters between choices inside the unlocked Evolution sections.
 - Show locked section level gates before the turret reaches them.
 - Show material requirements and progress for the active element project, plus burner state, burn progress, and stored fuel for unlocked elements.
 - Show a core naming field and a floating-label toggle when a core is installed.

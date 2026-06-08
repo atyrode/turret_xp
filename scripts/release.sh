@@ -20,6 +20,7 @@ Turret XP ${version}.
 - Adds a hidden turret-tile feeder inventory for inserter-fed element materials, element fuel, and ammo forwarding.
 - Closes the hidden feeder at the visible element fuel cap instead of accepting excess ghost fuel.
 - On space platforms, lists Veteran Cores from the platform hub inventory so a player can install the exact core they choose and send installed cores back to that hub.
+- Reduces space-platform combat XP to 10% while keeping displayed damage and kill-credit stats as raw totals.
 - Awards configurable XP from cored gun turret damage and proportional kill credit.
 - Lets the player extract a core and install it in another turret, carrying progression with it.
 - Returns or spills the installed core when a turret is mined.
@@ -29,6 +30,7 @@ Turret XP ${version}.
 - Uses Factorio Library (flib) GUI styles for a more vanilla-like relative panel.
 - Shows quality summaries for HP and range while filtering Factorio's hidden unknown quality prototype.
 - Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
+- Adds horizontal delimiters between Evolution choices for easier scanning.
 - Adds compact core upgrades, level-gated element projects, specialization choices, Double Shot/Veteran Training/Range/Luck augments, furnace-like element fuel, element mastery ranks, and second-element combo text.
 - Shows element material requirements with item icons and hides feeder implementation status from the panel.
 - Specialization choices and Range ranks use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.

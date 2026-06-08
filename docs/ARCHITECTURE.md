@@ -32,6 +32,8 @@ storage.turret_xp = {
       kills = 0,
       kill_credit = 0,
       damage = 0,
+      xp_damage = 0,
+      xp_kill_credit = 0,
       dev_xp = 0,
       evolution = {
         base = {
@@ -112,10 +114,11 @@ storage.turret_xp = {
 
 ## Runtime Responsibilities
 
-- `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, cache per-target damage contribution, and apply runtime evolution damage effects.
-- `on_entity_died`: award proportional kill credit to contributing core profiles, track visible kills including scripted element-damage kills, and delete installed core profiles when a turret dies.
+- `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, add XP-weighted damage into `xp_damage`, cache per-target damage contribution, and apply runtime evolution damage effects.
+- `on_entity_died`: award proportional kill credit to contributing core profiles, add XP-weighted kill credit into `xp_kill_credit`, track visible kills including scripted element-damage kills, and delete installed core profiles when a turret dies.
 - Feeder lifecycle: create a hidden Veteran Core feeder inventory colocated with installed-core turrets only while input is needed, forward ammo from that hidden inventory into the turret ammo inventory, consume project materials and element burner fuel from it, close the input at the visible fuel cap, spill unsupported non-ammo items, and destroy/spill it when the core leaves the turret.
 - Platform core transfer: when the opened turret is on a space platform, list Veteran Cores from the platform hub inventory for exact install selection and allow sending the installed core back to that hub.
+- Space-platform XP pacing: raw `damage` and `kill_credit` remain display totals, but combat on surfaces with `LuaSurface::platform` writes only 10% of those increments into the XP counters used by progression.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined gun turrets.
 - `on_space_platform_mined_entity`, when available: return/spill installed Veteran Cores for platform-mined gun turrets.

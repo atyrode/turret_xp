@@ -23,6 +23,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer a comp
 - Dev buttons are hidden by default as of V0.5.0 and toggled with `/turret-xp-dev` so normal playthroughs are not dominated by test controls.
 - V0.6.0 stat rows should reveal active custom bonuses only when present, with specialization multipliers colored next to affected base values.
 - V0.6.1 should make space-platform core choice explicit from the turret panel: when several Veteran Cores are in the platform hub, the player picks the exact core by row instead of relying on inserter order.
+- V0.6.2 should make Evolution choices easier to scan by separating adjacent options with vanilla-style horizontal delimiters.
 
 ## V0.4.1 UX
 
@@ -49,6 +50,7 @@ The main design goal is specialization over universal upgrades. A sniper turret,
 - Early levels should arrive fast enough for testing and feedback, but damage should contribute very little because damage totals grow quickly.
 - Kill credit should be based on damage contribution so final-hit stealing does not erase most turret progress.
 - Default 0.4.x pacing is conservative: `0.02` XP per damage, `20` XP per full kill credit, `100` base XP, and linear level growth using the `1.65` growth step.
+- Space-platform combat is worth 10% of normal combat XP in V0.6.2 because space combat density can otherwise overlevel turrets too quickly.
 - Long-term curves should avoid turning a single turret into a complete wall replacement.
 - Bonuses should probably be modest and visible, with caps or specialization tradeoffs.
 
