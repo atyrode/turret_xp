@@ -42,7 +42,16 @@ These instructions apply to the whole repository. Follow them before making chan
 - `docs/ARCHITECTURE.md`: system components, responsibilities, data flow, storage concepts, and architecture rules. Update it when adding or reshaping application structure.
 - `docs/DEVELOPMENT_STEPS.md`: development checklist, milestones, and validation checkpoints. Update it as work is completed, re-ordered, or split.
 - `docs/DESIGN.md`: internal UI/UX direction, report layout, map behavior, warning states, and source presentation. Update it when designing or changing user-facing workflows.
+- `docs/index.html`: public GitHub Pages website. Keep it aligned with the current mod version and make it useful as a lightweight docs/tutorial surface for getting started, downloading/installing, core mechanics, and current playtest guidance.
 - `docs/CLIENT_QUESTIONS.fr.md`: unresolved French client-facing questions only. Keep answered decisions out of this file.
+
+## Project Chores
+
+- Keep the repo website up to date as the mod changes. Treat `docs/index.html` as the public-facing documentation/tutorial entry point, not a stale marketing page: it should explain what the mod does, how to download/install it, how to get started, and where deeper docs/playtest guidance live.
+- Before publishing or handing off a gameplay change, run the headless test suite with `scripts/test-headless.sh` when a local Factorio binary is available. If the suite cannot be run, state why and describe the remaining risk.
+- Add or extend headless tests as the mod gains behavior that can be validated without manual GUI playtesting. Prioritize tests for progression state, Veteran Core serialization, feeder/item routing, element fuel, combat XP, bound turret movement, and regressions found during playtesting.
+- Before ending an implementation or release turn, make the source-control state explicit. If the operator asked for the source to be hosted, shared, released, or kept up to date online, commit the validated changes and push the relevant branch after fetching and checking the remote state. If publishing to the Mod Portal or another release channel, ensure the matching source commit is pushed first unless the operator explicitly requests otherwise.
+- Do not leave completed, validated implementation work only in the local working tree without saying so. If a commit, push, merge, package, or release was intentionally deferred, explain the reason and the exact remaining command/workflow.
 
 ## Secret Handling
 

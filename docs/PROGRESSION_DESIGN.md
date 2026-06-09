@@ -2,7 +2,7 @@
 
 This document captures the intended long-term gameplay direction for turret XP, evolution, perks, material investment, elemental specialization, and infinite scaling. It is design direction only; it should not be read as a committed implementation spec.
 
-V0.4.0 intentionally uses a simple five-section Evolution list instead of a navigable skill tree. The list is the first playable way to test the gameplay loop before deciding whether a future tree, map, or another layout is worth the UI complexity.
+The current playable draft uses a simple level-gated Evolution list instead of a navigable skill tree. V0.10.0 has six sections: core upgrades, specialization, first element, augments, sub-specialization, and second element/combo.
 
 ## Core Fantasy
 
@@ -15,7 +15,7 @@ The player should look at two gun turrets that started from the same vanilla pro
 - **Specialization over universal upgrades.** A high-level turret should not simply be better at everything. Strong choices should usually close or weaken other paths.
 - **Combat earns direction.** XP and levels should grant skill points, and skill points should express what the turret learned by fighting.
 - **Materials express commitment.** One-time or milestone material costs should unlock major hardware changes, branch caps, elemental slots, sustain systems, risky overdrives, and infinite sinks.
-- **Element upkeep should be intentional.** Most material delivery should still feel like a construction project or research-style goal, but unlocked elements may use their matching resource as a bounded fuel buffer when the element effect is strong enough to justify ongoing logistics.
+- **Element growth should be intentional.** Material delivery should feel like a construction project or research-style goal: picking an element creates identity immediately, while later ranks require progressively larger deliveries.
 - **Visible identity.** The GUI should show the turret's archetype, elements, spent points, material gates, and next meaningful goal without burying the player in raw numbers.
 - **Infinite scaling stays narrow.** Repeatable investment should exist, but it should be slow, focused, and subject to diminishing returns.
 
@@ -52,7 +52,7 @@ Examples:
 
 Material investment should answer: **what did the factory build into this turret?**
 
-The intended feel for major unlocks is closer to localized research or a construction contract than fuel. A turret might need `1k` iron plate to unlock a branch, then much later `1m` iron plate as part of an infinite mastery sink. Element effects are now the exception: V0.6.0 treats an unlocked element as a small furnace-like burner that fills from matching items up to capacity, while mastery ranks spend regular core points after unlock. The exact numbers should scale with game stage and must be playtested.
+The intended feel for major unlocks is closer to localized research or a construction contract than fuel. A turret might need `1k` iron plate to unlock a branch, then much later `1m` iron plate as part of an infinite mastery sink. In the current V0.10.x draft, the first rank of an element is free at its level gate, and future element ranks are earned through passive material progress using the element's matching resource. The next requirement is always visible on the selected element panel, and inserters can keep feeding it without clicking a separate project button. The exact numbers should scale with game stage and must be playtested.
 
 ### 3. Element Slots
 
@@ -326,9 +326,11 @@ Skill points and materials should both matter. A turret with XP but no materials
 
 ## Portable Veteran Core
 
-Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, V0.4.2 makes specialization stats travel with the core by swapping the current turret body, V0.4.3 adds a feeder inventory so material progression is supplied like machine input, V0.4.6 hides that input on the turret tile while forwarding ammo back into the turret, and V0.6.0 uses the same input for buffered element burner fuel.
+Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, V0.4.2 makes specialization stats travel with the core by swapping the current turret body, V0.4.3 adds a feeder inventory so material progression is supplied like machine input, V0.4.6 hides that input on the turret tile while forwarding ammo back into the turret, V0.7.2 adds optional bound turret quick moves, and V0.10.2 uses the hidden input for passive element rank progress rather than ongoing element fuel or manually started projects.
 
-The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. When the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret.
+The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. By default, when the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret. If the player explicitly binds the installed core to the turret body, mining instead returns one tagged bound turret item for faster world movement. Unbinding returns to the default separate core/turret behavior.
+
+Bound turret moves must be lossless. When a bound turret is mined with a full inventory, the tagged bound item should spill on the ground with the Veteran Core profile, chosen build, health ratio, quality, and saved ammo intact. When a bound turret is placed, the saved ammo snapshot is authoritative: ammo inserted by placement-helper mods is refunded first, then the stored ammo is restored, preventing both duplication and silent ammo loss.
 
 Design goals:
 
@@ -366,12 +368,13 @@ Implemented first pass:
 - Sets stack size to 1 so each veteran core is unique.
 - Stores serialized turret XP/evolution state in item tags.
 - Adds install/extract controls in the Turret XP panel.
-- On turret pickup, if a core is installed, returns the normal turret item through vanilla mining and separately returns or spills the tagged core.
+- On turret pickup, if an unbound core is installed, returns the normal turret item through vanilla mining and separately returns or spills the tagged core.
+- If the installed core is bound, mining returns a placeable tagged bound turret item carrying the core profile plus turret quality, health ratio, and loaded ammo snapshot.
 - On installation, reads the core tags and restores the profile to the new turret host.
 - Does not allow two active turrets to share the same core ID.
 - Lets the player name the core profile and optionally draw a floating `name (lvl N)` label above the current turret body.
-- Creates a hidden Veteran Core feeder on the turret tile for element unlock materials and element fuel.
-- Consumes matching material from the hidden feeder inventory for element unlocks and element fuel, and forwards ammo stacks into the turret ammo inventory.
+- Creates a hidden Veteran Core feeder on the turret tile for selected element rank materials.
+- Consumes matching materials into passive element rank progress from the hidden feeder inventory and forwards ammo stacks into the turret ammo inventory.
 - Destroys the feeder and spills leftover contents when the core is removed or the turret is mined.
 
 Open design questions:

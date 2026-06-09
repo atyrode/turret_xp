@@ -142,7 +142,7 @@
 ## Completed For V0.4.6
 
 - [x] Replace the visible adjacent feeder chest with an invisible hidden input colocated with the turret.
-- [x] Forward ammo from the hidden input into the turret ammo inventory and spill unsupported non-ammo items.
+- [x] Forward ammo from the hidden input into the turret ammo inventory; later V0.7.2 feeder handling stops normal unsupported-item spills.
 - [x] Remove feeder status from the Evolution panel.
 - [x] Fix the label color button rebuild and standardize floating labels on the larger readable size.
 - [x] Polish core upgrade rows with separate rank/effect text and compact vanilla-gray allocation buttons.
@@ -190,11 +190,173 @@
 - [x] Reduce space-platform combat XP to 10% while preserving raw displayed damage and kill-credit totals.
 - [x] Add delimiters between choices in Evolution sections for readability.
 
+## Completed For V0.7.0
+
+- [x] Add target-aware combat XP weighting for asteroids, units, worms, spawners, and miscellaneous enemy targets.
+- [x] Keep raw damage and kill-credit display totals unchanged while applying target/surface weights only to XP counters.
+- [x] Add optional Bullet Trails support for scripted bounce, double-shot, and element tracers.
+- [x] Reuse vanilla electric, fire, explosion, and weapon sound prototypes for element feedback where practical.
+- [x] Stop copying gun-turret attack research effects onto hidden turret variants.
+- [x] Sync hidden variant turret attack modifiers from the vanilla gun turret at runtime on init, configuration change, force creation, and research completion.
+- [x] Recheck Veteran Core recipe unlocks after research completion.
+
+## Completed For V0.7.1
+
+- [x] Defer turret body swaps until the turret GUI closes so specialization, Range, install, extract, respec, and reset actions do not reset the whole vanilla GUI position.
+- [x] Replace base upgrade `+` rows with compact `- value +` controls.
+- [x] Add Shift-click support to add or remove up to 10 base upgrade ranks at once.
+- [x] Add RGB sliders for floating label color selection.
+- [x] Reduce the stats panel to one visible container.
+- [x] Make Sniper shoot much more slowly.
+- [x] Make Double Shot prefer a simultaneous second target and fall back to the original target when alone.
+- [x] Keep hidden element feeders present but closed at fuel cap so inserters can resume fuel input when the buffer drops.
+
+## Completed For V0.7.2
+
+- [x] Rework hidden element feeding to manage nearby inserter `drop_target` values and temporary filters while element input is needed.
+- [x] Restore regular turret drop targeting when element input is full or not needed.
+- [x] Stop normal feeder routing from spilling unexpected non-ammo items around the turret.
+- [x] Right-align the base upgrade `- value +` control group.
+- [x] Hide floating-label color controls until `Show name` is enabled, and keep preset color captions stable unless RGB sliders create a custom color.
+- [x] Add opt-in bound veteran turret quick moves through a tagged placeable turret item.
+- [x] Add a Factorio headless regression suite that runs before Mod Portal publishing and covers core gameplay invariants.
+
+## Completed For V0.8.0
+
+- [x] Move Evolution into a second main panel column beside the core, XP, dev, and stats column.
+- [x] Fix mixed-element feeding so the second element's resource can be requested and inserted when the first element is different.
+- [x] Refresh stale allowed inserter filters instead of leaving a feeder stuck on the first element's item.
+- [x] Collapse duplicate pure-element stat summary rows into one active element row.
+- [x] Include `thumbnail.png` from the repository root in packaged mod zips.
+- [x] Extend the headless regression suite for mixed elements, stale filter refresh, duplicate element summary state, feeder caps, bound turret movement, and combat progression.
+
+## Completed For V0.8.1
+
+- [x] Move Respec and Bind/Unbind to a separate installed-core action row so the core panel does not overflow.
+- [x] Hide `Show level` unless the floating name label is enabled.
+- [x] Keep custom RGB floating labels on display-panel label entities through a generated color palette.
+- [x] Force managed mixed-element inserters to the single current-priority resource and test Fire-first/Explosive-second feeding.
+- [x] Avoid redundant feeder input-bar writes while leaving the input open whenever fuel or project material is still needed.
+
+## Completed For V0.9.0
+
+- [x] Move hidden specialization and Range variant generation to `data-final-fixes.lua` so modded base gun-turret stats are inherited before Turret XP applies rank/specialization modifiers.
+- [x] Add a headless regression for a data-updates range patch, covering the K2 Spaced Out-style range decrease report.
+- [x] Make the attached two-column panel fixed-width with scrollable stats and bounded scrollable Evolution content.
+- [x] Add Evolution section headers, right-side point/status text, technical element previews, and per-section reset/deallocation controls.
+- [x] Extend the headless suite for individual Evolution section resets and deterministic combat kill tracking.
+
+## Completed For V0.9.1
+
+- [x] Split the runtime implementation into focused modules under `scripts/control/` while keeping `control.lua` as an entrypoint.
+- [x] Split data-stage prototype creation into `prototypes/` modules while keeping `data.lua` and `data-final-fixes.lua` as entrypoints.
+- [x] Preserve the existing `storage.turret_xp` save schema and Veteran Core `item-with-tags` profile format.
+- [x] Add a documented `core_slot` module boundary for future tag-preserving inventory-list slot work.
+- [x] Narrow the attached two-column panel through shared layout constants and keep Evolution content out from under the scrollbar.
+- [x] Rename selected element reset actions to `Change` so element choices are clearly respecable like specialization.
+- [x] Document the V0.9.1 refactor plan and update architecture, technical direction, requirements, spec, website, and README references.
+
+## Completed For V0.9.2
+
+- [x] Fix bound veteran turret placement so normal destroyed gun-turret replacement ghosts keep requesting/displaying the normal gun turret item.
+- [x] Add a headless place-result regression for normal gun turrets, bound turret items, and the bound-only placeholder.
+- [x] Move Bind/Unbind onto the installed Veteran Core slot row.
+- [x] Narrow fuel-burning element panels and keep selected element `Change` actions visible inside the Evolution scrollbar.
+- [x] Reformat unselected element choices into readable cards with separate description, effect, cost, and combo lines.
+
+## Completed For V0.9.3
+
+- [x] Flatten the Evolution column into a static summary header plus one scrollable section body.
+- [x] Move Core, Augment, and Specialization summary text into the fixed Evolution header.
+- [x] Replace scattered Evolution width constants with derived viewport, content, and inner-row widths.
+- [x] Move element choice `Start` actions into their own right-aligned row so they cannot overflow under the scrollbar.
+- [x] Fix duplicate Augment point summaries after spending augment points.
+
+## Completed For V0.9.4
+
+- [x] Put element choice `Start` buttons on the icon/name row and bound that row to the card's real inner width.
+- [x] Add a separator between element effect and cost rows.
+- [x] Remove redundant `Material unlock` text from element section headers.
+- [x] Move core-upgrade Reset to the static Evolution header, simplify Augment summary text, and remove the selected specialization `Active` label.
+
+## Completed For V0.9.5
+
+- [x] Color specialization choice multipliers and stat-summary multipliers green for benefits and red for tradeoffs.
+- [x] Add vertical breathing room after Evolution section headers.
+- [x] Add balanced margins around Evolution section frames and between adjacent sections.
+- [x] Compact Veteran Core name controls, align specialization cards with element cards, and move element Start actions to cost rows.
+
+## Completed For V0.9.6
+
+- [x] Replace section-specific reset buttons with one always-visible Evolution header Reset that clears all Evolution choices while preserving XP, level, history, name, and binding.
+- [x] Move floating-label `Level` below the RGB color picker.
+- [x] Right-align element `Start` and specialization `Pick` buttons without shrinking card descriptions unnecessarily.
+- [x] Reserve explicit Evolution section width for both left and right section margins.
+- [x] Show baseline Crit Chance and Crit Damage in the stats summary.
+- [x] Add headless coverage for the full Evolution reset and the margin-aware layout constants.
+
+## Completed For V0.9.7
+
+- [x] Start fresh Veteran Cores at level 0 so level 10 grants 10 core points before spending.
+- [x] Add Max HP as a capped prototype-backed augment at +50 HP per rank, up to rank 20.
+- [x] Add Ammo Recovery as a core upgrade that regenerates the current or remembered ammo item at one ammo per minute per rank.
+- [x] Persist last loaded ammo on Veteran Core profiles so ammo recovery survives moving cores.
+- [x] Generate hidden turret variants for Max HP ranks combined with Range ranks and specializations.
+- [x] Add headless coverage for Max HP variants and remembered-ammo recovery.
+- [x] Replace the hidden feeder's one-item material latch with a bounded one-item-slot project buffer so inserters do not hit `Target full` after every project item.
+
+## Completed For V0.9.8
+
+- [x] Increase element fuel capacity from 10 to 100 stored items per active element.
+- [x] Reformat the Evolution header summary as rich text with white labels and colored values.
+- [x] Move the floating-label preset/custom color button below the RGB picker and above the `Level` checkbox.
+- [x] Move unlocked element mastery controls into the element card header row so they stay inside the Evolution column.
+- [x] Reserve stats-scrollbar space and move baseline Crit Chance/Crit Damage under Damage Dealt.
+- [x] Standardize value formatting so only numeric fragments are colored, with element colors on elemental damage numbers.
+- [x] Add explicit expiry tracking for electric arc visual entities.
+- [x] Clear unexpected non-ammo stacks from the hidden input so wrong items cannot block element project progress.
+- [x] Add headless regression coverage for wrong hidden-input materials during an active element project.
+- [x] Add hidden bound turret preview variants so newly mined bound stacks show a native placement range preview matching specialization and Range ranks.
+- [x] Prevent placement helper ammo from merging with bound turret ammo snapshots.
+- [x] Keep bound turret mining as one tagged bound item, spilling it when inventory space is unavailable instead of degrading into a separate core path.
+- [x] Add role-specific secondary specialization multipliers for Crit Damage, Ammo Recovery, Regeneration, and Lifesteal.
+
+## Completed For V0.10.0
+
+- [x] Add Resistance as a capped core upgrade that reduces non-lethal incoming damage.
+- [x] Implement Resistance with scripted post-hit mitigation instead of hidden prototype variants.
+- [x] Rebalance Brawler to x3 damage and x0.5 fire rate while preserving its lifesteal identity.
+- [x] Move elements from ongoing fuel buffers to free picks plus material-fed rank projects.
+- [x] Add level-40 sub-specializations and move the second element/combo unlock to level 50.
+- [x] Harden bound turret mining and placement so full inventories and placement-helper ammo cannot reset cores, duplicate ammo, or silently consume ammo.
+- [x] Add headless coverage for Resistance derived stats, rank cap, and live damage mitigation.
+- [x] Add headless coverage for material-fed element projects, bound turret full-inventory spills, tagged ground items, and placement-helper ammo refunds.
+
+## Completed For V0.10.1
+
+- [x] Rebalance Regeneration to scale from current max HP instead of a small flat HP/s value.
+- [x] Keep Bulwark and Guardian regeneration multipliers applied on top of max-health-based repair.
+- [x] Fix the unlocked element `Upgrade` action width so the caption is not truncated.
+- [x] Add headless coverage for Max HP based regeneration and specialization regeneration multipliers.
+
+## Completed For V0.10.2
+
+- [x] Replace element `Upgrade` buttons and manually started projects with passive always-visible next-rank material progress.
+- [x] Add Toxic as a poison-capsule-fed element with stacking poison damage and slowdown feedback.
+- [x] Add tracked Fire burn damage, critical-hit visual feedback, and two-trail Double Shot feedback.
+- [x] Keep delayed Fire/Toxic damage tied to XP, kill contribution, and lifesteal.
+- [x] Let managed inserters expose all currently needed mixed-element resources in their filter slots.
+- [x] Add headless coverage for passive element progress, Toxic material routing, mixed-element filters, and delayed status-damage lifesteal.
+
 ## Likely Next Work
 
-- Playtest V0.6.2 from the Mod Portal as the first playable run after feedback integration, especially around hidden input ammo forwarding, burner-style element fuel, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, space-combat XP pacing, label controls, and high-level turret combat performance.
-- Plan a Mod Portal identity pass: final name, short description, category, and a simple Factorio-native portal image that avoids generic AI-generated key art.
+- Playtest V0.10.2 from a local package or Mod Portal release after feedback integration, especially around Resistance feel, max-HP-based Regeneration, passive element material progress, Toxic and Fire damage-over-time readability, crit/double-shot visuals, richer Evolution summary header, right-column scrollbar containment, specialization multiplier colors, section margins, full Evolution reset, baseline crit stats, Max HP rank body swaps, Ammo Recovery pacing, level-40 sub-specializations, normal/bulk inserter feeding, hidden input ammo forwarding, deferred turret body swaps, bound turret mining/placement, normal turret replacement ghosts, placement-helper ammo refunds, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, asteroid XP pacing, optional Bullet Trails visuals, label controls, modded base turret range compatibility, and high-level turret combat performance.
+- Keep GUI polish, visual readability, and real click/hover feel in the manual playtest loop; headless tests cover deterministic state and event behavior, not pixels or mouse feel.
+- Build the next Veteran Core slot iteration on `scripts/control/core_slot.lua`: exact-core inventory lists, tag-preserving scripted transfers, and clearer player-inventory/platform selection without claiming native vanilla slot behavior.
+- Consider a scripted slot-like manual project input in unlocked element cards. It can support normal cursor transfer and display active project counts, but it is not a true arbitrary native inventory slot inside the vanilla turret GUI.
+- Continue the Mod Portal identity pass: final name/category decisions and any future thumbnail refinements should stay simple, sober, and Factorio-native.
 - Playtest and tune level gates, material costs, point costs, core recipe cost, specialization stats, and upgrade effect strength.
+- Investigate whether HP and Range can eventually move away from hidden prototype variants without losing real attack reach, max-health behavior, placement preview fidelity, blueprint behavior, or modded-base compatibility.
 - Decide whether destroyed turrets should always lose cores, drop damaged cores, or have a recovery chance.
 - Prototype an `entity-gui-lib` branch before any full replacement of the turret GUI.
 - Evaluate `quality-lib` and/or prototype `custom_tooltip_fields` before adding quality-scaled custom stats.

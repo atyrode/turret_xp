@@ -1,8 +1,6 @@
 # turret_xp
 
-Factorio mod project workspace.
-
-`turret_xp` adds the first playable progression layer for vanilla gun turrets. Version 0.6.2 moves progression onto a non-stackable Veteran Core item that the player chooses to install in a turret, keeps material progression inserter-fed through a hidden turret-tile input that routes ammo back into the turret, and keeps specialization/range choices as prototype-backed turret stat variants.
+`turret_xp` makes chosen vanilla gun turrets grow into veteran defenses. Install a Veteran Core, let the turret earn XP, then shape it through upgrades, specializations, passive elemental material ranks, and a portable history that can move to another turret.
 
 Homepage: <https://atyrode.github.io/turret_xp/>
 
@@ -10,21 +8,18 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 
 - Persistent agent/contributor workflow rules: [AGENTS.md](AGENTS.md).
 - Planning and tracking documents: [docs/](docs/).
-- Factorio mod scaffold: `info.json`, `data.lua`, `control.lua`, `settings.lua`, and `locale/`.
+- Factorio mod scaffold: `info.json`, entrypoint Lua files, runtime modules in `scripts/control/`, data-stage modules in `prototypes/`, `settings.lua`, and `locale/`.
 - Factorio changelog: `changelog.txt`.
-- Current prototype: runtime-only XP tracking and a `flib`-styled right-side relative GUI panel for vanilla `gun-turret`.
-- Ordinary gun turrets stay stackable and do not gain progression until a Veteran Core is installed.
-- A Veteran Core is an `item-with-tags` profile item. Installing it makes the current turret unique; extracting or mining the turret returns the core with its XP, upgrades, element projects, custom name, and display-label preference.
-- On space platforms, the Turret XP panel can list Veteran Cores stored in the platform hub inventory, install the exact selected core into the opened turret, and send an installed core back to the hub when there is room.
-- Installing a Veteran Core creates a hidden feeder input on the turret tile only while the turret needs material input. Inserters can feed the turret area; ammo is routed into the turret ammo inventory, element unlock projects consume matching resources from the hidden input, and unlocked elements use a furnace-like resource burner that closes at the visible fuel cap instead of keeping ghost fuel.
-- XP is awarded from damage dealt by gun turrets with an installed core plus proportional kill credit based on damage contribution. Space-platform combat contributes 10% of normal combat XP while the displayed damage and kill-credit stats remain raw totals.
-- XP pacing is configurable with runtime-global mod settings.
-- The panel shows level, XP progress, HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, and lifetime damage.
-- Stat rows expand into formula form when research, core additive bonuses, Range ranks, expected proc output, or specialization multipliers affect the value.
-- Research bonuses are shown in a vanilla-like base plus bonus format where available.
-- HP and range show the real quality-info marker with a custom hover summary derived from Factorio quality prototypes. The native Factoriopedia popover is not exposed as a reusable runtime GUI widget.
-- The Evolution panel replaces the experimental skill tree with five list sections: core upgrades, first element, specialization, powerful augments, and second element/combo. Choices inside those sections are separated by horizontal delimiters for readability.
-- Element choices start material projects that can be filled by feeding resources into the turret with inserters. After unlock, the same resource fuels a burner display for combat effects. Dev controls are hidden by default and can be toggled with `/turret-xp-dev` for playtesting.
+- Chosen turrets become veterans when a Veteran Core is installed; ordinary turrets stay stackable.
+- Veteran Cores store XP, levels, upgrades, elements, name and label preferences, and combat history.
+- Installed Veteran Cores can be bound to a turret body for quick moves as one tagged placeable item, then unbound to return to the separate core/turret workflow.
+- Turrets gain XP from damage and kill contribution; target type and space-platform context affect XP pacing.
+- Evolution offers repeatable upgrades, specializations, sub-specializations, augments, and elemental material ranks.
+- Inserters can passively feed selected element ranks while normal ammo logistics still work.
+- Fire and Toxic now apply tracked damage over time; those delayed ticks count for XP and lifesteal.
+- Space-platform turrets can choose exact cores from the platform hub.
+- Bullet Trails is an optional visual dependency for richer scripted bullet and element tracers.
+- The turret panel shows XP, combat stats, active custom bonuses, formulas when useful, and a bounded two-column layout with scrollable stats and Evolution choices separated from the core/stat summary.
 
 ## Development
 
@@ -41,6 +36,14 @@ Run lightweight repository checks:
 scripts/check.sh
 ```
 
+Run the Factorio headless regression suite:
+
+```sh
+scripts/test-headless.sh
+```
+
+Set `FACTORIO_BIN=/path/to/factorio` if the script cannot autodetect the local Factorio executable. The suite packages the current mod, loads it with a dedicated temporary test mod, and fails if core gameplay invariants break.
+
 Build a local Factorio mod zip:
 
 ```sh
@@ -48,6 +51,7 @@ scripts/package.sh
 ```
 
 The package is written to `dist/turret_xp_<version>.zip`.
+If `thumbnail.png` exists at the repository root, it is included at the mod zip root for Mod Portal display.
 
 Install the packaged zip into the default Linux Factorio mods folder:
 
@@ -73,7 +77,7 @@ Publish or update the Factorio Mod Portal release:
 FACTORIO_MOD_PORTAL_API_KEY=<your-api-key> scripts/publish-portal.sh
 ```
 
-The script also loads an ignored `.env` file and accepts `FACTORIO_API_KEY=<your-api-key>`. The API key must be created on `https://factorio.com/profile` with `ModPortal: Publish Mods`, `ModPortal: Upload Mods`, and `ModPortal: Edit Mods` usages. Do not commit the key or paste it into chat.
+The script runs `scripts/test-headless.sh` before uploading. Set `SKIP_HEADLESS_TESTS=1` only for exceptional machines that cannot run Factorio locally. The script also loads an ignored `.env` file and accepts `FACTORIO_API_KEY=<your-api-key>`. The API key must be created on `https://factorio.com/profile` with `ModPortal: Publish Mods`, `ModPortal: Upload Mods`, and `ModPortal: Edit Mods` usages. Do not commit the key or paste it into chat.
 
 ## Download And Playtest
 
@@ -99,14 +103,16 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 ## Prototype Limits
 
-- V0.6.2 is the current first playable patch after playtest feedback: element fuel closes at the visible cap, active custom stats are dynamic, element mastery costs core points, Luck affects proc odds, specialization formulas are visible, space-platform turrets can pick cores from the platform hub, space combat XP is reduced, Evolution choices are easier to scan, floating labels use display-panel behavior where possible, and respec fully resets evolution choices.
+- V0.10.2 is the current development line after the 0.10.0 Mod Portal playtest release: Veteran Cores start at level 0, level 10 grants 10 core points and a specialization choice, level 20 grants the first free element, level 40 adds sub-specializations, and level 50 unlocks the second element/combo. Evolution lives in a bounded second main column with a richer static summary header and a single scrollable section body, stats can scroll, selected elements always show their next material rank progress, duplicate pure-element stat rows are collapsed, active custom stats are dynamic, baseline crit stats are visible, Max HP is a capped prototype-backed augment, Regeneration scales from current max HP, Ammo Recovery slowly regenerates the loaded or remembered ammo item, Resistance mitigates incoming damage without adding hidden prototypes, Toxic adds poison-capsule-fed stacking poison and slow, Fire adds tracked burn damage, Luck affects proc odds, specialization formulas are visible with green benefits and red tradeoffs, sub-specializations deepen each role, space-platform turrets can pick cores from the platform hub, target-aware XP slows asteroid farming, optional Bullet Trails visuals are supported for readable bounce/double-shot/element tracers, custom floating-label colors keep Factorio-style display-panel backing, bound veteran turrets can quick-move as one tagged placeable item without polluting normal gun-turret replacement ghosts, one Evolution header Reset clears all Evolution choices while preserving XP/history, element selections expose a `Change` action, element and specialization choices use clearer card-style rows with contained right-aligned actions, and hidden variants are generated after other mods' data updates so Range ranks, Max HP ranks, and role branches preserve modded base gun-turret stats.
 - The Veteran Core item currently uses vanilla layered icons; dedicated art can replace it later without changing the profile model.
-- V0.5.x is still a first playable draft of list-based evolution. Core upgrades, augments, elements, and combos still need playtest balance and effect readability passes.
+- V0.9.x is still a first playable draft of list-based evolution. Core upgrades, augments, elements, and combos still need playtest balance and effect readability passes.
 - The failed embedded skill-tree drag spike was removed. The current progression UI is intentionally simple while the gameplay model is tested.
 - XP is currently scoped to vanilla `gun-turret`.
 - Default XP pacing is intentionally conservative: damage gives very little XP, kill credit matters more, and level requirements grow linearly by a configurable step.
+- Real specialization, Range, and Max HP stat changes still use hidden turret prototypes because runtime per-entity turret range, cooldown, damage modifier, and max health are not writable. Those variants are generated in `data-final-fixes.lua` so they inherit late prototype edits from other mods, and research damage bonuses are synced to those variants at runtime instead of copied into technology effect lists. Resistance deliberately avoids new variants by refunding part of non-lethal incoming damage after Factorio applies vanilla resistances.
 - Damage shown in the GUI is a best-effort estimate from loaded ammo prototype data.
-- Mined turrets return their installed Veteran Core and spill leftover feeder contents. Destroyed turrets currently lose the installed core.
+- Tagged Veteran Core and bound turret items include a build summary in their custom item descriptions. Placed turret hover tooltips cannot show per-core build data through runtime custom descriptions; Factorio's extra tooltip fields are static prototype data, so the attached Turret XP panel remains the source of truth for live placed-turret build details.
+- Mined unbound turrets return their installed Veteran Core and spill leftover feeder contents. Mined bound turrets return one tagged bound turret item. The bound item places a bound-only placeholder that is immediately converted into a real gun turret with its stored core profile, so normal gun-turret ghosts keep requesting the normal gun turret item. Destroyed turrets currently lose the installed core.
 
 ## Documents
 
@@ -117,6 +123,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 - [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md): concrete first milestone and implementation target.
 - [docs/TECHNICAL_DIRECTION.md](docs/TECHNICAL_DIRECTION.md): Factorio modding stack, validation path, and technical risks.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): repository structure, runtime responsibilities, and ownership boundaries.
+- [docs/REFACTOR_PLAN_0.9.1.md](docs/REFACTOR_PLAN_0.9.1.md): V0.9.1 modularization plan and Veteran Core slot boundary.
 - [docs/DESIGN.md](docs/DESIGN.md): gameplay, balance, UX, terminology, art, and compatibility direction.
 - [docs/PROGRESSION_DESIGN.md](docs/PROGRESSION_DESIGN.md): intended XP, evolution, material-gate, duo-element, and infinite-scaling gameplay direction.
 - [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md): working checklist.

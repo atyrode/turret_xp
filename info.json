@@ -1,12 +1,14 @@
 {
   "name": "turret_xp",
-  "version": "0.6.2",
+  "version": "0.10.2",
   "title": "Turret XP",
   "author": "atyrode",
   "factorio_version": "2.0",
   "dependencies": [
     "base >= 2.0.0",
-    "flib >= 0.16.4"
+    "flib >= 0.16.4",
+    "? Krastorio2-spaced-out",
+    "? bullet-trails >= 0.7.1"
   ],
-  "description": "Turns chosen vanilla gun turrets into movable Veteran Core defenses with XP, active stat upgrades, specializations, fueled elements, and element mastery."
+  "description": "Make chosen gun turrets earn XP, carry Veteran Cores, specialize, and grow through elemental material upgrades."
 }

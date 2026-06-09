@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.6.2
+## Version 0.10.0
 
-V0.6.2 is the current first playable patch for a full Veteran Core turret loop after initial playtest feedback. It keeps the vanilla turret GUI as the main interaction and keeps the five-section Evolution list from V0.4.0. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installing a core creates an invisible inserter-fed input on the turret tile only while element materials or fuel are needed, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Specialization and Range augment choices swap the current turret into hidden gun-turret variants with prototype stat changes. Space-platform combat XP is weighted down to 10% of normal combat XP.
+V0.10.x is the current development line after the 0.9.8 Mod Portal playtest release. It keeps the vanilla turret GUI as the main interaction and presents Turret XP as two narrower attached columns: core identity, XP, dev controls, and scrollable stats on the left; a richer static Evolution summary header plus a bounded scrollable six-section Evolution workflow on the right. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installed cores can optionally bind to their turret body for quick world moves: mining a bound veteran turret returns one tagged placeable turret item instead of a separate turret plus core. Bound items place a hidden bound-only placeholder that is immediately converted into a real gun turret with the stored core profile, which keeps normal gun-turret replacement ghosts tied to the normal gun turret item. Installing a core creates an invisible inserter-fed input on the turret tile whenever selected elements need next-rank materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Nearby inserters that are actually sourcing needed materials are pointed at the hidden input and can receive multiple active element filters at once. When input is not needed, inserters are restored to the turret target so ammo logistics keep behaving normally. Specialization, sub-specialization, Range augment, and Max HP choices use hidden gun-turret variants with prototype stat changes generated in `data-final-fixes.lua`, so they inherit final base gun-turret edits from mods that run during `data-updates.lua`. Resistance is intentionally scripted instead of variant-backed: it refunds part of non-lethal final incoming damage after Factorio's vanilla resistance calculation. Body swaps are queued until the turret GUI closes so Factorio does not reset the whole vanilla window position. Combat XP is weighted by surface and target type so asteroid defense, especially on space platforms, does not overlevel cores. The implementation is split into runtime modules under `scripts/control/` and data-stage modules under `prototypes/`.
 
 Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the UI and Veteran Core foundations before this first playable line.
 
@@ -12,30 +12,41 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - Turret host records are keyed by turret entity `unit_number`.
 - Durable progression profiles are keyed by Veteran Core ID under `storage.turret_xp.chips`.
 - A turret without an installed Veteran Core has no XP/evolution profile and does not gain progression.
-- New core profiles start at level 1 with zero XP, kills, kill credit, damage, total XP, custom name, display-label flag, and empty evolution choices.
+- New core profiles start at level 0 with zero XP, kills, kill credit, damage, total XP, custom name, display-label flag, and empty evolution choices.
 - Veteran Cores are non-stackable `item-with-tags` items. Extracted cores serialize their profile into item tags.
+- Bound veteran turrets are non-stackable placeable `item-with-tags` items that serialize the core profile and a small turret snapshot. They place a hidden bound-only placeholder entity first; build handling converts it into a real `gun-turret` before installing the profile.
+- Newly created bound veteran turret stacks use hidden preview item/placeholder variants selected from the stored specialization and Range augment rank. This lets Factorio's native placement range preview match the turret that will be restored, while older generic bound stacks remain a compatibility fallback until placed and mined again.
+- Bound turret items carry their saved ammo snapshot. If another mod preloads ammo during placement, Turret XP reconciles that ammo against the saved snapshot: matching ammo satisfies the snapshot, while only excess or incompatible placement-time ammo is returned.
+- Bound core detachment happens when mining-buffer conversion creates or spills the tagged bound turret item, not during the pre-mining snapshot. If the inventory cannot accept the bound item, the tagged bound turret is spilled rather than falling back to a separate Veteran Core path.
 - On space platforms, Veteran Cores stay in the platform hub inventory until the player chooses a specific core from the opened turret panel. This avoids inserter ambiguity when multiple cores exist and keeps normal inserters focused on ammo/material feeding.
 - XP is derived from XP-weighted lifetime damage, XP-weighted kill credit, runtime-global XP settings, core XP upgrade ranks, and optional dev XP.
-- Displayed damage and kill credit remain raw combat totals. Separate `xp_damage` and `xp_kill_credit` counters preserve XP balance, with space-platform combat adding only 10% of its raw damage or kill credit into those XP counters.
+- Displayed damage and kill credit remain raw combat totals. Separate `xp_damage` and `xp_kill_credit` counters preserve XP balance, with surface and target multipliers applied only to those XP counters.
 - Derived level progress is cached after sync so normal combat only applies new XP deltas instead of recalculating every previous level.
 - Default damage XP is `0.02` XP per final damage point.
 - Default kill-credit XP is `25` XP per full kill credit.
 - Combat by turrets on a space-platform surface applies a `0.1x` multiplier before damage or kill credit reaches the XP counters.
-- Default level XP starts at `100` and grows linearly. The default `1.65` growth setting means each level adds `65%` of base XP to the next requirement.
+- Combat against asteroids or asteroid chunks applies an additional `0.2x` target multiplier before damage or kill credit reaches the XP counters.
+- Unit kill-credit XP is weighted by target max health. Small enemies pay less than a full credit; large enemies pay more. Spawners and worms are treated as higher-value targets.
+- Default level XP starts at `100` for level 0 to level 1 and grows linearly. The default `1.65` growth setting means each level adds `65%` of base XP to the next requirement.
 - Kill credit is split proportionally by damage contribution so turrets are not fully denied XP when another source lands the final hit.
-- Core points equal `level - 1 - spent_core_points`.
-- Core upgrade ranks cost one point each and can be purchased repeatedly.
-- The Respec button refunds core upgrades, element mastery, augment point allocations, element choices, element fuel, material projects, specialization, and hidden feeder contents.
+- Core points equal `level - spent_core_points`, so a level 10 core has 10 core points before spending.
+- Core upgrade ranks cost one point each and can be purchased repeatedly unless the specific upgrade has a cap.
+- Core upgrades and augments use embedded `- value +` controls. Element ranks are advanced through passive material progress instead of point spending or a separate upgrade-start click. The static Evolution header exposes one always-visible `Reset` action that clears all Evolution choices and refunds spent core/augment ranks while preserving XP, level, combat history, name, and binding. Element, specialization, and sub-specialization sections expose `Change` actions for focused local edits.
 - Powerful augment ranks unlock at level 30, cost one augment point each, and earn one augment point every ten levels.
-- Element choices do not cost points. They start a single-resource material project that permanently assigns the element when complete.
-- Material projects and element fuel consume from the installed core's hidden turret-tile input, not from the player inventory.
-- Inserter-fed ammo that lands in the hidden input is moved into the turret ammo inventory; unrelated non-ammo items are spilled back out.
-- Unlocked elements use their matching resource as burner fuel. Inserters can fill stored fuel up to the burner capacity, the hidden input closes instead of storing excess valid fuel, and one stored fuel item burns for 30 seconds to power that element.
-- A second-element material project and already-unlocked element fuel can both be valid hidden-input targets when both are needed.
-- Unlocked elements start at mastery rank 1. Further element mastery ranks cost 5 regular core points each and improve proc chance, damage efficiency, and electric arc count.
-- Specialization unlocks at level 20 and is a free one-time choice.
+- Element choices do not cost points. When the matching level gate is unlocked, choosing an element permanently assigns rank 1 for free.
+- Further element ranks always expose a single-resource material requirement for the chosen element. Those passive ranks consume from the installed core's hidden turret-tile input, not from the player inventory.
+- Inserter-fed ammo that lands in the hidden input is moved into the turret ammo inventory. If an unrelated non-ammo item slips into the hidden input through a stale inserter hand or edge case, routing ejects that invalid stack instead of leaving element progress blocked.
+- Mixed-element turrets request every selected element's currently needed material, so one turret can progress both elements without manually starting projects. Duplicate pure-element builds share one mastery rank and material progress track.
+- Unlocked elements start at rank 1. Higher ranks increase proc chance, damage efficiency, electric arc count, and Toxic poison scaling where applicable.
+- Specialization unlocks at level 10 and is a free one-time choice.
+- First element unlocks at level 20 and is a free one-time choice.
+- Sub-specialization unlocks at level 40 and branches the chosen primary specialization into one of two stronger identities.
+- Second element unlocks at level 50 and creates a combo identity with the first element.
 - Specialization swaps the turret body between vanilla `gun-turret` and hidden `turret-xp-gun-turret-*` variants. Removing the Veteran Core returns the turret body to vanilla `gun-turret`.
-- Mined turrets return the installed Veteran Core as a separate item or spill it if there is no inventory room.
+- Hidden turret variants are required for real per-turret range, cooldown, damage modifier, max HP, and rotation-speed changes. They are generated in `data-final-fixes.lua` after all mods' `data-updates.lua` stages, so Range and Max HP ranks add to the final modded base turret instead of an early vanilla copy. Their force gun-turret damage research modifier is synced at runtime from vanilla `gun-turret` instead of being injected into technology effect lists. When the turret GUI is open, body swaps are deferred until close to avoid moving the vanilla entity GUI back to its default location.
+- Ammo Recovery stores the last loaded ammo item and quality on the Veteran Core. Each rank recovers one ammo item per minute into the turret ammo inventory, using the currently loaded ammo when present or the remembered ammo when the turret is empty. Factorio ammo is consumed as discrete items; there is no per-round ammo durability to refill.
+- Mined unbound turrets return the installed Veteran Core as a separate item or spill it if there is no inventory room.
+- Mined bound turrets remove the vanilla gun-turret mining output and return a single bound veteran gun turret item when possible. The bound item restores the core profile, bound state, turret quality, health ratio, and loaded ammo when placed again through the hidden placeholder conversion path.
 - Destroyed turrets currently destroy the installed core/profile.
 
 ## Veteran Core Behavior
@@ -47,40 +58,50 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - First draft recipe: `20` electronic circuits, `10` steel plates, `40` copper cable, and `2` repair packs.
 - Installing a carried core removes the item and binds its profile to the opened gun turret.
 - Extracting a core returns the profile item to the player inventory.
-- The core slot supports tag-preserving cursor transfer and swap behavior for installed/carried Veteran Cores.
-- If the turret is mined, the normal gun turret item returns through vanilla behavior and the mod separately returns/spills the Veteran Core.
-- If a turret is mined through a space-platform mining event, the mod attempts to return the Veteran Core to the event mining buffer before spilling it.
+- The core slot supports tag-preserving cursor transfer and swap behavior for installed/carried Veteran Cores. It is a scripted slot-like GUI control, not a native extra Factorio inventory slot.
+- If an unbound turret is mined, the normal gun turret item returns through vanilla behavior and the mod separately returns/spills the Veteran Core.
+- If an unbound turret is mined through a space-platform mining event, the mod attempts to return the Veteran Core to the event mining buffer before spilling it.
+- `Bind` marks the installed core and turret body as one quick-move item for mining and placement. `Unbind` returns to the default separate turret/core mining behavior.
 - The profile can be named. If the player enables the label, the world label renders above the current turret body, with configurable color and optional level suffix.
+- Label color can be chosen through presets or RGB sliders stored on the Veteran Core profile. Color controls are hidden until the compact `Show` label checkbox beside the name field is enabled, and the `Level` checkbox sits below the RGB picker. Preset cycling records a preset name, while RGB slider edits mark the color as custom. Custom RGB labels use the nearest generated hidden display-panel color variant so the world label keeps Factorio's display-panel backing instead of falling back to raw floating text.
 - Installing a core creates a hidden `turret-xp-veteran-feeder` inventory entity colocated with the turret.
-- The hidden feeder is not a player-facing container. It accepts inserter drops, forwards ammo into the turret, and exists only while resources are needed for the current element project or unlocked element fuel.
+- The hidden feeder is not a player-facing container. It accepts inserter drops only while selected element ranks need material, forwards ammo into the turret if ammo lands there, and coordinates nearby inserter drop targets/filters so material feeders behave like recipe feeders without breaking normal ammo inserters. Passive element progress exposes a bounded input buffer so inserters can feed smoothly between routing ticks.
 - Extracting or mining a core destroys the hidden feeder and spills any leftover feeder contents.
 
 ## Evolution Sections
 
-- `Core upgrades`: unlocked from level 1. Includes Damage, Regeneration, Lifesteal, Crit Chance, and Crit Damage.
-- `First element`: unlocks at level 10. Starts a material project for Explosive, Fire, or Electric.
-- `Specialization`: unlocks at level 20. Picks Sniper, Machine Gun, Bulwark, or Brawler for free.
-- `Powerful augments`: unlocks at level 30. Includes Bullet Bounce, Double Shot, Luck, Veteran Training, and Range. Augment points are earned every ten levels.
-- `Second element and combo`: unlocks at level 40. Starts a second material project and derives a combo from the two selected elements.
+- `Core upgrades`: available from level 0 once a Veteran Core is installed. Includes Damage, Regeneration, Resistance, Ammo Recovery, Lifesteal, Crit Chance, and Crit Damage.
+- `Specialization`: unlocks at level 10. Picks Sniper, Machine Gun, Bulwark, or Brawler for free.
+- `First element`: unlocks at level 20. Picks Explosive, Fire, Electric, or Toxic for free at rank 1; later ranks use passive material feeding.
+- `Powerful augments`: unlocks at level 30. Includes Bullet Bounce, Double Shot, Luck, Veteran Training, Range, and Max HP. Augment points are earned every ten levels.
+- `Sub-specialization`: unlocks at level 40. Picks one of two branch identities for the current specialization.
+- `Second element and combo`: unlocks at level 50. Picks a second element for free at rank 1 and derives a combo from the two selected elements.
 
 ## Combat Effects
 
 - Damage adds flat physical bonus damage per shot.
-- Regeneration adds passive turret repair.
+- Regeneration adds passive turret repair equal to 0.1% of current max HP per second per rank, before specialization regeneration multipliers.
+- Resistance mitigates 0.25% final incoming damage per rank, capped at 60%, by refunding health after non-lethal hits.
+- Ammo Recovery regenerates the current or remembered ammo item at one ammo per minute per rank.
 - Lifesteal heals the turret from damage dealt.
 - Crit Chance improves critical hit chance.
 - Crit Damage improves critical hit damage.
 - Sniper, Machine Gun, Bulwark, and Brawler are real turret body variants generated from multipliers on vanilla gun turret range, cooldown, damage modifier, max HP, and rotation speed.
+- Level-40 sub-specializations add a second identity layer. Sniper can choose Deadeye or Overwatch; Machine Gun can choose Shredder or Sustained Fire; Bulwark can choose Bastion or Guardian; Brawler can choose Executioner or Vampire.
 - Bullet Bounce can damage a nearby enemy.
-- Double Shot can apply a second physical hit to the same target.
+- Double Shot can apply a second physical hit to a nearby second target when available, or to the original target when it is alone.
 - Luck increases crit, bounce, double-shot, and element proc odds by a small relative amount per rank.
 - Veteran Training increases combat XP gained from damage and kill credit.
 - Range adds +1 attack range per rank, up to rank 20, through hidden prototype-backed turret variants. Specialization range multipliers apply after Range augment ranks.
-- Fire can add fire damage.
+- Max HP adds +50 maximum HP per augment rank, capped at rank 20, through hidden prototype-backed turret variants. Specialization HP multipliers apply after Max HP ranks.
+- Fire can add fire damage and tracked burn damage over time.
 - Electric can arc damage to a nearby enemy.
 - Explosive can splash damage around the target.
-- Mixed or duplicate element pairs derive simple combo behavior. Element effects only run while that element has fuel burning.
+- Toxic can stack tracked poison damage over time and apply vanilla slowdown-sticker feedback where the runtime accepts it.
+- Mixed or duplicate element pairs derive simple combo behavior. Active elements run when their element rank is above zero.
 - Bounced hits run the same element proc path as the original hit, so Electric arcs can originate from the bounced impact.
+- If Bullet Trails is installed, scripted bounce, double-shot, and element feedback can use its beam-like trail entities. Without it, the mod falls back to lightweight local render lines.
+- Electric, fire, explosive, toxic, crit, bounce, and double-shot feedback reuse vanilla prototype effects, optional Bullet Trails trail entities, and safe render fallbacks where practical.
 
 ## GUI Behavior
 
@@ -88,20 +109,26 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - The mod creates a frame in `player.gui.relative` anchored to `defines.relative_gui_type.turret_gui` on the right side.
 - If relative anchoring fails, the panel falls back to `player.gui.left`.
 - `on_gui_closed` destroys the panel and clears the remembered player/turret link.
-- The panel includes a Veteran Core slot-style control for install/extract, naming, floating-label toggle, label color, and optional level suffix.
+- The attached frame uses two fixed-width main columns sized to avoid covering more screen than needed. The left column contains core identity, XP, dev controls, and a scrollable stats area. The right column is a shallow content pane with a static Evolution summary header above one scroll pane. Its section and row widths derive from the right-column viewport so content reserves scrollbar space without layering independent margins, and section frames use balanced margins inside the scroll body.
+- The panel includes a Veteran Core slot-style control for install/extract, naming, optional quick-move binding, floating-label toggle, RGB/preset label color, and optional level suffix. Bind/Unbind sits on the same row as the installed core slot so the quick-move state reads as part of that core-slot interaction. The name row keeps `Show` beside the text field, color controls appear below only while the floating label is enabled, the preset/custom color button sits under the RGB picker, and `Level` sits below that color button.
 - When the opened turret is on a space platform, the Veteran Core panel also lists tagged cores found in that platform's hub inventory. Each row represents the exact hub inventory slot, with level/kills/damage summary and an install button. Installed platform cores can be sent back to the same hub if it has room.
-- The Evolution panel does not show feeder status; material project panels show the current requirement and progress. Unlocked element panels show a resource slot, burn progress, stored fuel count, and burner state.
+- The Evolution column does not show feeder status; unlocked element panels always show the current rank, technical effect, next material requirement, and passive progress bar. Element, specialization, and sub-specialization choices use compact card-style rows with icon/title, full-width descriptions, separator, and technical value rows. Element `Pick` buttons sit right-aligned in the cost row; specialization and sub-specialization `Pick` buttons sit right-aligned in the multiplier row. Unlocked element panels must not expand under the scrollbar.
 - Stats show formula-style rows only when an additive value, multiplier, or expected proc output affects the displayed number.
-- Evolution choices inside the unlocked list sections use horizontal delimiters to improve readability without adding extra explanatory text.
+- The stats scroll pane reserves room for its scrollbar so value text does not render underneath it.
+- Stats always show baseline Crit Chance and Crit Damage under Damage Dealt for context, then use base-plus-bonus formatting when those core upgrades are ranked.
+- Stat, upgrade, augment, specialization, sub-specialization, element, and material-count values color numeric fragments only. Units and descriptive words remain neutral; elemental damage amounts use fire, electric, explosive, or toxic colors for the numeric amount.
+- Duplicate pure-element builds show one active element stat row plus the combo identity instead of duplicate stat rows.
+- Evolution choices inside the unlocked list sections use horizontal delimiters and section headers with right-side point/status text to improve readability without adding extra explanatory text.
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
-- Point allocation refreshes scroll the rebuilt Evolution list back to the clicked row so spending points does not jump back to the top.
+- Point allocation refreshes rebuild the Evolution column in place; prototype body swaps remain deferred while the turret GUI is open so the whole vanilla window does not jump back to its default position.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and panel styles.
-- The XP bar uses a custom solid progressbar style defined in `data.lua`.
-- Dev buttons are hidden by default. `/turret-xp-dev` toggles controls that can create a test core, grant quick levels, complete the active material project, fill one selected element fuel buffer, or reset the installed core to a fresh zero-XP state.
+- The XP bar uses a custom solid progressbar style defined by the data-stage style prototype module.
+- Dev buttons are hidden by default. `/turret-xp-dev` toggles controls that can create a test core, grant quick levels, complete the next passive element material rank, or reset the installed core to a fresh zero-XP state.
 
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.6.2`
+- Current version: `0.10.2`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`
+- Pre-publish validation: run `scripts/check.sh`, `scripts/package.sh`, and `scripts/test-headless.sh`; `scripts/publish-portal.sh` runs the headless suite by default before upload. The packaged zip includes root `thumbnail.png` when present.

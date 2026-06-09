@@ -1,4 +1,217 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.10.2
+Date: 2026-06-09
+  Changes:
+    - Made selected elements passively show and consume progress toward their next rank at all times; there is no separate `Upgrade` click anymore.
+    - Added Toxic as a fourth element using poison capsules, stacking poison damage over time, and vanilla slowdown-sticker feedback where Factorio accepts it.
+    - Added delayed burn damage to Fire procs so Fire has a visible damage-over-time identity instead of only instant bonus damage.
+    - Added critical-hit visual feedback with a brighter shot trail and vanilla star signal marker at impact.
+    - Changed Double Shot feedback to draw two readable bullet trails, using Bullet Trails entities when the optional dependency is present.
+    - Let managed element inserters expose every currently needed selected-element material in their filter slots instead of only one current-priority item.
+    - Added headless regression coverage for passive element feeding, Toxic material routing, mixed-element filters, and delayed status damage counting for XP and lifesteal.
+  Bugfixes:
+    - Migrated legacy active element projects into passive element progress so old saves do not lose delivered materials.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.10.1
+Date: 2026-06-09
+  Changes:
+    - Rebalanced Regeneration from a flat 0.2 HP/s per rank to 0.1% of current max HP per second per rank, still affected by specialization regeneration multipliers.
+  Bugfixes:
+    - Increased the unlocked element `Upgrade` button width so Factorio no longer truncates it as `Upgra...`.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.10.0
+Date: 2026-06-09
+  Changes:
+    - Added Resistance as a capped core upgrade: each rank mitigates 0.25% final incoming damage on non-lethal hits, up to 60%.
+    - Implemented Resistance as scripted post-hit health refund logic instead of adding another hidden turret prototype variant axis.
+    - Rebalanced Brawler to x3 damage and x0.5 fire rate so the close-range role is less explosive while keeping its lifesteal identity.
+    - Moved the first specialization choice to level 10 and the first element choice to level 20.
+    - Added level-40 sub-specializations: each primary specialization now branches into two stronger identities with real stat multipliers where Factorio prototypes allow them.
+    - Moved the second element and combo unlock to level 50.
+    - Reworked elements away from fuel buffers: picking an element is free at unlock, and future element ranks are earned by feeding larger material projects into the turret.
+    - Improved Double Shot and Bullet Bounce readability by layering optional Bullet Trails entities with stronger short-lived trails and hit sparks.
+    - Added headless regression coverage for Resistance derived stats, cap behavior, and live incoming-damage mitigation.
+    - Added headless regression coverage for sub-specialization prototype bodies, combined stat multipliers, and the new material-fed element rank flow.
+  Bugfixes:
+    - Fixed bound turret placement with Fill4Me-style preloaded ammo by refunding all placement-time ammo before restoring the bound turret's own saved ammo snapshot.
+    - Hardened bound turret mining so full inventories spill a tagged bound turret item with its Veteran Core level, build, and saved ammo instead of degrading into a separate core or reset profile.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.8
+Date: 2026-06-09
+  Changes:
+    - Increased the element burner fuel capacity from 10 to 100 items, giving powered elements a much longer internal buffer while keeping fuel input capped at the visible limit.
+    - Reformatted the static Evolution header summary as rich text: white `Core:`, `Aug:`, and `Spec:` labels with colored values.
+    - Standardized stat and upgrade value coloring so numeric bonuses are colored while units and descriptive text remain neutral; elemental damage numbers use their element color.
+    - Moved unlocked element mastery controls into the element header row so the `- value +` controls stay inside the Evolution column.
+    - Moved baseline Crit Chance and Crit Damage into the regular stats block under Damage Dealt.
+    - Added hidden bound turret preview item/placeholder variants so newly mined bound turrets show a placement range preview matching their specialization and Range augment ranks.
+    - Added role-specific secondary specialization multipliers: Sniper boosts Crit Damage, Machine Gun boosts Ammo Recovery, Bulwark boosts Regeneration, and Brawler boosts Lifesteal.
+  Bugfixes:
+    - Added explicit expiry tracking for electric beam visuals so electric arcs do not remain on the map.
+    - Reserved space for the stats scrollbar so scrollable stat text does not render underneath it.
+    - Cleared unexpected non-ammo items from the hidden element input so a wrong material cannot permanently block an active element project.
+    - Prevented bound turret placement from combining saved ammo with ammo inserted by other placement helpers; preloaded ammo is returned before the bound ammo snapshot is restored.
+    - Delayed bound-core detachment until mining-buffer conversion so full inventories cannot degrade a bound turret into a separate core path or lose the bound profile.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.7
+Date: 2026-06-09
+  Changes:
+    - Veteran Cores now start at level 0, so level 10 grants 10 core points before spending.
+    - Added a capped prototype-backed Max HP augment: +50 maximum HP per rank, up to rank 20, multiplied by specialization HP modifiers.
+    - Added Ammo Recovery as a core upgrade: each rank recovers one currently loaded or remembered ammo item per minute.
+    - Persisted the last loaded ammo type on Veteran Cores so ammo recovery can restart from an empty turret after the turret has previously held ammo.
+    - Expanded hidden turret variants so Max HP ranks combine with Range ranks and specialization bodies.
+    - Added headless regression coverage for Max HP variants and remembered-ammo recovery.
+  Bugfixes:
+    - Changed the hidden element input from a one-item latch into a bounded one-item-slot buffer so active material projects no longer make inserters flash `Target full` after every inserted item.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.6
+Date: 2026-06-09
+  Changes:
+    - Replaced section-specific Evolution reset buttons with one always-visible Evolution header Reset that clears core upgrades, augments, specialization, elements, mastery, active element projects, and element fuel while keeping XP, level, combat history, name, and binding.
+    - Moved the floating-label `Level` checkbox below the RGB color picker.
+    - Right-aligned element `Start` and specialization `Pick` actions while allowing card descriptions to use the full card text width.
+    - Reserved section width for both left and right Evolution margins so section cards keep visible spacing on every side.
+    - Added baseline Crit Chance and Crit Damage rows to the turret stats summary.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.5
+Date: 2026-06-09
+  Changes:
+    - Colored specialization multipliers green when beneficial and red when they are tradeoffs, both in specialization choices and stat formulas.
+    - Added extra spacing between Evolution section headers and their option rows for readability.
+    - Added symmetrical margins around Evolution section frames and between adjacent sections.
+    - Compacted the Veteran Core name controls so `Show` sits beside the name field, with color controls appearing below only when enabled.
+    - Reworked specialization choices into the same card rhythm as element choices.
+    - Moved element choice `Start` buttons into the cost row.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.4
+Date: 2026-06-09
+  Changes:
+    - Moved element choice `Start` buttons back onto the icon/name row while bounding that row to the card's real inner width.
+    - Added a light separator between element effect and cost rows so element cards are easier to scan.
+    - Removed redundant `Material unlock` text from element section headers.
+    - Moved the core-upgrade Reset action to the static Evolution header and simplified the Augment summary to the available point count.
+  Bugfixes:
+    - Prevented element choice `Start` buttons from overflowing past the right edge of their card.
+    - Removed the redundant `Active` label from the selected specialization row.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.3
+Date: 2026-06-09
+  Changes:
+    - Reworked the right-side Evolution panel into one fixed header plus one scrollable section body, following Factorio-style content-pane and toolbar separation.
+    - Replaced scattered Evolution width constants with a derived column model so section, row, and text widths are calculated from one viewport width.
+    - Moved Core, Augment, and Specialization summary text into the static Evolution header instead of repeating point lines inside sections.
+  Bugfixes:
+    - Fixed duplicate Augment point lines after spending an augment point.
+    - Prevented element choice Start buttons and fueled element mastery controls from being pushed under the Evolution scrollbar.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.2
+Date: 2026-06-09
+  Changes:
+    - Moved Bind/Unbind onto the Veteran Core slot row for a cleaner installed-core panel.
+    - Reformatted element choices as compact cards with separate description, effect, material cost, and combo preview lines.
+    - Narrowed Evolution content further and split unlocked element fuel cards into separate effect and fuel/mastery rows so they do not extend under the scrollbar.
+  Bugfixes:
+    - Fixed normal destroyed gun turrets creating replacement ghosts that could request/display the bound veteran turret item. Bound veteran turret items now place a bound-only placeholder entity that is immediately converted into a real gun turret with its stored core profile.
+    - Kept selected element `Change` actions visible after an element enters the fuel-burning state.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.1
+Date: 2026-06-09
+  Changes:
+    - Split the runtime implementation into focused modules for configuration, storage, progression, profiles, turret bodies, feeder logistics, stats, GUI panels, core-slot actions, combat effects, events, commands, and headless-test remotes.
+    - Split data-stage prototype creation into focused `prototypes/` modules while keeping `data.lua` and `data-final-fixes.lua` as entrypoints.
+    - Narrowed the attached Turret XP panel and constrained both columns with explicit layout constants so the Evolution column no longer renders under its scrollbar.
+    - Renamed element section reset actions to `Change` so selected elements are clearly respecable like specialization.
+    - Documented the Veteran Core slot boundary for a future tag-preserving inventory-list improvement without claiming native vanilla inventory-slot support.
+  Bugfixes:
+    - Reduced the risk of GUI width churn moving the vanilla turret window by replacing scattered hard-coded panel widths with shared layout constants.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.9.0
+Date: 2026-06-09
+  Changes:
+    - Generated hidden specialization and Range turret variants in `data-final-fixes.lua` so they inherit final gun-turret stats from mods that edit vanilla prototypes during `data-updates.lua`.
+    - Expanded the attached turret panel into fixed-width left and right columns, with scrollable stats and Evolution areas so content growth does not resize the vanilla turret GUI.
+    - Reworked Evolution sections with category headers, right-side status/action controls, technical colored element previews before selection, and section-level reset/deallocation controls instead of one global Respec button.
+    - Added headless regression coverage for modded base turret range, section-level resets, and deterministic combat kill tracking.
+  Bugfixes:
+    - Fixed compatibility with Krastorio 2 Spaced Out-style gun turret range edits where buying a Range rank could reduce range from a modded base value.
+    - Reduced GUI rebuilds caused by Evolution refreshes changing the attached panel size, which could move the whole vanilla turret GUI back to its default location.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.8.1
+Date: 2026-06-09
+  Changes:
+    - Kept custom floating-label colors on hidden display-panel label entities by mapping RGB slider colors to a generated Factorio-style label palette.
+    - Moved installed-core Respec and Bind/Unbind controls to their own row so they fit inside the core panel more reliably.
+    - Hid the `Show level` checkbox unless the floating name label is enabled.
+  Bugfixes:
+    - Forced managed element-feed inserters to one current-priority material filter so mixed Fire + Explosive turrets can feed sulfur and grenades from the same chest instead of staying stuck on one resource.
+    - Avoided redundant hidden-feeder inventory bar writes while keeping input open whenever any project or element fuel buffer still needs material.
+    - Extended the headless regression suite for custom label display-panel behavior and Fire-first/Explosive-second fuel priority.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.8.0
+Date: 2026-06-09
+  Changes:
+    - Moved Evolution into a second main column to the right of the core, XP, dev, and stats column, giving upgrades and element choices more room without relying on an internal Evolution scrollbar.
+    - Prioritized active element material requests by project state, missing fuel, and inserter source contents so mixed-element turrets can feed the second element's resource correctly.
+    - Added root thumbnail packaging support for Mod Portal display when `thumbnail.png` exists in the repository root.
+  Bugfixes:
+    - Refreshed stale allowed inserter filters instead of leaving mixed-element feeders stuck on the first element's fuel item.
+    - Collapsed duplicate active element rows in the stats summary, so a pure double-element build shows one element stat line plus its combo identity.
+    - Expanded the headless regression suite to cover mixed-element fuel requests, stale inserter filter refresh, duplicate element summary state, bound turret movement, feeder caps, and combat progression.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.2
+Date: 2026-06-09
+  Changes:
+    - Reworked hidden element feeding to manage nearby inserter drop targets and temporary inserter filters while the turret needs element materials or fuel.
+    - Right-aligned the `- value +` core upgrade controls within each upgrade row.
+    - Added an opt-in Bind/Unbind control for installed Veteran Cores. Bound veteran turrets mine into one tagged placeable item that restores the turret, core profile, turret quality, health ratio, and loaded ammo when placed again.
+    - Hid floating-label color controls until `Show name` is enabled.
+    - Added a Factorio headless regression suite and made Mod Portal publishing run it before upload by default.
+  Bugfixes:
+    - Stopped normal feeder routing from spilling unexpected inserter contents around the turret.
+    - Restored regular turret drop targeting when the element feeder is full or not needed, so ammo inserters are not left fighting the hidden feeder target.
+    - Kept preset label color names stable when cycling colors; the color control now shows `Custom` only after RGB slider edits.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.1
+Date: 2026-06-09
+  Changes:
+    - Prevented specialization, Range, install, extract, respec, and reset actions from moving the whole vanilla turret GUI back to its default position by queuing turret-body swaps until the turret GUI closes.
+    - Changed core upgrade controls to a compact `- value +` layout, with Shift-click adding or removing up to 10 ranks.
+    - Added RGB sliders for floating label colors while keeping the preset color button.
+    - Reduced the stats panel to a single visible container instead of a box inside another box.
+    - Made Sniper fire much more slowly, increasing its cooldown multiplier from x2.5 to x4.
+    - Changed Double Shot to fire the extra shot at a nearby second enemy when possible, otherwise into the original target, with simultaneous Bullet Trails feedback when available.
+  Bugfixes:
+    - Kept the hidden element feeder present but closed at fuel cap so inserters can resume feeding element fuel when the buffer drops below the cap.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.0
+Date: 2026-06-08
+  Changes:
+    - Rebalanced combat XP by target type. Asteroids and asteroid chunks now grant much less XP, especially on space platforms, while raw damage and kill-credit stats remain unchanged.
+    - Weighted kill-credit XP by enemy class and health so small targets are not overvalued and larger enemies, worms, and spawners feel more meaningful.
+    - Added optional Bullet Trails support for scripted bounce, double-shot, and element tracers when `bullet-trails` is installed.
+    - Reused vanilla electric, fire, explosion, and weapon sound prototypes for clearer element feedback without adding custom art.
+    - Removed hidden turret variants from technology effect lists. Variant damage research is now synced at runtime from the vanilla gun turret modifier instead of being copied into every research effect.
+  Bugfixes:
+    - Rechecked Veteran Core recipe unlocks when research finishes so existing saves enable the recipe after `military` research without requiring a reload.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.6.2
 Date: 2026-06-08
   Changes:

@@ -33,6 +33,13 @@ fi
 python_bin="${PYTHON:-python3}"
 mod_name="$("$python_bin" -c 'import json; print(json.load(open("info.json"))["name"])')"
 version="$("$python_bin" -c 'import json; print(json.load(open("info.json"))["version"])')"
+
+if [ "${SKIP_HEADLESS_TESTS:-}" = "1" ]; then
+  echo "Skipping headless tests because SKIP_HEADLESS_TESTS=1."
+else
+  scripts/test-headless.sh
+fi
+
 package_path="$(scripts/package.sh | tail -n 1)"
 description_path="dist/mod-portal-description.md"
 homepage_url="https://atyrode.github.io/turret_xp/"
@@ -41,43 +48,22 @@ source_url="https://github.com/atyrode/turret_xp"
 cat > "$description_path" <<DESC
 # Turret XP
 
-Turret XP turns chosen vanilla gun turrets into movable Veteran Core defenses with XP, active stat upgrades, specializations, fueled elements, and element mastery.
+Turret XP makes gun turrets grow into named veteran defenders.
 
-Current prototype:
+Install a Veteran Core in a turret and let it earn XP from real fights. As it levels up, shape it into the defender your factory needs: a long-range sniper, a rapid machine gun, a tough bulwark, or a brutal close-range brawler.
 
-- Adds a Turret XP panel to the vanilla gun turret GUI.
-- Adds non-stackable Veteran Cores that make selected gun turrets unique while ordinary turrets stay stackable.
-- Tracks XP, level, kills, kill credit, lifetime damage, evolution choices, material projects, element fuel, custom names, and label preference on the installed core profile.
-- Adds tag-preserving slot-style Veteran Core cursor transfer and swap behavior.
-- Adds floating label color and level-suffix controls with a fixed larger readable label size.
-- Adds a hidden turret-tile feeder inventory for inserter-fed element materials, element fuel, and ammo forwarding.
-- Closes the hidden feeder at the visible element fuel cap instead of accepting excess ghost fuel.
-- On space platforms, lists Veteran Cores from the platform hub inventory so a player can install the exact core they choose and send installed cores back to that hub.
-- Reduces space-platform combat XP to 10% while keeping displayed damage and kill-credit stats as raw totals.
-- Awards configurable XP from cored gun turret damage and proportional kill credit.
-- Lets the player extract a core and install it in another turret, carrying progression with it.
-- Returns or spills the installed core when a turret is mined.
-- Shows HP, shooting speed, range, loaded ammo, estimated ammo damage, estimated DPS, kills, total damage, active custom stats, formula-style additive/multiplier breakdowns, and XP progress.
-- Includes runtime-global settings for XP pacing.
-- Uses Factorio Library (flib) styles and richer vanilla-like panel structure.
-- Shows research bonuses in base plus bonus format.
-- Shows HP and range quality summaries using Factorio quality prototypes and the real quality info marker.
-- Uses a scrollable five-section Evolution list so the panel stays within the vanilla turret GUI height.
-- Adds horizontal delimiters between Evolution choices for easier scanning.
-- Shows element material requirements with item icons and hides feeder implementation status from the panel.
-- Adds compact core upgrades, element material projects, furnace-like element fuel, element mastery ranks, a free specialization choice, Double Shot/Veteran Training/Range/Luck augments, and a second element combo path.
-- Specialization choices and Range ranks now use hidden gun-turret body variants with real range, cooldown, damage modifier, and health values.
-- Adds optional floating turret labels in "name (lvl N)" format, using hidden display-panel labels when available.
-- Adds first-draft runtime upgrade effects and visuals for bonus damage, crits, bounce, double shots, Luck-adjusted proc odds, XP gain, Range ranks, fire, electric arcs, explosive splash, passive repair, and vampiric healing.
-- Adds command-toggled dev controls for quick level, core, and material-project testing.
-- Adds respec/reset controls for point allocation and local playtesting.
-- Keeps Evolution scroll context after point allocation.
-- Shows technical effect text for augments, elements, and specialization choices.
-- Uses a custom solid XP bar style.
+Veteran Cores carry a turret's level, upgrades, elements, name, and combat history. Move the core to a new turret when the front line shifts, or keep it on a trusted defender and watch it grow.
 
-This is the first playable release line intended to validate Veteran Core mobility, the simplified scrollable Evolution list, material gates, furnace-like element fuel, element choices, specialization stats, upgrade effects, and XP pacing before deeper balance work.
+Highlights:
 
-0.6.2 reduces space-platform combat XP to 10% and adds Evolution choice delimiters. 0.6.1 added Luck, formula-style stat breakdowns, expected DPS from proc output, impact-origin Electric feedback, delayed Double Shot tracers, bounced-hit element procs, hidden fuel cap fixes, second-element fuel acceptance fixes, and explicit space-platform hub core selection.
+- Only chosen turrets become unique, so ordinary gun turrets stay stackable.
+- Earn XP from damage and kill contribution.
+- Spend points on damage, regeneration, lifesteal, crits, range, luck, double shots, XP gain, and bouncing bullets.
+- Pick specializations with strong tradeoffs.
+- Feed fire, electric, explosive, or toxic resources into passive element ranks to strengthen elemental effects and combos.
+- Name favorite turrets and show their level above them.
+- Choose exact Veteran Cores from platform hubs for space-platform defenses.
+- Tune XP pacing in mod settings.
 
 Source:
 ${source_url}
@@ -129,7 +115,7 @@ if edit_response="$(
     -H "Authorization: Bearer ${api_key}" \
     -F "mod=${mod_name}" \
     -F "title=Turret XP" \
-    -F "summary=Turn chosen gun turrets into movable Veteran Core defenses with XP, upgrades, specializations, fueled elements, and mastery." \
+    -F "summary=Make chosen gun turrets level up, specialize, and carry Veteran Core progression between battlefields." \
     -F "description=<${description_path}" \
     -F "category=tweaks" \
     -F "tags=combat" \

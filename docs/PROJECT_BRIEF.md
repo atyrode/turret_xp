@@ -115,10 +115,151 @@ The first playable releases should make progression visible and testable: select
 - Reduce combat XP gained by turrets fighting on space-platform surfaces to 10% of normal without changing displayed raw damage or kill-credit stats.
 - Add clear delimiters between choices inside the Evolution sections.
 
+## V0.7.0 Scope
+
+- Start the next playtest line with target-aware combat XP instead of only surface-aware XP.
+- Make asteroids and asteroid chunks low-XP targets so stationary space-platform asteroid defense does not level Veteran Cores too quickly.
+- Keep raw lifetime damage, kill credit, and kills unchanged while applying target and platform multipliers only to XP counters.
+- Weight kill-credit XP by target type and health so small enemies are not overvalued and larger enemies, worms, and spawners are more meaningful.
+- Add optional `bullet-trails` support for scripted bounce, double-shot, and element tracers when the dependency is installed.
+- Reuse vanilla electric, fire, explosion, and weapon sound prototypes for element feedback.
+- Keep hidden turret body variants for real specialization and Range stats, but sync their gun-turret damage research modifier at runtime instead of copying every technology effect onto every variant.
+
+## V0.7.1 Scope
+
+- Patch early 0.7 playtest UX issues without changing the progression model.
+- Prevent open-turret specialization, Range, install, extract, respec, and reset actions from moving the vanilla turret GUI back to its default location.
+- Keep element feeder targets present but closed at fuel cap so inserters can resume feeding when element fuel burns below capacity.
+- Make base upgrade rows faster to use with `- value +` controls and Shift-click batches.
+- Add RGB floating-label color controls because Factorio runtime GUI exposes sliders but not the native train color picker widget.
+- Make Double Shot visually and mechanically prefer a simultaneous second target.
+
+## V0.7.2 Scope
+
+- Patch hidden element feeding after playtesting showed overlapping turret/feed inputs were unreliable.
+- Manage nearby inserter drop targets and temporary filters so element material inserters feed the hidden input only while needed.
+- Restore inserters to the turret target when the element input is full or not needed, preserving ammo logistics.
+- Stop normal routing from spilling unexpected items around the turret.
+- Right-align the `- value +` core upgrade controls.
+- Hide floating-label color controls until the label is enabled, and keep preset color cycling distinct from custom RGB edits.
+- Add an opt-in bound veteran turret item so a player can mine and place a chosen turret/core pair as one quick-move item, while keeping the default separate core/turret behavior available through Unbind.
+
+## V0.8.0 Scope
+
+- Keep the turret panel attached to the vanilla turret GUI, but split it into two main columns.
+- Keep core identity, XP, dev controls, and stats in the left column.
+- Move all Evolution choices to the right column so progression has more room without relying on its own scroll pane in normal play.
+- Fix mixed-element fuel feeding so first and second element resources are both requested and stale inserter filters refresh to the currently needed item.
+- Aggregate duplicate pure-element stat summary rows while keeping the pure-element combo identity.
+- Package the root `thumbnail.png` so the Mod Portal release has a thumbnail.
+- Expand the headless regression suite before publishing 0.8.0.
+
+## V0.8.1 Scope
+
+- Patch core-panel overflow by moving installed-core action buttons to their own row.
+- Hide `Show level` until `Show name` is enabled.
+- Preserve display-panel-style floating labels for custom RGB colors through generated hidden label-panel variants.
+- Make Fire + Explosive and other mixed-element fuel feeding use one current-priority inserter filter at a time.
+- Avoid redundant feeder inventory bar writes while keeping the input open whenever any progression material is still needed.
+
+## V0.9.0 Scope
+
+- Generate prototype-backed specialization and Range variants in `data-final-fixes.lua` so Turret XP inherits final modded vanilla gun-turret stats before applying its own modifiers.
+- Keep the attached two-column turret panel wide but stable, with bounded scrollable stats and Evolution areas instead of content-driven top-level resizing.
+- Replace the global Respec flow with per-section reset/deallocation controls and embedded `- value +` rank controls where practical.
+- Show clearer Evolution section headers, right-side status text, delimiters, and technical element previews before a player chooses an element.
+- Extend the headless suite for modded base range, individual section resets, and deterministic combat kill tracking.
+- Before redesigning the Veteran Core slot into a more vanilla-like inventory slot or switching to a full custom GUI, inspect large GUI-heavy mod sources and maintained GUI/inventory libraries for proven patterns worth reusing.
+
+## V0.9.1 Scope
+
+- Refactor the runtime and data-stage implementation into focused modules while preserving the existing save schema and gameplay behavior.
+- Keep `control.lua`, `data.lua`, and `data-final-fixes.lua` as small entrypoints.
+- Narrow the attached two-column panel and keep Evolution content inside its scroll-pane width.
+- Make selected element choices clearly changeable through section-level actions, matching specialization.
+- Treat a fuller Veteran Core slot as a future scripted, tag-preserving UI feature rather than claiming native vanilla inventory-slot support.
+
+## V0.9.2 Scope
+
+- Fix bound veteran turret placement so bound quick-move items cannot be selected by ordinary gun-turret replacement ghosts.
+- Keep Bind/Unbind visually attached to the Veteran Core slot row.
+- Keep selected, fueled element panels inside the Evolution scroll-pane width and keep their `Change` action visible.
+- Reformat element choices as compact readable cards with distinct effect, cost, and combo information.
+
+## V0.9.3 Scope
+
+- Replace the nested right-column layout with a static Evolution summary header and one scrollable section body.
+- Derive Evolution section, row, and label widths from one right-column viewport model instead of independently tuned constants.
+- Keep element choice Start buttons and fueled element mastery controls inside their cards.
+- Remove duplicate Core/Augment point summaries from section bodies.
+
+## V0.9.4 Scope
+
+- Keep element choice Start buttons on the first card row with the element icon and name.
+- Bound element-card child rows to the card's actual padded content width.
+- Separate element effect and cost rows visually.
+- Remove redundant element-section status text when the cards already explain the material unlock.
+
+## V0.9.5 Scope
+
+- Color specialization multipliers and stat-summary multipliers green for benefits and red for tradeoffs.
+- Add breathing room between Evolution section headers and option rows.
+- Add balanced margins around Evolution section frames and between adjacent sections.
+- Compact the Veteran Core name controls so `Show` sits beside the name field, and reveal color/level controls only when the floating label is enabled.
+- Match specialization option cards to element option cards, with icon/title rows, separated descriptions, and technical multiplier rows.
+- Keep element choice `Start` actions on the cost row where the material requirement is shown.
+
+## V0.9.6 Scope
+
+- Use one always-visible Evolution header Reset for all Evolution choices while keeping per-section `Change` actions for focused element and specialization edits.
+- Keep element and specialization action buttons right-aligned without forcing unrelated description text to reserve button space.
+- Preserve visible right-side margins inside the Evolution column.
+- Show baseline crit chance and crit damage in the stats summary.
+- Move the floating-label `Level` option under the RGB color picker.
+
+## V0.9.7 Scope
+
+- Add a capped real Max HP augment through hidden turret variants.
+- Add slow Ammo Recovery that restores the current or last remembered ammo item over time.
+- Keep the implementation honest about Factorio constraints: Max HP is capped to avoid unbounded variants, and ammo recovery creates ammo items rather than repairing ammo durability.
+
+## V0.9.8 Scope
+
+- Increase element fuel capacity to 100 stored items per active element so powered turrets can buffer a meaningful operating window.
+- Reformat the Evolution header summary with white labels and colored values for faster scanning.
+- Keep stat and Evolution value coloring focused on numeric fragments only, with elemental damage amounts using element colors.
+- Add secondary specialization identity so Sniper boosts Crit Damage, Machine Gun boosts Ammo Recovery, Bulwark boosts Regeneration, and Brawler boosts Lifesteal.
+- Prevent wrong hidden-input items from leaving element projects stuck, and ensure electric arc visuals expire cleanly.
+
+## V0.10.0 Scope
+
+- Add Resistance as a core upgrade for survivability without adding another hidden prototype variant axis.
+- Treat Resistance as scripted mitigation on non-lethal incoming damage after Factorio's normal resistance calculation.
+- Tune Brawler down to a slower, less explosive close-range role: x3 damage and x0.5 fire rate, with lifesteal as the identity hook.
+- Move specialization to level 10, first element to level 20, sub-specialization to level 40, and second element/combo to level 50.
+- Replace ongoing element fuel buffers with free element picks at unlock and material-fed rank projects for future element growth.
+- Add two sub-specialization branches per primary role so level-40 builds can push further into range, crits, sustained fire, durability, or lifesteal.
+- Keep bound veteran turret moves lossless under full inventories and placement-helper mods: tagged bound items preserve the core profile and saved ammo, while placement-time ammo is refunded before the saved snapshot is restored.
+- Keep the long-term direction open to reducing hidden prototype usage for HP and Range if an equally real and Factorio-compatible approach is found.
+
+## V0.10.1 Scope
+
+- Rebalance Regeneration from a flat HP/s trickle into 0.1% current max HP per second per rank.
+- Keep Bulwark and Guardian regeneration multipliers meaningful by applying them on top of max-health-based regeneration.
+- Fix small UI fit issues from V0.10.0, including the truncated unlocked-element `Upgrade` button.
+
+## V0.10.2 Scope
+
+- Replace manually started element rank projects with always-visible passive next-rank material progress on selected elements.
+- Add Toxic as a poison-capsule-fed element with stacking poison damage and slowdown feedback.
+- Add tracked burn damage to Fire, critical-hit visual feedback, and stronger double-shot trail feedback.
+- Keep delayed Fire/Toxic damage tied to turret XP, kill contribution, and lifesteal.
+- Let mixed-element feeder inserters expose all currently needed element materials instead of only one project resource.
+
 ## Open Product Questions
 
 - What final mod name, short description, portal category, and sober Factorio-native portal image best communicate Veteran Core turret progression once the core loop stabilizes?
-- Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, element fuel, or infinite mastery?
+- Which parts of the long-term progression direction in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md) should ship first: archetype branches, material gates, element slots, combo nodes, element ranks, or infinite mastery?
 - Should destroyed turrets destroy their installed core, drop a damaged core, or have a recovery chance?
 - Should XP eventually include waves survived, ammo consumed, or other behavior beyond damage and kill credit?
-- Does the hidden turret-tile input plus ammo-forwarding behavior feel reliable with inserters in practical layouts, or does the material input need a clearer visible design later?
+- Does the hidden turret-tile input plus managed inserter targeting/filtering feel reliable with practical inserter layouts, or does the material input need a clearer visible design later?
