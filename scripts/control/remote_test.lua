@@ -391,6 +391,46 @@ remote.add_interface("turret_xp_test", {
     }
   end,
 
+  mine_bound_turret_with_vanilla_returns = function(entity, buffer, external_inventory)
+    local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+    if not state then
+      return {
+        converted = false,
+        counts = turret_xp_test_inventory_counts(buffer),
+        external_counts = turret_xp_test_inventory_counts(external_inventory),
+        post_pre_mine_ammo = {}
+      }
+    end
+
+    if state.bound_turret then
+      remember_bound_turret_mining(entity, state, snapshot_turret_item_state(entity))
+    end
+
+    local post_pre_mine_snapshot = snapshot_turret_item_state(entity)
+    if buffer and buffer.valid then
+      buffer.insert({
+        name = BASE_TURRET_NAME,
+        count = 1
+      })
+    end
+    if external_inventory and external_inventory.valid then
+      for _, ammo in ipairs(post_pre_mine_snapshot.ammo or {}) do
+        external_inventory.insert({
+          name = ammo.name,
+          count = ammo.count,
+          quality = ammo.quality or "normal"
+        })
+      end
+    end
+
+    return {
+      converted = finish_bound_turret_mining(entity, buffer),
+      counts = turret_xp_test_inventory_counts(buffer),
+      external_counts = turret_xp_test_inventory_counts(external_inventory),
+      post_pre_mine_ammo = copy_serializable(post_pre_mine_snapshot.ammo or {})
+    }
+  end,
+
   make_chip_stack = function(entity)
     local state = is_gun_turret(entity) and get_turret_state(entity) or nil
     return state and make_chip_item_stack(state) or nil

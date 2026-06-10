@@ -41,8 +41,9 @@ scripts/install-local.sh
 17. Bind the installed core from the Veteran Core slot row, mine the turret, and confirm inventory receives one bound veteran turret item rather than separate turret/core items.
 18. Place the bound veteran turret item and confirm the turret, installed core profile, name/label settings, quality, health ratio, and loaded ammo restore. Unbind it and confirm mining returns to the separate item behavior.
 18a. Bind a turret with Sniper or Range ranks, hold the bound turret item in hand, and confirm Factorio's native placement range preview matches the restored turret range. Old generic bound stacks may need to be placed and mined once before they become a range-specific preview item.
-18b. With Fill4Me or another placement helper enabled, place a bound turret that already stores ammo and confirm all placement-time ammo is refunded before the saved bound ammo snapshot is restored.
-18c. Mine a bound turret with no free inventory slot and confirm a tagged bound turret item spills on the ground instead of returning only a Veteran Core or losing the profile.
+18b. Mine a bound turret with ammo loaded, place the bound item again, and confirm the ammo is restored only in the turret: the player inventory must not also receive a duplicate copy.
+18c. With Fill4Me or another placement helper enabled, place a bound turret that already stores ammo and confirm all placement-time ammo is refunded before the saved bound ammo snapshot is restored.
+18d. Mine a bound turret with no free inventory slot and confirm a tagged bound turret item spills on the ground instead of returning only a Veteran Core or losing the profile.
 19. Destroy a regular gun turret with no Veteran Core and confirm the replacement ghost displays and requests the normal gun turret item, not the bound veteran turret item.
 20. Confirm the Evolution header shows `Core:`, `Aug:`, and `Spec:` summary text once, with white labels and colored values, and that the scrollable body has six sections: core upgrades, specialization, first element, powerful augments, sub-specialization, and second element/combo.
 21. Confirm level-gated sections show their unlock levels before using dev tools.

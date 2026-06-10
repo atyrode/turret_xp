@@ -825,6 +825,54 @@ local function run_bound_turret_test(surface)
   end)
 end
 
+local function run_bound_turret_mining_ammo_conservation_test(surface)
+  local position = { x = 34, y = 0 }
+  local turret = create_turret(surface, position, 7)
+  call("install_core", turret, {
+    level = 8,
+    custom_name = "No Dupes"
+  })
+  call("set_bound", turret, true)
+
+  local buffer = game.create_inventory(20)
+  local external_returns = game.create_inventory(20)
+  local mined = call("mine_bound_turret_with_vanilla_returns", turret, buffer, external_returns)
+  assert_true(mined.converted == true, "bound mining did not convert after simulated vanilla returns")
+  assert_eq(inventory_count(buffer, "turret-xp-bound-gun-turret"), 1, "bound mining did not return exactly one bound turret item")
+  assert_eq(inventory_count(buffer, "gun-turret"), 0, "bound mining returned a vanilla gun turret alongside the bound turret item")
+  assert_eq(inventory_count(buffer, "turret-xp-veteran-core"), 0, "bound mining returned a separate Veteran Core alongside the bound turret item")
+  assert_eq(inventory_count(external_returns, "firearm-magazine"), 0, "bound mining left ammo for vanilla to return outside the bound item")
+
+  local bound_stack = find_stack(buffer, "turret-xp-bound-gun-turret")
+  assert_true(bound_stack ~= nil, "mined bound turret stack was not found")
+  local decoded = call("read_bound_turret_stack", bound_stack)
+  assert_true(decoded ~= nil, "mined bound turret item lost readable tags")
+  assert_eq(decoded.profile.custom_name, "No Dupes", "mined bound turret lost its profile")
+  assert_eq(decoded.profile.bound_turret, true, "mined bound turret lost its bound flag")
+  assert_eq(#(decoded.turret.ammo or {}), 1, "mined bound turret did not keep ammo in the item snapshot")
+  assert_eq(decoded.turret.ammo[1].name, "firearm-magazine", "mined bound turret snapshot used the wrong ammo")
+  assert_eq(decoded.turret.ammo[1].count, 7, "mined bound turret snapshot used the wrong ammo count")
+
+  local placed = surface.create_entity({
+    name = "turret-xp-bound-gun-turret-placeholder",
+    position = { 36, 0 },
+    force = "player",
+    raise_built = false
+  })
+  assert_true(placed and placed.valid, "failed to create placeholder for mined bound turret")
+  local summary = call("install_bound_turret_stack", placed, bound_stack)
+  assert_true(summary ~= nil, "mined bound turret could not be placed again")
+  assert_eq(summary.turret_ammo["firearm-magazine"] or 0, 7, "mined bound turret did not restore its saved ammo on placement")
+  assert_eq(inventory_count(external_returns, "firearm-magazine"), 0, "placing mined bound turret left duplicated ammo outside the bound item")
+
+  pcall(function()
+    buffer.destroy()
+  end)
+  pcall(function()
+    external_returns.destroy()
+  end)
+end
+
 local function setup_combat_test(surface)
   local turret = create_turret(surface, { -20, 0 }, 100)
   call("install_core", turret, {
@@ -913,6 +961,7 @@ local function run_immediate_tests()
   run_targeted_reset_test(surface)
   run_full_evolution_reset_test(surface)
   run_bound_turret_test(surface)
+  run_bound_turret_mining_ammo_conservation_test(surface)
   setup_combat_test(surface)
   setup_status_damage_test(surface)
 end

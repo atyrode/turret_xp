@@ -499,6 +499,24 @@ function snapshot_turret_item_state(entity)
   return snapshot
 end
 
+function clear_turret_ammo_inventory(entity)
+  if not is_gun_turret(entity) then
+    return
+  end
+
+  local inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
+  if not inventory then
+    return
+  end
+
+  for index = 1, #inventory do
+    local stack = inventory[index]
+    if stack then
+      stack.clear()
+    end
+  end
+end
+
 function ammo_snapshot_key(name, quality)
   return tostring(name or "") .. "\n" .. tostring(quality or "normal")
 end

@@ -423,6 +423,10 @@ function remember_bound_turret_mining(entity, profile, turret_snapshot)
     key = key,
     tick = game.tick
   }
+
+  -- The bound item snapshot now owns loaded ammo; clear it before vanilla mining
+  -- can also return the same ammo to the player or robot buffer.
+  clear_turret_ammo_inventory(entity)
 end
 
 function take_bound_turret_mining(entity)

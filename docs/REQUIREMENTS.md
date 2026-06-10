@@ -20,7 +20,8 @@
 - Mining a turret with an installed unbound core must return the normal turret item through vanilla behavior and return or spill the core separately.
 - Mining a bound veteran turret must not duplicate the normal turret/core outputs; it must return one bound veteran turret item when possible and spill that tagged bound item if inventory space is unavailable.
 - Mining a bound veteran turret must not fall back to a separate Veteran Core result or lose the core profile when the mining buffer is full.
-- Placing a bound veteran turret must restore the saved ammo snapshot without duplicating or deleting ammo inserted by placement helper mods; matching placement-time ammo should satisfy the saved snapshot, and only excess or incompatible placement-time ammo should be returned or spilled.
+- Mining a bound veteran turret must move loaded ammo into the bound item snapshot and clear the live turret ammo inventory before vanilla mining can return that same ammo separately.
+- Placing a bound veteran turret must restore the saved ammo snapshot without duplicating or deleting ammo inserted by placement helper mods; placement-time ammo is treated as external and returned or spilled before the saved snapshot is restored.
 - Newly created bound veteran turret stacks with specialization or Range ranks should use hidden preview item variants so the cursor placement range visualization reflects the turret that will be restored.
 - The bound veteran turret item must not be treated as an equivalent replacement item for ordinary vanilla gun-turret ghosts. Destroying a regular gun turret with no installed core must create a normal gun-turret replacement ghost.
 - Installing a Veteran Core must create a real hidden feeder inventory entity on the turret tile.

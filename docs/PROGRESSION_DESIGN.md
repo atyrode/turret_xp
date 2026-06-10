@@ -330,7 +330,7 @@ Turret progression should be movable, but not for free. V0.4.1 implements the fi
 
 The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. By default, when the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret. If the player explicitly binds the installed core to the turret body, mining instead returns one tagged bound turret item for faster world movement. Unbinding returns to the default separate core/turret behavior.
 
-Bound turret moves must be lossless. When a bound turret is mined with a full inventory, the tagged bound item should spill on the ground with the Veteran Core profile, chosen build, health ratio, quality, and saved ammo intact. When a bound turret is placed, the saved ammo snapshot is authoritative: ammo inserted by placement-helper mods is refunded first, then the stored ammo is restored, preventing both duplication and silent ammo loss.
+Bound turret moves must be lossless. When a bound turret is mined, loaded ammo moves into the tagged bound item snapshot and the live turret ammo inventory is cleared before vanilla mining can return the same ammo separately. When a bound turret is mined with a full inventory, the tagged bound item should spill on the ground with the Veteran Core profile, chosen build, health ratio, quality, and saved ammo intact. When a bound turret is placed, the saved ammo snapshot is authoritative: ammo inserted by placement-helper mods is refunded first, then the stored ammo is restored, preventing both duplication and silent ammo loss.
 
 Design goals:
 
