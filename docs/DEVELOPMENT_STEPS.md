@@ -348,9 +348,16 @@
 - [x] Let managed inserters expose all currently needed mixed-element resources in their filter slots.
 - [x] Add headless coverage for passive element progress, Toxic material routing, mixed-element filters, and delayed status-damage lifesteal.
 
+## Completed For V0.10.3
+
+- [x] Fix bound veteran turret ammo conservation so mining and placing a bound turret does not duplicate the saved ammo snapshot.
+- [x] Add a turret-source projectile range compatibility patch for K2/K2SO-style realistic rifle ammo.
+- [x] Add headless coverage for modded projectile ammo whose physical delivery range is lower than generated Turret XP turret range.
+- [x] Add an in-world level-up flying-text popup for installed cores that gain levels through XP progression.
+
 ## Likely Next Work
 
-- Playtest V0.10.2 from a local package or Mod Portal release after feedback integration, especially around Resistance feel, max-HP-based Regeneration, passive element material progress, Toxic and Fire damage-over-time readability, crit/double-shot visuals, richer Evolution summary header, right-column scrollbar containment, specialization multiplier colors, section margins, full Evolution reset, baseline crit stats, Max HP rank body swaps, Ammo Recovery pacing, level-40 sub-specializations, normal/bulk inserter feeding, hidden input ammo forwarding, deferred turret body swaps, bound turret mining/placement, normal turret replacement ghosts, placement-helper ammo refunds, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, asteroid XP pacing, optional Bullet Trails visuals, label controls, modded base turret range compatibility, and high-level turret combat performance.
+- Playtest V0.10.3 from a local package or Mod Portal release after feedback integration, especially around bound turret ammo conservation, K2/K2SO realistic ammo range compatibility, level-up flying text, Resistance feel, max-HP-based Regeneration, passive element material progress, Toxic and Fire damage-over-time readability, crit/double-shot visuals, richer Evolution summary header, right-column scrollbar containment, specialization multiplier colors, section margins, full Evolution reset, baseline crit stats, Max HP rank body swaps, Ammo Recovery pacing, level-40 sub-specializations, normal/bulk inserter feeding, hidden input ammo forwarding, deferred turret body swaps, bound turret mining/placement, normal turret replacement ghosts, placement-helper ammo refunds, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, asteroid XP pacing, optional Bullet Trails visuals, label controls, modded base turret range compatibility, and high-level turret combat performance.
 - Keep GUI polish, visual readability, and real click/hover feel in the manual playtest loop; headless tests cover deterministic state and event behavior, not pixels or mouse feel.
 - Build the next Veteran Core slot iteration on `scripts/control/core_slot.lua`: exact-core inventory lists, tag-preserving scripted transfers, and clearer player-inventory/platform selection without claiming native vanilla slot behavior.
 - Consider a scripted slot-like manual project input in unlocked element cards. It can support normal cursor transfer and display active project counts, but it is not a true arbitrary native inventory slot inside the vanilla turret GUI.

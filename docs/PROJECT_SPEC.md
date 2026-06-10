@@ -1,6 +1,6 @@
 # Project Spec
 
-## Version 0.10.0
+## Version 0.10.3
 
 V0.10.x is the current development line after the 0.9.8 Mod Portal playtest release. It keeps the vanilla turret GUI as the main interaction and presents Turret XP as two narrower attached columns: core identity, XP, dev controls, and scrollable stats on the left; a richer static Evolution summary header plus a bounded scrollable six-section Evolution workflow on the right. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installed cores can optionally bind to their turret body for quick world moves: mining a bound veteran turret returns one tagged placeable turret item instead of a separate turret plus core. Bound items place a hidden bound-only placeholder that is immediately converted into a real gun turret with the stored core profile, which keeps normal gun-turret replacement ghosts tied to the normal gun turret item. Installing a core creates an invisible inserter-fed input on the turret tile whenever selected elements need next-rank materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Nearby inserters that are actually sourcing needed materials are pointed at the hidden input and can receive multiple active element filters at once. When input is not needed, inserters are restored to the turret target so ammo logistics keep behaving normally. Specialization, sub-specialization, Range augment, and Max HP choices use hidden gun-turret variants with prototype stat changes generated in `data-final-fixes.lua`, so they inherit final base gun-turret edits from mods that run during `data-updates.lua`. Resistance is intentionally scripted instead of variant-backed: it refunds part of non-lethal final incoming damage after Factorio's vanilla resistance calculation. Body swaps are queued until the turret GUI closes so Factorio does not reset the whole vanilla window position. Combat XP is weighted by surface and target type so asteroid defense, especially on space platforms, does not overlevel cores. The implementation is split into runtime modules under `scripts/control/` and data-stage modules under `prototypes/`.
 
@@ -21,7 +21,7 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - On space platforms, Veteran Cores stay in the platform hub inventory until the player chooses a specific core from the opened turret panel. This avoids inserter ambiguity when multiple cores exist and keeps normal inserters focused on ammo/material feeding.
 - XP is derived from XP-weighted lifetime damage, XP-weighted kill credit, runtime-global XP settings, core XP upgrade ranks, and optional dev XP.
 - Displayed damage and kill credit remain raw combat totals. Separate `xp_damage` and `xp_kill_credit` counters preserve XP balance, with surface and target multipliers applied only to those XP counters.
-- Derived level progress is cached after sync so normal combat only applies new XP deltas instead of recalculating every previous level.
+- Derived level progress is cached after sync so normal combat only applies new XP deltas instead of recalculating every previous level. When an existing installed core gains enough XP to increase level, connected players on the turret's force see a short `Level up!` local flying-text popup above the entity.
 - Default damage XP is `0.02` XP per final damage point.
 - Default kill-credit XP is `25` XP per full kill credit.
 - Combat by turrets on a space-platform surface applies a `0.1x` multiplier before damage or kill credit reaches the XP counters.
@@ -44,6 +44,7 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - Second element unlocks at level 50 and creates a combo identity with the first element.
 - Specialization swaps the turret body between vanilla `gun-turret` and hidden `turret-xp-gun-turret-*` variants. Removing the Veteran Core returns the turret body to vanilla `gun-turret`.
 - Hidden turret variants are required for real per-turret range, cooldown, damage modifier, max HP, and rotation-speed changes. They are generated in `data-final-fixes.lua` after all mods' `data-updates.lua` stages, so Range and Max HP ranks add to the final modded base turret instead of an early vanilla copy. Their force gun-turret damage research modifier is synced at runtime from vanilla `gun-turret` instead of being injected into technology effect lists. When the turret GUI is open, body swaps are deferred until close to avoid moving the vanilla entity GUI back to its default location.
+- If a compatible mod gives gun-turret ammo a projectile `max_range` lower than Turret XP's generated turret range, `data-final-fixes.lua` adds or patches a turret-source ammo type with enough projectile range for veteran turrets. Non-turret ammo behavior stays on the original default/source-specific ammo type. This is mainly for K2/K2SO realistic rifle ammo, where the turret can otherwise target farther than the physical bullet can fly.
 - Ammo Recovery stores the last loaded ammo item and quality on the Veteran Core. Each rank recovers one ammo item per minute into the turret ammo inventory, using the currently loaded ammo when present or the remembered ammo when the turret is empty. Factorio ammo is consumed as discrete items; there is no per-round ammo durability to refill.
 - Mined unbound turrets return the installed Veteran Core as a separate item or spill it if there is no inventory room.
 - Mined bound turrets remove the vanilla gun-turret mining output and return a single bound veteran gun turret item when possible. The bound item restores the core profile, bound state, turret quality, health ratio, and loaded ammo when placed again through the hidden placeholder conversion path.
@@ -128,7 +129,7 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.10.2`
+- Current version: `0.10.3`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`
 - Pre-publish validation: run `scripts/check.sh`, `scripts/package.sh`, and `scripts/test-headless.sh`; `scripts/publish-portal.sh` runs the headless suite by default before upload. The packaged zip includes root `thumbnail.png` when present.

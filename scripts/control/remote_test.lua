@@ -18,6 +18,51 @@ function turret_xp_test_inventory_counts(inventory)
   return counts
 end
 
+function turret_xp_test_as_array(value)
+  if not value then
+    return {}
+  end
+
+  if value[1] ~= nil then
+    return value
+  end
+
+  return { value }
+end
+
+function turret_xp_test_collect_projectile_ranges_from_ammo_type(ammo_type)
+  local ranges = {}
+  for _, item in pairs(turret_xp_test_as_array(ammo_type and ammo_type.action)) do
+    for _, delivery in pairs(turret_xp_test_as_array(item and item.action_delivery)) do
+      if delivery.type == "projectile" then
+        local max_range = tonumber(delivery.max_range) or 1000
+        local range_deviation = math.max(0, tonumber(delivery.range_deviation) or 0)
+        ranges[#ranges + 1] = {
+          max_range = max_range,
+          range_deviation = range_deviation,
+          minimum_effective_range = max_range * math.max(0.1, 1 - (range_deviation / 2))
+        }
+      end
+    end
+  end
+  return ranges
+end
+
+function turret_xp_test_max_generated_turret_range()
+  local max_range = 0
+  for name, prototype in pairs(prototypes.entity) do
+    local attack_parameters = prototype.attack_parameters
+    local range = attack_parameters and attack_parameters.range or nil
+    if type(range) == "number"
+      and (name == BASE_TURRET_NAME or string.sub(name, 1, #SPECIALIZED_TURRET_PREFIX) == SPECIALIZED_TURRET_PREFIX)
+      and range > max_range
+    then
+      max_range = range
+    end
+  end
+  return max_range
+end
+
 function turret_xp_test_state_summary(entity)
   local state = is_gun_turret(entity) and get_turret_state(entity) or nil
   if not state then
@@ -180,6 +225,21 @@ remote.add_interface("turret_xp_test", {
       sniper_range_3_bound_item = preview_item and preview_item.name or nil,
       sniper_range_3_bound_place_result = preview_item and preview_item.place_result and preview_item.place_result.name or nil,
       sniper_range_3_bound_preview_range = preview_attack_parameters and preview_attack_parameters.range or nil
+    }
+  end,
+
+  ammo_range_compat = function(ammo_name)
+    local ammo = prototypes.item[ammo_name]
+    if not ammo then
+      return nil
+    end
+
+    local player_ammo_type = ammo.get_ammo_type("player")
+    local turret_ammo_type = ammo.get_ammo_type("turret")
+    return {
+      max_turret_xp_range = turret_xp_test_max_generated_turret_range(),
+      player = turret_xp_test_collect_projectile_ranges_from_ammo_type(player_ammo_type),
+      turret = turret_xp_test_collect_projectile_ranges_from_ammo_type(turret_ammo_type)
     }
   end,
 

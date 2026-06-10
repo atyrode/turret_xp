@@ -423,6 +423,34 @@ function progression_from_total_xp(total_xp)
   return level, remaining_xp, required_xp
 end
 
+function show_level_up_flying_text(state, level)
+  local entity = state and state.entity or nil
+  if not entity or not entity.valid then
+    return
+  end
+
+  local surface = entity.surface
+  if not surface then
+    return
+  end
+
+  local position = {
+    entity.position.x,
+    entity.position.y - 1.35
+  }
+
+  for _, player in pairs(game.connected_players) do
+    if player.valid and player.surface == surface and player.force == entity.force then
+      player.create_local_flying_text({
+        position = position,
+        text = { "turret-xp.level-up-flying-text", level },
+        color = { r = 1, g = 0.86, b = 0.36 },
+        time_to_live = 120
+      })
+    end
+  end
+end
+
 function sync_turret_progression(state)
   state.kill_credit = state.kill_credit or state.kills or 0
   ensure_xp_counters(state)
@@ -444,6 +472,7 @@ function sync_turret_progression(state)
     .. ":"
     .. tostring(veteran_training_rank)
   local cached_total_xp = state._progress_total_xp
+  local cached_level = state.level
   local level = nil
   local xp = nil
   local required = nil
@@ -473,6 +502,14 @@ function sync_turret_progression(state)
   state.required_xp = required
   state._progress_total_xp = total_xp
   state._progress_settings_key = settings_key
+
+  if cached_total_xp
+    and total_xp > cached_total_xp
+    and cached_level
+    and level > cached_level
+  then
+    show_level_up_flying_text(state, level)
+  end
 
   return {
     total_xp = total_xp,

@@ -256,6 +256,12 @@ The first playable releases should make progression visible and testable: select
 - Keep delayed Fire/Toxic damage tied to turret XP, kill contribution, and lifesteal.
 - Let mixed-element feeder inserters expose all currently needed element materials instead of only one project resource.
 
+## V0.10.3 Scope
+
+- Patch bound turret ammo movement so mining and replacing a bound veteran turret cannot duplicate or lose its stored ammo snapshot.
+- Add turret-source projectile range compatibility for K2/K2SO-style realistic rifle ammo, without changing player-fired ammo behavior.
+- Show a lightweight in-world level-up popup above a turret when XP progression raises its installed core level.
+
 ## Open Product Questions
 
 - What final mod name, short description, portal category, and sober Factorio-native portal image best communicate Veteran Core turret progression once the core loop stabilizes?

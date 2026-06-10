@@ -4,7 +4,7 @@
 
 Current development playtest:
 
-0.10.2 is the current package target for the next Mod Portal playtest release.
+0.10.3 is the current package target for the next Mod Portal playtest release.
 
 Preferred once published:
 
@@ -71,7 +71,9 @@ scripts/install-local.sh
 37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: x3 damage, x0.5 fire rate, short range, and lifesteal.
 38. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
 39. Buy Range ranks and confirm the displayed range changes and the turret can actually fire farther.
+39a. Level a turret through combat and confirm a short `Level up!` popup appears above the turret when the core gains a level.
 40. With a mod that changes vanilla gun turret range during data updates, such as K2 Spaced Out, confirm buying Range rank 1 adds to the modded base range instead of reducing it.
+40a. With K2/K2SO realistic weapons enabled, test a long-range Turret XP build with rifle ammo and confirm the turret no longer shoots endlessly at targets beyond the physical bullet delivery range.
 41. At level 40, pick one of the two sub-specializations for the active role and confirm the stats summary shows the branch identity and combined multipliers.
 42. Confirm an unlocked element card stays inside the Evolution column, keeps its `Change` action visible, and keeps next-rank material progress visible.
 43. At level 50, pick a second element for free and confirm the combo text appears.

@@ -36,6 +36,7 @@
 - Preset label-color cycling must keep preset captions; `Custom` should appear only after RGB slider edits.
 - Runtime-global mod settings must allow tuning damage XP, kill-credit XP, base level XP, and level XP growth.
 - XP overflow must advance levels and carry remaining XP into the next level.
+- When XP progression increases an installed core's level, a short in-world level-up popup should appear above the turret.
 - Evolution points must be derived from turret level and spent allocations.
 - Clicking an allocatable core upgrade or augment must allocate one rank to the opened turret and refresh the panel.
 - Range augment ranks must change real turret attack range, not only the displayed range value.
@@ -53,6 +54,7 @@
 - Selecting a gun turret and running `/turret-xp` must open the same panel as a fallback.
 - The packaged zip must include `info.json`, Lua entrypoints, runtime/data prototype module files, locale, docs, README, changelog, and a root `thumbnail.png` when that file exists.
 - Hidden specialization, Range, and Max HP turret variants must inherit late gun-turret prototype edits from other mods before adding Turret XP-specific stat changes.
+- Gun-turret accepted projectile ammo with an ammo delivery range below the highest generated Turret XP turret range must receive a turret-source compatibility range patch while preserving the original non-turret ammo behavior.
 
 ## Display
 

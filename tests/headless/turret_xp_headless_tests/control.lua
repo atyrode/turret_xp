@@ -24,6 +24,12 @@ local function assert_gt(actual, minimum, message)
   end
 end
 
+local function assert_ge(actual, minimum, message)
+  if not actual or actual < minimum then
+    fail(message .. " (expected >= " .. tostring(minimum) .. ", got " .. tostring(actual) .. ")")
+  end
+end
+
 local function assert_near(actual, expected, epsilon, message)
   if not actual or math.abs(actual - expected) > (epsilon or 0.0001) then
     fail(message .. " (expected near " .. tostring(expected) .. ", got " .. tostring(actual) .. ")")
@@ -340,6 +346,21 @@ local function run_modded_base_range_variant_test(surface)
   })
   assert_eq(summary.entity_name, "turret-xp-gun-turret-range-1", "range rank 1 did not swap to the range variant")
   assert_eq(summary.attack_range, 26, "range rank 1 variant did not clone the modded base range before adding +1")
+end
+
+local function run_turret_ammo_range_compat_test()
+  local compat = call("ammo_range_compat", "firearm-magazine")
+  assert_true(compat ~= nil, "ammo range compatibility summary is unavailable")
+  assert_gt(compat.max_turret_xp_range, 30, "test fixture did not generate Turret XP ranges above the K2-style ammo cap")
+  assert_true(compat.player and compat.player[1], "player ammo projectile range was not reported")
+  assert_true(compat.turret and compat.turret[1], "turret ammo projectile range was not reported")
+  assert_near(compat.player[1].max_range, 30, 0.0001, "non-turret ammo projectile range should keep the K2-style cap")
+  assert_gt(compat.turret[1].max_range, 30, "turret ammo projectile range was not raised above the K2-style cap")
+  assert_ge(
+    compat.turret[1].minimum_effective_range,
+    compat.max_turret_xp_range,
+    "turret ammo projectile range should cover the highest generated Turret XP range even with range deviation"
+  )
 end
 
 local function run_level_zero_points_test(surface)
@@ -950,6 +971,7 @@ local function run_immediate_tests()
   run_place_result_regression_test()
   run_profile_label_test(surface)
   run_modded_base_range_variant_test(surface)
+  run_turret_ammo_range_compat_test()
   run_level_zero_points_test(surface)
   run_max_health_variant_test(surface)
   run_ammo_regen_test(surface)

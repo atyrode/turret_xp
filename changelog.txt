@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.10.3
+Date: 2026-06-10
+  Changes:
+    - Added a short in-world `Level up!` flying-text popup above Veteran Core turrets when XP progression raises their level.
+  Bugfixes:
+    - Fixed bound veteran turret mining/placement ammo conservation so picking up and replacing a bound turret no longer duplicates its stored ammo snapshot.
+    - Added a turret-source projectile range compatibility patch for K2/K2SO-style realistic rifle ammo, so Turret XP range upgrades do not make turrets target enemies that turret-fired ammo cannot physically reach.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.10.2
 Date: 2026-06-09
   Changes:

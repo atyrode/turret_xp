@@ -40,6 +40,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer a comp
 - V0.10.0 should add Resistance as a readable defensive core upgrade while avoiding more hidden prototype variants. It should also move the current element loop away from ongoing fuel buffers: picking an element is free at its level gate, future ranks are material projects, and the UI should describe damage mitigation plainly without implying that Resistance can prevent lethal one-shots.
 - V0.10.1 should make Regeneration scale from current max HP instead of a tiny flat value, so durability investment, Bulwark, Guardian, and Max HP ranks create a coherent sustain build.
 - V0.10.2 should make selected elements feel continuously buildable: the next material rank is always visible and passively fed, changing an element resets its unique mastery, Toxic joins the element set with poison-capsule material and slowing/stacking poison identity, Fire gains tracked burn damage over time, crits get lightweight hit feedback, and delayed damage remains tied to XP and lifesteal.
+- V0.10.3 should be a compatibility and feedback patch: bound turret movement must preserve ammo exactly once, K2/K2SO-style realistic projectile ammo must physically reach upgraded veteran turret ranges when fired by turrets, and successful level-ups should create a small in-world acknowledgement without adding UI noise.
 
 ## V0.4.1 UX
 
