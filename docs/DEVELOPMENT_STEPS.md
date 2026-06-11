@@ -355,6 +355,14 @@
 - [x] Add headless coverage for modded projectile ammo whose physical delivery range is lower than generated Turret XP turret range.
 - [x] Add an in-world level-up flying-text popup for installed cores that gain levels through XP progression.
 
+## Completed For CI/Release Workflow
+
+- [x] Establish short-lived issue branches and pull requests into protected `main` as the preferred development flow.
+- [x] Add GitHub Actions package validation for pull requests, pushes to `main`, and manual CI runs.
+- [x] Add CI support for authenticated Mod Portal dependency downloads and Factorio headless regression tests.
+- [x] Add GitHub Release-triggered packaging, headless validation, GitHub release asset upload, and gated Factorio Mod Portal publishing.
+- [x] Document required GitHub repository secrets, the `factorio-mod-portal` environment gate, and branch protection follow-up.
+
 ## Likely Next Work
 
 - Playtest V0.10.3 from a local package or Mod Portal release after feedback integration, especially around bound turret ammo conservation, K2/K2SO realistic ammo range compatibility, level-up flying text, Resistance feel, max-HP-based Regeneration, passive element material progress, Toxic and Fire damage-over-time readability, crit/double-shot visuals, richer Evolution summary header, right-column scrollbar containment, specialization multiplier colors, section margins, full Evolution reset, baseline crit stats, Max HP rank body swaps, Ammo Recovery pacing, level-40 sub-specializations, normal/bulk inserter feeding, hidden input ammo forwarding, deferred turret body swaps, bound turret mining/placement, normal turret replacement ghosts, placement-helper ammo refunds, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, asteroid XP pacing, optional Bullet Trails visuals, label controls, modded base turret range compatibility, and high-level turret combat performance.
