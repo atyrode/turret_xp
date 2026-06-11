@@ -30,6 +30,8 @@ git fetch
 git status --short --branch
 ```
 
+Use short-lived issue branches and pull requests into protected `main`. Keep releases on `main`: merge the release-ready PR, then publish a GitHub Release/tag named `v<info.json version>`. Do not use a long-lived `dev` branch unless the workflow is explicitly revisited.
+
 Run lightweight repository checks:
 
 ```sh
@@ -53,6 +55,8 @@ scripts/package.sh
 The package is written to `dist/turret_xp_<version>.zip`.
 If `thumbnail.png` exists at the repository root, it is included at the mod zip root for Mod Portal display.
 
+GitHub Actions runs `scripts/package.sh` for pull requests, pushes to `main`, and manual CI runs. When Mod Portal download credentials are available as repository secrets, CI also downloads the official Factorio headless Linux build plus required Mod Portal dependencies and runs `scripts/test-headless.sh`. The workflow pins the headless runner version and caches the extracted Factorio directory plus dependency zips; update `FACTORIO_HEADLESS_VERSION` in the workflows when intentionally moving CI to a newer Factorio build.
+
 Install the packaged zip into the default Linux Factorio mods folder:
 
 ```sh
@@ -65,19 +69,39 @@ Override the target folder when needed:
 FACTORIO_MODS_DIR=/path/to/factorio/mods scripts/install-local.sh
 ```
 
-Publish or update the GitHub release for the current `info.json` version:
+## Release Workflow
+
+The standard release path is:
+
+1. Finish the issue branch and open a pull request into `main`.
+2. Confirm CI passes, including headless tests when secrets are configured.
+3. Merge the PR into `main`.
+4. Publish a GitHub Release named `v<info.json version>`.
+5. Let the Release workflow build/test the package, attach the zip to the GitHub Release, wait for the `factorio-mod-portal` environment approval when configured, and publish the same version to the Factorio Mod Portal.
+
+Local helper for creating or updating the GitHub release for the current `info.json` version:
 
 ```sh
 scripts/release.sh
 ```
 
-Publish or update the Factorio Mod Portal release:
+Local helper for manually publishing or updating the Factorio Mod Portal release:
 
 ```sh
 FACTORIO_MOD_PORTAL_API_KEY=<your-api-key> scripts/publish-portal.sh
 ```
 
 The script runs `scripts/test-headless.sh` before uploading. Set `SKIP_HEADLESS_TESTS=1` only for exceptional machines that cannot run Factorio locally. The script also loads an ignored `.env` file and accepts `FACTORIO_API_KEY=<your-api-key>`. The API key must be created on `https://factorio.com/profile` with `ModPortal: Publish Mods`, `ModPortal: Upload Mods`, and `ModPortal: Edit Mods` usages. Do not commit the key or paste it into chat.
+
+GitHub setup required for the automated release path:
+
+- Repository secret `FACTORIO_SERVICE_USERNAME`: Factorio service username used for authenticated Mod Portal dependency downloads.
+- Repository secret `FACTORIO_SERVICE_TOKEN`: Factorio service token used with `FACTORIO_SERVICE_USERNAME`.
+- Repository secret `FACTORIO_MOD_PORTAL_API_KEY`: Mod Portal API key with publish/upload/edit permissions.
+- GitHub Environment `factorio-mod-portal`: recommended for the portal publish job, with required reviewer approval before upload.
+- Branch protection for `main`: require pull requests and the `Basic Checks And Package` status check first; add `Headless Factorio Tests` as a required check after the download secrets are configured and the job is confirmed to run.
+
+Do not store these values in tracked files or paste them into chat. The CI dependency downloader reads credentials from environment variables and does not print authenticated download URLs.
 
 ## Download And Playtest
 

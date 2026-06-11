@@ -132,4 +132,4 @@ Earlier 0.4.x releases were published to the Factorio Mod Portal to validate the
 - Current version: `0.10.3`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`
-- Pre-publish validation: run `scripts/check.sh`, `scripts/package.sh`, and `scripts/test-headless.sh`; `scripts/publish-portal.sh` runs the headless suite by default before upload. The packaged zip includes root `thumbnail.png` when present.
+- Pre-publish validation: pull requests and `main` run GitHub Actions package validation, and headless tests run in CI when Mod Portal download credentials are configured. A published GitHub Release/tag named `v<info.json version>` triggers the release workflow, which validates the tag, runs the headless suite, attaches the package, and publishes to the Mod Portal behind the `factorio-mod-portal` environment gate. Local publishing through `scripts/publish-portal.sh` still runs the headless suite by default before upload. The packaged zip includes root `thumbnail.png` when present.

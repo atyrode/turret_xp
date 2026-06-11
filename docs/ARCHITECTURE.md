@@ -2,6 +2,7 @@
 
 ## Repository Layout
 
+- `.github/workflows/`: GitHub Actions CI and release automation.
 - `info.json`: Factorio mod metadata.
 - `control.lua`: runtime entrypoint that loads modules from `scripts/control/`.
 - `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, and headless-test remotes.
@@ -10,7 +11,7 @@
 - `prototypes/`: data-stage modules for names, items, bound-turret placeholder and preview variants, feeder, label panels, styles, effects, and turret variants.
 - `settings.lua`: runtime-global XP pacing settings.
 - `locale/en/turret-xp.cfg`: English GUI strings.
-- `scripts/`: validation, packaging, install, release, and portal publishing.
+- `scripts/`: validation, packaging, dependency download, install, release, and portal publishing.
 - `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`.
 - `docs/`: project context, playtest guidance, and the GitHub Pages homepage.
 
@@ -177,4 +178,6 @@ storage.turret_xp = {
 - `scripts/control/core_slot.lua` owns tag-preserving Veteran Core install/extract/swap, platform core selection, bind/unbind actions, and future inventory-list selection work.
 - Data-stage entrypoints should stay minimal. New prototypes belong in `prototypes/`, and hidden turret body variants must stay generated from `data-final-fixes.lua` so they see other mods' final base prototype edits.
 - Release scripts should stay data-driven from `info.json` where practical.
+- CI and release workflows should reuse the same scripts as local operators where practical, so GitHub package/release behavior does not drift from local validation.
+- `scripts/download-mod-dependencies.py` owns authenticated Mod Portal dependency downloads for CI/headless tests. It must read credentials from environment variables and must not print token-bearing URLs.
 - The website should stay tightly coupled to mod metadata and docs. As it grows, prefer a small generator over manually maintaining duplicate homepage content.

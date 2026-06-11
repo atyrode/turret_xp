@@ -11,7 +11,9 @@
 - V0.4.5 uses local tag-preserving Veteran Core slot transfer logic. `entity-gui-lib` inventory display was inspected, but its current transfer helper copies name/count/quality and would not preserve Veteran Core item tags.
 - Python packaging script reused from `player_quality`.
 - Shell scripts for checks, packaging, local install, GitHub release, and Mod Portal publishing.
+- `scripts/download-mod-dependencies.py` downloads required Mod Portal dependency zips for isolated CI/headless test directories using `FACTORIO_SERVICE_USERNAME` and `FACTORIO_SERVICE_TOKEN`.
 - `scripts/test-headless.sh` runs a temporary Factorio test mod against the packaged Turret XP zip before portal publishing.
+- GitHub Actions runs package validation for pull requests and `main`; when Mod Portal download secrets are configured, it also downloads the official Factorio headless Linux build and runs the headless regression suite. The workflows pin `FACTORIO_HEADLESS_VERSION` and cache the extracted Factorio directory plus dependency zips so repeated CI runs avoid redundant downloads without storing credentials. The release workflow is triggered by a GitHub Release/tag, validates the tag against `info.json`, attaches the built package to the GitHub Release, and publishes to the Factorio Mod Portal behind the `factorio-mod-portal` environment gate.
 - Static GitHub Pages homepage served from `docs/index.html`.
 
 ## Website Direction
@@ -144,6 +146,7 @@
 - Run `scripts/check.sh`.
 - Run `scripts/package.sh`.
 - Run `scripts/test-headless.sh`. It packages the current mod, assembles an isolated mod directory with flib and `tests/headless/turret_xp_headless_tests`, creates a save, benchmark-runs it for deterministic ticks, and fails if the test mod does not log `PASS`.
+- In GitHub Actions, CI runs package validation on pull requests and `main`. The headless job runs when `FACTORIO_SERVICE_USERNAME` and `FACTORIO_SERVICE_TOKEN` secrets are available; release publishing requires those download credentials plus `FACTORIO_MOD_PORTAL_API_KEY`.
 - Inspect the zip layout.
 - If a local Factorio binary is available, run a headless load smoke test.
 - `scripts/publish-portal.sh` runs the headless suite before uploading unless `SKIP_HEADLESS_TESTS=1` is set for a machine that cannot run Factorio locally.
