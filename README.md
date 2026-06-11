@@ -55,7 +55,7 @@ scripts/package.sh
 The package is written to `dist/turret_xp_<version>.zip`.
 If `thumbnail.png` exists at the repository root, it is included at the mod zip root for Mod Portal display.
 
-GitHub Actions runs `scripts/package.sh` for pull requests, pushes to `main`, and manual CI runs. When Mod Portal download credentials are available as repository secrets, CI also downloads the official Factorio headless Linux build plus required Mod Portal dependencies and runs `scripts/test-headless.sh`. The workflow pins the headless runner version and caches the extracted Factorio directory plus dependency zips; update `FACTORIO_HEADLESS_VERSION` in the workflows when intentionally moving CI to a newer Factorio build.
+GitHub Actions keeps the required check names stable for pull requests, pushes to `main`, and manual CI runs. Pull requests first classify changed files with `scripts/ci-change-scope.sh`: README/docs/changelog/site-only changes pass the required checks without running package or headless work, while source, workflow, script, prototype, locale, metadata, or test changes run `scripts/package.sh` and, when Mod Portal download credentials are available, `scripts/test-headless.sh`. Pushes to `main` and manual CI runs always run the full validation path. The workflow pins the headless runner version and caches the extracted Factorio directory plus dependency zips; update `FACTORIO_HEADLESS_VERSION` in the workflows when intentionally moving CI to a newer Factorio build.
 
 Install the packaged zip into the default Linux Factorio mods folder:
 
