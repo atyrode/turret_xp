@@ -79,6 +79,13 @@ The standard release path is:
 4. Publish a GitHub Release named `v<info.json version>`.
 5. Let the Release workflow build/test the package, attach the zip to the GitHub Release, wait for the `factorio-mod-portal` environment approval when configured, and publish the same version to the Factorio Mod Portal.
 
+Pull request conventions:
+
+- Use concise change titles such as `Extract label color helper module` or `Measure hidden prototype budget`; do not prefix titles with issue numbers.
+- Link issues in the PR body with `Closes #N` when the PR fully resolves the issue, or `Refs #N` when it is a partial step.
+- Include a `What This Changes For The Future/Codebase` section for audit-driven work so the intended long-term effect is explicit.
+- Keep design answers and follow-up decisions in issue comments for continuity.
+
 Local helper for creating or updating the GitHub release for the current `info.json` version:
 
 ```sh
