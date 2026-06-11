@@ -571,6 +571,21 @@ remote.add_interface("turret_xp_test", {
     return make_bound_turret_item_stack(state, snapshot_turret_item_state(entity))
   end,
 
+  make_legacy_bound_turret_stack = function(fields)
+    local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields or {})
+    profile.bound_turret = true
+    local serialized = serialize_profile(profile)
+    return {
+      name = BOUND_TURRET_NAME,
+      count = 1,
+      quality = serialized.chip_quality or "normal",
+      tags = {
+        [PROFILE_TAG] = serialized
+      },
+      custom_description = bound_turret_description(serialized)
+    }
+  end,
+
   read_bound_turret_stack = function(stack)
     local profile, turret_snapshot = read_bound_turret_stack(stack)
     if not profile then
