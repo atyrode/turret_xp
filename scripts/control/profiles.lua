@@ -1,3 +1,5 @@
+local label_colors = require("scripts.control.label_colors")
+
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
@@ -57,8 +59,8 @@ function normalize_profile(profile)
   if type(profile.label_color) ~= "table" then
     profile.label_color = { 1, 0.86, 0.46 }
   end
-  if profile.label_color_preset ~= "custom" and not label_color_preset_by_id(profile.label_color_preset) then
-    local preset = label_color_preset_from_color(profile.label_color)
+  if profile.label_color_preset ~= "custom" and not label_colors.preset_by_id(profile.label_color_preset) then
+    local preset = label_colors.preset_from_color(profile.label_color)
     profile.label_color_preset = preset and preset.id or "custom"
   end
   profile.label_scale = 2
@@ -920,7 +922,7 @@ function find_matching_label_color_preset(profile)
   end
 
   if profile.label_color_preset and profile.label_color_preset ~= "custom" then
-    local preset = label_color_preset_by_id(profile.label_color_preset)
+    local preset = label_colors.preset_by_id(profile.label_color_preset)
     if preset then
       return preset
     end
@@ -930,7 +932,7 @@ function find_matching_label_color_preset(profile)
     return nil
   end
 
-  return label_color_preset_from_color(profile.label_color)
+  return label_colors.preset_from_color(profile.label_color)
 end
 
 function get_label_panel_name(profile)
