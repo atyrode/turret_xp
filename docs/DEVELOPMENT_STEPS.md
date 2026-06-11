@@ -369,6 +369,12 @@
 - [x] Reuse the shared domain definitions from runtime config, data-stage prototype generation, bound turret preview variants, and headless regression checks.
 - [x] Package the shared domain module in release zips so CI and Mod Portal artifacts use the same module as local source runs.
 
+## Prototype Variant Budget
+
+- [x] Add headless runtime measurement for hidden turret body, bound preview item, bound placeholder, and label display-panel prototype counts.
+- [x] Print the tracked hidden prototype budget from `scripts/test-headless.sh` on passing runs.
+- [x] Document the current 6,498-prototype tracked budget and require explicit issue/PR approval before adding new prototype-backed axes or increasing prototype-generating caps.
+
 ## Likely Next Work
 
 - Playtest V0.10.3 from a local package or Mod Portal release after feedback integration, especially around bound turret ammo conservation, K2/K2SO realistic ammo range compatibility, level-up flying text, Resistance feel, max-HP-based Regeneration, passive element material progress, Toxic and Fire damage-over-time readability, crit/double-shot visuals, richer Evolution summary header, right-column scrollbar containment, specialization multiplier colors, section margins, full Evolution reset, baseline crit stats, Max HP rank body swaps, Ammo Recovery pacing, level-40 sub-specializations, normal/bulk inserter feeding, hidden input ammo forwarding, deferred turret body swaps, bound turret mining/placement, normal turret replacement ghosts, placement-helper ammo refunds, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, asteroid XP pacing, optional Bullet Trails visuals, label controls, modded base turret range compatibility, and high-level turret combat performance.
