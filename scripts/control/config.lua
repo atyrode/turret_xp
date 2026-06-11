@@ -1,3 +1,5 @@
+local label_colors = require("scripts.control.label_colors")
+
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
@@ -219,35 +221,8 @@ COLOR = {
   muted = { 0.74, 0.74, 0.74 },
   bonus = { 0.58, 0.82, 0.38 },
   penalty = { 1.0, 0.36, 0.30 },
-  label_presets = DOMAIN.label_color_presets
+  label_presets = label_colors.presets
 }
-
-function label_color_matches(color, preset_color)
-  color = color or {}
-  return math.abs((color[1] or 0) - preset_color[1]) < 0.01
-    and math.abs((color[2] or 0) - preset_color[2]) < 0.01
-    and math.abs((color[3] or 0) - preset_color[3]) < 0.01
-end
-
-function label_color_preset_by_id(id)
-  for _, preset in ipairs(COLOR.label_presets) do
-    if preset.id == id then
-      return preset
-    end
-  end
-
-  return nil
-end
-
-function label_color_preset_from_color(color)
-  for _, preset in ipairs(COLOR.label_presets) do
-    if label_color_matches(color, preset.color) then
-      return preset
-    end
-  end
-
-  return nil
-end
 
 REFRESH_TICKS = 60
 TARGET_DAMAGE_TTL = 60 * 60 * 5

@@ -6,7 +6,7 @@
 - `info.json`: Factorio mod metadata.
 - `control.lua`: runtime entrypoint that loads modules from `scripts/control/`.
 - `scripts/domain.lua`: pure shared gameplay domain definitions and variant-name helpers used by data stage, runtime, and headless tests.
-- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, and headless-test remotes.
+- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and small explicit helper modules such as label-color matching.
 - `data.lua`: data-stage entrypoint that loads prototype modules from `prototypes/`.
 - `data-final-fixes.lua`: final-fixes entrypoint that loads hidden turret variant generation from `prototypes/`.
 - `prototypes/`: data-stage modules for names, items, bound-turret placeholder and preview variants, feeder, label panels, styles, effects, and turret variants.
@@ -177,6 +177,7 @@ storage.turret_xp = {
 
 - Runtime state remains under `storage.turret_xp`; modules must not create separate save roots for core gameplay state.
 - `control.lua` should stay a small loader. New runtime work belongs in the owning module under `scripts/control/`. Stable gameplay IDs, progression caps, specialization definitions, label presets, and generated variant names belong in `scripts/domain.lua`; runtime-only GUI layout and event behavior stay in runtime modules.
+- New pure helper groups should prefer explicit returned-table modules required directly by their callers. Existing `_ENV`/`M` exports can remain during incremental migration, but new helpers should not add hidden dependencies to the shared runtime environment unless they are part of a deliberately broad subsystem boundary.
 - `scripts/control/core_slot.lua` owns tag-preserving Veteran Core install/extract/swap, platform core selection, bind/unbind actions, and future inventory-list selection work.
 - Data-stage entrypoints should stay minimal. New prototypes belong in `prototypes/`, should reuse `scripts/domain.lua` for shared IDs/names, and hidden turret body variants must stay generated from `data-final-fixes.lua` so they see other mods' final base prototype edits.
 - Release scripts should stay data-driven from `info.json` where practical.
