@@ -24,18 +24,34 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect CI change scope
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/ci-change-scope.sh
+
+      - name: Skip package build
+        if: steps.changes.outputs.package_changed != 'true'
+        run: echo "No package-impacting changes detected; skipping package validation."
 
       - name: Set up Python
+        if: steps.changes.outputs.package_changed == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
       - name: Install Lua compiler
+        if: steps.changes.outputs.package_changed == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y lua5.4
 
       - name: Run package build
+        if: steps.changes.outputs.package_changed == 'true'
         id: package
         run: |
           package_path="$(scripts/package.sh | tail -n 1)"
@@ -43,6 +59,7 @@ jobs:
           echo "package_path=${package_path}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload package artifact
+        if: steps.changes.outputs.package_changed == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: turret-xp-package
@@ -59,13 +76,28 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect CI change scope
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/ci-change-scope.sh
+
+      - name: Skip headless suite
+        if: steps.changes.outputs.headless_changed != 'true'
+        run: echo "No Factorio-runtime-impacting changes detected; skipping headless Factorio tests."
 
       - name: Set up Python
+        if: steps.changes.outputs.headless_changed == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
       - name: Check Mod Portal download credentials
+        if: steps.changes.outputs.headless_changed == 'true'
         id: portal-auth
         run: |
           if [ -n "${FACTORIO_SERVICE_USERNAME}" ] && [ -n "${FACTORIO_SERVICE_TOKEN}" ]; then
