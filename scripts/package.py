@@ -27,6 +27,7 @@ def package_files():
         files.append("thumbnail.png")
 
     files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "locale").rglob("*")) if path.is_file())
+    files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "scripts").glob("*.lua")) if path.is_file())
     files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "scripts" / "control").rglob("*.lua")) if path.is_file())
     files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "prototypes").rglob("*.lua")) if path.is_file())
     files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "docs").rglob("*.md")) if path.is_file())

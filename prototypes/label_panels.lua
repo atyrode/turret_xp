@@ -35,7 +35,7 @@ return function(names)
   end
 
   for _, preset in ipairs(names.label_presets) do
-    add_label_panel(preset.id, preset.color)
+    add_label_panel(preset.id, preset.display_color or preset.color)
   end
 
   for r = 0, 5 do
