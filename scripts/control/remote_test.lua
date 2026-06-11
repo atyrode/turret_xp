@@ -63,6 +63,45 @@ function turret_xp_test_max_generated_turret_range()
   return max_range
 end
 
+function turret_xp_test_has_prefix(name, prefix)
+  return type(name) == "string"
+    and type(prefix) == "string"
+    and string.sub(name, 1, #prefix) == prefix
+end
+
+function turret_xp_test_prototype_budget()
+  local counts = {
+    hidden_turret_variants = 0,
+    bound_preview_items = 0,
+    bound_preview_placeholders = 0,
+    label_panels = 0,
+    tracked_hidden_variant_total = 0
+  }
+
+  for name, _ in pairs(prototypes.entity) do
+    if turret_xp_test_has_prefix(name, SPECIALIZED_TURRET_PREFIX) then
+      counts.hidden_turret_variants = counts.hidden_turret_variants + 1
+    elseif turret_xp_test_has_prefix(name, BOUND_TURRET_PLACEHOLDER_VARIANT_PREFIX) then
+      counts.bound_preview_placeholders = counts.bound_preview_placeholders + 1
+    elseif turret_xp_test_has_prefix(name, LABEL_PANEL_PREFIX) then
+      counts.label_panels = counts.label_panels + 1
+    end
+  end
+
+  for name, _ in pairs(prototypes.item) do
+    if name ~= BOUND_TURRET_NAME and DOMAIN.is_bound_turret_item_name(name) then
+      counts.bound_preview_items = counts.bound_preview_items + 1
+    end
+  end
+
+  counts.tracked_hidden_variant_total = counts.hidden_turret_variants
+    + counts.bound_preview_items
+    + counts.bound_preview_placeholders
+    + counts.label_panels
+
+  return counts
+end
+
 function turret_xp_test_state_summary(entity)
   local state = is_gun_turret(entity) and get_turret_state(entity) or nil
   if not state then
@@ -198,6 +237,10 @@ remote.add_interface("turret_xp_test", {
 
   layout = function()
     return copy_serializable(LAYOUT)
+  end,
+
+  prototype_budget = function()
+    return turret_xp_test_prototype_budget()
   end,
 
   apply_passive = function(ticks)

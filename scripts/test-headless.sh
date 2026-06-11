@@ -109,4 +109,9 @@ if ! grep -q "\[turret_xp_headless_tests\] PASS" "$benchmark_log"; then
   exit 1
 fi
 
+budget_line="$(grep -m 1 "\[turret_xp_headless_tests\] prototype budget:" "$create_log" | sed 's/^.*\[turret_xp_headless_tests\] //' || true)"
+if [ -n "$budget_line" ]; then
+  echo "$budget_line"
+fi
+
 echo "Headless tests passed."

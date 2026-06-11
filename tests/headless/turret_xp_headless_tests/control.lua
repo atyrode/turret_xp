@@ -171,6 +171,29 @@ local function run_layout_constants_test()
   assert_true(layout.evolution_detail_width < layout.evolution_inner_width, "Evolution text details must stay capped inside inner rows")
 end
 
+local function run_prototype_budget_test()
+  local budget = call("prototype_budget")
+  assert_true(type(budget) == "table", "prototype budget was not exposed to the headless suite")
+  assert_eq(budget.hidden_turret_variants, 5732, "hidden turret variant budget changed")
+  assert_eq(budget.bound_preview_items, 272, "bound preview item budget changed")
+  assert_eq(budget.bound_preview_placeholders, 272, "bound preview placeholder budget changed")
+  assert_eq(budget.label_panels, 222, "label display-panel budget changed")
+  assert_eq(budget.tracked_hidden_variant_total, 6498, "tracked hidden prototype budget changed")
+  log(
+    TEST_PREFIX
+      .. "prototype budget: hidden_turret_variants="
+      .. tostring(budget.hidden_turret_variants)
+      .. ", bound_preview_items="
+      .. tostring(budget.bound_preview_items)
+      .. ", bound_preview_placeholders="
+      .. tostring(budget.bound_preview_placeholders)
+      .. ", label_panels="
+      .. tostring(budget.label_panels)
+      .. ", tracked_hidden_variant_total="
+      .. tostring(budget.tracked_hidden_variant_total)
+  )
+end
+
 local function run_place_result_regression_test()
   local placement = call("placement_prototypes")
   assert_eq(placement.gun_turret_place_result, "gun-turret", "vanilla gun turret item no longer places the vanilla gun turret")
@@ -979,6 +1002,7 @@ local function run_immediate_tests()
   assert_true(remote.interfaces[IFACE] ~= nil, "Turret XP test remote interface is unavailable")
 
   run_layout_constants_test()
+  run_prototype_budget_test()
   run_place_result_regression_test()
   run_profile_label_test(surface)
   run_modded_base_range_variant_test(surface)

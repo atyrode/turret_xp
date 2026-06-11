@@ -44,7 +44,7 @@ Run the Factorio headless regression suite:
 scripts/test-headless.sh
 ```
 
-Set `FACTORIO_BIN=/path/to/factorio` if the script cannot autodetect the local Factorio executable. The suite packages the current mod, loads it with a dedicated temporary test mod, and fails if core gameplay invariants break.
+Set `FACTORIO_BIN=/path/to/factorio` if the script cannot autodetect the local Factorio executable. The suite packages the current mod, loads it with a dedicated temporary test mod, reports the tracked hidden prototype budget, and fails if core gameplay invariants break.
 
 Build a local Factorio mod zip:
 
