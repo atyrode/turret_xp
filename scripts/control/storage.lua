@@ -62,87 +62,28 @@ end
 
 function is_gun_turret(entity)
   return entity and entity.valid
-    and (entity.name == BASE_TURRET_NAME or string.sub(entity.name, 1, #SPECIALIZED_TURRET_PREFIX) == SPECIALIZED_TURRET_PREFIX)
+    and (entity.name == BASE_TURRET_NAME or DOMAIN.is_specialized_turret_name(entity.name))
 end
 
 function is_bound_turret_item_name(name)
-  return name == BOUND_TURRET_NAME
-    or (
-      type(name) == "string"
-      and string.sub(name, 1, #BOUND_TURRET_VARIANT_PREFIX) == BOUND_TURRET_VARIANT_PREFIX
-      and string.sub(name, 1, #BOUND_TURRET_PLACEHOLDER_NAME) ~= BOUND_TURRET_PLACEHOLDER_NAME
-    )
+  return DOMAIN.is_bound_turret_item_name(name)
 end
 
 function is_bound_turret_placeholder(entity)
   local name = entity and entity.valid and entity.name or nil
-  return name == BOUND_TURRET_PLACEHOLDER_NAME
-    or (type(name) == "string" and string.sub(name, 1, #BOUND_TURRET_PLACEHOLDER_VARIANT_PREFIX) == BOUND_TURRET_PLACEHOLDER_VARIANT_PREFIX)
+  return DOMAIN.is_bound_turret_placeholder_name(name)
 end
 
 function get_sub_specialization_variant_segment(specialization_id, sub_specialization_id)
-  if not specialization_id or not sub_specialization_id then
-    return nil
-  end
-
-  local sub_specialization = SUB_SPECIALIZATION_BY_ID[sub_specialization_id]
-  if not sub_specialization or sub_specialization.parent ~= specialization_id then
-    return nil
-  end
-
-  local prefix = specialization_id .. "_"
-  if string.sub(sub_specialization_id, 1, #prefix) == prefix then
-    return string.sub(sub_specialization_id, #prefix + 1)
-  end
-
-  return sub_specialization_id
+  return DOMAIN.get_sub_specialization_variant_segment(specialization_id, sub_specialization_id)
 end
 
 function get_specialized_turret_name(specialization_id, range_rank, health_rank, sub_specialization_id)
-  range_rank = math.max(0, math.min(RANGE_AUGMENT_MAX, math.floor(tonumber(range_rank) or 0)))
-  health_rank = math.max(0, math.min(MAX_HEALTH_AUGMENT_MAX, math.floor(tonumber(health_rank) or 0)))
-
-  local segments = {}
-  if specialization_id and SPECIALIZATION_BY_ID[specialization_id] then
-    segments[#segments + 1] = specialization_id
-    local sub_segment = get_sub_specialization_variant_segment(specialization_id, sub_specialization_id)
-    if sub_segment then
-      segments[#segments + 1] = sub_segment
-    end
-  end
-  if range_rank > 0 then
-    segments[#segments + 1] = "range-" .. tostring(range_rank)
-  end
-  if health_rank > 0 then
-    segments[#segments + 1] = "health-" .. tostring(health_rank)
-  end
-
-  if #segments > 0 then
-    return SPECIALIZED_TURRET_PREFIX .. table.concat(segments, "-")
-  end
-
-  return BASE_TURRET_NAME
+  return DOMAIN.specialized_turret_name(specialization_id, range_rank, health_rank, sub_specialization_id)
 end
 
 function get_bound_turret_variant_id(specialization_id, range_rank, sub_specialization_id)
-  range_rank = math.max(0, math.min(RANGE_AUGMENT_MAX, math.floor(tonumber(range_rank) or 0)))
-  local segments = {}
-  if specialization_id and SPECIALIZATION_BY_ID[specialization_id] then
-    segments[#segments + 1] = specialization_id
-    local sub_segment = get_sub_specialization_variant_segment(specialization_id, sub_specialization_id)
-    if sub_segment then
-      segments[#segments + 1] = sub_segment
-    end
-  end
-  if range_rank > 0 then
-    segments[#segments + 1] = "range-" .. tostring(range_rank)
-  end
-
-  if #segments == 0 then
-    return nil
-  end
-
-  return table.concat(segments, "-")
+  return DOMAIN.bound_turret_variant_id(specialization_id, range_rank, sub_specialization_id)
 end
 
 function get_bound_turret_item_name(profile)
@@ -150,7 +91,7 @@ function get_bound_turret_item_name(profile)
   local variant_id = evolution
     and get_bound_turret_variant_id(evolution.specialization, get_augment_rank(profile, "range"), evolution.sub_specialization)
     or nil
-  local name = variant_id and (BOUND_TURRET_VARIANT_PREFIX .. variant_id) or BOUND_TURRET_NAME
+  local name = DOMAIN.bound_turret_item_name(variant_id)
   if name ~= BOUND_TURRET_NAME and prototypes and prototypes.item and not prototypes.item[name] then
     return BOUND_TURRET_NAME
   end
@@ -159,29 +100,7 @@ function get_bound_turret_item_name(profile)
 end
 
 function combat.for_each_specialized_turret_name(callback)
-  for range_rank = 0, RANGE_AUGMENT_MAX do
-    for health_rank = 0, MAX_HEALTH_AUGMENT_MAX do
-      if range_rank > 0 or health_rank > 0 then
-        callback(get_specialized_turret_name(nil, range_rank, health_rank))
-      end
-    end
-  end
-
-  for _, specialization in ipairs(SPECIALIZATIONS) do
-    for range_rank = 0, RANGE_AUGMENT_MAX do
-      for health_rank = 0, MAX_HEALTH_AUGMENT_MAX do
-        callback(get_specialized_turret_name(specialization.id, range_rank, health_rank))
-      end
-    end
-  end
-
-  for _, sub_specialization in ipairs(SUB_SPECIALIZATIONS) do
-    for range_rank = 0, RANGE_AUGMENT_MAX do
-      for health_rank = 0, MAX_HEALTH_AUGMENT_MAX do
-        callback(get_specialized_turret_name(sub_specialization.parent, range_rank, health_rank, sub_specialization.id))
-      end
-    end
-  end
+  DOMAIN.for_each_specialized_turret_name(callback)
 end
 
 function combat.entity_prototype_exists(name)

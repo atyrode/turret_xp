@@ -5,6 +5,7 @@
 - `.github/workflows/`: GitHub Actions CI and release automation.
 - `info.json`: Factorio mod metadata.
 - `control.lua`: runtime entrypoint that loads modules from `scripts/control/`.
+- `scripts/domain.lua`: pure shared gameplay domain definitions and variant-name helpers used by data stage, runtime, and headless tests.
 - `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, and headless-test remotes.
 - `data.lua`: data-stage entrypoint that loads prototype modules from `prototypes/`.
 - `data-final-fixes.lua`: final-fixes entrypoint that loads hidden turret variant generation from `prototypes/`.
@@ -174,9 +175,9 @@ storage.turret_xp = {
 ## Boundaries
 
 - Runtime state remains under `storage.turret_xp`; modules must not create separate save roots for core gameplay state.
-- `control.lua` should stay a small loader. New runtime work belongs in the owning module under `scripts/control/`, with shared constants in `config.lua`.
+- `control.lua` should stay a small loader. New runtime work belongs in the owning module under `scripts/control/`. Stable gameplay IDs, progression caps, specialization definitions, label presets, and generated variant names belong in `scripts/domain.lua`; runtime-only GUI layout and event behavior stay in runtime modules.
 - `scripts/control/core_slot.lua` owns tag-preserving Veteran Core install/extract/swap, platform core selection, bind/unbind actions, and future inventory-list selection work.
-- Data-stage entrypoints should stay minimal. New prototypes belong in `prototypes/`, and hidden turret body variants must stay generated from `data-final-fixes.lua` so they see other mods' final base prototype edits.
+- Data-stage entrypoints should stay minimal. New prototypes belong in `prototypes/`, should reuse `scripts/domain.lua` for shared IDs/names, and hidden turret body variants must stay generated from `data-final-fixes.lua` so they see other mods' final base prototype edits.
 - Release scripts should stay data-driven from `info.json` where practical.
 - CI and release workflows should reuse the same scripts as local operators where practical, so GitHub package/release behavior does not drift from local validation.
 - `scripts/download-mod-dependencies.py` owns authenticated Mod Portal dependency downloads for CI/headless tests. It must read credentials from environment variables and must not print token-bearing URLs.

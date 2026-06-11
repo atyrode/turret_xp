@@ -212,11 +212,20 @@ remote.add_interface("turret_xp_test", {
     local gun_item = prototypes.item[BASE_TURRET_NAME]
     local bound_item = prototypes.item[BOUND_TURRET_NAME]
     local placeholder_entity = prototypes.entity[BOUND_TURRET_PLACEHOLDER_NAME]
-    local preview_name = BOUND_TURRET_VARIANT_PREFIX .. "sniper-range-3"
+    local preview_name = DOMAIN.bound_turret_item_name(get_bound_turret_variant_id("sniper", 3))
     local preview_item = prototypes.item[preview_name]
     local preview_entity = preview_item and preview_item.place_result or nil
     local base_attack_parameters = placeholder_entity and placeholder_entity.attack_parameters or nil
     local preview_attack_parameters = preview_entity and preview_entity.attack_parameters or nil
+    local range_3_body_name = get_specialized_turret_name(nil, 3, 0)
+    local health_2_body_name = get_specialized_turret_name(nil, 0, 2)
+    local sniper_deadeye_body_name = get_specialized_turret_name("sniper", 0, 0, "sniper_deadeye")
+    local sniper_overwatch_range_3_body_name = get_specialized_turret_name("sniper", 3, 0, "sniper_overwatch")
+    local invalid_sub_body_name = get_specialized_turret_name("machine_gun", 0, 0, "sniper_deadeye")
+    local sniper_deadeye_bound_item_name = DOMAIN.bound_turret_item_name(
+      get_bound_turret_variant_id("sniper", 0, "sniper_deadeye")
+    )
+    local sniper_deadeye_bound_item = prototypes.item[sniper_deadeye_bound_item_name]
     return {
       gun_turret_place_result = gun_item and gun_item.place_result and gun_item.place_result.name or nil,
       bound_turret_place_result = bound_item and bound_item.place_result and bound_item.place_result.name or nil,
@@ -224,7 +233,21 @@ remote.add_interface("turret_xp_test", {
       base_bound_preview_range = base_attack_parameters and base_attack_parameters.range or nil,
       sniper_range_3_bound_item = preview_item and preview_item.name or nil,
       sniper_range_3_bound_place_result = preview_item and preview_item.place_result and preview_item.place_result.name or nil,
-      sniper_range_3_bound_preview_range = preview_attack_parameters and preview_attack_parameters.range or nil
+      sniper_range_3_bound_preview_range = preview_attack_parameters and preview_attack_parameters.range or nil,
+      range_3_body_name = range_3_body_name,
+      range_3_body_exists = prototypes.entity[range_3_body_name] ~= nil,
+      health_2_body_name = health_2_body_name,
+      health_2_body_exists = prototypes.entity[health_2_body_name] ~= nil,
+      sniper_deadeye_body_name = sniper_deadeye_body_name,
+      sniper_deadeye_body_exists = prototypes.entity[sniper_deadeye_body_name] ~= nil,
+      sniper_overwatch_range_3_body_name = sniper_overwatch_range_3_body_name,
+      sniper_overwatch_range_3_body_exists = prototypes.entity[sniper_overwatch_range_3_body_name] ~= nil,
+      invalid_sub_body_name = invalid_sub_body_name,
+      sniper_deadeye_bound_item = sniper_deadeye_bound_item and sniper_deadeye_bound_item.name or nil,
+      sniper_deadeye_bound_place_result = sniper_deadeye_bound_item
+        and sniper_deadeye_bound_item.place_result
+        and sniper_deadeye_bound_item.place_result.name
+        or nil
     }
   end,
 
