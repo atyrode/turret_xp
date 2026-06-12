@@ -68,6 +68,7 @@ return function(M)
     end
 
     if is_gun_turret(state.entity) then
+      feeder.restore_managed_inserters_for_state(state, entity, state.entity)
       feeder.update_nearby_inserters(state.entity, state)
     end
 
@@ -340,6 +341,34 @@ return function(M)
     return false
   end
 
+  function feeder.pickup_area_has_item(surface, position, item_name, ignored_entity)
+    if not surface or not position or not item_name then
+      return false
+    end
+
+    local ok, entities = pcall(function()
+      return surface.find_entities_filtered({
+        area = {
+          { (position.x or 0) - 0.35, (position.y or 0) - 0.35 },
+          { (position.x or 0) + 0.35, (position.y or 0) + 0.35 },
+        },
+      })
+    end)
+    if not ok or not entities then
+      return false
+    end
+
+    for _, entity in ipairs(entities) do
+      if entity and entity.valid and entity ~= ignored_entity and entity.type ~= "item-entity" then
+        if feeder.entity_has_item(entity, item_name) then
+          return true
+        end
+      end
+    end
+
+    return false
+  end
+
   function feeder.inserter_source_has_allowed_item(inserter, allowed_items)
     for item_name in pairs(allowed_items) do
       if feeder.inserter_source_has_item(inserter, item_name) then
@@ -358,11 +387,72 @@ return function(M)
 
     local surface = safe_read(inserter, "surface")
     local pickup_position = safe_read(inserter, "pickup_position")
+    if feeder.pickup_area_has_item(surface, pickup_position, item_name, inserter) then
+      return true
+    end
+
     return feeder.ground_has_item(surface, pickup_position, item_name)
   end
 
   function feeder.prioritize_item_names_for_inserter(inserter, names)
-    return names or {}
+    if not inserter or not inserter.valid or not names or #names <= 1 then
+      return names or {}
+    end
+
+    local available = {}
+    local unavailable = {}
+    for _, name in ipairs(names) do
+      if feeder.inserter_source_has_item(inserter, name) then
+        available[#available + 1] = name
+      else
+        unavailable[#unavailable + 1] = name
+      end
+    end
+
+    if #available == 0 then
+      return names
+    end
+
+    for _, name in ipairs(unavailable) do
+      available[#available + 1] = name
+    end
+    return available
+  end
+
+  function feeder.capture_managed_inserter(inserter, state, count)
+    return {
+      entity = inserter,
+      filters = feeder.read_inserter_filters(inserter, count),
+      turret_unit_number = state and state.entity and safe_read(state.entity, "unit_number") or nil,
+      feeder_unit_number = state and state.feeder and safe_read(state.feeder, "unit_number") or nil,
+    }
+  end
+
+  function feeder.track_managed_inserter(managed, inserter, state)
+    if not managed then
+      return
+    end
+
+    managed.entity = managed.entity or inserter
+    managed.turret_unit_number = managed.turret_unit_number or (state and state.entity and safe_read(state.entity, "unit_number") or nil)
+    managed.feeder_unit_number = managed.feeder_unit_number or (state and state.feeder and safe_read(state.feeder, "unit_number") or nil)
+  end
+
+  function feeder.managed_inserter_matches_state(managed, state, feeder_entity)
+    if not managed or not state then
+      return false
+    end
+
+    local turret_unit_number = state.entity and safe_read(state.entity, "unit_number") or nil
+    local feeder_unit_number = feeder_entity and safe_read(feeder_entity, "unit_number") or nil
+    feeder_unit_number = feeder_unit_number or (state.feeder and safe_read(state.feeder, "unit_number") or nil)
+
+    if not managed.turret_unit_number and not managed.feeder_unit_number then
+      return true
+    end
+
+    return (turret_unit_number and managed.turret_unit_number == turret_unit_number)
+      or (feeder_unit_number and managed.feeder_unit_number == feeder_unit_number)
   end
 
   function feeder.apply_inserter_filters(inserter, state)
@@ -395,16 +485,14 @@ return function(M)
           return false
         end
 
-        managed = {
-          filters = feeder.read_inserter_filters(inserter, count),
-        }
+        managed = feeder.capture_managed_inserter(inserter, state, count)
         storage.turret_xp.managed_inserters[unit_number] = managed
       else
-        managed = {
-          filters = feeder.read_inserter_filters(inserter, count),
-        }
+        managed = feeder.capture_managed_inserter(inserter, state, count)
         storage.turret_xp.managed_inserters[unit_number] = managed
       end
+    else
+      feeder.track_managed_inserter(managed, inserter, state)
     end
 
     local applied_any_filter = false
@@ -447,6 +535,29 @@ return function(M)
     storage.turret_xp.managed_inserters[unit_number] = nil
   end
 
+  function feeder.restore_managed_inserters_for_state(state, feeder_entity, restore_target)
+    if not storage or not storage.turret_xp or not storage.turret_xp.managed_inserters then
+      return
+    end
+
+    for unit_number, managed in pairs(storage.turret_xp.managed_inserters) do
+      if feeder.managed_inserter_matches_state(managed, state, feeder_entity) then
+        local inserter = managed and managed.entity or nil
+        if inserter and inserter.valid then
+          local should_restore_target = restore_target
+            and restore_target.valid
+            and feeder.inserter_points_at_turret(inserter, restore_target, feeder_entity)
+          feeder.restore_inserter_filters(inserter)
+          if should_restore_target then
+            feeder.set_inserter_drop_target(inserter, restore_target)
+          end
+        else
+          storage.turret_xp.managed_inserters[unit_number] = nil
+        end
+      end
+    end
+  end
+
   function feeder.update_nearby_inserters(turret, state)
     if not is_gun_turret(turret) or not state then
       return
@@ -476,16 +587,17 @@ return function(M)
     local inserters = surface.find_entities_filtered(filters)
 
     for _, inserter in ipairs(inserters) do
+      local unit_number = safe_read(inserter, "unit_number")
+      local managed = unit_number and storage.turret_xp.managed_inserters[unit_number] or nil
+      local managed_matches = managed and feeder.managed_inserter_matches_state(managed, state, feeder_entity)
       if feeder.inserter_points_at_turret(inserter, turret, feeder_entity) then
-        local unit_number = safe_read(inserter, "unit_number")
-        local managed = unit_number and storage.turret_xp.managed_inserters[unit_number] or nil
         local has_source_item = needs_input and feeder.inserter_source_has_allowed_item(inserter, allowed_items)
         local filter_count = feeder.get_inserter_filter_slot_count(inserter)
         local _, has_allowed_filter = feeder.inserter_filters_match_allowed(inserter, allowed_items, filter_count)
         local should_feed = needs_input
           and feeder_entity
           and feeder_entity.valid
-          and (has_source_item or has_allowed_filter or managed ~= nil)
+          and (has_source_item or has_allowed_filter or managed_matches)
 
         if should_feed and feeder.apply_inserter_filters(inserter, state) then
           feeder.set_inserter_drop_target(inserter, feeder_entity)
@@ -493,6 +605,8 @@ return function(M)
           feeder.restore_inserter_filters(inserter)
           feeder.set_inserter_drop_target(inserter, turret)
         end
+      elseif managed_matches then
+        feeder.restore_inserter_filters(inserter)
       end
     end
   end

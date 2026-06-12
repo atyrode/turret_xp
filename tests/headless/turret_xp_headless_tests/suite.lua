@@ -419,6 +419,37 @@ local function feed_element_until_rank(entity, item_name, element_id, target_ran
   return summary
 end
 
+local function create_source_chest(surface, position, item_name)
+  local chest = surface.create_entity({
+    name = "wooden-chest",
+    position = position,
+    force = "player",
+    raise_built = false,
+  })
+  assert_true(chest and chest.valid, "failed to create source chest for feeder inserter test")
+  local inserted = chest.insert({
+    name = item_name,
+    count = 10,
+  })
+  assert_gt(inserted, 0, "failed to fill source chest for feeder inserter test")
+  return chest
+end
+
+local function destroy_entity(entity)
+  if entity and entity.valid then
+    pcall(function()
+      entity.destroy({ raise_destroy = false })
+    end)
+  end
+end
+
+local function cleanup_test_turret(turret)
+  if turret and turret.valid then
+    call("cleanup_entity", turret)
+    destroy_entity(turret)
+  end
+end
+
 local function run_feeder_project_test(surface)
   local turret = create_turret(surface, { 16, 0 }, 10)
   local summary = call("install_core", turret, { level = 20 })
@@ -463,6 +494,99 @@ local function run_feeder_project_test(surface)
   assert_contains(summary.feeder.allowed_items, "grenade", "feeder did not continue requesting explosive material after rank up")
 end
 
+local function run_feeder_contract_test(surface)
+  local turret_position = { x = 28, y = 12 }
+  local turret = create_turret(surface, turret_position, 10)
+  local summary = call("install_core", turret, { level = 20 })
+  assert_true(summary ~= nil, "failed to install core for feeder contract test")
+  assert_eq(summary.feeder.valid, false, "a core with no selected element should not create an invisible feeder")
+  assert_eq(summary.feeder.needs_input, false, "a core with no selected element should not need material input")
+
+  summary = call("start_element_project", turret, 1, "fire")
+  assert_eq(summary.feeder.valid, true, "selected element did not create the invisible feeder")
+  assert_eq(summary.feeder.needs_input, true, "selected element did not request passive material input")
+  assert_contains(summary.feeder.allowed_items, "sulfur", "fire passive progress did not request sulfur")
+
+  local feeder_unit = summary.feeder.unit_number
+  assert_eq(call("feeder_owner", feeder_unit), summary.chip_id, "feeder ownership table did not point at the installed core")
+
+  local inserter = surface.create_entity({
+    name = "inserter",
+    position = { turret_position.x, turret_position.y + 1 },
+    direction = defines.direction.south,
+    force = "player",
+    raise_built = false,
+  })
+  assert_true(inserter and inserter.valid, "failed to create inserter for feeder contract test")
+  local pickup_position = inserter.pickup_position
+
+  call("update_feeder_inserters", turret)
+  local inserter_state = call("inserter_state", inserter)
+  assert_eq(inserter_state.managed, false, "empty-source inserter should not be managed by the invisible feeder")
+  assert_eq(inserter_state.filters[1], nil, "empty-source inserter should not receive a material filter")
+
+  local source_chest = create_source_chest(surface, pickup_position, "sulfur")
+  local probe = call("feeder_inserter_probe", turret, inserter)
+  assert_true(
+    probe.points_at_turret,
+    "source-ready inserter did not point at the turret/feeder tile: "
+      .. serpent.line(probe)
+      .. " "
+      .. serpent.line(call("inserter_state", inserter))
+  )
+  assert_true(probe.has_source_item, "source-ready inserter source did not expose an allowed material: " .. serpent.line(probe))
+  call("update_feeder_inserters", turret)
+  inserter_state = call("inserter_state", inserter)
+  assert_eq(inserter_state.managed, true, "source-ready material inserter was not marked managed")
+  assert_eq(inserter_state.filters[1], "sulfur", "source-ready material inserter did not receive its available material filter")
+  assert_eq(inserter_state.drop_target_unit_number, feeder_unit, "source-ready material inserter was not pointed at the hidden feeder")
+
+  local off_target_inserter = surface.create_entity({
+    name = "inserter",
+    position = { turret_position.x + 3, turret_position.y + 1 },
+    direction = defines.direction.south,
+    force = "player",
+    raise_built = false,
+  })
+  assert_true(off_target_inserter and off_target_inserter.valid, "failed to create off-target inserter")
+  local off_target_chest = create_source_chest(surface, off_target_inserter.pickup_position, "sulfur")
+  local off_target_probe = call("feeder_inserter_probe", turret, off_target_inserter)
+  assert_true(
+    off_target_probe.points_at_turret ~= true,
+    "source-ready inserter that does not target the turret was incorrectly eligible: " .. serpent.line(off_target_probe)
+  )
+  assert_true(
+    off_target_probe.has_source_item,
+    "off-target inserter fixture did not expose source material: " .. serpent.line(off_target_probe)
+  )
+  local stale_managed = call("manage_inserter_filters", turret, off_target_inserter)
+  assert_true(stale_managed and stale_managed.applied, "failed to seed stale off-target managed inserter state")
+  local stale_state = call("inserter_state", off_target_inserter)
+  assert_eq(stale_state.managed, true, "stale off-target fixture was not captured as managed")
+  assert_eq(stale_state.filters[1], "sulfur", "stale off-target fixture did not receive its seeded material filter")
+  call("update_feeder_inserters", turret)
+  local off_target_state = call("inserter_state", off_target_inserter)
+  assert_eq(off_target_state.managed, false, "off-target inserter should be restored by the invisible feeder update")
+  assert_eq(off_target_state.filters[1], nil, "off-target inserter should not receive a material filter")
+  assert_true(off_target_state.drop_target_unit_number ~= feeder_unit, "off-target inserter should not be pointed at the hidden feeder")
+
+  summary = call("reset_evolution_section", turret, "element-slot", 1)
+  assert_eq(summary.feeder.valid, false, "resetting the only element should destroy the invisible feeder")
+  assert_eq(summary.feeder.needs_input, false, "resetting the only element should clear material input need")
+  assert_eq(call("feeder_owner", feeder_unit), nil, "destroyed feeder unit was still mapped to a core")
+
+  inserter_state = call("inserter_state", inserter)
+  assert_eq(inserter_state.managed, false, "inserter remained managed after material input ended")
+  assert_eq(inserter_state.filters[1], nil, "inserter filter was not restored after material input ended")
+  assert_eq(inserter_state.drop_target_unit_number, summary.unit_number, "inserter was not restored to the turret after feeder teardown")
+
+  destroy_entity(source_chest)
+  destroy_entity(off_target_chest)
+  destroy_entity(inserter)
+  destroy_entity(off_target_inserter)
+  cleanup_test_turret(turret)
+end
+
 local function run_dual_element_feeder_test(surface)
   local turret = create_turret(surface, { 20, 8 }, 10)
   local summary = call("install_core", turret, { level = 55 })
@@ -499,6 +623,27 @@ local function run_dual_element_feeder_test(surface)
   assert_true(managed and managed.applied, "managed inserter filter was not applied for passive mixed elements")
   assert_eq(managed.filters[1], "sulfur", "managed inserter did not prioritize sulfur first")
   assert_eq(managed.filters[2], "grenade", "managed inserter did not expose the second element material")
+
+  local source_limited_inserter = surface.create_entity({
+    name = "inserter",
+    position = { 20, 9 },
+    direction = defines.direction.south,
+    force = "player",
+    raise_built = false,
+  })
+  assert_true(source_limited_inserter and source_limited_inserter.valid, "failed to create source-limited inserter")
+  local source_limited_pickup = source_limited_inserter.pickup_position
+  local source_limited_chest = create_source_chest(surface, source_limited_pickup, "grenade")
+
+  managed = call("manage_inserter_filters", turret, source_limited_inserter)
+  assert_true(managed and managed.applied, "source-limited inserter filter was not applied")
+  assert_eq(managed.filters[1], "grenade", "source-limited inserter did not prioritize the material available at its pickup source")
+  assert_contains(managed.filters, "sulfur", "source-limited inserter lost the fallback material filter")
+  local restored = call("restore_inserter_filters", source_limited_inserter)
+  assert_eq(restored.managed, false, "source-limited inserter remained tracked after explicit filter restore")
+  assert_eq(restored.filters[1], nil, "source-limited inserter filter was not restored")
+  destroy_entity(source_limited_inserter)
+  destroy_entity(source_limited_chest)
 
   summary = feed_one(turret, "sulfur")
   assert_eq(summary.evolution.element_mastery.fire.delivered, 1, "fire progress did not consume sulfur")
@@ -540,6 +685,8 @@ local function run_dual_element_feeder_test(surface)
     },
   })
   assert_contains(summary.feeder.allowed_items, "poison-capsule", "toxic passive progress did not request poison capsules")
+  call("restore_inserter_filters", inserter)
+  destroy_entity(inserter)
 end
 
 local function run_targeted_reset_test(surface)
@@ -1062,6 +1209,7 @@ local function run_immediate_tests()
   run_specialization_secondary_multiplier_test(surface)
   run_resistance_test(surface)
   run_feeder_project_test(surface)
+  run_feeder_contract_test(surface)
   run_dual_element_feeder_test(surface)
   run_targeted_reset_test(surface)
   run_full_evolution_reset_test(surface)
