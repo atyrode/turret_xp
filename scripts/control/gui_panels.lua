@@ -355,7 +355,7 @@ return function(M)
       caption = "Materials",
       tooltip = { "turret-xp.dev-materials-tooltip" },
       tags = {
-        turret_xp_action = "dev-complete-project",
+        turret_xp_action = "dev-complete-element-rank",
       },
     })
     buttons.add({
@@ -1779,153 +1779,6 @@ return function(M)
     )
   end
 
-  function get_project_totals(project)
-    local delivered_total = 0
-    local required_total = 0
-
-    for _, requirement in ipairs(project.requirements or {}) do
-      local delivered = math.min(requirement.count, (project.delivered and project.delivered[requirement.name]) or 0)
-      delivered_total = delivered_total + delivered
-      required_total = required_total + requirement.count
-    end
-
-    return delivered_total, required_total
-  end
-
-  function finish_element_project(state)
-    local evolution = ensure_evolution_state(state)
-    local project = evolution.element_project
-    local delivered, required = 0, 0
-    if project then
-      delivered, required = get_project_totals(project)
-    end
-    if not project or (required > 0 and delivered < required) then
-      return false
-    end
-
-    evolution.elements[project.slot] = project.element
-    local mastery = evolution.element_mastery[project.element]
-    if mastery then
-      mastery.rank = math.max(project.target_rank or ELEMENT_FREE_RANK, mastery.rank or 0, ELEMENT_FREE_RANK)
-      mastery.delivered = 0
-      mastery.fuel = nil
-      mastery.burn_remaining = nil
-    end
-    evolution.element_project = nil
-    return true
-  end
-
-  function make_project_requirement_text(project)
-    local parts = {}
-    for _, requirement in ipairs(project.requirements or {}) do
-      local delivered = (project.delivered and project.delivered[requirement.name]) or 0
-      parts[#parts + 1] = {
-        "",
-        "[item=",
-        requirement.name,
-        "] ",
-        { "item-name." .. requirement.name },
-        " ",
-        rich_number(format_number(math.min(delivered, requirement.count), 0)),
-        " / ",
-        rich_number(format_number(requirement.count, 0)),
-      }
-    end
-
-    local text = { "" }
-    for index, part in ipairs(parts) do
-      if index > 1 then
-        text[#text + 1] = "\n"
-      end
-      text[#text + 1] = part
-    end
-
-    return text
-  end
-
-  function make_requirement_summary(requirements)
-    local parts = {}
-    for _, requirement in ipairs(requirements or {}) do
-      parts[#parts + 1] = "[item=" .. requirement.name .. "] " .. rich_number("x" .. tostring(requirement.count))
-    end
-
-    if #parts == 0 then
-      return "No materials required."
-    end
-
-    return "Requires: " .. table.concat(parts, ", ")
-  end
-
-  function make_requirement_cost_summary(requirements)
-    local parts = {}
-    for _, requirement in ipairs(requirements or {}) do
-      parts[#parts + 1] = "[item=" .. requirement.name .. "] " .. rich_number("x" .. tostring(requirement.count))
-    end
-
-    if #parts == 0 then
-      return "No materials"
-    end
-
-    return table.concat(parts, ", ")
-  end
-
-  function add_project_panel(parent, state)
-    local evolution = ensure_evolution_state(state)
-    local project = evolution.element_project
-    if not project then
-      return
-    end
-
-    local element = ELEMENT_BY_ID[project.element]
-    if not element then
-      return
-    end
-
-    local frame = parent.add({
-      type = "frame",
-      name = GUI.element_project,
-      direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
-    })
-    set_evolution_content_width(frame, true)
-    set_style(frame, "top_margin", 6)
-
-    local delivered, required = get_project_totals(project)
-    local progress = required > 0 and math.min(1, delivered / required) or 0
-
-    local target_rank = math.max(ELEMENT_FREE_RANK + 1, math.floor(tonumber(project.target_rank) or (ELEMENT_FREE_RANK + 1)))
-    local title = frame.add({
-      type = "label",
-      caption = element.name .. " rank " .. tostring(target_rank),
-      style = "caption_label",
-    })
-    set_style(title, "font", "default-bold")
-
-    local requirements = frame.add({
-      type = "label",
-      caption = make_project_requirement_text(project),
-      style = "caption_label",
-    })
-    set_style(requirements, "single_line", false)
-    set_style(requirements, "maximal_width", LAYOUT.evolution_inner_width)
-
-    local bar = frame.add({
-      type = "progressbar",
-      name = GUI.element_project_bar,
-      value = progress,
-    })
-    set_style(bar, "horizontally_stretchable", true)
-
-    local note = frame.add({
-      type = "label",
-      caption = { "turret-xp.feeder-project-note" },
-      style = "caption_label",
-    })
-    set_style(note, "font_color", COLOR.muted)
-    set_style(note, "single_line", false)
-    set_style(note, "maximal_width", LAYOUT.evolution_inner_width)
-  end
-
   function add_element_mastery_panel(parent, state, element_id)
     local element = ELEMENT_BY_ID[element_id]
     if not element then
@@ -2021,7 +1874,7 @@ return function(M)
 
     local bar = frame.add({
       type = "progressbar",
-      name = GUI.element_project_bar,
+      name = GUI.element_progress_bar,
       value = progress,
     })
     set_style(bar, "horizontally_stretchable", true)

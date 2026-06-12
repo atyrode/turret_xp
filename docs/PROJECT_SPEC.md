@@ -9,6 +9,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - State lives under `storage.turret_xp`.
 - Turret host records are keyed by turret entity `unit_number`.
 - Durable progression profiles are keyed by Veteran Core ID under `storage.turret_xp.chips`.
+- Save/profile compatibility is maintained for Mod Portal-published versions where practical. Runtime normalization upgrades older live profiles and tagged Veteran Core/bound turret item profiles into the current profile schema; unpublished local development-only shapes may be broken or discarded before a 1.0-style compatibility commitment.
 - A turret without an installed Veteran Core has no XP/evolution profile and does not gain progression.
 - New core profiles start at level 0 with zero XP, kills, kill credit, damage, total XP, custom name, display-label flag, and empty evolution choices.
 - Veteran Cores are non-stackable `item-with-tags` items. Extracted cores serialize their profile into item tags.
@@ -35,6 +36,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - Further element ranks always expose a single-resource material requirement for the chosen element. Those passive ranks consume from the installed core's hidden turret-tile input, not from the player inventory.
 - Inserter-fed ammo that lands in the hidden input is moved into the turret ammo inventory. If an unrelated non-ammo item slips into the hidden input through a stale inserter hand or edge case, routing ejects that invalid stack instead of leaving element progress blocked.
 - Mixed-element turrets request every selected element's currently needed material, so one turret can progress both elements without manually starting projects. Duplicate pure-element builds share one mastery rank and material progress track.
+- Legacy active element projects, element fuel buffers, retired augment IDs, and old skill-tree ranks are compatibility inputs only; current profiles store selected elements plus `element_mastery[element_id].rank` and `delivered`.
 - Unlocked elements start at rank 1. Higher ranks increase proc chance, damage efficiency, electric arc count, and Toxic poison scaling where applicable.
 - Specialization unlocks at level 10 and is a free one-time choice.
 - First element unlocks at level 20 and is a free one-time choice.

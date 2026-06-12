@@ -58,8 +58,7 @@ return function(M)
     active_specialization = MOD_PREFIX .. "active-specialization",
     active_sub_specialization = MOD_PREFIX .. "active-sub-specialization",
     active_combo = MOD_PREFIX .. "active-combo",
-    element_project = MOD_PREFIX .. "element-project",
-    element_project_bar = MOD_PREFIX .. "element-project-bar",
+    element_progress_bar = MOD_PREFIX .. "element-progress-bar",
   }
 
   GATES = DOMAIN.gates

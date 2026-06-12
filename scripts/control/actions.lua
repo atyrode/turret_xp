@@ -273,7 +273,7 @@ return function(M)
     return true
   end
 
-  function start_element_rank_project(entity, state, element_id, slot)
+  function ensure_element_material_input(entity, state, element_id, slot)
     local element = ELEMENT_BY_ID[element_id]
     if not element then
       return false
@@ -514,7 +514,7 @@ return function(M)
     )
   end
 
-  function start_element_project(player, slot, element_id)
+  function pick_element(player, slot, element_id)
     slot = math.floor(tonumber(slot) or 0)
     if (slot ~= 1 and slot ~= 2) or not ELEMENT_BY_ID[element_id] then
       return
@@ -548,7 +548,7 @@ return function(M)
     refresh_open_turret(player, entity, anchor)
   end
 
-  function auto_feed_element_project(state)
+  function auto_feed_element_progress(state)
     local changed = false
     for _, element_id in ipairs(get_unique_active_element_ids(state)) do
       local requirement = get_element_remaining_requirement(state, element_id)
@@ -583,12 +583,12 @@ return function(M)
     end
 
     feeder.route_contents(state)
-    local changed_project = auto_feed_element_project(state)
+    local changed_progress = auto_feed_element_progress(state)
     feeder.route_contents(state)
-    return changed_project
+    return changed_progress
   end
 
-  function dev_complete_project(player)
+  function dev_complete_next_element_rank(player)
     local entity, state = get_open_turret_state(player)
     if not state then
       return
@@ -609,42 +609,6 @@ return function(M)
 
     feeder.ensure(entity, state)
     refresh_open_turret(player, entity)
-  end
-
-  -- Legacy name retained for event tags from older GUI builds.
-  function allocate_element_mastery(player, element_id, amount)
-    if not ELEMENT_BY_ID[element_id] then
-      return
-    end
-
-    local anchor = evolution_anchor_name("element-mastery", element_id)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    local requirement = get_element_remaining_requirement(state, element_id)
-    if requirement and requirement.remaining > 0 then
-      add_element_material_progress(state, element_id, requirement.remaining)
-      sync_turret_progression(state)
-      feeder.ensure(entity, state)
-    end
-
-    refresh_open_turret(player, entity, anchor)
-  end
-
-  function deallocate_element_mastery(player, element_id, amount)
-    if not ELEMENT_BY_ID[element_id] then
-      return
-    end
-
-    local anchor = evolution_anchor_name("element-mastery", element_id)
-    local entity = get_open_turret_state(player)
-    if not entity then
-      return
-    end
-
-    refresh_open_turret(player, entity, anchor)
   end
 
   function add_dev_levels(player, levels)

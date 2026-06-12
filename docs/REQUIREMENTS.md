@@ -8,6 +8,7 @@
 - Ordinary gun turrets must remain stackable and must not gain progression until a Veteran Core is installed.
 - Each installed Veteran Core must have independent tracked progression state.
 - A Veteran Core must be extractable and reinstallable into another gun turret while retaining XP, upgrades, element ranks/material progress, custom name, and label preference.
+- Veteran Core profile compatibility must be maintained for Mod Portal-published versions where practical, including tagged item profiles that may exist outside live `storage`.
 - An installed Veteran Core must be able to opt into a bound quick-move mode where mining returns one tagged placeable turret item that restores the turret and core together when placed.
 - Unbinding must return the turret to the default separate turret item plus Veteran Core movement behavior.
 - On space platforms, the attached turret panel must allow selecting a specific Veteran Core from the platform hub inventory and sending an installed core back to the hub when there is room.

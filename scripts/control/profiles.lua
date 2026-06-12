@@ -260,14 +260,6 @@ return function(M)
       profile.evolution = {}
     end
 
-    local elements = profile.evolution.elements
-    if type(elements) == "table" then
-      profile.evolution.elements = {
-        elements[1] or elements.first,
-        elements[2] or elements.second,
-      }
-    end
-
     return normalize_profile(profile)
   end
 
@@ -345,34 +337,6 @@ return function(M)
     return #parts > 0 and table.concat(parts, " + ") or nil
   end
 
-  function profile_project_summary(evolution)
-    local project = evolution.element_project
-    if type(project) ~= "table" then
-      return nil
-    end
-
-    local element = ELEMENT_BY_ID[project.element]
-    if not element then
-      return nil
-    end
-
-    local delivered_total = 0
-    local required_total = 0
-    for _, requirement in ipairs(project.requirements or {}) do
-      local delivered = math.min(requirement.count, (project.delivered and project.delivered[requirement.name]) or 0)
-      delivered_total = delivered_total + delivered
-      required_total = required_total + requirement.count
-    end
-
-    return element.name
-      .. " r"
-      .. profile_format_rank(project.target_rank or ELEMENT_FREE_RANK)
-      .. " "
-      .. profile_format_rank(delivered_total)
-      .. "/"
-      .. profile_format_rank(required_total)
-  end
-
   function profile_specialization_summary(evolution)
     local specialization = evolution.specialization and SPECIALIZATION_BY_ID[evolution.specialization] or nil
     if not specialization then
@@ -410,11 +374,6 @@ return function(M)
     local augments = profile_rank_list(AUGMENTS, evolution.augments)
     if augments then
       lines[#lines + 1] = { "", "[color=0.35,0.75,1]Aug:[/color] ", augments }
-    end
-
-    local project = profile_project_summary(evolution)
-    if project then
-      lines[#lines + 1] = { "", "[color=1,0.68,0.22]Project:[/color] ", project }
     end
 
     return lines

@@ -656,21 +656,6 @@ return function(M)
     end)
   end
 
-  function feeder.get_project_input_slots(state, priority_item)
-    if not state or not priority_item then
-      return 0
-    end
-
-    local remaining = 0
-    for _, element_id in ipairs(get_unique_active_element_ids(state)) do
-      local requirement = get_element_remaining_requirement(state, element_id)
-      if requirement and requirement.name == priority_item then
-        remaining = remaining + math.max(0, requirement.remaining or 0)
-      end
-    end
-    return remaining
-  end
-
   function feeder.get_total_input_slots(state)
     if not state then
       return 0
