@@ -36,7 +36,7 @@ The player installs a Veteran Core into a normal gun turret, lets that turret ea
 
 ## Release History
 
-Version-specific changes belong in `changelog.txt`. The package includes that file at the mod root for Factorio and Mod Portal use, and future release/website automation should reuse it rather than maintaining separate release diaries in active docs.
+Version-specific changes belong in `changelog.txt`. The package includes that file at the mod root for Factorio and Mod Portal use. Public website, release-note, and Mod Portal automation reuses it rather than maintaining separate release diaries in active docs.
 
 Historical planning context is kept by git history, not by active docs. If an old plan contains a still-useful decision, move that decision into the relevant current document instead of keeping the old plan around.
 

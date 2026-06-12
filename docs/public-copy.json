@@ -1,0 +1,100 @@
+{
+  "homepage_url": "https://atyrode.github.io/turret_xp/",
+  "source_url": "https://github.com/atyrode/turret_xp",
+  "mod_portal_url": "https://mods.factorio.com/mod/turret_xp",
+  "release_url": "https://github.com/atyrode/turret_xp/releases/latest",
+  "portal": {
+    "category": "tweaks",
+    "tags": "combat",
+    "summary": "Make chosen gun turrets level up, specialize, and carry Veteran Core progression between battlefields."
+  },
+  "intro": {
+    "eyebrow": "Factorio 2.0 mod",
+    "lede": "Install Veteran Cores in your favorite gun turrets, level them through combat, and shape them into snipers, bulwarks, brawlers, machine guns, or elemental hybrids."
+  },
+  "portal_description": {
+    "paragraphs": [
+      "Turret XP makes gun turrets grow into named veteran defenders.",
+      "Install a Veteran Core in a turret and let it earn XP from real fights. As it levels up, shape it into the defender your factory needs: a long-range sniper, a rapid machine gun, a tough bulwark, or a brutal close-range brawler.",
+      "Veteran Cores carry a turret's level, upgrades, elements, name, and combat history. Move the core to a new turret when the front line shifts, or keep it on a trusted defender and watch it grow."
+    ]
+  },
+  "release_notes": {
+    "intro": "Turn ordinary gun turrets into veteran defenders with portable cores, XP, upgrades, specializations, elemental material ranks, and names.",
+    "validation": [
+      "Packaged zip layout checked.",
+      "See changelog.txt for the Factorio-compatible version history."
+    ]
+  },
+  "highlights": [
+    "Only chosen turrets become unique, so ordinary gun turrets stay stackable.",
+    "Earn XP from damage and kill contribution.",
+    "Spend points on damage, regeneration, lifesteal, crits, range, luck, double shots, XP gain, and bouncing bullets.",
+    "Pick specializations and sub-specializations with strong tradeoffs.",
+    "Feed fire, electric, explosive, or toxic resources into passive element ranks to strengthen elemental effects and combos.",
+    "Name favorite turrets and show their level above them.",
+    "Choose exact Veteran Cores from platform hubs for space-platform defenses.",
+    "Tune XP pacing in mod settings."
+  ],
+  "features": [
+    {
+      "title": "Veteran Cores",
+      "body": "Only chosen turrets become unique. A core stores XP, upgrades, elements, name, and battle history, then moves by itself or bound to its turret body when the front line shifts."
+    },
+    {
+      "title": "Combat Growth",
+      "body": "Turrets earn XP from damage and kill contribution. Points buy damage, repair, lifesteal, crits, range, luck, double shots, XP gain, and bouncing bullets."
+    },
+    {
+      "title": "Specialized Defenders",
+      "body": "Choose strong identities with tradeoffs: long-range snipers, rapid machine guns, tough bulwarks, or brutal close-range brawlers."
+    },
+    {
+      "title": "Element Projects",
+      "body": "Pick fire, electric, explosive, or toxic effects, feed larger passive material ranks to strengthen them, and combine two elements on veteran turrets."
+    }
+  ],
+  "playtest": {
+    "intro": "Install from the in-game Mods interface, place a gun turret, install a Veteran Core, add ammo, and let it fight.",
+    "steps": [
+      "Install or dev-create a Veteran Core.",
+      "Let the turret shoot enemies.",
+      "Check that XP and lifetime damage increase.",
+      "Name the core, toggle its floating label, and move it to another turret or bind it for one-item turret moves.",
+      "Run /turret-xp-dev to test level gates, complete passive element material ranks, then buy an upgrade or augment.",
+      "Report confusing stats, pacing issues, or runtime errors."
+    ]
+  },
+  "docs": [
+    {
+      "title": "Playtest Guide",
+      "href": "https://github.com/atyrode/turret_xp/blob/main/docs/PLAYTEST.md",
+      "description": "Install path and focused test checklist."
+    },
+    {
+      "title": "Project Spec",
+      "href": "https://github.com/atyrode/turret_xp/blob/main/docs/PROJECT_SPEC.md",
+      "description": "Current milestone and implementation target."
+    },
+    {
+      "title": "Technical Direction",
+      "href": "https://github.com/atyrode/turret_xp/blob/main/docs/TECHNICAL_DIRECTION.md",
+      "description": "Validation path, risks, and library candidates."
+    },
+    {
+      "title": "Architecture",
+      "href": "https://github.com/atyrode/turret_xp/blob/main/docs/ARCHITECTURE.md",
+      "description": "Runtime responsibilities, state, and ownership boundaries."
+    },
+    {
+      "title": "Design Notes",
+      "href": "https://github.com/atyrode/turret_xp/blob/main/docs/DESIGN.md",
+      "description": "Gameplay, balance, UX, and compatibility direction."
+    },
+    {
+      "title": "Progression Design",
+      "href": "https://github.com/atyrode/turret_xp/blob/main/docs/PROGRESSION_DESIGN.md",
+      "description": "Evolution, material gates, element ranks, combos, and long-term scaling."
+    }
+  ]
+}

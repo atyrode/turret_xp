@@ -33,6 +33,12 @@ fi
 python_bin="${PYTHON:-python3}"
 mod_name="$("$python_bin" -c 'import json; print(json.load(open("info.json"))["name"])')"
 version="$("$python_bin" -c 'import json; print(json.load(open("info.json"))["version"])')"
+description_path="dist/mod-portal-description.md"
+metadata_path="dist/mod-portal-metadata.env"
+
+scripts/generate-public-assets.py --check
+scripts/generate-public-assets.py --portal-description "$description_path" --portal-metadata "$metadata_path"
+. "$metadata_path"
 
 if [ "${SKIP_HEADLESS_TESTS:-}" = "1" ]; then
   echo "Skipping headless tests because SKIP_HEADLESS_TESTS=1."
@@ -41,36 +47,6 @@ else
 fi
 
 package_path="$(scripts/package.sh | tail -n 1)"
-description_path="dist/mod-portal-description.md"
-homepage_url="https://atyrode.github.io/turret_xp/"
-source_url="https://github.com/atyrode/turret_xp"
-
-cat > "$description_path" <<DESC
-# Turret XP
-
-Turret XP makes gun turrets grow into named veteran defenders.
-
-Install a Veteran Core in a turret and let it earn XP from real fights. As it levels up, shape it into the defender your factory needs: a long-range sniper, a rapid machine gun, a tough bulwark, or a brutal close-range brawler.
-
-Veteran Cores carry a turret's level, upgrades, elements, name, and combat history. Move the core to a new turret when the front line shifts, or keep it on a trusted defender and watch it grow.
-
-Highlights:
-
-- Only chosen turrets become unique, so ordinary gun turrets stay stackable.
-- Earn XP from damage and kill contribution.
-- Spend points on damage, regeneration, lifesteal, crits, range, luck, double shots, XP gain, and bouncing bullets.
-- Pick specializations with strong tradeoffs.
-- Feed fire, electric, explosive, or toxic resources into passive element ranks to strengthen elemental effects and combos.
-- Name favorite turrets and show their level above them.
-- Choose exact Veteran Cores from platform hubs for space-platform defenses.
-- Tune XP pacing in mod settings.
-
-Source:
-${source_url}
-
-Homepage:
-${homepage_url}
-DESC
 
 if curl -fsS "https://mods.factorio.com/api/mods/${mod_name}" >/dev/null 2>&1; then
   init_url="https://mods.factorio.com/api/v2/mods/releases/init_upload"
@@ -96,8 +72,8 @@ if [ "$mode" = "publish" ]; then
     curl -fsS \
       -F "file=@${package_path}" \
       -F "description=<${description_path}" \
-      -F "category=tweaks" \
-      -F "source_url=${source_url}" \
+      -F "category=${MOD_PORTAL_CATEGORY}" \
+      -F "source_url=${MOD_PORTAL_SOURCE_URL}" \
       "$upload_url"
   )"
 else
@@ -114,13 +90,13 @@ if edit_response="$(
   curl -fsS \
     -H "Authorization: Bearer ${api_key}" \
     -F "mod=${mod_name}" \
-    -F "title=Turret XP" \
-    -F "summary=Make chosen gun turrets level up, specialize, and carry Veteran Core progression between battlefields." \
+    -F "title=${MOD_PORTAL_TITLE}" \
+    -F "summary=${MOD_PORTAL_SUMMARY}" \
     -F "description=<${description_path}" \
-    -F "category=tweaks" \
-    -F "tags=combat" \
-    -F "homepage=${homepage_url}" \
-    -F "source_url=${source_url}" \
+    -F "category=${MOD_PORTAL_CATEGORY}" \
+    -F "tags=${MOD_PORTAL_TAGS}" \
+    -F "homepage=${MOD_PORTAL_HOMEPAGE}" \
+    -F "source_url=${MOD_PORTAL_SOURCE_URL}" \
     "https://mods.factorio.com/api/v2/mods/edit_details"
 )"; then
   printf '%s\n' "$edit_response" | "$python_bin" -m json.tool

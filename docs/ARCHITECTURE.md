@@ -4,6 +4,7 @@
 
 - `.github/workflows/`: GitHub Actions CI and release automation.
 - `info.json`: Factorio mod metadata.
+- `changelog.txt`: canonical Factorio-compatible release history.
 - `control.lua`: runtime entrypoint that loads modules from `scripts/control/`.
 - `scripts/domain.lua`: pure shared gameplay domain definitions and variant-name helpers used by data stage, runtime, and headless tests.
 - `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and explicit helper modules such as Factorio API compatibility, label-color matching, bound turret item handling, damage accounting, and generic GUI support.
@@ -12,11 +13,11 @@
 - `prototypes/`: data-stage modules for names, items, bound-turret placeholder and preview variants, feeder, label panels, styles, effects, and turret variants.
 - `settings.lua`: runtime-global XP pacing settings.
 - `locale/en/turret-xp.cfg`: English GUI strings.
-- `scripts/`: validation, packaging, dependency download, install, release, and portal publishing.
+- `scripts/`: validation, public-asset generation, packaging, dependency download, install, release, and portal publishing.
 - `.stylua.toml`, `.luacheckrc`, `compose.yaml`, and `tools/lua/Dockerfile`: Lua format/lint configuration and the optional local strict-tooling container.
 - `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`; `control.lua` owns runner lifecycle, `support.lua` owns shared assertions/helpers, and `suite.lua` owns behavior checks.
 - `tests/headless/turret_xp_remote_policy_tests/`: separate headless smoke-test mod used by `scripts/test-headless.sh` to verify private test remotes are absent when the companion suite is not active.
-- `docs/`: project context, playtest guidance, and the GitHub Pages homepage.
+- `docs/`: project context, playtest guidance, shared public copy, and the generated GitHub Pages homepage.
 
 ## Runtime State
 
@@ -190,8 +191,8 @@ storage.turret_xp = {
 - Generic GUI formatting and repeated width helpers belong in `scripts/control/gui_support.lua`; domain-specific panel sections should stay in `gui_panels.lua` until a broader componentization pass is explicitly approved.
 - `scripts/control/core_slot.lua` owns tag-preserving Veteran Core install/extract/swap, platform core selection, bind/unbind actions, and future inventory-list selection work.
 - Data-stage entrypoints should stay minimal. New prototypes belong in `prototypes/`, should reuse `scripts/domain.lua` for shared IDs/names, and hidden turret body variants must stay generated from `data-final-fixes.lua` so they see other mods' final base prototype edits.
-- Release scripts should stay data-driven from `info.json` where practical.
+- Release scripts should stay data-driven from `info.json`, `changelog.txt`, and `docs/public-copy.json` where practical.
 - CI and release workflows should reuse the same scripts as local operators where practical, so GitHub package/release behavior does not drift from local validation.
 - `scripts/download-mod-dependencies.py` owns authenticated Mod Portal dependency downloads for CI/headless tests. It must read credentials from environment variables and must not print token-bearing URLs.
 - The headless test companion mod may exercise private internals through `turret_xp_test`, but those hooks must stay gated to the companion mod and must not be documented or stabilized as third-party integration surface.
-- The website should stay tightly coupled to mod metadata and docs. As it grows, prefer a small generator over manually maintaining duplicate homepage content.
+- `scripts/generate-public-assets.py` owns generated public assets. Edit `docs/public-copy.json`, `info.json`, or `changelog.txt`, then regenerate `docs/index.html` instead of hand-editing duplicated homepage, release-note, or portal-copy text.
