@@ -117,6 +117,7 @@ return function(M)
     local migrations = get_legacy_migration_service()
     migrations.normalize_legacy_element_slots(evolution)
     migrations.migrate_moved_base_upgrades(evolution)
+    migrations.migrate_legacy_base_xp_upgrade(evolution)
 
     for _, upgrade in ipairs(BASE_UPGRADES) do
       evolution.base[upgrade.id] = math.max(0, math.floor(tonumber(evolution.base[upgrade.id]) or 0))
@@ -166,6 +167,7 @@ return function(M)
 
     migrations.migrate_legacy_element_project(state, evolution)
     migrations.migrate_legacy_skills(state, evolution)
+    migrations.migrate_legacy_base_xp_upgrade(evolution)
 
     return evolution
   end

@@ -651,7 +651,7 @@ return function(M)
       state.xp_damage = 0
       state.xp_kill_credit = 0
       state.dev_xp = 0
-      state.skills = {}
+      state.skills = nil
       state.evolution = {}
       state.required_xp = nil
       state._progress_total_xp = nil

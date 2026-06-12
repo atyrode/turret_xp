@@ -95,6 +95,37 @@ return function(M)
 
   handlers = {}
 
+  local function name_filter(name)
+    return {
+      filter = "name",
+      name = name,
+    }
+  end
+
+  local function gun_turret_event_filters()
+    local filters = {
+      name_filter(BASE_TURRET_NAME),
+    }
+
+    DOMAIN.for_each_specialized_turret_name(function(name)
+      filters[#filters + 1] = name_filter(name)
+    end)
+
+    return filters
+  end
+
+  local function bound_placeholder_event_filters()
+    local filters = {
+      name_filter(BOUND_TURRET_PLACEHOLDER_NAME),
+    }
+
+    DOMAIN.for_each_bound_turret_variant(function(variant_id)
+      filters[#filters + 1] = name_filter(DOMAIN.bound_turret_placeholder_name(variant_id))
+    end)
+
+    return filters
+  end
+
   function handlers.on_gui_opened(event)
     local player = game.get_player(event.player_index)
     if not player then
@@ -646,23 +677,26 @@ return function(M)
   script.on_event(defines.events.on_force_created, handlers.on_force_created)
   script.on_event(defines.events.on_entity_damaged, handlers.on_entity_damaged)
   script.on_event(defines.events.on_entity_died, handlers.on_entity_died)
-  script.on_event(defines.events.on_built_entity, handlers.on_built_entity)
-  script.on_event(defines.events.on_robot_built_entity, handlers.on_robot_built_entity)
-  script.on_event(defines.events.on_pre_player_mined_item, handlers.on_turret_removed)
-  script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed)
-  script.on_event(defines.events.on_player_mined_entity, handlers.on_turret_mined_entity)
-  script.on_event(defines.events.on_robot_mined_entity, handlers.on_turret_mined_entity)
+
+  local gun_turret_filters = gun_turret_event_filters()
+  local bound_placeholder_filters = bound_placeholder_event_filters()
+  script.on_event(defines.events.on_built_entity, handlers.on_built_entity, bound_placeholder_filters)
+  script.on_event(defines.events.on_robot_built_entity, handlers.on_robot_built_entity, bound_placeholder_filters)
+  script.on_event(defines.events.on_pre_player_mined_item, handlers.on_turret_removed, gun_turret_filters)
+  script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed, gun_turret_filters)
+  script.on_event(defines.events.on_player_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
+  script.on_event(defines.events.on_robot_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
   script.on_event(defines.events.on_tick, handlers.on_tick)
   script.on_nth_tick(REFRESH_TICKS, handlers.on_refresh_tick)
   script.on_nth_tick(SHIELD_RECHARGE_TICKS, handlers.on_shield_recharge_tick)
 
   space_platform_built_event = defines.events.on_space_platform_built_entity
   if space_platform_built_event then
-    script.on_event(space_platform_built_event, handlers.on_space_platform_built_entity)
+    script.on_event(space_platform_built_event, handlers.on_space_platform_built_entity, bound_placeholder_filters)
   end
 
   space_platform_mined_event = defines.events.on_space_platform_mined_entity
   if space_platform_mined_event then
-    script.on_event(space_platform_mined_event, handlers.on_space_platform_mined_entity)
+    script.on_event(space_platform_mined_event, handlers.on_space_platform_mined_entity, gun_turret_filters)
   end
 end

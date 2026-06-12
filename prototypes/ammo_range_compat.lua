@@ -1,5 +1,4 @@
-local TURRET_VARIANT_PREFIX = "turret-xp-gun-turret-"
-local BASE_TURRET_NAME = "gun-turret"
+local domain = require("scripts.domain")
 
 local function as_array(value)
   if not value then
@@ -14,7 +13,7 @@ local function as_array(value)
 end
 
 local function is_turret_xp_body(name)
-  return name == BASE_TURRET_NAME or string.sub(name, 1, #TURRET_VARIANT_PREFIX) == TURRET_VARIANT_PREFIX
+  return name == domain.names.base_turret or domain.is_specialized_turret_name(name)
 end
 
 local function add_category(categories, category)
@@ -46,7 +45,7 @@ end
 
 local function gun_turret_categories()
   local categories = {}
-  local turret = data.raw["ammo-turret"] and data.raw["ammo-turret"][BASE_TURRET_NAME]
+  local turret = data.raw["ammo-turret"] and data.raw["ammo-turret"][domain.names.base_turret]
   collect_attack_categories(categories, turret and turret.attack_parameters)
   return categories
 end

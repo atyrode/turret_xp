@@ -584,7 +584,8 @@ local function run_legacy_migration_test()
     evolution = {},
   })
   assert_eq(skills.evolution.base.damage, 2, "legacy Ballistics skill did not migrate into Damage")
-  assert_eq(skills.evolution.base.xp, 7, "legacy XP skills did not migrate into Veteran Training")
+  assert_eq(skills.evolution.base.xp, nil, "legacy XP skills left a dead base XP rank")
+  assert_eq(skills.evolution.augments.veteran_training, 7, "legacy XP skills did not migrate into Veteran Training")
   assert_eq(skills.evolution.augments.repair, 1, "legacy Field Repairs skill did not migrate into Regeneration")
   assert_eq(skills.evolution.migrated_legacy_skills, true, "legacy skill migration was not marked complete")
 
@@ -602,8 +603,22 @@ local function run_legacy_migration_test()
     },
   })
   assert_eq(skills_again.evolution.base.damage, 2, "legacy skill migration was not idempotent for Damage")
-  assert_eq(skills_again.evolution.base.xp, 7, "legacy skill migration was not idempotent for Veteran Training")
+  assert_eq(skills_again.evolution.base.xp, nil, "legacy XP base rank persisted after idempotent migration")
+  assert_eq(skills_again.evolution.augments.veteran_training, 7, "legacy skill migration was not idempotent for Veteran Training")
   assert_eq(skills_again.evolution.augments.repair, 1, "legacy skill migration was not idempotent for Regeneration")
+
+  local legacy_base_xp = call("normalize_profile_snapshot", {
+    evolution = {
+      base = {
+        xp = 4,
+      },
+      augments = {
+        veteran_training = 2,
+      },
+    },
+  })
+  assert_eq(legacy_base_xp.evolution.base.xp, nil, "legacy base XP rank was not removed")
+  assert_eq(legacy_base_xp.evolution.augments.veteran_training, 6, "legacy base XP rank was not moved to Veteran Training")
 
   local moved_base = call("normalize_profile_snapshot", {
     evolution = {
@@ -741,6 +756,29 @@ local function run_legacy_migration_test()
     },
   })
   assert_eq(invalid_project.evolution.element_project, nil, "invalid legacy project value was not removed")
+
+  local serialized = call("serialize_profile_snapshot", {
+    skills = {
+      kill_chain = 2,
+      targeting_data = 1,
+    },
+    evolution = {
+      base = {
+        xp = 4,
+      },
+      element_project = {
+        slot = 1,
+        element = "fire",
+        target_rank = 1,
+        delivered = {},
+        requirements = {},
+      },
+    },
+  })
+  assert_eq(serialized.skills, nil, "serialized current profile should not include legacy skills")
+  assert_eq(serialized.evolution.base.xp, nil, "serialized current profile should not include legacy base XP")
+  assert_eq(serialized.evolution.augments.veteran_training, 7, "serialized profile lost legacy XP conversion")
+  assert_eq(serialized.evolution.element_project, nil, "serialized current profile should not include legacy element project")
 end
 
 local function create_source_chest(surface, position, item_name)

@@ -53,7 +53,6 @@ return function(M)
       damage = 0,
       xp_damage = 0,
       xp_kill_credit = 0,
-      skills = {},
       evolution = {},
       chip_quality = "normal",
       custom_name = "",
@@ -106,6 +105,7 @@ return function(M)
     end
     profile.label_scale = 2
     ensure_evolution_state(profile)
+    profile.skills = nil
     normalize_shield_state(profile, true)
     sync_turret_progression(profile)
     return profile
@@ -251,7 +251,6 @@ return function(M)
         },
         specialization = evolution.specialization,
         sub_specialization = evolution.sub_specialization,
-        element_project = copy_serializable(evolution.element_project),
       },
     }
   end
