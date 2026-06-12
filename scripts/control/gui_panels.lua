@@ -1,10 +1,12 @@
 local gui_support = require("scripts.control.gui_support")
+local gui_components = require("scripts.control.gui_components")
 
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
 
   local gui_support_service = nil
+  local gui_components_service = nil
 
   local function get_gui_support_service()
     if not gui_support_service then
@@ -19,62 +21,31 @@ return function(M)
     return gui_support_service
   end
 
+  local function get_gui_components_service()
+    if not gui_components_service then
+      gui_components_service = gui_components.new({
+        COLOR = COLOR,
+        LAYOUT = LAYOUT,
+        rich_color = function(color, text)
+          return rich_color(color, text)
+        end,
+        set_evolution_content_width = function(element, inner)
+          return set_evolution_content_width(element, inner)
+        end,
+        set_style = set_style,
+        with_info_marker = with_info_marker,
+      })
+    end
+
+    return gui_components_service
+  end
+
   function add_stat_row(parent, label, element_name, options)
-    options = options or {}
-
-    local label_element = parent.add({
-      type = "label",
-      caption = with_info_marker(label, options.info_tooltip),
-      tooltip = options.info_tooltip,
-      style = "caption_label",
-    })
-    set_style(label_element, "font_color", COLOR.caption)
-    set_style(label_element, "single_line", true)
-
-    local value_flow_definition = {
-      type = "flow",
-      direction = "horizontal",
-    }
-    if options.flow_name then
-      value_flow_definition.name = options.flow_name
-    end
-    local value_flow = parent.add(value_flow_definition)
-    set_style(value_flow, "horizontal_align", "right")
-    set_style(value_flow, "horizontally_stretchable", true)
-    if options.flow_only then
-      return label_element, value_flow
-    end
-
-    local value_element = value_flow.add({
-      type = "label",
-      name = element_name,
-      caption = "-",
-      style = options.value_style or "label",
-    })
-    set_style(value_element, "horizontal_align", "right")
-    set_style(value_element, "single_line", false)
-    set_style(value_element, "maximal_width", options.maximal_width or LAYOUT.stats_value_width)
-
-    return label_element, value_element
+    return get_gui_components_service().add_stat_row(parent, label, element_name, options)
   end
 
   function make_stats_table(parent, name)
-    local stat_table = parent.add({
-      type = "table",
-      name = name,
-      column_count = 2,
-      draw_horizontal_lines = true,
-    })
-    set_style(stat_table, "horizontally_stretchable", true)
-    set_style(stat_table, "width", LAYOUT.stats_content_width)
-    set_style(stat_table, "minimal_width", LAYOUT.stats_content_width)
-    set_style(stat_table, "maximal_width", LAYOUT.stats_content_width)
-    set_style(stat_table, "horizontal_spacing", 12)
-    pcall(function()
-      stat_table.style.column_alignments[1] = "left"
-      stat_table.style.column_alignments[2] = "right"
-    end)
-    return stat_table
+    return get_gui_components_service().make_stats_table(parent, name)
   end
 
   function add_xp_panel(parent)
@@ -318,7 +289,7 @@ return function(M)
 
     local label = top.add({
       type = "label",
-      caption = "Dev",
+      caption = { "turret-xp.dev-title" },
       style = "caption_label",
     })
     set_style(label, "font", "default-bold")
@@ -334,7 +305,7 @@ return function(M)
 
     buttons.add({
       type = "button",
-      caption = "+1",
+      caption = { "turret-xp.dev-level-1" },
       tooltip = { "turret-xp.dev-level-1-tooltip" },
       tags = {
         turret_xp_action = "dev-level",
@@ -343,7 +314,7 @@ return function(M)
     })
     buttons.add({
       type = "button",
-      caption = "+5",
+      caption = { "turret-xp.dev-level-5" },
       tooltip = { "turret-xp.dev-level-5-tooltip" },
       tags = {
         turret_xp_action = "dev-level",
@@ -352,7 +323,7 @@ return function(M)
     })
     buttons.add({
       type = "button",
-      caption = "Materials",
+      caption = { "turret-xp.dev-materials" },
       tooltip = { "turret-xp.dev-materials-tooltip" },
       tags = {
         turret_xp_action = "dev-complete-element-rank",
@@ -360,7 +331,7 @@ return function(M)
     })
     buttons.add({
       type = "button",
-      caption = "Reset",
+      caption = { "turret-xp.dev-reset" },
       tooltip = { "turret-xp.dev-reset-core-tooltip" },
       tags = {
         turret_xp_action = "dev-reset-core",
@@ -420,7 +391,7 @@ return function(M)
     local label = top.add({
       type = "label",
       name = GUI.core_status,
-      caption = state and "Veteran Core installed" or "No Veteran Core installed",
+      caption = state and { "turret-xp.core-installed" } or { "turret-xp.core-empty" },
       style = "caption_label",
     })
     set_style(label, "font", "default-bold")
@@ -434,7 +405,7 @@ return function(M)
       })
       local bind_button = top.add({
         type = "button",
-        caption = state.bound_turret and "Unbind" or "Bind",
+        caption = state.bound_turret and { "turret-xp.core-unbind" } or { "turret-xp.core-bind" },
         tooltip = state.bound_turret and { "turret-xp.unbind-turret-tooltip" } or { "turret-xp.bind-turret-tooltip" },
         tags = {
           turret_xp_action = state.bound_turret and "unbind-turret" or "bind-turret",
@@ -455,7 +426,7 @@ return function(M)
       set_style(actions, "horizontal_spacing", 4)
       actions.add({
         type = "button",
-        caption = "Dev core",
+        caption = { "turret-xp.dev-create-core" },
         tags = {
           turret_xp_action = "dev-create-core",
         },
@@ -485,7 +456,7 @@ return function(M)
 
     name_flow.add({
       type = "label",
-      caption = "Name",
+      caption = { "turret-xp.core-name" },
       style = "caption_label",
     })
 
@@ -502,7 +473,7 @@ return function(M)
     name_flow.add({
       type = "checkbox",
       name = GUI.core_name_visible,
-      caption = "Show",
+      caption = { "turret-xp.core-name-show" },
       state = state.show_name_label == true,
       tags = {
         turret_xp_action = "toggle-core-label",
@@ -568,7 +539,7 @@ return function(M)
       local color_button = preset_flow.add({
         type = "button",
         name = GUI.core_color_preview,
-        caption = preset and preset.name or "Custom",
+        caption = preset and preset.name or { "turret-xp.label-custom-color" },
         tooltip = { "turret-xp.label-color-tooltip" },
         tags = {
           turret_xp_action = "cycle-label-color",
@@ -586,7 +557,7 @@ return function(M)
       label_options.add({
         type = "checkbox",
         name = GUI.core_name_level_visible,
-        caption = "Level",
+        caption = { "turret-xp.label-level" },
         state = state.show_label_level ~= false,
         tags = {
           turret_xp_action = "toggle-label-level",
@@ -723,7 +694,7 @@ return function(M)
     local luck_multiplier = get_luck_multiplier(state)
     add_stat_value(
       stats,
-      "Crit chance",
+      { "turret-xp.stat-crit-chance" },
       format_stat_formula(0, raw_chance, luck_multiplier, get_crit_chance_fraction(state) * 100, "% / shot", 2),
       nil
     )
@@ -731,7 +702,7 @@ return function(M)
     local crit_damage_values = get_crit_damage_formula_values(state)
     add_stat_value(
       stats,
-      "Crit damage",
+      { "turret-xp.stat-crit-damage" },
       format_stat_formula(
         crit_damage_values.base,
         crit_damage_values.additive,
@@ -770,23 +741,23 @@ return function(M)
 
     local specialization = get_specialization(state)
     if specialization then
-      add_custom_stat(stats, "Specialization", specialization.name)
+      add_custom_stat(stats, { "turret-xp.stat-specialization" }, specialization.name)
     end
     local sub_specialization = get_sub_specialization(state)
     if sub_specialization then
-      add_custom_stat(stats, "Sub-specialization", sub_specialization.name)
+      add_custom_stat(stats, { "turret-xp.stat-sub-specialization" }, sub_specialization.name)
     end
 
     local damage_rank = get_base_rank(state, "damage")
     if damage_rank > 0 then
-      add_custom_stat(stats, "Core damage", rich_number("+" .. format_number(damage_rank * 0.5, 1)) .. " / shot")
+      add_custom_stat(stats, { "turret-xp.stat-core-damage" }, rich_number("+" .. format_number(damage_rank * 0.5, 1)) .. " / shot")
     end
 
     local repair_rank = get_base_rank(state, "repair")
     if repair_rank > 0 then
       add_custom_stat(
         stats,
-        "Regeneration",
+        { "turret-xp.stat-regeneration" },
         format_bonus_value_with_multiplier(
           get_repair_base_per_second(state, entity),
           get_specialization_multiplier(state, "repair_multiplier"),
@@ -798,12 +769,20 @@ return function(M)
 
     local resistance = get_damage_resistance_fraction(state)
     if resistance > 0 then
-      add_custom_stat(stats, "Resistance", { "", rich_number("-" .. format_number(resistance * 100, 2) .. "%"), " damage taken" })
+      add_custom_stat(
+        stats,
+        { "turret-xp.stat-resistance" },
+        { "", rich_number("-" .. format_number(resistance * 100, 2) .. "%"), " damage taken" }
+      )
     end
 
     local max_health_rank = get_augment_rank(state, "max_health")
     if max_health_rank > 0 then
-      add_custom_stat(stats, "Max HP augment", rich_number("+" .. format_number(max_health_rank * MAX_HEALTH_PER_RANK, 0)) .. " HP")
+      add_custom_stat(
+        stats,
+        { "turret-xp.stat-max-health-augment" },
+        rich_number("+" .. format_number(max_health_rank * MAX_HEALTH_PER_RANK, 0)) .. " HP"
+      )
     end
 
     local ammo_regen_rank = get_base_rank(state, "ammo_regen")
@@ -817,14 +796,14 @@ return function(M)
       if state.last_ammo and state.last_ammo.name then
         caption = { "", caption, " [item=", state.last_ammo.name, "]" }
       end
-      add_custom_stat(stats, "Ammo recovery", caption)
+      add_custom_stat(stats, { "turret-xp.stat-ammo-recovery" }, caption)
     end
 
     local siphon_rank = get_base_rank(state, "siphon")
     if siphon_rank > 0 then
       add_custom_stat(
         stats,
-        "Lifesteal",
+        { "turret-xp.stat-lifesteal" },
         format_bonus_value_with_multiplier(
           (siphon_rank * 0.004) * 100,
           get_specialization_multiplier(state, "lifesteal_multiplier"),
@@ -839,24 +818,24 @@ return function(M)
     if bounce_rank > 0 then
       add_custom_stat(
         stats,
-        "Bullet bounce",
+        { "turret-xp.stat-bullet-bounce" },
         rich_number(format_percent(apply_luck_to_chance(state, bounce_rank * 0.05), 1)) .. ", " .. rich_number("35%") .. " shot damage"
       )
     end
 
     local double_shot_chance = get_double_shot_chance(state)
     if double_shot_chance > 0 then
-      add_custom_stat(stats, "Double shot", rich_number(format_percent(double_shot_chance, 1)) .. " chance")
+      add_custom_stat(stats, { "turret-xp.stat-double-shot" }, rich_number(format_percent(double_shot_chance, 1)) .. " chance")
     end
 
     local luck_rank = get_augment_rank(state, "luck")
     if luck_rank > 0 then
-      add_custom_stat(stats, "Luck", format_colored_multiplier(get_luck_multiplier(state)) .. " proc odds")
+      add_custom_stat(stats, { "turret-xp.stat-luck" }, format_colored_multiplier(get_luck_multiplier(state)) .. " proc odds")
     end
 
     local training_rank = get_augment_rank(state, "veteran_training")
     if training_rank > 0 then
-      add_custom_stat(stats, "XP gain", rich_number("+" .. format_number(training_rank * 5, 0) .. "%") .. " combat XP")
+      add_custom_stat(stats, { "turret-xp.stat-xp-gain" }, rich_number("+" .. format_number(training_rank * 5, 0) .. "%") .. " combat XP")
     end
 
     local range_rank = get_augment_rank(state, "range")
@@ -866,7 +845,7 @@ return function(M)
       if math.abs(multiplier - 1) >= 0.005 then
         value = value .. " " .. (format_colored_multiplier(multiplier) or "")
       end
-      add_custom_stat(stats, "Range augment", value)
+      add_custom_stat(stats, { "turret-xp.stat-range-augment" }, value)
     end
 
     for _, element_id in ipairs(get_unique_active_element_ids(state)) do
@@ -877,9 +856,10 @@ return function(M)
       end
     end
 
+    local evolution = ensure_evolution_state(state)
     local combo = get_combo_caption(state)
-    if combo and combo ~= "No combo yet" then
-      add_custom_stat(stats, "Element combo", combo)
+    if combo and evolution.elements[1] and evolution.elements[2] then
+      add_custom_stat(stats, { "turret-xp.stat-element-combo" }, combo)
     end
   end
 
@@ -1037,21 +1017,7 @@ return function(M)
   end
 
   function add_summary_label(parent, title, value, value_color)
-    local caption = {
-      "",
-      rich_color("1,1,1", title .. ":"),
-      " ",
-      rich_color(value_color or "0.58,0.82,0.38", value),
-    }
-    local label = parent.add({
-      type = "label",
-      caption = caption,
-      style = "caption_label",
-    })
-    set_style(label, "font_color", COLOR.muted)
-    set_style(label, "single_line", true)
-    set_style(label, "left_margin", 8)
-    return label
+    return get_gui_components_service().add_summary_label(parent, title, value, value_color)
   end
 
   function update_evolution_summary(panel, state)
@@ -1064,7 +1030,7 @@ return function(M)
 
     local label = header.add({
       type = "label",
-      caption = "Evolution",
+      caption = { "turret-xp.evolution-title" },
       style = "heading_2_label",
     })
     set_style(label, "font", "default-bold")
@@ -1075,7 +1041,7 @@ return function(M)
     })
 
     if not state then
-      add_summary_label(header, "Core", "None", "0.74,0.74,0.74")
+      add_summary_label(header, { "turret-xp.evolution-summary-core" }, { "turret-xp.evolution-summary-none" }, "0.74,0.74,0.74")
       return
     end
 
@@ -1086,14 +1052,19 @@ return function(M)
     if specialization and sub_specialization then
       specialization_caption = specialization.name .. "/" .. sub_specialization.name
     end
-    add_summary_label(header, "Core", tostring(get_available_skill_points(state)), "0.58,0.82,0.38")
-    add_summary_label(header, "Aug", tostring(get_available_augment_points(state)), "0.35,0.75,1")
-    add_summary_label(header, "Spec", specialization_caption, specialization and "1,0.86,0.46" or "0.74,0.74,0.74")
+    add_summary_label(header, { "turret-xp.evolution-summary-core" }, tostring(get_available_skill_points(state)), "0.58,0.82,0.38")
+    add_summary_label(header, { "turret-xp.evolution-summary-aug" }, tostring(get_available_augment_points(state)), "0.35,0.75,1")
+    add_summary_label(
+      header,
+      { "turret-xp.evolution-summary-spec" },
+      specialization_caption,
+      specialization and "1,0.86,0.46" or "0.74,0.74,0.74"
+    )
 
     local reset = header.add({
       type = "button",
-      caption = "Reset",
-      tooltip = "Reset all Evolution choices and refund core and augment ranks. XP, level, combat history, name, and binding are kept.",
+      caption = { "turret-xp.evolution-reset" },
+      tooltip = { "turret-xp.evolution-reset-tooltip" },
       tags = {
         turret_xp_action = "reset-evolution",
       },
@@ -1103,91 +1074,16 @@ return function(M)
   end
 
   function add_section(parent, title, unlocked, gate_level, right_caption, action_caption, action_tags, action_tooltip, action_enabled)
-    local section = parent.add({
-      type = "frame",
-      direction = "vertical",
-      style = "deep_frame_in_shallow_frame",
+    return get_gui_components_service().add_evolution_section(parent, {
+      title = title,
+      unlocked = unlocked,
+      locked_caption = { "turret-xp.evolution-unlocks-at-level", gate_level },
+      right_caption = right_caption,
+      action_caption = action_caption,
+      action_tags = action_tags,
+      action_tooltip = action_tooltip,
+      action_enabled = action_enabled,
     })
-    set_evolution_content_width(section)
-    set_style(section, "top_margin", 6)
-    set_style(section, "bottom_margin", 6)
-    set_style(section, "left_margin", LAYOUT.evolution_section_margin)
-    set_style(section, "right_margin", LAYOUT.evolution_section_margin)
-    set_style(section, "padding", { 6, 6, 6, 6 })
-
-    if not unlocked then
-      set_style(section, "height", 70)
-      set_style(section, "vertical_align", "center")
-      local locked = section.add({
-        type = "label",
-        caption = "Unlocks at level " .. tostring(gate_level),
-        style = "caption_label",
-      })
-      set_style(locked, "font", "default-bold")
-      set_style(locked, "horizontally_stretchable", true)
-      set_style(locked, "horizontal_align", "center")
-      return section
-    end
-
-    if not title or title == "" then
-      return section
-    end
-
-    local header = section.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_evolution_content_width(header, true)
-    set_style(header, "horizontally_stretchable", true)
-    set_style(header, "vertical_align", "center")
-    set_style(header, "bottom_margin", 6)
-
-    local title_label = header.add({
-      type = "label",
-      caption = title,
-      style = "caption_label",
-    })
-    set_style(title_label, "font", "default-bold")
-
-    header.add({
-      type = "empty-widget",
-      style = "flib_horizontal_pusher",
-    })
-
-    if right_caption and right_caption ~= "" and not action_caption then
-      local right = header.add({
-        type = "label",
-        caption = right_caption,
-        style = "caption_label",
-      })
-      set_style(right, "font_color", COLOR.muted)
-      set_style(right, "right_margin", action_caption and 6 or 0)
-    end
-
-    if action_caption and action_tags then
-      local button = header.add({
-        type = "button",
-        caption = action_caption,
-        tooltip = action_tooltip,
-        enabled = action_enabled ~= false,
-        tags = action_tags,
-      })
-      set_style(button, "minimal_width", 56)
-    end
-
-    if right_caption and right_caption ~= "" and action_caption then
-      local right = section.add({
-        type = "label",
-        caption = right_caption,
-        style = "caption_label",
-      })
-      set_style(right, "font_color", COLOR.muted)
-      set_style(right, "single_line", false)
-      set_style(right, "maximal_width", LAYOUT.evolution_inner_width)
-      set_style(right, "top_margin", 2)
-    end
-
-    return section
   end
 
   function specialization_value_caption(specialization)
@@ -1306,82 +1202,11 @@ return function(M)
   end
 
   function add_choice_delimiter(parent)
-    local delimiter = parent.add({
-      type = "line",
-      direction = "horizontal",
-    })
-    set_style(delimiter, "horizontally_stretchable", true)
-    set_style(delimiter, "top_margin", 4)
-    set_style(delimiter, "bottom_margin", 4)
-    return delimiter
+    return get_gui_components_service().add_choice_delimiter(parent)
   end
 
   function add_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name)
-    local row_definition = {
-      type = "table",
-      column_count = 3,
-    }
-    if row_name then
-      row_definition.name = row_name
-    end
-    local row = parent.add(row_definition)
-    set_evolution_content_width(row, true)
-    set_style(row, "horizontal_spacing", 8)
-    set_style(row, "vertical_spacing", 2)
-    pcall(function()
-      row.style.column_alignments[1] = "left"
-      row.style.column_alignments[2] = "left"
-      row.style.column_alignments[3] = "right"
-    end)
-
-    local icon = row.add({
-      type = "sprite",
-      sprite = sprite,
-    })
-    set_style(icon, "size", 28)
-
-    local details = row.add({
-      type = "flow",
-      direction = "vertical",
-    })
-    set_style(details, "horizontally_stretchable", true)
-
-    local title = details.add({
-      type = "label",
-      caption = name,
-      style = "caption_label",
-    })
-    set_style(title, "font", "default-bold")
-
-    if detail and detail ~= "" then
-      local desc = details.add({
-        type = "label",
-        caption = detail,
-        style = "caption_label",
-      })
-      set_style(desc, "font_color", COLOR.muted)
-      set_style(desc, "single_line", false)
-      set_style(desc, "maximal_width", LAYOUT.evolution_detail_width)
-    end
-
-    if tags then
-      local button = row.add({
-        type = "button",
-        caption = right_caption,
-        tags = tags,
-        enabled = enabled,
-      })
-      set_style(button, "minimal_width", 72)
-      return button
-    end
-
-    local value = row.add({
-      type = "label",
-      caption = right_caption or "",
-      style = "caption_label",
-    })
-    set_style(value, "font_color", COLOR.muted)
-    return value
+    return get_gui_components_service().add_choice_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name)
   end
 
   function add_element_choice_card(parent, element, state, slot)
@@ -1427,7 +1252,7 @@ return function(M)
 
     local effect = row.add({
       type = "label",
-      caption = { "", "[color=0.58,0.82,0.38]Effect:[/color] ", get_element_effect_summary_for_rank(state, element.id, 1, true) or "" },
+      caption = { "turret-xp.element-card-effect", get_element_effect_summary_for_rank(state, element.id, 1, true) or "" },
       style = "caption_label",
     })
     set_card_text_width(effect)
@@ -1451,7 +1276,7 @@ return function(M)
 
     local cost = cost_row.add({
       type = "label",
-      caption = { "", "[color=0.74,0.74,0.74]Unlock:[/color] ", rich_number("Free") },
+      caption = { "turret-xp.element-card-unlock", { "turret-xp.element-unlock-free" } },
       style = "caption_label",
     })
     set_style(cost, "single_line", false)
@@ -1460,7 +1285,7 @@ return function(M)
 
     local start = cost_row.add({
       type = "button",
-      caption = "Pick",
+      caption = { "turret-xp.evolution-action-pick" },
       tags = {
         turret_xp_action = "start-element",
         element = element.id,
@@ -1475,7 +1300,7 @@ return function(M)
     if slot == 2 and evolution.elements[1] then
       local combo = row.add({
         type = "label",
-        caption = { "", "[color=0.35,0.75,1]Combo:[/color] ", get_combo_caption_for_pair(evolution.elements[1], element.id) },
+        caption = { "turret-xp.element-card-combo", get_combo_caption_for_pair(evolution.elements[1], element.id) },
         style = "caption_label",
       })
       set_card_text_width(combo)
@@ -1830,7 +1655,7 @@ return function(M)
 
     local title = labels.add({
       type = "label",
-      caption = element.name .. " rank " .. tostring(mastery_rank),
+      caption = { "turret-xp.element-rank-title", element.name, mastery_rank },
       style = "caption_label",
     })
     set_style(title, "font", "default-bold")
@@ -1855,17 +1680,12 @@ return function(M)
     local requirement_label = control_row.add({
       type = "label",
       caption = element_requirement and {
-        "",
-        "[item=",
+        "turret-xp.element-rank-progress",
         element_requirement.name,
-        "] ",
-        "Rank ",
-        tostring(next_rank),
-        ": ",
+        next_rank,
         rich_number(format_number(delivered, 0)),
-        " / ",
         rich_number(format_number(required, 0)),
-      } or "No material requirement.",
+      } or { "turret-xp.element-rank-no-requirement" },
       style = "caption_label",
     })
     set_style(requirement_label, "font_color", COLOR.muted)
@@ -1893,24 +1713,24 @@ return function(M)
 
   get_combo_caption_for_pair = function(first, second)
     if not first or not second then
-      return "No combo yet"
+      return { "turret-xp.combo-none" }
     end
 
     if first == second then
-      return "Pure " .. element_name(first) .. ": stronger " .. string.lower(element_name(first)) .. " effects"
+      return { "turret-xp.combo-pure", element_name(first), string.lower(element_name(first)) }
     end
 
     local key = first < second and (first .. "+" .. second) or (second .. "+" .. first)
     local combos = {
-      ["electric+fire"] = "Stormfire: arcs can add burn damage",
-      ["electric+explosive"] = "Shockburst: explosive splashes arc to one target",
-      ["explosive+fire"] = "Incendiary burst: explosive splashes add fire damage",
-      ["fire+toxic"] = "Choking flame: burns and poison stacks reinforce damage over time",
-      ["electric+toxic"] = "Neuroshock: electric arcs can carry toxic slow",
-      ["explosive+toxic"] = "Contaminated blast: splash spreads toxic stacks",
+      ["electric+fire"] = { "turret-xp.combo-stormfire" },
+      ["electric+explosive"] = { "turret-xp.combo-shockburst" },
+      ["explosive+fire"] = { "turret-xp.combo-incendiary" },
+      ["fire+toxic"] = { "turret-xp.combo-choking" },
+      ["electric+toxic"] = { "turret-xp.combo-neuroshock" },
+      ["explosive+toxic"] = { "turret-xp.combo-contaminated" },
     }
 
-    return combos[key] or (element_name(first) .. " + " .. element_name(second))
+    return combos[key] or { "turret-xp.combo-generic", element_name(first), element_name(second) }
   end
 
   function rich_color(color, text)
@@ -1997,7 +1817,7 @@ return function(M)
 
   function add_base_section(parent, state)
     local available = get_available_skill_points(state)
-    local section = add_section(parent, "Core upgrades", true, nil, nil, nil, nil, nil)
+    local section = add_section(parent, { "turret-xp.section-core-upgrades" }, true, nil, nil, nil, nil, nil)
 
     for index, upgrade in ipairs(BASE_UPGRADES) do
       if index > 1 then
@@ -2029,11 +1849,12 @@ return function(M)
     local unlocked = has_level(state, GATES.first_element)
     local evolution = ensure_evolution_state(state)
     local has_element = evolution.elements[1] ~= nil
-    local section =
-      add_section(parent, "First element", unlocked, GATES.first_element, nil, has_element and "Change" or nil, has_element and {
-        turret_xp_action = "reset-element-slot",
-        slot = 1,
-      } or nil, "Clear the first element so another one can be picked. This also clears the second element and their element ranks.")
+    local section = add_section(parent, { "turret-xp.section-first-element" }, unlocked, GATES.first_element, nil, has_element and {
+      "turret-xp.evolution-action-change",
+    } or nil, has_element and {
+      turret_xp_action = "reset-element-slot",
+      slot = 1,
+    } or nil, { "turret-xp.first-element-reset-tooltip" })
     if unlocked then
       add_element_choices(section, state, 1)
     end
@@ -2112,7 +1933,7 @@ return function(M)
 
     local button = value_row.add({
       type = "button",
-      caption = "Pick",
+      caption = { "turret-xp.evolution-action-pick" },
       tags = {
         turret_xp_action = "choose-specialization",
         specialization = specialization.id,
@@ -2128,15 +1949,15 @@ return function(M)
     local evolution = ensure_evolution_state(state)
     local section = add_section(
       parent,
-      "Specialization",
+      { "turret-xp.section-specialization" },
       unlocked,
       GATES.specialization,
       nil,
-      evolution.specialization and "Change" or nil,
+      evolution.specialization and { "turret-xp.evolution-action-change" } or nil,
       evolution.specialization and {
         turret_xp_action = "reset-specialization",
       } or nil,
-      "Clear the current specialization so another one can be picked."
+      { "turret-xp.specialization-reset-tooltip" }
     )
     if not unlocked then
       return
@@ -2229,7 +2050,7 @@ return function(M)
 
     local button = value_row.add({
       type = "button",
-      caption = "Pick",
+      caption = { "turret-xp.evolution-action-pick" },
       tags = {
         turret_xp_action = "choose-sub-specialization",
         sub_specialization = sub_specialization.id,
@@ -2245,15 +2066,15 @@ return function(M)
     local evolution = ensure_evolution_state(state)
     local section = add_section(
       parent,
-      "Sub-specialization",
+      { "turret-xp.section-sub-specialization" },
       unlocked,
       GATES.sub_specialization,
       nil,
-      evolution.sub_specialization and "Change" or nil,
+      evolution.sub_specialization and { "turret-xp.evolution-action-change" } or nil,
       evolution.sub_specialization and {
         turret_xp_action = "reset-sub-specialization",
       } or nil,
-      "Clear the current sub-specialization so another one can be picked."
+      { "turret-xp.sub-specialization-reset-tooltip" }
     )
     if not unlocked then
       return
@@ -2262,7 +2083,7 @@ return function(M)
     if not evolution.specialization then
       local label = section.add({
         type = "label",
-        caption = "Pick a specialization before choosing a branch.",
+        caption = { "turret-xp.sub-specialization-needs-specialization" },
         style = "caption_label",
       })
       set_style(label, "font_color", COLOR.muted)
@@ -2291,7 +2112,7 @@ return function(M)
   function add_augments_section(parent, state)
     local unlocked = has_level(state, GATES.augments)
     local available = get_available_augment_points(state)
-    local section = add_section(parent, "Augments", unlocked, GATES.augments, nil, nil, nil, nil)
+    local section = add_section(parent, { "turret-xp.section-augments" }, unlocked, GATES.augments, nil, nil, nil, nil)
     if not unlocked then
       return
     end
@@ -2310,11 +2131,12 @@ return function(M)
     local unlocked = has_level(state, GATES.second_element)
     local evolution = ensure_evolution_state(state)
     local has_element = evolution.elements[2] ~= nil
-    local section =
-      add_section(parent, "Second element", unlocked, GATES.second_element, nil, has_element and "Change" or nil, has_element and {
-        turret_xp_action = "reset-element-slot",
-        slot = 2,
-      } or nil, "Clear the second element so another one can be picked.")
+    local section = add_section(parent, { "turret-xp.section-second-element" }, unlocked, GATES.second_element, nil, has_element and {
+      "turret-xp.evolution-action-change",
+    } or nil, has_element and {
+      turret_xp_action = "reset-element-slot",
+      slot = 2,
+    } or nil, { "turret-xp.second-element-reset-tooltip" })
     if not unlocked then
       return
     end
@@ -2322,7 +2144,7 @@ return function(M)
     if not evolution.elements[1] then
       local label = section.add({
         type = "label",
-        caption = "Unlock the first element before starting the second.",
+        caption = { "turret-xp.second-element-needs-first" },
         style = "caption_label",
       })
       set_style(label, "font_color", COLOR.muted)
@@ -2336,7 +2158,7 @@ return function(M)
     local combo = section.add({
       type = "label",
       name = GUI.active_combo,
-      caption = "Combo: " .. get_combo_caption(state),
+      caption = { "turret-xp.active-combo", get_combo_caption(state) },
       style = "caption_label",
     })
     set_style(combo, "font", "default-bold")
