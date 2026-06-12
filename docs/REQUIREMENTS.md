@@ -87,7 +87,7 @@
 - Preserve Evolution list context after point allocation so the panel does not jump back to the top, and prevent GUI refreshes from resizing the attached panel in ways that move the vanilla turret GUI.
 - Keep the attached two-column panel narrow enough for normal play, and ensure Evolution content wraps or shrinks inside the scroll pane instead of rendering under the scrollbar.
 - Derive Evolution section, row, and text widths from one right-column viewport model so fixed controls and labels reserve scrollbar space consistently.
-- Clearly state that V0.9.x evolution effects are early draft effects, not final balance.
+- Clearly state in playtest-facing guidance that current evolution effects still need balance and readability feedback.
 - Electric visual feedback must expire automatically and must not leave beam or arc entities on the map after combat.
 - Critical hits, double shots, bounce, and elemental procs should have readable visual feedback when possible, preferring optional Bullet Trails entities and vanilla visual prototypes with safe fallbacks.
 - Fire and Toxic damage-over-time ticks must count as turret damage for XP, kill credit contribution, and lifesteal.

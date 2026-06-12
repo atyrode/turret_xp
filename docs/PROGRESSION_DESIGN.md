@@ -2,7 +2,7 @@
 
 This document captures the intended long-term gameplay direction for turret XP, evolution, perks, material investment, elemental specialization, and infinite scaling. It is design direction only; it should not be read as a committed implementation spec.
 
-The current playable draft uses a simple level-gated Evolution list instead of a navigable skill tree. V0.10.0 has six sections: core upgrades, specialization, first element, augments, sub-specialization, and second element/combo.
+The current playable draft uses a simple level-gated Evolution list instead of a navigable skill tree. The V0.10.x line has six sections: core upgrades, specialization, first element, augments, sub-specialization, and second element/combo.
 
 ## Core Fantasy
 
@@ -93,7 +93,7 @@ Infinite upgrades should use diminishing returns, soft caps, or escalating mater
 
 ## Future Tree Shape
 
-If the mod returns to a tree later, it should be a navigable map, not a flat list. This is deferred while V0.4.x tests whether the underlying upgrade categories are fun.
+If the mod returns to a tree later, it should be a navigable map, not a flat list. This remains deferred while the current list-based Evolution model is playtested.
 
 Recommended structure:
 
@@ -304,14 +304,12 @@ The preferred design is a **turret investment ledger**.
 
 The player opens the turret and sees material goals attached to locked nodes or branch gates. Supplying materials fills those goals. Once a goal is complete, the unlock stays permanently on that turret.
 
-Possible delivery approaches:
+Current and possible delivery approaches:
 
-- Direct deposit through the Turret XP GUI.
-- Later: logistic request integration or clearer machine-style input behavior if the hidden turret-tile proxy is not readable enough.
-- Later: construction-bot delivery for large upgrade projects.
+- Current: a hidden turret-tile input with managed inserter targets and filters.
+- Possible fallback or complement: clearer visible machine-style input if the hidden proxy is not readable enough.
+- Later: logistic request integration or construction-bot delivery for large upgrade projects.
 - Later: blueprint or copy-paste support for desired upgrade plans.
-
-The first implementation can be manual and explicit. Automation can come later after the material economy feels right.
 
 Material gates should be used for:
 
@@ -326,7 +324,7 @@ Skill points and materials should both matter. A turret with XP but no materials
 
 ## Portable Veteran Core
 
-Turret progression should be movable, but not for free. V0.4.1 implements the first draft of this model, V0.4.2 makes specialization stats travel with the core by swapping the current turret body, V0.4.3 adds a feeder inventory so material progression is supplied like machine input, V0.4.6 hides that input on the turret tile while forwarding ammo back into the turret, V0.7.2 adds optional bound turret quick moves, V0.10.2 uses the hidden input for passive element rank progress rather than ongoing element fuel or manually started projects, and V0.10.3 hardens bound turret ammo conservation during quick moves.
+Turret progression should be movable, but not for free. The chosen model is a craftable non-stackable Veteran Core that carries a turret's progression profile and can move between turret bodies. Specialization and real stat changes follow the core by swapping the current turret body to the correct hidden variant. Element material progress uses the hidden turret-tile input, and optional bound turret quick moves let the player mine/place one tagged turret/core item when that convenience is worth the inventory uniqueness.
 
 The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. By default, when the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret. If the player explicitly binds the installed core to the turret body, mining instead returns one tagged bound turret item for faster world movement. Unbinding returns to the default separate core/turret behavior.
 
@@ -377,16 +375,12 @@ Implemented first pass:
 - Consumes matching materials into passive element rank progress from the hidden feeder inventory and forwards ammo stacks into the turret ammo inventory.
 - Destroys the feeder and spills leftover contents when the core is removed or the turret is mined.
 
-Open design questions:
+Open Veteran Core questions:
 
-- Should the core recipe include a gun turret, or should it stay as a pure electronics/repair component?
-- Should installing a core be reversible before the turret earns XP?
 - Should a core bind to one force or remain tradable between players/forces?
-- Should the core carry ammo/project/material-project progress, or only XP and evolution?
 - Does the hidden turret-tile input feel reliable and readable enough, or should a future design expose a clearer visible machine input?
 - Should quality on the core affect XP gain, memory capacity, element slots, or respec cost?
 - Should destroyed turrets always destroy the installed core, drop a damaged core, or have a recovery chance?
-- Should floating labels be always visible, alt-mode only, or configurable?
 
 ## Example Player Loop
 
@@ -414,12 +408,10 @@ Open design questions:
 
 ## Open Questions
 
-- Should turret XP and upgrades survive mining, and if so, should they transfer through item tags or a separate recovery mechanic?
-- Should element choices be permanent, expensive to reset, or freely swappable during early playtests?
-- Should material investment be per turret only, or should some gates be force-wide once discovered?
-- Should material delivery be manual-only at first, or should the first version include logistic integration?
-- Which damage types should ship first for vanilla gun turrets: kinetic, fire, electric, acid, explosive, poison, or a smaller subset?
+- Should material investment stay per turret only, or should some late gates become force-wide once discovered?
+- Should Acid, Kinetic, or other elements join the implemented Fire/Electric/Explosive/Toxic set?
 - How much should modded ammo influence available elemental paths?
 - Should infinite mastery consume only materials, only XP, or both?
-- How much should nearby support or aura behavior exist, given performance and readability constraints?
+- How much nearby support or aura behavior can exist without hurting performance and readability?
 - Should self-damage overdrive be manually toggled, automatically triggered by conditions, or represented as passive always-on risk?
+- Should respec remain free during playtesting, gain a cost, or become partly permanent once balance stabilizes?
