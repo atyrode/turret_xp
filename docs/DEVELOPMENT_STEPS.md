@@ -18,8 +18,10 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - `main` is protected through pull requests and selected required status checks.
 - The private `turret_xp_test` remote interface is gated to the headless companion test mod and checked by a separate production-policy smoke test.
 - Runtime code has been split into focused modules under `scripts/control/`, with explicit helper modules for bound turret item handling, damage accounting, combat effect budgets, GUI support/components, Factorio API compatibility, and label color matching.
+- Runtime config ownership is split so `config.lua` wires domain aliases plus progression definitions, GUI constants, and runtime constants from explicit returned-table modules instead of carrying all constants directly.
 - Data-stage prototype creation is split under `prototypes/`, with entrypoints kept small.
 - `scripts/domain.lua` owns shared stable gameplay IDs, caps, specialization data, label presets, and generated variant-name helpers across data stage, runtime, and tests.
+- Data-stage prototype generation now uses `scripts/domain.lua` for shared base turret and Turret XP body naming in turret variants, bound placeholders, bound previews, and ammo range compatibility.
 - Lua formatting and linting are enforced through StyLua, Luacheck, Lua 5.2 syntax checks, CI, and the local Docker Compose tooling path.
 - The headless suite covers the current hidden prototype budget, bound turret movement and ammo conservation, modded base turret range inheritance, turret-source projectile ammo range compatibility, damage accounting, combat effect descriptor/budget samples, GUI helper samples, compatibility helper samples, feeder routing, passive element progress, Shield, Resistance, Ammo Productivity, status damage, and gated remote policy.
 - The invisible feeder remains the accepted material-input model and is documented as a narrow contract with headless coverage for lifecycle, ownership cleanup, source-aware filter priority, no-source non-management, restoration, ammo forwarding, wrong-item cleanup, mixed-element requests, and passive material progress.

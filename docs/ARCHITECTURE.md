@@ -7,7 +7,7 @@
 - `changelog.txt`: canonical Factorio-compatible release history.
 - `control.lua`: runtime entrypoint that loads modules from `scripts/control/`.
 - `scripts/domain.lua`: pure shared gameplay domain definitions and variant-name helpers used by data stage, runtime, and headless tests.
-- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and explicit helper modules such as Factorio API compatibility, label-color matching, bound turret item handling, migration compatibility, damage accounting, combat effect budgets, generic GUI support, and reusable GUI components.
+- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and explicit helper modules such as Factorio API compatibility, label-color matching, bound turret item handling, migration compatibility, damage accounting, combat effect budgets, progression definitions, runtime constants, GUI constants, generic GUI support, and reusable GUI components.
 - `data.lua`: data-stage entrypoint that loads prototype modules from `prototypes/`.
 - `data-final-fixes.lua`: final-fixes entrypoint that loads hidden turret variant generation from `prototypes/`.
 - `prototypes/`: data-stage modules for names, items, bound-turret placeholder and preview variants, feeder, label panels, styles, effects, and turret variants.
@@ -239,7 +239,7 @@ Managed inserters are also intentionally narrow:
 ## Boundaries
 
 - Runtime state remains under `storage.turret_xp`; modules must not create separate save roots for core gameplay state.
-- `control.lua` should stay a small loader. New runtime work belongs in the owning module under `scripts/control/`. Stable gameplay IDs, progression caps, specialization definitions, label presets, and generated variant names belong in `scripts/domain.lua`; runtime-only GUI layout and event behavior stay in runtime modules.
+- `control.lua` should stay a small loader. New runtime work belongs in the owning module under `scripts/control/`. Stable gameplay IDs, progression caps, specialization definitions, label presets, and generated variant names belong in `scripts/domain.lua`; current runtime progression definitions belong in `scripts/control/progression_definitions.lua`; runtime-only GUI identifiers, layout, and colors belong in `scripts/control/gui_constants.lua`; event/combat/feeder timing and budget constants belong in `scripts/control/runtime_constants.lua`.
 - Save/profile compatibility for Mod Portal-published versions belongs in named migration helpers or Factorio `migrations/` files when appropriate. Tagged Veteran Core and bound turret items still require runtime normalization because old profile shapes can live in item tags outside live `storage`.
 - New pure helper groups should prefer explicit returned-table modules required directly by their callers. Existing `_ENV`/`M` exports can remain during incremental migration, but new helpers should not add hidden dependencies to the shared runtime environment unless they are part of a deliberately broad subsystem boundary.
 - Bound turret item/tag behavior belongs in `scripts/control/bound_turret_items.lua`; live profile installation, detachment, and entity replacement should call that module rather than duplicating tag or mining-buffer logic.

@@ -532,6 +532,10 @@ return function(M)
       return turret_xp_test_profile_summary(deserialize_profile(data))
     end,
 
+    serialize_profile_snapshot = function(fields)
+      return serialize_profile(fields)
+    end,
+
     set_evolution = function(entity, fields)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
