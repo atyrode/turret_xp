@@ -7,7 +7,7 @@
 - `changelog.txt`: canonical Factorio-compatible release history.
 - `control.lua`: runtime entrypoint that loads modules from `scripts/control/`.
 - `scripts/domain.lua`: pure shared gameplay domain definitions and variant-name helpers used by data stage, runtime, and headless tests.
-- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and explicit helper modules such as Factorio API compatibility, label-color matching, bound turret item handling, migration compatibility, damage accounting, combat effect budgets, generic GUI support, and reusable GUI components.
+- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and explicit helper modules such as Factorio API compatibility, label-color matching, bound turret item handling, migration compatibility, damage accounting, combat effect budgets, progression definitions, runtime constants, GUI constants, generic GUI support, and reusable GUI components.
 - `data.lua`: data-stage entrypoint that loads prototype modules from `prototypes/`.
 - `data-final-fixes.lua`: final-fixes entrypoint that loads hidden turret variant generation from `prototypes/`.
 - `prototypes/`: data-stage modules for names, items, bound-turret placeholder and preview variants, feeder, styles, effects, and turret variants.
@@ -205,8 +205,10 @@ storage.turret_xp = {
 - `on_built_entity`, `on_robot_built_entity`, and `on_space_platform_built_entity`, when available: restore bound veteran turret profiles from tagged placeable turret items after converting the bound-only placeholder into a real gun turret.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined unbound gun turrets, or snapshot bound turrets for mining-buffer replacement while leaving the bound profile attached until conversion.
 - `on_player_mined_entity`, `on_robot_mined_entity`, and `on_space_platform_mined_entity`, when available: complete bound turret mining-buffer replacement or return/spill installed Veteran Cores for platform-mined unbound gun turrets.
+- Entity lifecycle registrations use Factorio name filters for known gun-turret bodies and bound placeholders where that does not reduce behavior coverage. Damage and death handlers stay broadly registered because they also account enemy damage and kill-credit events.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI. The attached panel is a fixed-width two-column layout: core, XP, dev controls, and scrollable stats on the left; a shallow Evolution content pane with a static summary header and one bounded scrollable section body on the right.
 - `on_gui_closed`: remove the panel.
+- GUI click routing is table-driven in `events.lua`. Mutations that follow the common opened-turret lookup, state mutation, and GUI refresh flow should use the `opened_turret_action` helper in `actions.lua` instead of repeating that transaction shape.
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open.
 - Runtime label render objects: draw optional chip-carried labels above currently installed turret bodies as `name (lvl N)`. Preset colors and RGB slider colors are stored on the Veteran Core profile and applied directly through `rendering.draw_text`; stale display-panel label entities from older saves are destroyed the next time the label updates.
 - `/turret-xp`: fallback command for opening the selected turret's GUI/panel.
@@ -238,7 +240,7 @@ Managed inserters are also intentionally narrow:
 ## Boundaries
 
 - Runtime state remains under `storage.turret_xp`; modules must not create separate save roots for core gameplay state.
-- `control.lua` should stay a small loader. New runtime work belongs in the owning module under `scripts/control/`. Stable gameplay IDs, progression caps, specialization definitions, label presets, and generated variant names belong in `scripts/domain.lua`; runtime-only GUI layout and event behavior stay in runtime modules.
+- `control.lua` should stay a small loader. New runtime work belongs in the owning module under `scripts/control/`. Stable gameplay IDs, progression caps, specialization definitions, label presets, and generated variant names belong in `scripts/domain.lua`; current runtime progression definitions belong in `scripts/control/progression_definitions.lua`; runtime-only GUI identifiers, layout, and colors belong in `scripts/control/gui_constants.lua`; event/combat/feeder timing and budget constants belong in `scripts/control/runtime_constants.lua`.
 - Save/profile compatibility for Mod Portal-published versions belongs in named migration helpers or Factorio `migrations/` files when appropriate. Tagged Veteran Core and bound turret items still require runtime normalization because old profile shapes can live in item tags outside live `storage`.
 - New pure helper groups should prefer explicit returned-table modules required directly by their callers. Existing `_ENV`/`M` exports can remain during incremental migration, but new helpers should not add hidden dependencies to the shared runtime environment unless they are part of a deliberately broad subsystem boundary.
 - Bound turret item/tag behavior belongs in `scripts/control/bound_turret_items.lua`; live profile installation, detachment, and entity replacement should call that module rather than duplicating tag or mining-buffer logic.

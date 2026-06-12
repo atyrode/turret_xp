@@ -196,6 +196,24 @@ local function run_profile_label_test(surface)
   assert_true(summary.name_render_valid, "stale label cleanup did not leave a render object label")
 end
 
+local function run_gui_action_dispatch_test(surface)
+  local turret = create_turret(surface, { 4, 0 }, 10)
+  local summary = call("install_core", turret, {
+    custom_name = "Dispatch",
+    show_name_label = true,
+    label_color = { 1, 0.86, 0.46 },
+    label_color_preset = "gold",
+  })
+  assert_true(summary ~= nil, "failed to install core for GUI action dispatch test")
+
+  summary = call("dispatch_cycle_label_color", turret)
+  assert_true(summary ~= nil, "GUI action dispatch did not return a turret summary")
+  assert_eq(summary.label_color_preset, "white", "GUI action dispatch did not cycle the label color preset")
+  assert_eq(summary.label_color[1], 1, "GUI action dispatch changed the red label channel unexpectedly")
+  assert_eq(summary.label_color[2], 1, "GUI action dispatch did not update the green label channel")
+  assert_eq(summary.label_color[3], 1, "GUI action dispatch did not update the blue label channel")
+end
+
 local function run_evolution_body_test(surface)
   local turret = create_turret(surface, { 8, 0 }, 20)
   call("install_core", turret, { level = 40 })
@@ -573,7 +591,8 @@ local function run_legacy_migration_test()
     evolution = {},
   })
   assert_eq(skills.evolution.base.damage, 2, "legacy Ballistics skill did not migrate into Damage")
-  assert_eq(skills.evolution.base.xp, 7, "legacy XP skills did not migrate into Veteran Training")
+  assert_eq(skills.evolution.base.xp, nil, "legacy XP skills left a dead base XP rank")
+  assert_eq(skills.evolution.augments.veteran_training, 7, "legacy XP skills did not migrate into Veteran Training")
   assert_eq(skills.evolution.augments.repair, 1, "legacy Field Repairs skill did not migrate into Regeneration")
   assert_eq(skills.evolution.migrated_legacy_skills, true, "legacy skill migration was not marked complete")
 
@@ -591,8 +610,22 @@ local function run_legacy_migration_test()
     },
   })
   assert_eq(skills_again.evolution.base.damage, 2, "legacy skill migration was not idempotent for Damage")
-  assert_eq(skills_again.evolution.base.xp, 7, "legacy skill migration was not idempotent for Veteran Training")
+  assert_eq(skills_again.evolution.base.xp, nil, "legacy XP base rank persisted after idempotent migration")
+  assert_eq(skills_again.evolution.augments.veteran_training, 7, "legacy skill migration was not idempotent for Veteran Training")
   assert_eq(skills_again.evolution.augments.repair, 1, "legacy skill migration was not idempotent for Regeneration")
+
+  local legacy_base_xp = call("normalize_profile_snapshot", {
+    evolution = {
+      base = {
+        xp = 4,
+      },
+      augments = {
+        veteran_training = 2,
+      },
+    },
+  })
+  assert_eq(legacy_base_xp.evolution.base.xp, nil, "legacy base XP rank was not removed")
+  assert_eq(legacy_base_xp.evolution.augments.veteran_training, 6, "legacy base XP rank was not moved to Veteran Training")
 
   local moved_base = call("normalize_profile_snapshot", {
     evolution = {
@@ -730,6 +763,29 @@ local function run_legacy_migration_test()
     },
   })
   assert_eq(invalid_project.evolution.element_project, nil, "invalid legacy project value was not removed")
+
+  local serialized = call("serialize_profile_snapshot", {
+    skills = {
+      kill_chain = 2,
+      targeting_data = 1,
+    },
+    evolution = {
+      base = {
+        xp = 4,
+      },
+      element_project = {
+        slot = 1,
+        element = "fire",
+        target_rank = 1,
+        delivered = {},
+        requirements = {},
+      },
+    },
+  })
+  assert_eq(serialized.skills, nil, "serialized current profile should not include legacy skills")
+  assert_eq(serialized.evolution.base.xp, nil, "serialized current profile should not include legacy base XP")
+  assert_eq(serialized.evolution.augments.veteran_training, 7, "serialized profile lost legacy XP conversion")
+  assert_eq(serialized.evolution.element_project, nil, "serialized current profile should not include legacy element project")
 end
 
 local function create_source_chest(surface, position, item_name)
@@ -1509,6 +1565,7 @@ local function run_immediate_tests()
   run_prototype_budget_test()
   run_place_result_regression_test()
   run_profile_label_test(surface)
+  run_gui_action_dispatch_test(surface)
   run_modded_base_range_variant_test(surface)
   run_turret_ammo_range_compat_test()
   run_level_zero_points_test(surface)

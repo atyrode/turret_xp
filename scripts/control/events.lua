@@ -95,6 +95,37 @@ return function(M)
 
   handlers = {}
 
+  local function name_filter(name)
+    return {
+      filter = "name",
+      name = name,
+    }
+  end
+
+  local function gun_turret_event_filters()
+    local filters = {
+      name_filter(BASE_TURRET_NAME),
+    }
+
+    DOMAIN.for_each_specialized_turret_name(function(name)
+      filters[#filters + 1] = name_filter(name)
+    end)
+
+    return filters
+  end
+
+  local function bound_placeholder_event_filters()
+    local filters = {
+      name_filter(BOUND_TURRET_PLACEHOLDER_NAME),
+    }
+
+    DOMAIN.for_each_bound_turret_variant(function(variant_id)
+      filters[#filters + 1] = name_filter(DOMAIN.bound_turret_placeholder_name(variant_id))
+    end)
+
+    return filters
+  end
+
   function handlers.on_gui_opened(event)
     local player = game.get_player(event.player_index)
     if not player then
@@ -128,6 +159,96 @@ return function(M)
     end
   end
 
+  local gui_click_dispatch = {
+    ["core-slot"] = function(player, event)
+      handle_core_slot_click(player, event)
+    end,
+    ["install-core"] = function(player)
+      install_core(player)
+    end,
+    ["extract-core"] = function(player)
+      extract_core(player)
+    end,
+    ["platform-install-core"] = function(player, event, tags)
+      install_core_from_platform(player, tags.slot)
+    end,
+    ["platform-send-core"] = function(player)
+      send_core_to_platform(player)
+    end,
+    ["bind-turret"] = function(player)
+      set_bound_turret(player, true)
+    end,
+    ["unbind-turret"] = function(player)
+      set_bound_turret(player, false)
+    end,
+    ["cycle-label-color"] = function(player)
+      cycle_label_color(player)
+    end,
+    ["dev-create-core"] = function(player)
+      dev_create_core(player)
+    end,
+    ["allocate-base"] = function(player, event, tags)
+      allocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
+    end,
+    ["deallocate-base"] = function(player, event, tags)
+      deallocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
+    end,
+    ["reset-base-upgrades"] = function(player)
+      reset_base_upgrades(player)
+    end,
+    ["choose-specialization"] = function(player, event, tags)
+      choose_specialization(player, tags.specialization)
+    end,
+    ["reset-specialization"] = function(player)
+      reset_specialization(player)
+    end,
+    ["choose-sub-specialization"] = function(player, event, tags)
+      choose_sub_specialization(player, tags.sub_specialization)
+    end,
+    ["reset-sub-specialization"] = function(player)
+      reset_sub_specialization(player)
+    end,
+    ["allocate-augment"] = function(player, event, tags)
+      allocate_augment(player, tags.augment, event.shift and 10 or 1)
+    end,
+    ["deallocate-augment"] = function(player, event, tags)
+      deallocate_augment(player, tags.augment, event.shift and 10 or 1)
+    end,
+    ["reset-augments"] = function(player)
+      reset_augments(player)
+    end,
+    ["reset-evolution"] = function(player)
+      reset_evolution(player)
+    end,
+    ["reset-element-slot"] = function(player, event, tags)
+      reset_element_slot(player, tags.slot)
+    end,
+    ["start-element"] = function(player, event, tags)
+      pick_element(player, tags.slot, tags.element)
+    end,
+    ["dev-complete-element-rank"] = function(player)
+      dev_complete_next_element_rank(player)
+    end,
+    ["dev-level"] = function(player, event, tags)
+      add_dev_levels(player, tags.levels)
+    end,
+    ["dev-reset-core"] = function(player)
+      dev_reset_core(player)
+    end,
+  }
+
+  function dispatch_gui_click_action(player, event, tags)
+    tags = tags or {}
+    local action = tags.turret_xp_action
+    local handler = action and gui_click_dispatch[action] or nil
+    if not handler then
+      return false
+    end
+
+    handler(player, event or {}, tags)
+    return true
+  end
+
   function handlers.on_gui_click(event)
     local element = event.element
     if not element or not element.valid then
@@ -140,77 +261,7 @@ return function(M)
     end
 
     local tags = element.tags or {}
-    local action = tags.turret_xp_action
-    if action == "core-slot" then
-      handle_core_slot_click(player, event)
-    elseif action == "install-core" then
-      install_core(player)
-    elseif action == "extract-core" then
-      extract_core(player)
-    elseif action == "platform-install-core" then
-      install_core_from_platform(player, tags.slot)
-    elseif action == "platform-send-core" then
-      send_core_to_platform(player)
-    elseif action == "bind-turret" then
-      set_bound_turret(player, true)
-    elseif action == "unbind-turret" then
-      set_bound_turret(player, false)
-    elseif action == "cycle-label-color" then
-      local entity, state = get_open_turret_state(player)
-      if state then
-        local presets = COLOR.label_presets
-        local next_index = 1
-        local current_preset = find_matching_label_color_preset(state)
-        for index, preset in ipairs(presets) do
-          if current_preset and preset.id == current_preset.id then
-            next_index = (index % #presets) + 1
-            break
-          end
-        end
-        state.label_color = {
-          presets[next_index].color[1],
-          presets[next_index].color[2],
-          presets[next_index].color[3],
-        }
-        state.label_color_preset = presets[next_index].id
-        update_name_render(entity, state)
-        update_label_color_preview(player, state)
-      end
-    elseif action == "dev-create-core" then
-      dev_create_core(player)
-    elseif action == "allocate-base" then
-      allocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
-    elseif action == "deallocate-base" then
-      deallocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
-    elseif action == "reset-base-upgrades" then
-      reset_base_upgrades(player)
-    elseif action == "choose-specialization" then
-      choose_specialization(player, tags.specialization)
-    elseif action == "reset-specialization" then
-      reset_specialization(player)
-    elseif action == "choose-sub-specialization" then
-      choose_sub_specialization(player, tags.sub_specialization)
-    elseif action == "reset-sub-specialization" then
-      reset_sub_specialization(player)
-    elseif action == "allocate-augment" then
-      allocate_augment(player, tags.augment, event.shift and 10 or 1)
-    elseif action == "deallocate-augment" then
-      deallocate_augment(player, tags.augment, event.shift and 10 or 1)
-    elseif action == "reset-augments" then
-      reset_augments(player)
-    elseif action == "reset-evolution" then
-      reset_evolution(player)
-    elseif action == "reset-element-slot" then
-      reset_element_slot(player, tags.slot)
-    elseif action == "start-element" then
-      pick_element(player, tags.slot, tags.element)
-    elseif action == "dev-complete-element-rank" then
-      dev_complete_next_element_rank(player)
-    elseif action == "dev-level" then
-      add_dev_levels(player, tags.levels)
-    elseif action == "dev-reset-core" then
-      dev_reset_core(player)
-    end
+    dispatch_gui_click_action(player, event, tags)
   end
 
   function handlers.on_gui_checked_state_changed(event)
@@ -626,23 +677,26 @@ return function(M)
   script.on_event(defines.events.on_force_created, handlers.on_force_created)
   script.on_event(defines.events.on_entity_damaged, handlers.on_entity_damaged)
   script.on_event(defines.events.on_entity_died, handlers.on_entity_died)
-  script.on_event(defines.events.on_built_entity, handlers.on_built_entity)
-  script.on_event(defines.events.on_robot_built_entity, handlers.on_robot_built_entity)
-  script.on_event(defines.events.on_pre_player_mined_item, handlers.on_turret_removed)
-  script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed)
-  script.on_event(defines.events.on_player_mined_entity, handlers.on_turret_mined_entity)
-  script.on_event(defines.events.on_robot_mined_entity, handlers.on_turret_mined_entity)
+
+  local gun_turret_filters = gun_turret_event_filters()
+  local bound_placeholder_filters = bound_placeholder_event_filters()
+  script.on_event(defines.events.on_built_entity, handlers.on_built_entity, bound_placeholder_filters)
+  script.on_event(defines.events.on_robot_built_entity, handlers.on_robot_built_entity, bound_placeholder_filters)
+  script.on_event(defines.events.on_pre_player_mined_item, handlers.on_turret_removed, gun_turret_filters)
+  script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed, gun_turret_filters)
+  script.on_event(defines.events.on_player_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
+  script.on_event(defines.events.on_robot_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
   script.on_event(defines.events.on_tick, handlers.on_tick)
   script.on_nth_tick(REFRESH_TICKS, handlers.on_refresh_tick)
   script.on_nth_tick(SHIELD_RECHARGE_TICKS, handlers.on_shield_recharge_tick)
 
   space_platform_built_event = defines.events.on_space_platform_built_entity
   if space_platform_built_event then
-    script.on_event(space_platform_built_event, handlers.on_space_platform_built_entity)
+    script.on_event(space_platform_built_event, handlers.on_space_platform_built_entity, bound_placeholder_filters)
   end
 
   space_platform_mined_event = defines.events.on_space_platform_mined_entity
   if space_platform_mined_event then
-    script.on_event(space_platform_mined_event, handlers.on_space_platform_mined_entity)
+    script.on_event(space_platform_mined_event, handlers.on_space_platform_mined_entity, gun_turret_filters)
   end
 end

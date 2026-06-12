@@ -330,6 +330,31 @@ return function(M)
       return turret_xp_test_state_summary(entity)
     end,
 
+    dispatch_cycle_label_color = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local player = {
+        index = -1,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+      }
+      remember_open_turret(player, entity)
+      dispatch_gui_click_action(player, {}, {
+        turret_xp_action = "cycle-label-color",
+      })
+
+      local summary = turret_xp_test_state_summary(entity)
+      forget_open_turret(player)
+
+      return summary
+    end,
+
     record_damage_contribution = function(target, turret, damage, final_health)
       record_damage_contribution({
         entity = target,
@@ -554,6 +579,10 @@ return function(M)
 
     deserialize_profile_snapshot = function(data)
       return turret_xp_test_profile_summary(deserialize_profile(data))
+    end,
+
+    serialize_profile_snapshot = function(fields)
+      return serialize_profile(fields)
     end,
 
     set_evolution = function(entity, fields)

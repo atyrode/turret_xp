@@ -1,5 +1,7 @@
+local domain = require("scripts.domain")
+
 return function(names)
-  local base = data.raw["ammo-turret"] and data.raw["ammo-turret"]["gun-turret"]
+  local base = data.raw["ammo-turret"] and data.raw["ammo-turret"][domain.names.base_turret]
   if not base then
     return
   end
