@@ -106,6 +106,7 @@ return function(M)
     local profile = chip_id and storage.turret_xp.chips[chip_id] or nil
     if profile then
       destroy_name_render(profile)
+      destroy_selection_proxy(profile)
       profile.entity = new_entity
     end
 
@@ -120,6 +121,7 @@ return function(M)
     new_host.chip_id = chip_id
 
     if profile then
+      ensure_selection_proxy(new_entity, profile)
       update_name_render(new_entity, profile)
       feeder.ensure(new_entity, profile)
     end

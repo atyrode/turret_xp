@@ -210,6 +210,18 @@ local function run_selection_overlay_test(surface)
     assert_gt(overlay.time_to_live, 0, "selection overlay should expire instead of living forever")
   end
 
+  local proxy = call("selection_proxy", turret)
+  assert_true(proxy ~= nil, "selection proxy did not return a smoke-test summary")
+  assert_true(proxy.proxy_valid, "selection proxy entity was not valid")
+  assert_eq(proxy.proxy_name, "turret-xp-veteran-selection-proxy", "selection proxy used the wrong prototype")
+  assert_eq(proxy.prototype_has_attack_parameters, false, "selection proxy must not expose turret attack parameters")
+  assert_eq(proxy.prototype_max_health, nil, "selection proxy prototype should not expose max health")
+  assert_true(
+    proxy.proxy_max_health == nil or proxy.proxy_max_health == 0,
+    "selection proxy entity should not expose positive max health"
+  )
+  assert_eq(proxy.resolved_unit_number, turret.unit_number, "selection proxy did not resolve back to the turret")
+
   call("cleanup_entity", turret)
   if turret and turret.valid then
     turret.destroy({ raise_destroy = false })

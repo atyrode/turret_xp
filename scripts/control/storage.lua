@@ -11,6 +11,7 @@ return function(M)
     storage.turret_xp.player_settings = storage.turret_xp.player_settings or {}
     storage.turret_xp.targets = storage.turret_xp.targets or {}
     storage.turret_xp.feeders = storage.turret_xp.feeders or {}
+    storage.turret_xp.selection_proxies = storage.turret_xp.selection_proxies or {}
     storage.turret_xp.managed_inserters = storage.turret_xp.managed_inserters or {}
     storage.turret_xp.pending_bound_mined = storage.turret_xp.pending_bound_mined or {}
     storage.turret_xp.pending_visuals = storage.turret_xp.pending_visuals or {}
@@ -91,6 +92,10 @@ return function(M)
   function is_bound_turret_placeholder(entity)
     local name = entity and entity.valid and entity.name or nil
     return DOMAIN.is_bound_turret_placeholder_name(name)
+  end
+
+  function is_selection_proxy(entity)
+    return entity and entity.valid and entity.name == SELECTION_PROXY_NAME
   end
 
   function get_sub_specialization_variant_segment(specialization_id, sub_specialization_id)

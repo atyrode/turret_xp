@@ -157,12 +157,11 @@ return function(M)
       return
     end
 
-    local entity = player.selected
+    local entity, state = resolve_veteran_selection(player.selected)
     if not is_gun_turret(entity) then
       return
     end
 
-    local state = get_turret_state(entity)
     if state then
       update_selection_overlay(player, entity, state)
     end

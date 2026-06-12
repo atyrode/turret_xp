@@ -2,6 +2,7 @@ local M = {}
 
 require("scripts.control.config")(M)
 require("scripts.control.storage")(M)
+require("scripts.control.selection_proxy")(M)
 
 local compat = require("scripts.control.compat")
 M.compat = compat.new({

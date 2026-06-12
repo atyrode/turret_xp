@@ -29,7 +29,7 @@ scripts/install-local.sh
 5. Confirm the panel says no Veteran Core is installed and XP/evolution are inactive.
 6. Craft or dev-create a Veteran Core and install it.
 7. Check that the panel shows level, XP progress, HP, shooting speed, range, loaded ammo, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
-7a. Select or hover-select the installed-core turret and confirm an experimental Turret XP stat overlay appears above the turret, refreshes while selected, and lingers briefly after moving the cursor away. In this spike, the native Factorio tooltip is still present; judge whether the custom overlay is readable enough to become the future source of truth.
+7a. Select or hover-select the installed-core turret and confirm an experimental Turret XP stat overlay appears above the turret, refreshes while selected, and lingers briefly after moving the cursor away. The hover target should read as a `Veteran turret` selector rather than a normal gun turret, and it should not show native turret range/HP as the stat source. Judge whether this feels close enough to a Turret XP-owned object.
 8. Name the core and confirm the `Show` checkbox sits beside the name field, with label color controls hidden while `Show` is off.
 9. Enable `Show label` and confirm the floating text appears as `name (lvl N)` above the turret.
 10. Change label color with RGB sliders and the preset/custom color button below them, then confirm presets keep their preset names, RGB slider edits show `Custom`, `Level` appears below the color button, and the floating label keeps its display-panel-style backing.
@@ -100,7 +100,7 @@ scripts/install-local.sh
 Useful feedback:
 
 - Did the panel appear in the right place?
-- Did the experimental selected-turret overlay feel readable enough to replace native hover stats later, or did it feel noisy, misplaced, or too transient?
+- Did the experimental Veteran selector prevent misleading native turret HP/range from being the apparent source of truth, or did the native tooltip still feel too visible/confusing?
 - Did the Veteran Core install/extract flow feel like a natural way to choose which turret becomes unique?
 - Did moving a core between turrets preserve the right information?
 - Did Bind/Unbind make quick turret moves clearer, or does it need a different label or placement in the panel?

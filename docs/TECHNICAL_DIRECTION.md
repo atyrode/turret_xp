@@ -134,7 +134,7 @@
 
 Issue #53 tracks a branch experiment for moving veteran turrets toward a Turret XP-owned presentation model. The first spike does not replace the combat entity yet; it adds a per-player `LuaRendering.draw_text` overlay above selected installed-core turrets using `on_selected_entity_changed` and `LuaPlayer.selected`. The overlay is refreshed while selected and lingers briefly after selection changes, so it can be judged as a replacement direction for the native hover tooltip.
 
-This is intentionally not the final shell/proxy architecture. The next experimental step is to test whether a non-selectable combat turret shell plus a selectable lightweight proxy can remove misleading native turret stats while keeping normal combat, mining, robots, ghosts, ammo logistics, and Turret XP profile ownership understandable. Until that is proven, the native tooltip remains present and the overlay is an additional stat source, not the only stat source.
+The second spike adds an invisible selectable Veteran selector over installed-core turrets. The real turret remains underneath for combat, ammo, damage, mining, and existing Turret XP state, but the selector has higher selection priority and is not a turret prototype. The goal is to test whether hover selection can stop reporting native turret HP/range while the Turret XP overlay becomes the visible source of scripted stats. This is still not the final shell/proxy architecture: if the selector feels right, the next step is a proper Turret XP-owned shell item/entity that deliberately owns selection, GUI opening, mining, ghosts, and visual identity while a hidden combat helper or scripted combat loop supplies behavior.
 
 ## Risks
 

@@ -14,6 +14,7 @@ return function(M)
   BOUND_TURRET_PLACEHOLDER_VARIANT_PREFIX = DOMAIN.names.bound_turret_placeholder_variant_prefix
   FEEDER_NAME = DOMAIN.names.feeder
   LABEL_PANEL_PREFIX = DOMAIN.names.label_panel_prefix
+  SELECTION_PROXY_NAME = DOMAIN.names.selection_proxy
   PROFILE_TAG = DOMAIN.names.profile_tag
   BOUND_TURRET_TAG = DOMAIN.names.bound_turret_tag
   BASE_TURRET_NAME = DOMAIN.names.base_turret

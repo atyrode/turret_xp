@@ -166,6 +166,7 @@ return function(M)
       local profile = storage.turret_xp.chips[host.chip_id]
       if profile then
         destroy_name_render(profile)
+        destroy_selection_proxy(profile)
       end
       if destroy_profile then
         storage.turret_xp.chips[host.chip_id] = nil
@@ -182,7 +183,14 @@ return function(M)
     local result = {}
     for key, child in pairs(value) do
       local skip_runtime_key = type(key) == "string" and string.sub(key, 1, 1) == "_"
-      if not skip_runtime_key and key ~= "entity" and key ~= "name_render" and key ~= "label_entity" and key ~= "feeder" then
+      if
+        not skip_runtime_key
+        and key ~= "entity"
+        and key ~= "name_render"
+        and key ~= "label_entity"
+        and key ~= "selection_proxy"
+        and key ~= "feeder"
+      then
         result[key] = copy_serializable(child)
       end
     end
@@ -995,6 +1003,7 @@ return function(M)
     storage.turret_xp.chips[profile.chip_id] = profile
     host.chip_id = profile.chip_id
     feeder.ensure(entity, profile)
+    ensure_selection_proxy(entity, profile)
     update_name_render(entity, profile)
     return profile
   end
@@ -1007,6 +1016,7 @@ return function(M)
 
     local chip_id = profile.chip_id
     destroy_name_render(profile)
+    destroy_selection_proxy(profile)
     feeder.destroy(profile, entity.position, true)
     profile.entity = nil
     if chip_id then

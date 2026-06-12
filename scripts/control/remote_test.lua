@@ -333,6 +333,33 @@ return function(M)
       return result
     end,
 
+    selection_proxy = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local proxy = ensure_selection_proxy(entity, state)
+      local resolved_entity, resolved_state = resolve_veteran_selection(proxy)
+      local proxy_prototype = prototypes.entity[SELECTION_PROXY_NAME]
+      local prototype_max_health = nil
+      if proxy_prototype then
+        pcall(function()
+          prototype_max_health = proxy_prototype.max_health
+        end)
+      end
+      return {
+        proxy_valid = proxy and proxy.valid or false,
+        proxy_name = proxy and proxy.valid and proxy.name or nil,
+        proxy_type = proxy and proxy.valid and proxy.type or nil,
+        proxy_max_health = safe_read(proxy, "max_health"),
+        prototype_max_health = prototype_max_health,
+        prototype_has_attack_parameters = proxy_prototype and proxy_prototype.attack_parameters ~= nil or false,
+        resolved_unit_number = resolved_entity and resolved_entity.valid and resolved_entity.unit_number or nil,
+        resolved_chip_id = resolved_state and resolved_state.chip_id or nil,
+      }
+    end,
+
     record_damage_contribution = function(target, turret, damage, final_health)
       record_damage_contribution({
         entity = target,

@@ -6,5 +6,6 @@ return {
   bound_turret_placeholder = domain.names.bound_turret_placeholder,
   feeder = domain.names.feeder,
   label_panel_prefix = domain.names.label_panel_prefix,
+  selection_proxy = domain.names.selection_proxy,
   label_presets = domain.label_color_presets,
 }

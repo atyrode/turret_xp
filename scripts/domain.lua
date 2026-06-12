@@ -24,6 +24,7 @@ domain.names = {
   bound_turret_placeholder = "turret-xp-bound-gun-turret-placeholder",
   feeder = "turret-xp-veteran-feeder",
   label_panel_prefix = "turret-xp-label-panel-",
+  selection_proxy = "turret-xp-veteran-selection-proxy",
   profile_tag = "turret_xp_profile",
   bound_turret_tag = "turret_xp_bound_turret",
   base_turret = "gun-turret",

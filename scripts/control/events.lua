@@ -101,8 +101,20 @@ return function(M)
       return
     end
 
-    if is_gun_turret(event.entity) then
-      build_turret_gui(player, event.entity)
+    local opened_entity = event.entity
+    if is_selection_proxy(opened_entity) then
+      local turret = get_selection_proxy_turret(opened_entity)
+      if turret then
+        pcall(function()
+          player.opened = turret
+        end)
+        build_turret_gui(player, turret)
+      else
+        destroy_gui(player)
+        forget_open_turret(player)
+      end
+    elseif is_gun_turret(opened_entity) then
+      build_turret_gui(player, opened_entity)
     else
       destroy_gui(player)
       forget_open_turret(player)
@@ -563,6 +575,7 @@ return function(M)
     ensure_storage()
     cleanup_target_damage()
     cleanup_pending_bound_mining()
+    cleanup_selection_proxies()
     cleanup_selection_overlays()
     apply_passive_evolution_effects()
 
@@ -597,7 +610,9 @@ return function(M)
       ensure_evolution_state(state)
       sync_turret_progression(state)
       destroy_name_render(state)
+      destroy_selection_proxy(state)
       if is_gun_turret(state.entity) then
+        ensure_selection_proxy(state.entity, state)
         update_name_render(state.entity, state)
       end
     end
