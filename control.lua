@@ -2,6 +2,17 @@ local M = {}
 
 require("scripts.control.config")(M)
 require("scripts.control.storage")(M)
+
+local compat = require("scripts.control.compat")
+M.compat = compat.new({
+  diagnostics_enabled = function()
+    return M.compat_diagnostics_enabled()
+  end,
+})
+M.safe_read = function(object, property, fallback, context)
+  return M.compat.safe_read(object, property, fallback, context)
+end
+
 require("scripts.control.progression")(M)
 require("scripts.control.profiles")(M)
 require("scripts.control.turret_bodies")(M)

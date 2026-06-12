@@ -389,6 +389,8 @@
 - [x] Add headless coverage for multi-turret proportional kill credit and highest-contributor visible-kill assignment.
 - [x] Move generic GUI rich-text formatting and repeated Evolution width helpers into `scripts/control/gui_support.lua`.
 - [x] Add headless coverage for GUI support formatting helper outputs.
+- [x] Move repeated optional Factorio API guards for quality reads, inventory lookup, prototype checks, platform hub inventory, and stat modifier reads into `scripts/control/compat.lua`.
+- [x] Add headless coverage for the centralized compatibility helper behavior.
 
 ## Headless Test Surface
 

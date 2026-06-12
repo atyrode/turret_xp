@@ -68,11 +68,11 @@ return function(M)
     end
 
     local stack = make_chip_item_stack(state)
-    local ok, can_insert = pcall(function()
+    local can_insert = compat.try("player can_insert extracted core", function()
       return player.can_insert(stack)
-    end)
+    end, false)
 
-    if not ok or not can_insert then
+    if not can_insert then
       player.print({ "turret-xp.no-room-for-core" })
       refresh_open_turret(player, entity)
       return
@@ -122,7 +122,7 @@ return function(M)
 
     local installed = install_profile_on_turret(entity, profile)
     if not installed then
-      pcall(function()
+      compat.try("return platform core after failed install", function()
         inventory.insert(make_chip_item_stack(profile))
       end)
       refresh_open_turret(player, entity)
@@ -153,11 +153,10 @@ return function(M)
       return
     end
 
-    local inserted = 0
-    local ok = pcall(function()
-      inserted = inventory.insert(make_chip_item_stack(profile))
-    end)
-    if not ok or not inserted or inserted <= 0 then
+    local inserted = compat.try("send core to platform hub", function()
+      return inventory.insert(make_chip_item_stack(profile))
+    end, 0)
+    if not inserted or inserted <= 0 then
       install_profile_on_turret(entity, profile)
       player.print({ "turret-xp.platform-core-no-room" })
       refresh_open_turret(player, entity)
