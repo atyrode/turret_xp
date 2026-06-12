@@ -744,10 +744,10 @@ return function(M)
     return get_gui_support_service().rich_stat_text(text, color)
   end
 
-  function lifesteal_caption(percent_text)
+  function lifesteal_specialization_caption(percent_text)
     return {
       "",
-      rich_number(percent_text, COLOR.bonus),
+      percent_text,
       " ",
       rich_number("lifesteal", { 0.95, 0.22, 0.42 }),
     }
@@ -871,7 +871,7 @@ return function(M)
       add_custom_stat(
         stats,
         { "turret-xp.stat-lifesteal" },
-        { "", lifesteal_caption(format_percent(lifesteal_rate, 0)), " of damage healed as HP" },
+        format_percent(lifesteal_rate, 0),
         { "turret-xp.lifesteal-tooltip", format_percent(lifesteal_rate, 0) }
       )
     end
@@ -1248,6 +1248,7 @@ return function(M)
           label = entry.label or "",
           kind = entry.kind,
           color = entry.color,
+          lifesteal = entry.lifesteal == true,
           special = entry.special == true,
           order = entry.order or index,
         }
@@ -1280,7 +1281,7 @@ return function(M)
 
     local caption = { "" }
     for index, entry in ipairs(display_entries) do
-      local formatted = entry.lifesteal and lifesteal_caption(format_number(entry.value, 0) .. "%")
+      local formatted = entry.lifesteal and lifesteal_specialization_caption(format_number(entry.value, 0) .. "%")
         or entry.kind == "percent" and rich_number(format_number(entry.value, 0) .. "%", entry.color)
         or format_colored_multiplier(entry.value)
         or ("x" .. format_number(entry.value, 2))
