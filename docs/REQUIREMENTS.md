@@ -87,7 +87,7 @@
 - Reserve stats-scrollbar space before scrolling is needed so stat values do not shift or render underneath the scrollbar when additional rows make the panel scrollable.
 - Color numeric fragments only in stat, upgrade, augment, specialization, sub-specialization, element, and material-count values. Units and descriptive text must remain neutral, and elemental damage amounts should color the number with the corresponding element color.
 - Show a core naming field and a `Show` floating-label checkbox when a core is installed; show preset/RGB color controls only when the floating label is enabled, with the `Level` checkbox under the RGB picker.
-- Custom RGB floating-label colors should keep the Factorio-style display-panel background and sizing, accepting palette quantization if arbitrary runtime display-panel text color is unavailable.
+- Custom RGB floating-label colors should apply directly to the in-world rendered label without requiring generated label-color prototypes or palette quantization.
 - Preserve Evolution list context after point allocation so the panel does not jump back to the top, and prevent GUI refreshes from resizing the attached panel in ways that move the vanilla turret GUI.
 - Keep the attached two-column panel narrow enough for normal play, and ensure Evolution content wraps or shrinks inside the scroll pane instead of rendering under the scrollbar.
 - Derive Evolution section, row, and text widths from one right-column viewport model so fixed controls and labels reserve scrollbar space consistently.

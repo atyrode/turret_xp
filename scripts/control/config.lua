@@ -16,7 +16,6 @@ return function(M)
   BOUND_TURRET_VARIANT_PREFIX = DOMAIN.names.bound_turret_variant_prefix
   BOUND_TURRET_PLACEHOLDER_VARIANT_PREFIX = DOMAIN.names.bound_turret_placeholder_variant_prefix
   FEEDER_NAME = DOMAIN.names.feeder
-  LABEL_PANEL_PREFIX = DOMAIN.names.label_panel_prefix
   PROFILE_TAG = DOMAIN.names.profile_tag
   BOUND_TURRET_TAG = DOMAIN.names.bound_turret_tag
   BASE_TURRET_NAME = DOMAIN.names.base_turret
@@ -38,7 +37,6 @@ return function(M)
   REPAIR_MAX_HEALTH_FRACTION_PER_RANK = progression_definitions.repair_max_health_fraction_per_rank
   SHIELD_ON_HIT_FRACTION_PER_RANK = progression_definitions.shield_on_hit_fraction_per_rank
   ELEMENT_FREE_RANK = progression_definitions.element_free_rank
-  LABEL_CUSTOM_COLOR_STEPS = DOMAIN.label_custom_color_steps
   BASE_UPGRADES = progression_definitions.base_upgrades
   BASE_UPGRADE_BY_ID = progression_definitions.base_upgrade_by_id
   ELEMENTS = progression_definitions.elements

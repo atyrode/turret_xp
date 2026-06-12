@@ -23,7 +23,6 @@ domain.names = {
   bound_turret = "turret-xp-bound-gun-turret",
   bound_turret_placeholder = "turret-xp-bound-gun-turret-placeholder",
   feeder = "turret-xp-veteran-feeder",
-  label_panel_prefix = "turret-xp-label-panel-",
   profile_tag = "turret_xp_profile",
   bound_turret_tag = "turret_xp_bound_turret",
   base_turret = "gun-turret",
@@ -42,7 +41,6 @@ domain.gates = {
 
 domain.shield_per_rank = 10
 domain.element_free_rank = 1
-domain.label_custom_color_steps = 5
 
 domain.elements = {
   {

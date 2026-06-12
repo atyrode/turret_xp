@@ -31,7 +31,7 @@ scripts/install-local.sh
 7. Check that the panel shows level, XP progress, HP, shooting speed, range, separate Magazine and Ammo rows, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
 8. Name the core and confirm the `Show` checkbox sits beside the name field, with label color controls hidden while `Show` is off.
 9. Enable `Show label` and confirm the floating text appears as `name (lvl N)` above the turret.
-10. Change label color with RGB sliders and the preset/custom color button below them, then confirm presets keep their preset names, RGB slider edits show `Custom`, `Level` appears below the color button, and the floating label keeps its display-panel-style backing.
+10. Change label color with RGB sliders and the preset/custom color button below them, then confirm presets keep their preset names, RGB slider edits show `Custom`, `Level` appears below the color button, and the floating label updates to the selected color above the turret.
 11. Click the Veteran Core slot to move the installed tagged core to the cursor, put it in inventory, reinstall it, and confirm XP, upgrades, name, and label settings move with the core.
 12. Swap two Veteran Cores through the slot and confirm the outgoing core keeps its stored profile.
 13. Shift/Ctrl-click the installed core slot and confirm it returns to inventory when there is room.
