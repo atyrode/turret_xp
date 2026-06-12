@@ -4,7 +4,7 @@
 
 Current development playtest:
 
-0.10.3 is the current package target for the next Mod Portal playtest release.
+0.10.4 is the current package target for the next Mod Portal playtest release.
 
 Preferred once published:
 
@@ -28,7 +28,7 @@ scripts/install-local.sh
 4. Open the turret and confirm the `Turret XP` panel appears to the right of the vanilla GUI.
 5. Confirm the panel says no Veteran Core is installed and XP/evolution are inactive.
 6. Craft or dev-create a Veteran Core and install it.
-7. Check that the panel shows level, XP progress, HP, shooting speed, range, loaded ammo, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
+7. Check that the panel shows level, XP progress, HP, shooting speed, range, separate Magazine and Ammo rows, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
 8. Name the core and confirm the `Show` checkbox sits beside the name field, with label color controls hidden while `Show` is off.
 9. Enable `Show label` and confirm the floating text appears as `name (lvl N)` above the turret.
 10. Change label color with RGB sliders and the preset/custom color button below them, then confirm presets keep their preset names, RGB slider edits show `Custom`, `Level` appears below the color button, and the floating label keeps its display-panel-style backing.
@@ -40,7 +40,7 @@ scripts/install-local.sh
 16. Mine a turret with an unbound core installed and confirm the gun turret item and Veteran Core are returned separately.
 17. Bind the installed core from the Veteran Core slot row, mine the turret, and confirm inventory receives one bound veteran turret item rather than separate turret/core items.
 18. Place the bound veteran turret item and confirm the turret, installed core profile, name/label settings, quality, health ratio, and loaded ammo restore. Unbind it and confirm mining returns to the separate item behavior.
-18a. Bind a turret with Sniper or Range ranks, hold the bound turret item in hand, and confirm Factorio's native placement range preview matches the restored turret range. Old generic bound stacks may need to be placed and mined once before they become a range-specific preview item.
+18a. Bind a turret with Sniper or a sub-specialization that changes range, hold the bound turret item in hand, and confirm Factorio's native placement range preview matches the restored turret range. Old generic or retired range-preview bound stacks may need to be placed and mined once before they become a specialization-specific preview item.
 18b. Mine a bound turret with ammo loaded, place the bound item again, and confirm the ammo is restored only in the turret: the player inventory must not also receive a duplicate copy.
 18c. With Fill4Me or another placement helper enabled, place a bound turret that already stores ammo and confirm all placement-time ammo is refunded before the saved bound ammo snapshot is restored.
 18d. Mine a bound turret with no free inventory slot and confirm a tagged bound turret item spills on the ground instead of returning only a Veteran Core or losing the profile.
@@ -50,8 +50,9 @@ scripts/install-local.sh
 22. Run `/turret-xp-dev` and use `+1` and `+5` dev buttons to reach levels 10, 20, 30, 40, and 50 quickly.
 23. Run `/turret-xp-dev` again and confirm dev controls hide/show without breaking the panel layout.
 24. Spend core upgrade points and confirm ranks and remaining points refresh immediately without moving the whole vanilla turret GUI.
-24a. Spend Max HP augment ranks, close/reopen if needed for the deferred body swap, and confirm the real HP maximum increases by 50 per rank up to rank 20.
-24b. Spend Ammo Recovery ranks, let the turret remember loaded ammo, empty the turret, and confirm recovered ammo is slowly inserted back into the turret ammo inventory.
+24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, displays Factorio's native HP bar above a nine-pip blue Shield bar, does not recharge while the turret is still being hit, and recharges in small increments only after the no-damage delay. Add or remove Shield ranks while damaged and confirm current shield does not refill for free.
+24b. Spend Ammo Productivity ranks, let the turret fire loaded ammo, and confirm the purple bar appears in its own row after Ammo, advances as ammo is spent, restores +1 ammo inside the current magazine when it fills, uses diminishing returns so 100% raw productivity is not free ammo, does not overfill the magazine above its normal capacity, and does not create full ammo items.
+24d. Hover stat-name info markers and confirm formulas appear there instead of inline in the stats panel. For HP and Range, confirm the info marker explains the stat/formula while the quality diamond lists quality-specific values.
 24c. Spend Resistance ranks, damage the turret with enemies, and confirm the stats panel shows reduced damage taken while the turret still dies normally to overwhelming lethal hits.
 25. Confirm unlocked Evolution choices have category headers, right-side status text, horizontal delimiters, and are easier to scan.
 25a. Confirm Evolution section frames have balanced left/right padding, visible right margin, and spacing between adjacent sections.
@@ -66,13 +67,13 @@ scripts/install-local.sh
 34. Repeat material feeding with normal and bulk inserters; confirm only resources for selected elements are accepted and no item pile forms around the turret. If a stale inserter hand drops the wrong material once, confirm the hidden input clears it and the correct material can still advance the progress bar.
 35. Confirm ammo inserters keep feeding ammo while element material feeding is available.
 36. Use `Materials` and confirm it completes the next passive material rank for an unlocked element.
-37. Confirm specialization choices use the same card rhythm as element choices: icon/title row, full-width description, separator, colored multiplier row, and right-aligned Pick button.
-37a. Confirm the role-specific secondary multiplier is visible and functional: Sniper boosts Crit Damage, Machine Gun boosts Ammo Recovery, Bulwark boosts Regeneration, and Brawler boosts Lifesteal.
-37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: x3 damage, x0.5 fire rate, short range, and lifesteal.
+37. Confirm specialization choices use the updated card rhythm: icon/title row, full-width description with the Pick button justified right, then a full-width vertical technical stat table.
+37a. Confirm the role-specific secondary multiplier is visible and functional: Sniper boosts Crit Damage, Machine Gun boosts Ammo Productivity, and Bulwark boosts Regeneration.
+37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: +200% damage, -50% attack speed, short range, and innate 10% Lifesteal.
 38. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
-39. Buy Range ranks and confirm the displayed range changes and the turret can actually fire farther.
+39. Pick Sniper or a range-changing sub-specialization and confirm the displayed range changes and the turret can actually fire farther.
 39a. Level a turret through combat and confirm a short `Level up!` popup appears above the turret when the core gains a level.
-40. With a mod that changes vanilla gun turret range during data updates, such as K2 Spaced Out, confirm buying Range rank 1 adds to the modded base range instead of reducing it.
+40. With a mod that changes vanilla gun turret range during data updates, such as K2 Spaced Out, confirm specialization range multipliers apply to the modded base range instead of reducing it.
 40a. With K2/K2SO realistic weapons enabled, test a long-range Turret XP build with rifle ammo and confirm the turret no longer shoots endlessly at targets beyond the physical bullet delivery range.
 41. At level 40, pick one of the two sub-specializations for the active role and confirm the stats summary shows the branch identity and combined multipliers.
 42. Confirm an unlocked element card stays inside the Evolution column, keeps its `Change` action visible, and keeps next-rank material progress visible.
@@ -81,10 +82,10 @@ scripts/install-local.sh
 45. Test a duplicate pair such as Explosive + Explosive and confirm the stats summary shows one Explosive line plus the combo identity, not two Explosive stat rows.
 46. Extract or mine the core and confirm leftover feeder contents spill instead of disappearing.
 47. Let the turret shoot enemies and confirm XP, damage dealt, kills, active custom stat rows, and upgrade/element visual feedback feel visible enough to judge. Electric arc visuals should disappear quickly instead of staying on the map. Crits, double shots, bounce, Fire burn, and Toxic poison should be readable enough to notice when they happen.
-47a. Confirm the stats panel reserves space for its scrollbar when it becomes scrollable, and that Crit Chance and Crit Damage appear under Damage Dealt as regular baseline stats.
+47a. Confirm the stats panel reserves scrollbar space even before the scrollbar appears, does not shift when extra rows make it scrollable, and that Crit Chance and Crit Damage appear under Damage Dealt as regular baseline stats with compact percentage values such as `0%`, not inline unit text like `0% / shot`. Confirm Est. DPS also shows only a compact final value and keeps its formula in the info hover.
 47b. Confirm stat, upgrade, augment, and element value text colors only the numeric parts, with units and descriptive words staying neutral; elemental damage numbers should use their element color.
-48. Damage turrets with regeneration ranks and confirm passive repair scales with current max HP, especially after Max HP ranks or Bulwark/Guardian choices.
-49. Try Lifesteal in combat and check whether vampiric healing is understandable.
+48. Damage turrets with Shield and Regeneration augment ranks and confirm Shield protects HP first, then passive repair scales with current max HP, especially after Bulwark/Guardian choices.
+49. Try Brawler Lifesteal and Shield on Hit in combat and check whether HP healing versus shield generation is understandable.
 50. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
 51. Spend points, toggle label settings, unlock elements, use Change actions, and reset Evolution while the vanilla turret GUI is moved. Confirm the whole vanilla turret GUI does not jump back to its default position.
 52. Select the turret and run `/turret-xp` as a fallback path.
@@ -116,9 +117,9 @@ Useful feedback:
 - Did level gates 10, 20, 30, 40, and 50 feel like the right first draft?
 - Were passive material rank requirements understandable?
 - Which element, specialization, or augment felt confusing or too weak?
-- Did Range ranks and specialization multipliers feel meaningful without breaking the turret role?
-- Did specialization, Range, Change actions, and full Evolution Reset avoid moving the whole vanilla turret GUI?
-- If using K2 Spaced Out or another turret-range mod, did Range ranks preserve the modded base range?
+- Did Shield feel like a satisfying survivability replacement for Max HP?
+- Did specialization, Change actions, and full Evolution Reset avoid moving the whole vanilla turret GUI?
+- If using K2 Spaced Out or another turret-range mod, did specialization range multipliers preserve the modded base range?
 - Did XP, kills, evolution points, and ranks update at the pace you expected?
 - Did the platform hub core selector make it clear which Veteran Core was being installed?
 - Did target-aware XP pacing feel closer to the intended progression speed, especially for passive asteroid defense?

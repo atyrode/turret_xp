@@ -28,6 +28,28 @@ function migrations.new(deps)
 
     evolution.augments.piercing = nil
     evolution.augments.longshot = nil
+    evolution.augments.range = nil
+    evolution.augments.max_health = nil
+  end
+
+  function service.migrate_moved_base_upgrades(evolution)
+    if not evolution or type(evolution.base) ~= "table" then
+      return
+    end
+
+    evolution.augments = type(evolution.augments) == "table" and evolution.augments or {}
+
+    local function move_scaled(base_id, augment_id, old_ranks_per_new_rank)
+      local old_rank = unsigned_int(evolution.base[base_id])
+      if old_rank > 0 then
+        local migrated_rank = math.max(1, math.ceil(old_rank / old_ranks_per_new_rank))
+        evolution.augments[augment_id] = math.max(unsigned_int(evolution.augments[augment_id]), migrated_rank)
+      end
+      evolution.base[base_id] = nil
+    end
+
+    move_scaled("repair", "repair", 10)
+    move_scaled("siphon", "siphon", 10)
   end
 
   function service.normalize_legacy_element_mastery(mastery)
@@ -104,7 +126,7 @@ function migrations.new(deps)
 
     evolution.base.damage = (evolution.base.damage or 0) + unsigned_int(state.skills.ballistics)
     evolution.base.xp = (evolution.base.xp or 0) + unsigned_int(state.skills.kill_chain) + unsigned_int(state.skills.targeting_data)
-    evolution.base.repair = (evolution.base.repair or 0) + unsigned_int(state.skills.field_repairs)
+    evolution.augments.repair = (evolution.augments.repair or 0) + unsigned_int(state.skills.field_repairs)
     evolution.migrated_legacy_skills = true
   end
 

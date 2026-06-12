@@ -4,6 +4,8 @@ return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
 
+  local SHIELD_HEALTH_BAR_NUDGE = 0.01
+
   local effect_budget = combat_budget.new({
     ensure_storage = ensure_storage,
     get_storage = function()
@@ -211,7 +213,7 @@ return function(M)
       if is_gun_turret(entity) then
         entity = combat.sync_turret_body_when_idle(entity, state)
         auto_feed_open_turret(state)
-        combat.apply_ammo_regeneration(entity, state)
+        combat.remember_loaded_ammo(entity, state)
         local repair_per_second = get_repair_per_second(state, entity)
         if repair_per_second > 0 then
           local max_health = safe_read(entity, "max_health")
@@ -221,9 +223,23 @@ return function(M)
           end
         end
         update_name_render(entity, state)
+        update_shield_bar_render(entity, state, false)
       elseif entity and not entity.valid then
         destroy_name_render(state)
+        destroy_shield_bar_render(state)
         state.entity = nil
+      end
+    end
+  end
+
+  function apply_shield_recharge_effects(ticks)
+    ensure_storage()
+
+    local elapsed_ticks = math.max(1, math.floor(tonumber(ticks) or SHIELD_RECHARGE_TICKS))
+    for _, state in pairs(storage.turret_xp.chips) do
+      local entity = state.entity
+      if is_gun_turret(entity) then
+        combat.recharge_shield(entity, state, elapsed_ticks)
       end
     end
   end
@@ -233,15 +249,62 @@ return function(M)
       return nil
     end
 
-    local ammo_name, ammo_count, ammo_quality = get_loaded_ammo(entity)
-    if ammo_name and (ammo_count or 0) > 0 and feeder.is_ammo_item(ammo_name) then
+    local snapshot = get_loaded_ammo_snapshot(entity)
+    if snapshot and snapshot.name and (snapshot.count or 0) > 0 and feeder.is_ammo_item(snapshot.name) then
       state.last_ammo = {
-        name = ammo_name,
-        quality = ammo_quality or "normal",
+        name = snapshot.name,
+        quality = snapshot.quality or "normal",
+      }
+      state._ammo_productivity_last = {
+        name = snapshot.name,
+        quality = snapshot.quality or "normal",
+        count = math.max(0, math.floor(tonumber(snapshot.count) or 0)),
+        ammo = math.max(0, math.floor(tonumber(snapshot.ammo) or 0)),
+        magazine_size = math.max(0, math.floor(tonumber(snapshot.magazine_size) or 0)),
       }
     end
 
     return state.last_ammo
+  end
+
+  local function current_ammo_snapshot(entity)
+    local snapshot = get_loaded_ammo_snapshot(entity)
+    if snapshot and snapshot.name and (snapshot.count or 0) > 0 and feeder.is_ammo_item(snapshot.name) then
+      return {
+        name = snapshot.name,
+        quality = snapshot.quality or "normal",
+        count = math.max(0, math.floor(tonumber(snapshot.count) or 0)),
+        ammo = math.max(0, math.floor(tonumber(snapshot.ammo) or 0)),
+        magazine_size = math.max(0, math.floor(tonumber(snapshot.magazine_size) or 0)),
+      }
+    end
+
+    return {
+      count = 0,
+      ammo = 0,
+    }
+  end
+
+  local function remember_ammo_snapshot(state, snapshot)
+    if not state then
+      return
+    end
+
+    if snapshot and snapshot.name then
+      state.last_ammo = {
+        name = snapshot.name,
+        quality = snapshot.quality or "normal",
+      }
+      state._ammo_productivity_last = {
+        name = snapshot.name,
+        quality = snapshot.quality or "normal",
+        count = math.max(0, math.floor(tonumber(snapshot.count) or 0)),
+        ammo = math.max(0, math.floor(tonumber(snapshot.ammo) or 0)),
+        magazine_size = math.max(0, math.floor(tonumber(snapshot.magazine_size) or 0)),
+      }
+    else
+      state._ammo_productivity_last = nil
+    end
   end
 
   function combat.insert_recovered_ammo(entity, ammo, amount)
@@ -280,43 +343,200 @@ return function(M)
     return 0
   end
 
-  function combat.apply_ammo_regeneration(entity, state)
-    local rank = get_base_rank(state, "ammo_regen")
-    local last_ammo = combat.remember_loaded_ammo(entity, state)
-    if rank <= 0 then
-      state.ammo_regen_progress = 0
-      return
+  local function set_stack_ammo(stack, amount)
+    if not stack or not stack.valid_for_read then
+      return 0
     end
 
-    if not last_ammo or not feeder.is_ammo_item(last_ammo.name) then
-      state.ammo_regen_progress = math.min(1, tonumber(state.ammo_regen_progress) or 0)
-      return
+    local before = math.max(0, math.floor(tonumber(safe_read(stack, "ammo")) or 0))
+    local target = math.max(0, math.floor(tonumber(amount) or 0))
+    local ok = pcall(function()
+      stack.ammo = target
+    end)
+    if not ok then
+      local delta = target - before
+      if delta > 0 then
+        pcall(function()
+          stack.add_ammo(delta)
+        end)
+      elseif delta < 0 then
+        pcall(function()
+          stack.drain_ammo(-delta)
+        end)
+      end
     end
 
-    local recovery_per_minute = get_ammo_recovery_per_minute(state)
-    local progress = (tonumber(state.ammo_regen_progress) or 0) + ((recovery_per_minute * REFRESH_TICKS) / AMMO_REGEN_TICKS_PER_ROUND)
-    local amount = math.floor(progress)
-    if amount <= 0 then
-      state.ammo_regen_progress = progress
-      return
-    end
-
-    local inserted = combat.insert_recovered_ammo(entity, last_ammo, amount)
-    if inserted > 0 then
-      state.ammo_regen_progress = math.max(0, progress - inserted)
-      return
-    end
-
-    state.ammo_regen_progress = math.min(progress, 1)
+    local after = math.max(0, math.floor(tonumber(safe_read(stack, "ammo")) or before))
+    return math.max(0, after - before)
   end
 
-  function combat.apply_damage_resistance(event, entity, state)
+  function combat.add_productivity_ammo(entity, ammo, amount)
+    local bonus_ammo = math.max(0, math.floor(tonumber(amount) or 0))
+    if not is_gun_turret(entity) or not ammo or not ammo.name or bonus_ammo <= 0 then
+      return 0
+    end
+
+    local snapshot = get_loaded_ammo_snapshot(entity, ammo)
+    local stack = snapshot and snapshot.stack or nil
+
+    if not stack or not stack.valid_for_read then
+      local inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
+      if not inventory or not inventory.valid then
+        return 0
+      end
+
+      local stack_definition = {
+        name = ammo.name,
+        count = 1,
+      }
+      if ammo.quality and ammo.quality ~= "" then
+        stack_definition.quality = ammo.quality
+      end
+
+      local inserted = compat.try("insert productivity magazine shell", function()
+        return inventory.insert(stack_definition)
+      end, 0) or 0
+      if inserted <= 0 and stack_definition.quality then
+        stack_definition.quality = nil
+        inserted = compat.try("insert productivity magazine shell fallback", function()
+          return inventory.insert(stack_definition)
+        end, 0) or 0
+      end
+      if inserted <= 0 then
+        return 0
+      end
+
+      snapshot = get_loaded_ammo_snapshot(entity, ammo)
+      stack = snapshot and snapshot.stack or nil
+      if not stack or not stack.valid_for_read then
+        return 0
+      end
+
+      local magazine_size = tonumber(safe_read(safe_read(stack, "prototype"), "magazine_size")) or 0
+      if magazine_size > 0 then
+        pcall(function()
+          stack.drain_ammo(magazine_size)
+        end)
+      end
+    end
+
+    local before = math.max(0, math.floor(tonumber(safe_read(stack, "ammo")) or 0))
+    local magazine_size = tonumber(safe_read(safe_read(stack, "prototype"), "magazine_size"))
+      or tonumber(snapshot and snapshot.magazine_size)
+      or 0
+    local target = before + bonus_ammo
+    if magazine_size > 0 then
+      target = math.min(magazine_size, target)
+    end
+
+    return set_stack_ammo(stack, target)
+  end
+
+  function combat.apply_ammo_productivity(entity, state)
+    local rank = get_base_rank(state, "ammo_regen")
+    local current = current_ammo_snapshot(entity)
+    if rank <= 0 then
+      state.ammo_productivity_progress = 0
+      remember_ammo_snapshot(state, current)
+      return
+    end
+
+    local tick = game and game.tick or 0
+    if state._ammo_productivity_last_tick == tick then
+      remember_ammo_snapshot(state, current)
+      return
+    end
+
+    state._ammo_productivity_last_tick = tick
+
+    local previous = state._ammo_productivity_last
+    local spent = 0
+    local spent_ammo = nil
+    if previous and previous.name and feeder.is_ammo_item(previous.name) then
+      spent_ammo = {
+        name = previous.name,
+        quality = previous.quality or "normal",
+      }
+      if current.name == previous.name and (current.quality or "normal") == (previous.quality or "normal") then
+        if (current.count or 0) < (previous.count or 0) then
+          spent = math.max(1, (previous.count or 0) - (current.count or 0))
+        elseif previous.ammo and current.ammo then
+          spent = math.max(0, (previous.ammo or 0) - (current.ammo or 0))
+        end
+      elseif not current.name and (previous.count or 0) > 0 then
+        spent = 1
+      elseif current.name then
+        spent = 1
+        spent_ammo = {
+          name = current.name,
+          quality = current.quality or "normal",
+        }
+      end
+    elseif current.name then
+      spent = 1
+      spent_ammo = {
+        name = current.name,
+        quality = current.quality or "normal",
+      }
+    end
+
+    if spent <= 0 or not spent_ammo then
+      state.ammo_productivity_progress = math.max(0, tonumber(state.ammo_productivity_progress or state.ammo_regen_progress) or 0)
+      remember_ammo_snapshot(state, current)
+      return
+    end
+
+    local productivity = get_effective_ammo_productivity_fraction(state)
+    local progress = math.max(0, tonumber(state.ammo_productivity_progress or state.ammo_regen_progress) or 0) + (spent * productivity)
+    local bonus_ammo = math.floor(progress + 0.000001)
+    if bonus_ammo > 0 then
+      local added = combat.add_productivity_ammo(entity, spent_ammo, bonus_ammo)
+      if added > 0 then
+        progress = math.max(0, progress - added)
+      end
+    end
+
+    state.ammo_productivity_progress = math.min(progress, 1)
+    state.ammo_regen_progress = nil
+    remember_ammo_snapshot(state, current_ammo_snapshot(entity))
+  end
+
+  function combat.apply_ammo_regeneration(entity, state)
+    return combat.apply_ammo_productivity(entity, state)
+  end
+
+  function combat.apply_shield_on_hit(entity, state, amount)
+    if not is_gun_turret(entity) or not state or amount <= 0 then
+      return 0
+    end
+
+    local fraction = get_shield_on_hit_fraction(state)
+    if fraction <= 0 then
+      return 0
+    end
+
+    local shield, capacity = normalize_shield_state(state, false)
+    if capacity <= 0 or shield >= capacity then
+      return 0
+    end
+
+    local gained = math.min(capacity - shield, amount * fraction)
+    if gained <= 0 then
+      return 0
+    end
+
+    state.shield = shield + gained
+    update_shield_bar_render(entity, state, true)
+    return gained
+  end
+
+  function combat.apply_damage_resistance(event, entity, state, damage_override)
     if not is_gun_turret(entity) or not state then
       return 0
     end
 
     local mitigation = get_damage_resistance_fraction(state)
-    local damage = tonumber(event.final_damage_amount) or 0
+    local damage = tonumber(damage_override) or tonumber(event.final_damage_amount) or 0
     if mitigation <= 0 or damage <= 0 then
       return 0
     end
@@ -339,6 +559,86 @@ return function(M)
 
     entity.health = math.min(max_health, health + refunded)
     return refunded
+  end
+
+  function combat.apply_shield_absorption(event, entity, state)
+    if not is_gun_turret(entity) or not state then
+      return 0
+    end
+
+    local damage = tonumber(event.final_damage_amount) or 0
+    if damage <= 0 then
+      return 0
+    end
+
+    local shield, capacity = normalize_shield_state(state, true)
+    if capacity <= 0 then
+      return 0
+    end
+
+    state._shield_last_damage_tick = game and game.tick or nil
+    shield_bar_visible_for_damage(state)
+    if shield <= 0 then
+      update_shield_bar_render(entity, state, true)
+      return 0
+    end
+
+    local health = safe_read(entity, "health")
+    if health == nil then
+      return 0
+    end
+
+    local absorbed = math.min(shield, damage)
+    if absorbed <= 0 then
+      return 0
+    end
+
+    local max_health = safe_read(entity, "max_health")
+    local restored_health = health + absorbed
+    if max_health then
+      restored_health = math.min(max_health, restored_health)
+      if absorbed >= damage and restored_health >= max_health then
+        -- Factorio does not expose a runtime API to show the native HP bar.
+        -- Leaving a visually-full scratch lets the engine show its own bar
+        -- during shield-only hits without drawing a custom HP bar.
+        restored_health = math.max(1, max_health - SHIELD_HEALTH_BAR_NUDGE)
+      end
+    end
+
+    if restored_health > 0 then
+      entity.health = restored_health
+    end
+
+    state.shield = math.max(0, shield - absorbed)
+    update_shield_bar_render(entity, state, true)
+    return absorbed
+  end
+
+  function combat.recharge_shield(entity, state, elapsed_ticks)
+    if not is_gun_turret(entity) or not state then
+      return 0
+    end
+
+    local shield, capacity = normalize_shield_state(state, true)
+    if capacity <= 0 or shield >= capacity then
+      return 0
+    end
+
+    local tick = game and game.tick or 0
+    local last_damage_tick = tonumber(state._shield_last_damage_tick) or 0
+    if tick - last_damage_tick < SHIELD_RECHARGE_DELAY_TICKS then
+      return 0
+    end
+
+    local recharge_ticks = math.max(1, tonumber(elapsed_ticks) or SHIELD_RECHARGE_TICKS)
+    local recharge = get_shield_recharge_per_second(state) * (recharge_ticks / 60)
+    if recharge <= 0 then
+      return 0
+    end
+
+    state.shield = math.min(capacity, shield + recharge)
+    update_shield_bar_render(entity, state, false)
+    return state.shield - shield
   end
 
   function combat.chance_roll(chance)
@@ -811,9 +1111,10 @@ return function(M)
         if amount > 0 and combat.apply_tracked_runtime_damage(target, amount, force, effect.damage_type, turret) then
           effect.remaining = math.max(0, (effect.remaining or 0) - amount)
           add_profile_damage(state, amount, turret, context)
-          local siphon_rate = get_lifesteal_rate(state)
-          if siphon_rate > 0 then
-            combat.heal_turret(turret, amount * siphon_rate)
+          combat.apply_shield_on_hit(turret, state, amount)
+          local lifesteal_rate = get_lifesteal_rate(state)
+          if lifesteal_rate > 0 then
+            combat.heal_turret(turret, amount * lifesteal_rate)
           end
           sync_turret_progression(state)
           local surface = safe_read(target, "surface")
@@ -1384,11 +1685,15 @@ return function(M)
     end
 
     if not target.valid then
+      local total_damage = base_damage + upgrade_damage
+      combat.apply_shield_on_hit(turret, state, total_damage)
+      local lifesteal_rate = get_lifesteal_rate(state)
+      if lifesteal_rate > 0 then
+        combat.heal_turret(turret, total_damage * lifesteal_rate)
+      end
       if upgrade_damage > 0 then
         add_profile_damage(state, upgrade_damage, turret, target_xp_context)
         sync_turret_progression(state)
-        local siphon_rate = get_lifesteal_rate(state)
-        combat.heal_turret(turret, (base_damage + upgrade_damage) * siphon_rate)
       end
       return
     end
@@ -1419,9 +1724,11 @@ return function(M)
       upgrade_damage = upgrade_damage + combat.apply_combo_effects_to_target(turret, state, target, shot_damage, force, element_flags)
     end
 
-    local siphon_rate = get_lifesteal_rate(state)
-    if siphon_rate > 0 then
-      combat.heal_turret(turret, (base_damage + upgrade_damage) * siphon_rate)
+    local total_damage = base_damage + upgrade_damage
+    combat.apply_shield_on_hit(turret, state, total_damage)
+    local lifesteal_rate = get_lifesteal_rate(state)
+    if lifesteal_rate > 0 then
+      combat.heal_turret(turret, total_damage * lifesteal_rate)
     end
 
     if upgrade_damage > 0 then

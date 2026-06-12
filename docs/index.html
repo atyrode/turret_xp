@@ -42,9 +42,10 @@
           </div>
           <div class="stats-grid">
             <span>HP</span><strong>400 / 400</strong>
-            <span>Shooting speed</span><strong>10 + 15/s</strong>
+            <span>Shooting speed</span><strong>25/s</strong>
             <span>Range</span><strong>18</strong>
-            <span>Ammo</span><strong>piercing x42</strong>
+            <span>Magazine</span><strong>piercing x42</strong>
+            <span>Ammo</span><strong>10 / 10</strong>
             <span>Est. DPS</span><strong>157.5/s</strong>
             <span>Kills</span><strong>18</strong>
             <span>Damage dealt</span><strong>3,860</strong>
@@ -55,18 +56,24 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.10.3</h2>
-          <p>2026-06-10</p>
+          <h2 id="current-title">Version 0.10.4</h2>
+          <p>2026-06-12</p>
         </div>
         <div class="release-notes">
           <h3>Changes</h3>
           <ul>
-            <li>Added a short in-world <code>Level up!</code> flying-text popup above Veteran Core turrets when XP progression raises their level.</li>
+            <li>Replaced the prototype-backed Max HP augment with a scripted Shield core upgrade. Shield adds 10 shield per rank, absorbs incoming damage before turret HP, displays a nine-pip blue in-world Shield bar under the native HP bar while relevant, recharges in small increments after a short delay without incoming damage, and no longer refills current shield when capacity changes.</li>
+            <li>Removed the Range augment for now. Specialization and sub-specialization range modifiers remain prototype-backed.</li>
+            <li>Moved Regeneration into the augment section and rebalanced it to 1% max HP per second per augment rank.</li>
+            <li>Replaced the old general Lifesteal upgrade with a Shield on Hit augment that grants shield from gun-turret damage dealt, while Brawler now lists 10% Lifesteal as an innate specialization stat with a stats-panel info tooltip.</li>
+            <li>Replaced passive Ammo Recovery with Ammo Productivity: raw productivity now has diminishing returns for refill progress, spent ammo fills a purple stat-row bar after Ammo, and a full bar restores +1 ammo inside the current loaded magazine without overfilling it, creating full ammo items, or reaching free ammo.</li>
+            <li>Cleaned up the stats panel so formulas live in stat-name info hovers, HP/Range quality breakdowns live on the quality diamond, Magazine and Ammo are separate rows, Bullet Bounce is split into chance and damage rows, the scrollbar lane is reserved before scrolling starts, and visible values use calmer neutral/bonus/penalty coloring.</li>
+            <li>Reduced the generated hidden turret prototype budget by removing Range/Max HP variant axes from body and bound-preview generation.</li>
+            <li>Added a prototype migration that collapses old Range/Max HP hidden bodies and old range-preview bound items/placeholders onto the new specialization-only prototypes.</li>
           </ul>
           <h3>Bugfixes</h3>
           <ul>
-            <li>Fixed bound veteran turret mining/placement ammo conservation so picking up and replacing a bound turret no longer duplicates its stored ammo snapshot.</li>
-            <li>Added a turret-source projectile range compatibility patch for K2/K2SO-style realistic rifle ammo, so Turret XP range upgrades do not make turrets target enemies that turret-fired ammo cannot physically reach.</li>
+            <li>Retired saved Range and Max HP augment ranks during profile normalization so old Veteran Core and bound turret item tags no longer keep dead upgrade state.</li>
           </ul>
         </div>
       </section>
@@ -80,7 +87,7 @@
           </article>
           <article>
             <h3>Combat Growth</h3>
-            <p>Turrets earn XP from damage and kill contribution. Points buy damage, repair, lifesteal, crits, range, luck, double shots, XP gain, and bouncing bullets.</p>
+            <p>Turrets earn XP from damage and kill contribution. Points buy damage, shield, ammo productivity, shield-on-hit, repair, crits, luck, double shots, XP gain, and bouncing bullets. Brawler lists 10% Lifesteal as an innate specialization stat.</p>
           </article>
           <article>
             <h3>Specialized Defenders</h3>

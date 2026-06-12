@@ -22,6 +22,7 @@ return function(M)
             count = stack.count,
           }
           entry.quality = compat.quality_name(stack, nil, "turret body stack quality")
+          entry.ammo = safe_read(stack, "ammo", nil, "turret body stack ammo")
           contents[i] = entry
         end
       end
@@ -45,9 +46,21 @@ return function(M)
       for i, entry in pairs(contents or {}) do
         local stack = inventory[i]
         if stack and entry and entry.name and entry.count and entry.count > 0 then
+          local item = {
+            name = entry.name,
+            count = entry.count,
+          }
+          if entry.quality and entry.quality ~= "" then
+            item.quality = entry.quality
+          end
           pcall(function()
-            stack.set_stack(entry)
+            stack.set_stack(item)
           end)
+          if entry.ammo ~= nil and stack.valid_for_read then
+            pcall(function()
+              stack.ammo = math.max(0, math.floor(tonumber(entry.ammo) or 0))
+            end)
+          end
         end
       end
     end
@@ -106,6 +119,7 @@ return function(M)
     local profile = chip_id and storage.turret_xp.chips[chip_id] or nil
     if profile then
       destroy_name_render(profile)
+      destroy_shield_bar_render(profile)
       profile.entity = new_entity
     end
 
@@ -121,6 +135,7 @@ return function(M)
 
     if profile then
       update_name_render(new_entity, profile)
+      update_shield_bar_render(new_entity, profile, false)
       feeder.ensure(new_entity, profile)
     end
 
@@ -178,9 +193,7 @@ return function(M)
     local evolution = state and ensure_evolution_state(state) or nil
     local specialization = evolution and evolution.specialization or nil
     local sub_specialization = evolution and evolution.sub_specialization or nil
-    local range_rank = state and get_augment_rank(state, "range") or 0
-    local health_rank = state and get_augment_rank(state, "max_health") or 0
-    local target_name = get_specialized_turret_name(specialization, range_rank, health_rank, sub_specialization)
+    local target_name = get_specialized_turret_name(specialization, 0, 0, sub_specialization)
     return swap_turret_body(entity, target_name)
   end
 
@@ -213,12 +226,7 @@ return function(M)
     end
 
     local evolution = ensure_evolution_state(state)
-    local target_name = get_specialized_turret_name(
-      evolution.specialization,
-      get_augment_rank(state, "range"),
-      get_augment_rank(state, "max_health"),
-      evolution.sub_specialization
-    )
+    local target_name = get_specialized_turret_name(evolution.specialization, 0, 0, evolution.sub_specialization)
     if entity.name == target_name then
       state._body_sync_pending = nil
       return entity

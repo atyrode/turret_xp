@@ -29,7 +29,7 @@
   "highlights": [
     "Only chosen turrets become unique, so ordinary gun turrets stay stackable.",
     "Earn XP from damage and kill contribution.",
-    "Spend points on damage, regeneration, lifesteal, crits, range, luck, double shots, XP gain, and bouncing bullets.",
+    "Spend points on damage, shield, ammo productivity, shield-on-hit, regeneration, crits, luck, double shots, XP gain, and bouncing bullets. Brawler lists 10% Lifesteal as an innate specialization stat.",
     "Pick specializations and sub-specializations with strong tradeoffs.",
     "Feed fire, electric, explosive, or toxic resources into passive element ranks to strengthen elemental effects and combos.",
     "Name favorite turrets and show their level above them.",
@@ -43,7 +43,7 @@
     },
     {
       "title": "Combat Growth",
-      "body": "Turrets earn XP from damage and kill contribution. Points buy damage, repair, lifesteal, crits, range, luck, double shots, XP gain, and bouncing bullets."
+      "body": "Turrets earn XP from damage and kill contribution. Points buy damage, shield, ammo productivity, shield-on-hit, repair, crits, luck, double shots, XP gain, and bouncing bullets. Brawler lists 10% Lifesteal as an innate specialization stat."
     },
     {
       "title": "Specialized Defenders",

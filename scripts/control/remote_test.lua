@@ -157,6 +157,20 @@ return function(M)
     local current_entity = is_gun_turret(state.entity) and state.entity or entity
     local attack_parameters = get_attack_parameters(current_entity)
     local turret_inventory = feeder.get_entity_inventory(current_entity, defines.inventory.turret_ammo)
+    local shield, shield_capacity = normalize_shield_state(state, true)
+    local shield_bar_segments = state.shield_bar and state.shield_bar.segments or nil
+    local shield_bar_valid = false
+    local shield_bar_filled_segments = 0
+    if type(shield_bar_segments) == "table" then
+      for _, segment in pairs(shield_bar_segments) do
+        if type(segment) == "table" and segment.object and segment.object.valid then
+          shield_bar_valid = true
+          if segment.filled == true then
+            shield_bar_filled_segments = shield_bar_filled_segments + 1
+          end
+        end
+      end
+    end
 
     return {
       chip_id = state.chip_id,
@@ -170,18 +184,29 @@ return function(M)
       label_color = copy_serializable(state.label_color or {}),
       label_entity_valid = state.label_entity and state.label_entity.valid or false,
       name_render_valid = state.name_render and state.name_render.valid or false,
+      shield_bar_valid = shield_bar_valid,
+      shield_bar_fill_valid = shield_bar_filled_segments > 0,
+      shield_bar_segment_count = type(shield_bar_segments) == "table" and #shield_bar_segments or 0,
+      shield_bar_filled_segments = shield_bar_filled_segments,
       bound_turret = state.bound_turret == true,
       last_ammo = copy_serializable(state.last_ammo),
-      ammo_regen_progress = state.ammo_regen_progress or 0,
+      ammo_productivity_progress = state.ammo_productivity_progress or state.ammo_regen_progress or 0,
+      ammo_regen_progress = state.ammo_productivity_progress or state.ammo_regen_progress or 0,
       derived = {
         repair_per_second = get_repair_per_second(state, current_entity),
+        ammo_productivity_fraction = get_ammo_productivity_fraction(state),
+        effective_ammo_productivity_fraction = get_effective_ammo_productivity_fraction(state),
         ammo_recovery_per_minute = get_ammo_recovery_per_minute(state),
+        shield_on_hit_fraction = get_shield_on_hit_fraction(state),
         lifesteal_rate = get_lifesteal_rate(state),
         crit_damage_fraction = get_crit_damage_fraction(state),
         crit_chance_fraction = get_crit_chance_fraction(state),
         double_shot_chance = get_double_shot_chance(state),
         damage_resistance_fraction = get_damage_resistance_fraction(state),
+        shield_capacity = shield_capacity,
+        shield_recharge_per_second = get_shield_recharge_per_second(state),
       },
+      shield = shield,
       xp = state.xp or 0,
       total_xp = state.total_xp or 0,
       level = state.level or 0,
@@ -270,6 +295,9 @@ return function(M)
       "kills",
       "kill_credit",
       "damage",
+      "ammo_productivity_progress",
+      "ammo_regen_progress",
+      "shield",
     }) do
       if fields[key] ~= nil then
         profile[key] = copy_serializable(fields[key])
@@ -392,11 +420,47 @@ return function(M)
       return true
     end,
 
+    apply_shield_recharge = function(ticks)
+      apply_shield_recharge_effects(math.max(1, math.floor(tonumber(ticks) or SHIELD_RECHARGE_TICKS)))
+      return true
+    end,
+
+    remember_loaded_ammo = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      combat.remember_loaded_ammo(entity, state)
+      return turret_xp_test_state_summary(entity)
+    end,
+
+    apply_ammo_productivity = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      state._ammo_productivity_last_tick = nil
+      combat.apply_ammo_productivity(entity, state)
+      return turret_xp_test_state_summary(entity)
+    end,
+
+    age_shield_damage = function(entity, ticks)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      state._shield_last_damage_tick = (game and game.tick or 0) - math.max(0, math.floor(tonumber(ticks) or 0))
+      return turret_xp_test_state_summary(entity)
+    end,
+
     placement_prototypes = function()
       local gun_item = prototypes.item[BASE_TURRET_NAME]
       local bound_item = prototypes.item[BOUND_TURRET_NAME]
       local placeholder_entity = prototypes.entity[BOUND_TURRET_PLACEHOLDER_NAME]
-      local preview_name = DOMAIN.bound_turret_item_name(get_bound_turret_variant_id("sniper", 3))
+      local preview_name = DOMAIN.bound_turret_item_name(get_bound_turret_variant_id("sniper", 0))
       local preview_item = prototypes.item[preview_name]
       local preview_entity = preview_item and preview_item.place_result or nil
       local base_attack_parameters = placeholder_entity and placeholder_entity.attack_parameters or nil
@@ -413,9 +477,9 @@ return function(M)
         bound_turret_place_result = bound_item and bound_item.place_result and bound_item.place_result.name or nil,
         placeholder_exists = placeholder_entity ~= nil,
         base_bound_preview_range = base_attack_parameters and base_attack_parameters.range or nil,
-        sniper_range_3_bound_item = preview_item and preview_item.name or nil,
-        sniper_range_3_bound_place_result = preview_item and preview_item.place_result and preview_item.place_result.name or nil,
-        sniper_range_3_bound_preview_range = preview_attack_parameters and preview_attack_parameters.range or nil,
+        sniper_bound_item = preview_item and preview_item.name or nil,
+        sniper_bound_place_result = preview_item and preview_item.place_result and preview_item.place_result.name or nil,
+        sniper_bound_preview_range = preview_attack_parameters and preview_attack_parameters.range or nil,
         range_3_body_name = range_3_body_name,
         range_3_body_exists = prototypes.entity[range_3_body_name] ~= nil,
         health_2_body_name = health_2_body_name,
@@ -476,9 +540,13 @@ return function(M)
 
       local evolution = ensure_evolution_state(state)
       fields = type(fields) == "table" and fields or {}
+      local shield_rank_changed = false
       if fields.base then
         for key, value in pairs(fields.base) do
           evolution.base[key] = value
+          if key == "shield" then
+            shield_rank_changed = true
+          end
         end
       end
       if fields.augments then
@@ -506,6 +574,10 @@ return function(M)
       end
 
       ensure_evolution_state(state)
+      if shield_rank_changed then
+        normalize_shield_state(state, false)
+        update_shield_bar_render(entity, state, true)
+      end
       sync_turret_progression(state)
       local synced = combat.sync_turret_body_when_idle(entity, state)
       feeder.ensure(synced or entity, state)
@@ -827,6 +899,7 @@ return function(M)
       if is_gun_turret(entity) then
         local state = get_turret_state(entity)
         destroy_name_render(state)
+        destroy_shield_bar_render(state)
         feeder.destroy(state, entity.position, true)
         remove_turret_state(entity, true)
       end

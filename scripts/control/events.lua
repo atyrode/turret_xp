@@ -356,7 +356,9 @@ return function(M)
       get_turret_host(event.entity, false)
       local damaged_state = get_turret_state(event.entity)
       if damaged_state then
-        combat.apply_damage_resistance(event, event.entity, damaged_state)
+        local shield_absorbed = combat.apply_shield_absorption(event, event.entity, damaged_state)
+        local remaining_damage = math.max(0, damage - shield_absorbed)
+        combat.apply_damage_resistance(event, event.entity, damaged_state, remaining_damage)
         update_name_render(event.entity, damaged_state)
       end
     end
@@ -364,6 +366,7 @@ return function(M)
     if is_gun_turret(cause) then
       local state = get_turret_state(cause)
       if state then
+        combat.apply_ammo_productivity(cause, state)
         add_profile_damage(state, damage, cause, event.entity)
         combat.apply_evolution_damage_effects(event, cause, state, damage)
         sync_turret_progression(state)
@@ -376,6 +379,7 @@ return function(M)
     if is_gun_turret(event.entity) then
       local profile = get_turret_state(event.entity)
       destroy_name_render(profile)
+      destroy_shield_bar_render(profile)
       feeder.destroy(profile, event.entity.position, true)
       remove_turret_state(event.entity, true)
     elseif event.entity and event.entity.valid and event.entity.name == FEEDER_NAME then
@@ -567,6 +571,22 @@ return function(M)
     end
   end
 
+  function handlers.on_shield_recharge_tick()
+    apply_shield_recharge_effects(SHIELD_RECHARGE_TICKS)
+
+    for player_index in pairs(storage.turret_xp.players) do
+      local player = game.get_player(player_index)
+      if player and player.valid and player.connected then
+        local entity = get_remembered_turret(player)
+        if entity then
+          refresh_open_turret_stats(player, entity)
+        end
+      else
+        storage.turret_xp.players[player_index] = nil
+      end
+    end
+  end
+
   script.on_init(function()
     ensure_storage()
     unlock_core_recipes_for_existing_tech()
@@ -583,8 +603,10 @@ return function(M)
       ensure_evolution_state(state)
       sync_turret_progression(state)
       destroy_name_render(state)
+      destroy_shield_bar_render(state)
       if is_gun_turret(state.entity) then
         update_name_render(state.entity, state)
+        update_shield_bar_render(state.entity, state, false)
       end
     end
     for _, player in pairs(game.players) do
@@ -612,6 +634,7 @@ return function(M)
   script.on_event(defines.events.on_robot_mined_entity, handlers.on_turret_mined_entity)
   script.on_event(defines.events.on_tick, handlers.on_tick)
   script.on_nth_tick(REFRESH_TICKS, handlers.on_refresh_tick)
+  script.on_nth_tick(SHIELD_RECHARGE_TICKS, handlers.on_shield_recharge_tick)
 
   space_platform_built_event = defines.events.on_space_platform_built_entity
   if space_platform_built_event then

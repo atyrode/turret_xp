@@ -23,7 +23,7 @@
 - Mining a bound veteran turret must not fall back to a separate Veteran Core result or lose the core profile when the mining buffer is full.
 - Mining a bound veteran turret must move loaded ammo into the bound item snapshot and clear the live turret ammo inventory before vanilla mining can return that same ammo separately.
 - Placing a bound veteran turret must restore the saved ammo snapshot without duplicating or deleting ammo inserted by placement helper mods; placement-time ammo is treated as external and returned or spilled before the saved snapshot is restored.
-- Newly created bound veteran turret stacks with specialization or Range ranks should use hidden preview item variants so the cursor placement range visualization reflects the turret that will be restored.
+- Newly created bound veteran turret stacks with specialization or sub-specialization should use hidden preview item variants so the cursor placement range visualization reflects the turret that will be restored.
 - The bound veteran turret item must not be treated as an equivalent replacement item for ordinary vanilla gun-turret ghosts. Destroying a regular gun turret with no installed core must create a normal gun-turret replacement ghost.
 - Installing a Veteran Core must create a real hidden feeder inventory entity on the turret tile.
 - Element rank material progress must consume matching resources from the hidden feeder inventory, not from the player inventory.
@@ -40,10 +40,10 @@
 - When XP progression increases an installed core's level, a short in-world level-up popup should appear above the turret.
 - Evolution points must be derived from turret level and spent allocations.
 - Clicking an allocatable core upgrade or augment must allocate one rank to the opened turret and refresh the panel.
-- Range augment ranks must change real turret attack range, not only the displayed range value.
-- Max HP augment ranks must change real turret max health through hidden prototype-backed variants and must remain capped to avoid unbounded prototype growth.
+- Shield core upgrade ranks must add 10 scripted shield capacity per rank, absorb incoming damage before HP, recharge in small increments after a short delay without incoming damage, and keep current shield unchanged when capacity changes except for clamping down to a lower maximum.
+- Retired Range and Max HP augment ranks from old profiles must be normalized away so old tags do not keep dead upgrade state.
 - Resistance core upgrade ranks must reduce non-lethal incoming damage through scripted mitigation without adding more hidden turret variants.
-- Ammo Recovery core upgrade ranks must regenerate the current or remembered ammo item over time, but must not create ammo for a turret that has never held ammo.
+- Ammo Productivity core upgrade ranks must add 1% raw magazine productivity per rank, then apply diminishing returns as `raw / (raw + 1)` for effective refill progress so the stat can scale indefinitely without reaching free ammo. Spent ammo should fill a custom purple horizontal progress bar in a separate stat row immediately after Ammo, and every full bar should restore +1 ammo inside the current loaded magazine without exceeding that ammo prototype's normal magazine size or creating full ammo items.
 - Clicking an element option must assign rank 1 for free when the corresponding level gate is unlocked.
 - Unlocked elements must always show their current rank, technical effect, next-rank material, and passive progress bar; there is no separate upgrade-start click.
 - Feeding required items into the turret's hidden material input must advance the selected element's passive material progress and increase the element rank when requirements are complete.
@@ -54,7 +54,7 @@
 - The GUI must refresh while the turret GUI remains open.
 - Selecting a gun turret and running `/turret-xp` must open the same panel as a fallback.
 - The packaged zip must include `info.json`, Lua entrypoints, runtime/data prototype module files, locale, docs, README, changelog, and a root `thumbnail.png` when that file exists.
-- Hidden specialization, Range, and Max HP turret variants must inherit late gun-turret prototype edits from other mods before adding Turret XP-specific stat changes.
+- Hidden specialization and sub-specialization turret variants must inherit late gun-turret prototype edits from other mods before adding Turret XP-specific stat changes.
 - Gun-turret accepted projectile ammo with an ammo delivery range below the highest generated Turret XP turret range must receive a turret-source compatibility range patch while preserving the original non-turret ammo behavior.
 
 ## Display
@@ -63,13 +63,16 @@
 - Show whether a Veteran Core is installed and provide install/extract controls.
 - Show Bind/Unbind controls for installed cores.
 - On space-platform turrets, show platform hub Veteran Core options when cores are available there.
-- Show current HP and prototype max HP.
-- Show Max HP augment and Ammo Recovery rows in the active custom stat summary when ranked.
+- Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.
+- Show a nine-pip blue in-world Shield bar under Factorio's native turret HP bar when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open. The Shield row should use Factorio's exposed native shield and gray pip sprites, deplete one whole pip at a time, and stay centered under the native HP row.
+- Show Specialization first, then HP and HP Regeneration, then Shield and Shield Regeneration when ranked.
+- Show Shield, Resistance, Ammo Productivity, and other active custom stat rows when ranked. Ammo Productivity should appear as a horizontal bar in its own row immediately after Ammo when ranked.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
 - Show turret attack range in tiles, including quality range multiplier when relevant.
-- Show loaded ammo and count.
+- Show the loaded magazine stack and current ammo count as separate `Magazine` and `Ammo` stat rows.
 - Show estimated loaded-ammo damage per shot and estimated DPS when they can be derived from prototype data.
 - Show kills, lifetime damage, and evolution points.
+- Keep stat rows compact by showing final values in the panel and moving current formulas into the stat-name info hover. HP and Range quality breakdowns should be available from the quality diamond beside the value, not from the stat-name info hover.
 - Show a six-section Evolution column to the right of the core, XP, dev, and scrollable stats column: core upgrades, specialization, first element, powerful augments, sub-specialization, and second element/combo.
 - Keep Core points, Augment points, and current Specialization summary in a static Evolution header above the scrollable section body instead of repeating those summaries inside sections. Format the header as `Core: value`, `Aug: value`, and `Spec: value` with white labels and colored values.
 - Show clear section headers, right-side point/status text, and delimiters between choices inside the unlocked Evolution sections.
@@ -81,7 +84,7 @@
 - Always show baseline Crit Chance and Crit Damage in the stats summary when a core is installed, directly under Damage Dealt.
 - Show active Resistance in the stats summary only after at least one Resistance rank is allocated.
 - Apply and show specialization and sub-specialization multipliers, including Sniper Deadeye/Overwatch, Machine Gun Shredder/Sustained Fire, Bulwark Bastion/Guardian, and Brawler Executioner/Vampire.
-- Reserve stats-scrollbar space so scrollable stat values do not render underneath the scrollbar.
+- Reserve stats-scrollbar space before scrolling is needed so stat values do not shift or render underneath the scrollbar when additional rows make the panel scrollable.
 - Color numeric fragments only in stat, upgrade, augment, specialization, sub-specialization, element, and material-count values. Units and descriptive text must remain neutral, and elemental damage amounts should color the number with the corresponding element color.
 - Show a core naming field and a `Show` floating-label checkbox when a core is installed; show preset/RGB color controls only when the floating label is enabled, with the `Level` checkbox under the RGB picker.
 - Custom RGB floating-label colors should keep the Factorio-style display-panel background and sizing, accepting palette quantization if arbitrary runtime display-panel text color is unavailable.

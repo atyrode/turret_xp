@@ -138,35 +138,87 @@ return function(M)
     return nil
   end
 
-  function get_attack_parameters(entity)
-    return safe_read(safe_read(entity, "prototype"), "attack_parameters") or {}
-  end
-
-  function get_loaded_ammo(entity)
-    local inventory = entity.get_inventory(defines.inventory.turret_ammo)
-    if not inventory or not inventory.valid then
-      return nil, 0, nil
+  function get_effective_turret_prototype(entity, state)
+    if state then
+      local evolution = ensure_evolution_state(state)
+      local target_name = get_specialized_turret_name(evolution.specialization, 0, 0, evolution.sub_specialization)
+      local target_prototype = target_name and safe_read(prototypes.entity, target_name, nil, "effective turret prototype")
+      if target_prototype then
+        return target_prototype, target_name
+      end
     end
 
-    local ammo_name = nil
-    local ammo_quality = nil
-    local count = 0
+    return safe_read(entity, "prototype"), entity and entity.name or nil
+  end
+
+  function get_attack_parameters(entity, state)
+    local prototype = get_effective_turret_prototype(entity, state)
+    return safe_read(prototype, "attack_parameters") or {}
+  end
+
+  function get_loaded_ammo_snapshot(entity, preferred)
+    local inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
+    if not inventory or not inventory.valid then
+      return nil
+    end
+
+    local preferred_name = preferred and preferred.name or nil
+    local preferred_quality = preferred and (preferred.quality or "normal") or nil
+    local first = nil
+    local selected = nil
 
     for i = 1, #inventory do
       local stack = inventory[i]
-      if stack and stack.valid_for_read then
-        ammo_name = ammo_name or stack.name
-        if not ammo_quality and stack.name == ammo_name then
-          local quality = safe_read(stack, "quality")
-          ammo_quality = quality and quality.name or "normal"
-        end
-        if stack.name == ammo_name then
-          count = count + stack.count
+      if stack and stack.valid_for_read and feeder.is_ammo_item(stack.name) then
+        local quality = safe_read(stack, "quality")
+        local quality_name = quality and quality.name or "normal"
+        local prototype = safe_read(stack, "prototype")
+        local magazine_size = tonumber(safe_read(prototype, "magazine_size")) or 0
+        local snapshot = {
+          stack = stack,
+          slot_index = i,
+          name = stack.name,
+          quality = quality_name,
+          count = math.max(0, math.floor(tonumber(stack.count) or 0)),
+          ammo = math.max(0, math.floor(tonumber(safe_read(stack, "ammo")) or magazine_size or 0)),
+          magazine_size = magazine_size,
+        }
+
+        first = first or snapshot
+        if preferred_name and stack.name == preferred_name and quality_name == preferred_quality then
+          selected = selected or snapshot
         end
       end
     end
 
-    return ammo_name, count, ammo_quality
+    selected = selected or first
+    if not selected then
+      return nil
+    end
+
+    local total_count = 0
+    for i = 1, #inventory do
+      local stack = inventory[i]
+      if stack and stack.valid_for_read and stack.name == selected.name then
+        local quality = safe_read(stack, "quality")
+        local quality_name = quality and quality.name or "normal"
+        if quality_name == selected.quality then
+          total_count = total_count + (tonumber(stack.count) or 0)
+        end
+      end
+    end
+    selected.count = math.max(0, math.floor(total_count))
+
+    return selected
+  end
+
+  function get_loaded_ammo(entity)
+    local snapshot = get_loaded_ammo_snapshot(entity)
+    if not snapshot then
+      return nil, 0, nil, nil, nil
+    end
+
+    return snapshot.name, snapshot.count, snapshot.quality, snapshot.ammo, snapshot.magazine_size
   end
 
   function get_ammo_type(ammo_name)
@@ -184,7 +236,7 @@ return function(M)
     end)
   end
 
-  function get_ammo_category_name(entity, ammo_name)
+  function get_ammo_category_name(entity, ammo_name, state)
     if ammo_name then
       local ammo = prototypes.item[ammo_name]
       local ammo_category = safe_read(ammo, "ammo_category")
@@ -194,7 +246,7 @@ return function(M)
       end
     end
 
-    local attack_parameters = get_attack_parameters(entity)
+    local attack_parameters = get_attack_parameters(entity, state)
     local categories = attack_parameters.ammo_categories
     if categories and categories[1] then
       return categories[1]
@@ -373,19 +425,39 @@ return function(M)
   end
 
   function get_repair_base_per_second(state, entity)
-    return get_base_rank(state, "repair") * REPAIR_MAX_HEALTH_FRACTION_PER_RANK * get_repair_reference_health(state, entity)
+    return get_augment_rank(state, "repair") * REPAIR_MAX_HEALTH_FRACTION_PER_RANK * get_repair_reference_health(state, entity)
   end
 
   function get_repair_per_second(state, entity)
     return get_repair_base_per_second(state, entity) * get_specialization_multiplier(state, "repair_multiplier")
   end
 
+  function get_ammo_productivity_fraction(state)
+    return get_base_rank(state, "ammo_regen")
+      * AMMO_PRODUCTIVITY_PER_RANK
+      * get_specialization_multiplier(state, "ammo_recovery_multiplier")
+  end
+
+  function get_effective_ammo_productivity_fraction(state)
+    local raw = math.max(0, get_ammo_productivity_fraction(state))
+    if raw <= 0 then
+      return 0
+    end
+
+    return raw / (raw + 1)
+  end
+
   function get_ammo_recovery_per_minute(state)
-    return get_base_rank(state, "ammo_regen") * get_specialization_multiplier(state, "ammo_recovery_multiplier")
+    return get_effective_ammo_productivity_fraction(state) * 100
+  end
+
+  function get_shield_on_hit_fraction(state)
+    return get_augment_rank(state, "siphon") * SHIELD_ON_HIT_FRACTION_PER_RANK
   end
 
   function get_lifesteal_rate(state)
-    return get_base_rank(state, "siphon") * 0.004 * get_specialization_multiplier(state, "lifesteal_multiplier")
+    local specialization = get_specialization(state)
+    return specialization and (tonumber(specialization.lifesteal_fraction) or 0) or 0
   end
 
   function get_damage_resistance_fraction(state)
@@ -518,8 +590,8 @@ return function(M)
     return caption
   end
 
-  function get_shooting_speed_values(entity, ammo_name)
-    local attack_parameters = get_attack_parameters(entity)
+  function get_shooting_speed_values(entity, ammo_name, state)
+    local attack_parameters = get_attack_parameters(entity, state)
     if not attack_parameters.cooldown or attack_parameters.cooldown <= 0 then
       return nil, nil
     end
@@ -536,7 +608,7 @@ return function(M)
     local base_speed = 60 / cooldown
     local speed_modifier = 0
     local force = safe_read(entity, "force")
-    local ammo_category_name = get_ammo_category_name(entity, ammo_name)
+    local ammo_category_name = get_ammo_category_name(entity, ammo_name, state)
 
     if force and ammo_category_name then
       local modifier = compat.try("gun speed modifier", function()
@@ -552,12 +624,12 @@ return function(M)
     return base_speed, bonus_speed
   end
 
-  function format_shots_per_second(entity, ammo_name)
-    local base_speed, bonus_speed = get_shooting_speed_values(entity, ammo_name)
+  function format_shots_per_second(entity, ammo_name, state)
+    local base_speed, bonus_speed = get_shooting_speed_values(entity, ammo_name, state)
     return format_base_plus_bonus(base_speed, bonus_speed, "/s", 2)
   end
 
-  function get_damage_values(entity, ammo_name)
+  function get_damage_values(entity, ammo_name, state)
     if not ammo_name then
       return nil, nil
     end
@@ -567,12 +639,13 @@ return function(M)
       return nil, nil
     end
 
-    local attack_parameters = get_attack_parameters(entity)
+    local attack_parameters = get_attack_parameters(entity, state)
     local base_damage = sum_trigger_items(ammo_type.action) * (attack_parameters.damage_modifier or 1)
     local force = safe_read(entity, "force")
-    local ammo_category_name = get_ammo_category_name(entity, ammo_name)
+    local ammo_category_name = get_ammo_category_name(entity, ammo_name, state)
     local ammo_modifier = 0
     local turret_modifier = 0
+    local _, turret_name = get_effective_turret_prototype(entity, state)
 
     if force and ammo_category_name then
       local modifier = compat.try("ammo damage modifier", function()
@@ -586,7 +659,7 @@ return function(M)
 
     if force then
       local modifier = compat.try("turret attack modifier", function()
-        return force.get_turret_attack_modifier(entity.name)
+        return force.get_turret_attack_modifier(turret_name or entity.name)
       end)
 
       if modifier then
@@ -602,8 +675,8 @@ return function(M)
     return base_damage, bonus_damage, damage_type
   end
 
-  function format_damage_per_shot(entity, ammo_name)
-    local base_damage, bonus_damage, damage_type = get_damage_values(entity, ammo_name)
+  function format_damage_per_shot(entity, ammo_name, state)
+    local base_damage, bonus_damage, damage_type = get_damage_values(entity, ammo_name, state)
     local formatted = format_base_plus_bonus(base_damage, bonus_damage, "", 1)
     if damage_type and formatted ~= "-" then
       return { "turret-xp.damage-value-with-type", formatted, { "damage-type-name." .. damage_type } }
@@ -612,8 +685,8 @@ return function(M)
     return formatted
   end
 
-  function get_final_damage_per_shot(entity, ammo_name)
-    local base_damage, bonus_damage = get_damage_values(entity, ammo_name)
+  function get_final_damage_per_shot(entity, ammo_name, state)
+    local base_damage, bonus_damage = get_damage_values(entity, ammo_name, state)
     if not base_damage then
       return nil
     end
@@ -621,8 +694,8 @@ return function(M)
     return base_damage + (bonus_damage or 0)
   end
 
-  function get_final_shots_per_second(entity, ammo_name)
-    local base_speed, bonus_speed = get_shooting_speed_values(entity, ammo_name)
+  function get_final_shots_per_second(entity, ammo_name, state)
+    local base_speed, bonus_speed = get_shooting_speed_values(entity, ammo_name, state)
     if not base_speed then
       return nil
     end
@@ -633,7 +706,7 @@ return function(M)
   get_range_for_quality = nil
 
   function get_shooting_speed_formula_values(entity, state, ammo_name)
-    local base_speed, bonus_speed = get_shooting_speed_values(entity, ammo_name)
+    local base_speed, bonus_speed = get_shooting_speed_values(entity, ammo_name, state)
     if not base_speed then
       return nil
     end
@@ -648,7 +721,7 @@ return function(M)
   end
 
   function get_damage_formula_values(entity, state, ammo_name)
-    local base_damage, bonus_damage, damage_type = get_damage_values(entity, ammo_name)
+    local base_damage, bonus_damage, damage_type = get_damage_values(entity, ammo_name, state)
     if not base_damage then
       return nil
     end
@@ -689,15 +762,27 @@ return function(M)
     }
   end
 
-  function format_estimated_dps(entity, ammo_name, state)
+  function get_estimated_dps_values(entity, ammo_name, state)
     local expected = get_expected_damage_per_shot(entity, state, ammo_name)
-    local speed = get_final_shots_per_second(entity, ammo_name)
+    local speed = get_final_shots_per_second(entity, ammo_name, state)
     if not expected or not speed then
-      return "-"
+      return nil
     end
 
     local damage = expected.total
-    local total = damage * speed
+    return {
+      expected = expected,
+      speed = speed,
+      total = damage * speed,
+    }
+  end
+
+  function format_estimated_dps_formula(values)
+    if not values then
+      return "-"
+    end
+
+    local expected = values.expected
     if expected.expected_bonus and expected.expected_bonus >= 0.005 then
       return {
         "",
@@ -706,24 +791,32 @@ return function(M)
         " ",
         format_colored_bonus(expected.expected_bonus, 1),
         ") x ",
-        format_number(speed, 2),
+        format_number(values.speed, 2),
         "/s = ",
-        format_number(total, 1),
+        format_number(values.total, 1),
         "/s",
       }
     end
 
-    return format_number(total, 1) .. "/s"
+    return format_number(expected.total, 1) .. " x " .. format_number(values.speed, 2) .. "/s = " .. format_number(values.total, 1) .. "/s"
+  end
+
+  function format_estimated_dps(entity, ammo_name, state)
+    local values = get_estimated_dps_values(entity, ammo_name, state)
+    if not values then
+      return "-"
+    end
+
+    return format_number(values.total, 1) .. "/s"
   end
 
   function get_range_formula_values(entity, state, quality_name)
-    local total = get_range_for_quality(entity, quality_name)
+    local total = get_range_for_quality(entity, quality_name, state)
     if not total then
       return nil
     end
 
     local multiplier = get_specialization_multiplier(state, "range_multiplier")
-    local range_rank = get_augment_rank(state, "range")
     local quality = safe_read(prototypes.quality, quality_name or "normal")
     local quality_multiplier = quality and get_quality_multiplier(quality, "range_multiplier") or 1
     local base_range = nil
@@ -734,12 +827,12 @@ return function(M)
     end
 
     if not base_range then
-      base_range = (total / multiplier) - (range_rank * quality_multiplier)
+      base_range = total / multiplier
     end
 
     return {
       base = base_range,
-      additive = range_rank * quality_multiplier,
+      additive = 0,
       multiplier = multiplier,
       total = total,
     }
@@ -751,10 +844,6 @@ return function(M)
     end
 
     local multiplier = get_specialization_multiplier(state, "health_multiplier")
-    local health_rank = get_augment_rank(state, "max_health")
-    local quality = safe_read(prototypes.quality, quality_name or "normal")
-    local quality_multiplier = quality and get_quality_multiplier(quality, "health_multiplier") or 1
-    local additive = health_rank * MAX_HEALTH_PER_RANK * quality_multiplier
     local base_health = nil
     local base_prototype = prototypes.entity[BASE_TURRET_NAME]
     if base_prototype then
@@ -765,19 +854,19 @@ return function(M)
 
     local total = max_health
     if base_health then
-      total = math.floor(((base_health + additive) * multiplier) + 0.5)
+      total = math.floor((base_health * multiplier) + 0.5)
     end
 
     return {
       base = base_health or (max_health / multiplier),
-      additive = additive,
+      additive = 0,
       multiplier = multiplier,
       total = total,
     }
   end
 
-  function get_max_health_for_quality(entity, quality_name)
-    local prototype = safe_read(entity, "prototype")
+  function get_max_health_for_quality(entity, quality_name, state)
+    local prototype = get_effective_turret_prototype(entity, state)
     if not prototype then
       return nil
     end
@@ -789,12 +878,12 @@ return function(M)
 
   format_range_for_quality = nil
 
-  function format_range(entity)
-    return format_range_for_quality(entity, get_entity_quality_name(entity))
+  function format_range(entity, state)
+    return format_range_for_quality(entity, get_entity_quality_name(entity), state)
   end
 
-  get_range_for_quality = function(entity, quality_name)
-    local attack_parameters = get_attack_parameters(entity)
+  get_range_for_quality = function(entity, quality_name, state)
+    local attack_parameters = get_attack_parameters(entity, state)
     if not attack_parameters.range then
       return nil
     end
@@ -807,8 +896,8 @@ return function(M)
     return attack_parameters.range * get_quality_multiplier(quality, "range_multiplier")
   end
 
-  format_range_for_quality = function(entity, quality_name)
-    return format_number(get_range_for_quality(entity, quality_name), 1)
+  format_range_for_quality = function(entity, quality_name, state)
+    return format_number(get_range_for_quality(entity, quality_name, state), 1)
   end
 
   function target_prior_damage(event, damage)

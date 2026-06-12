@@ -4,7 +4,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 ## Current Baseline
 
-- Main development line: `0.10.3`.
+- Main development line: `0.10.4`.
 - Stable branch policy: short-lived issue branches into protected `main`; releases are GitHub Releases/tags named `v<info.json version>`.
 - Required local lightweight check: `scripts/check.sh`.
 - Strict local Lua tooling without host installs: `docker compose run --rm lua-tools`.
@@ -21,7 +21,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Data-stage prototype creation is split under `prototypes/`, with entrypoints kept small.
 - `scripts/domain.lua` owns shared stable gameplay IDs, caps, specialization data, label presets, and generated variant-name helpers across data stage, runtime, and tests.
 - Lua formatting and linting are enforced through StyLua, Luacheck, Lua 5.2 syntax checks, CI, and the local Docker Compose tooling path.
-- The headless suite covers the current hidden prototype budget, bound turret movement and ammo conservation, modded base turret range inheritance, turret-source projectile ammo range compatibility, damage accounting, combat effect descriptor/budget samples, GUI helper samples, compatibility helper samples, feeder routing, passive element progress, Resistance, Max HP, Ammo Recovery, status damage, and gated remote policy.
+- The headless suite covers the current hidden prototype budget, bound turret movement and ammo conservation, modded base turret range inheritance, turret-source projectile ammo range compatibility, damage accounting, combat effect descriptor/budget samples, GUI helper samples, compatibility helper samples, feeder routing, passive element progress, Shield, Resistance, Ammo Productivity, status damage, and gated remote policy.
 - The invisible feeder remains the accepted material-input model and is documented as a narrow contract with headless coverage for lifecycle, ownership cleanup, source-aware filter priority, no-source non-management, restoration, ammo forwarding, wrong-item cleanup, mixed-element requests, and passive material progress.
 - Published save/profile compatibility now lives in a named migration compatibility layer with headless coverage for legacy element slots, active element projects, retired element fuel buffers, retired augments, and old skill-tree ranks.
 - Public homepage, GitHub release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and `docs/public-copy.json`, with `scripts/check.sh` detecting stale committed homepage output.
@@ -48,7 +48,7 @@ Use the narrowest meaningful checks for each change:
 - Passive element rank progress visibility and wrong-item recovery.
 - Fire burn and Toxic poison readability in real combat.
 - Resistance feel against common enemy attacks and lethal-hit edge cases.
-- Max HP, Regeneration, Ammo Recovery, and Lifesteal balance in long fights.
+- Shield, Regeneration, Ammo Productivity, Shield on Hit, and Brawler Lifesteal balance in long fights.
 - Level gates at 10, 20, 30, 40, and 50.
 - Sniper, Machine Gun, Bulwark, Brawler, and sub-specialization identity clarity.
 - Space-platform core selection and asteroid XP pacing.

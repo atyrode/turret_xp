@@ -40,9 +40,7 @@ domain.gates = {
   second_element = 50,
 }
 
-domain.range_augment_max = 20
-domain.max_health_augment_max = 20
-domain.max_health_per_rank = 50
+domain.shield_per_rank = 10
 domain.element_free_rank = 1
 domain.label_custom_color_steps = 5
 
@@ -87,53 +85,53 @@ domain.specializations = {
     id = "sniper",
     sprite = "entity/radar",
     name = "Sniper",
-    range_multiplier = 1.8889,
+    range_multiplier = 1.90,
     cooldown_multiplier = 4.0,
     damage_multiplier = 2.8,
-    health_multiplier = 0.875,
-    rotation_speed_multiplier = 0.6667,
+    health_multiplier = 0.85,
+    rotation_speed_multiplier = 0.65,
     crit_damage_multiplier = 1.8,
-    value = "x1.89 range, x2.8 damage, x0.25 fire rate, x1.8 crit damage, x0.88 HP",
+    value = "+90% range, +180% damage, -75% attack speed, +80% crit damage, -15% HP",
     description = "Very high range and shot damage, stronger critical hits, extremely slow fire rate, lower durability.",
   },
   {
     id = "machine_gun",
     sprite = "item/submachine-gun",
     name = "Machine gun",
-    range_multiplier = 0.8889,
+    range_multiplier = 0.90,
     cooldown_multiplier = 0.5,
-    damage_multiplier = 0.58,
+    damage_multiplier = 0.60,
     health_multiplier = 0.9,
-    rotation_speed_multiplier = 1.6667,
+    rotation_speed_multiplier = 1.70,
     ammo_recovery_multiplier = 2.0,
-    value = "x2 fire rate, x2 ammo recovery, x0.58 damage, x0.89 range, x0.9 HP",
-    description = "Much faster fire rate and ammo recovery, slightly shorter range, lower shot damage.",
+    value = "+100% attack speed, +100% ammo productivity, -40% damage, -10% range, -10% HP",
+    description = "Much faster fire rate and ammo productivity, slightly shorter range, lower shot damage.",
   },
   {
     id = "bulwark",
     sprite = "item/stone-wall",
     name = "Bulwark",
-    range_multiplier = 0.9445,
+    range_multiplier = 0.95,
     cooldown_multiplier = 1.3334,
     damage_multiplier = 0.65,
     health_multiplier = 3.0,
     rotation_speed_multiplier = 0.8,
     repair_multiplier = 2.5,
-    value = "x3 HP, x2.5 regeneration, x0.65 damage, x0.75 fire rate",
+    value = "+200% HP, +150% regeneration, -35% damage, -25% attack speed, -5% range",
     description = "Triple durability and stronger regeneration, lower shot damage, slightly shorter range.",
   },
   {
     id = "brawler",
     sprite = "item/shotgun",
     name = "Brawler",
-    range_multiplier = 0.3889,
+    range_multiplier = 0.40,
     cooldown_multiplier = 2.0,
     damage_multiplier = 3.0,
-    health_multiplier = 1.625,
-    rotation_speed_multiplier = 1.3334,
-    lifesteal_multiplier = 2.5,
-    value = "x3 damage, x2.5 lifesteal, x0.5 fire rate, x0.39 range, x1.63 HP",
-    description = "Very short range, high shot damage, stronger lifesteal and durability, slower fire rate.",
+    health_multiplier = 1.60,
+    rotation_speed_multiplier = 1.35,
+    lifesteal_fraction = 0.10,
+    value = "+200% damage, 10% lifesteal, -50% attack speed, -60% range, +60% HP",
+    description = "Very short range, high shot damage, stronger durability, slower fire rate.",
   },
 }
 domain.specialization_by_id = index_by_id(domain.specializations)
@@ -144,10 +142,10 @@ domain.sub_specializations = {
     parent = "sniper",
     sprite = "item/piercing-rounds-magazine",
     name = "Deadeye",
-    crit_chance_flat = 0.08,
+    crit_chance_flat = 0.10,
     crit_damage_multiplier = 1.25,
-    damage_multiplier = 1.08,
-    value = "+8% crit chance, x1.25 crit damage, x1.08 damage",
+    damage_multiplier = 1.10,
+    value = "+10% crit chance, +25% crit damage, +10% damage",
     description = "Turns Sniper into a precision killer that leans harder into critical shots.",
   },
   {
@@ -155,10 +153,10 @@ domain.sub_specializations = {
     parent = "sniper",
     sprite = "entity/radar",
     name = "Overwatch",
-    range_multiplier = 1.18,
-    cooldown_multiplier = 1.15,
-    damage_multiplier = 1.08,
-    value = "x1.18 range, x1.08 damage, x0.87 fire rate",
+    range_multiplier = 1.20,
+    cooldown_multiplier = 1.1765,
+    damage_multiplier = 1.10,
+    value = "+20% range, +10% damage, -15% attack speed",
     description = "Pushes Sniper further into extreme range at the cost of an even slower firing rhythm.",
   },
   {
@@ -166,9 +164,9 @@ domain.sub_specializations = {
     parent = "machine_gun",
     sprite = "item/firearm-magazine",
     name = "Shredder",
-    double_shot_chance_flat = 0.12,
-    damage_multiplier = 0.92,
-    value = "+12% double-shot chance, x0.92 damage",
+    double_shot_chance_flat = 0.10,
+    damage_multiplier = 0.90,
+    value = "+10% double-shot chance, -10% damage",
     description = "Trades some shot weight for more frequent burst fire.",
   },
   {
@@ -176,9 +174,9 @@ domain.sub_specializations = {
     parent = "machine_gun",
     sprite = "item/piercing-rounds-magazine",
     name = "Sustained fire",
-    cooldown_multiplier = 0.85,
+    cooldown_multiplier = 0.8334,
     ammo_recovery_multiplier = 1.75,
-    value = "x1.18 fire rate, x1.75 ammo recovery",
+    value = "+20% attack speed, +75% ammo productivity",
     description = "Improves sustained uptime by firing faster and recovering ammunition more aggressively.",
   },
   {
@@ -188,8 +186,8 @@ domain.sub_specializations = {
     name = "Bastion",
     health_multiplier = 1.35,
     resistance_flat = 0.05,
-    cooldown_multiplier = 1.10,
-    value = "x1.35 HP, +5% resistance, x0.91 fire rate",
+    cooldown_multiplier = 1.1112,
+    value = "+35% HP, +5% resistance, -10% attack speed",
     description = "Commits Bulwark to holding ground through raw durability and extra mitigation.",
   },
   {
@@ -198,8 +196,8 @@ domain.sub_specializations = {
     sprite = "item/repair-pack",
     name = "Guardian",
     repair_multiplier = 1.80,
-    range_multiplier = 1.08,
-    value = "x1.8 regeneration, x1.08 range",
+    range_multiplier = 1.10,
+    value = "+80% regeneration, +10% range",
     description = "Turns Bulwark into a steadier protector with stronger self-repair and a little more reach.",
   },
   {
@@ -209,20 +207,18 @@ domain.sub_specializations = {
     name = "Executioner",
     damage_multiplier = 1.35,
     crit_damage_multiplier = 1.35,
-    lifesteal_multiplier = 0.80,
-    value = "x1.35 damage, x1.35 crit damage, x0.8 lifesteal",
-    description = "Makes Brawler more lethal at close range while softening its sustain.",
+    value = "+35% damage, +35% crit damage",
+    description = "Makes Brawler more lethal at close range while keeping its innate [color=1,0.36,0.30]Lifesteal[/color].",
   },
   {
     id = "brawler_vampire",
     parent = "brawler",
     sprite = "item/steel-plate",
     name = "Vampire",
-    lifesteal_multiplier = 1.80,
-    health_multiplier = 1.18,
+    health_multiplier = 1.20,
     damage_multiplier = 0.90,
-    value = "x1.8 lifesteal, x1.18 HP, x0.9 damage",
-    description = "Turns Brawler into a self-sustaining close-range anchor.",
+    value = "+20% HP, -10% damage",
+    description = "Turns Brawler into a steadier self-sustaining close-range anchor while keeping its innate [color=1,0.36,0.30]Lifesteal[/color].",
   },
 }
 domain.sub_specialization_by_id = index_by_id(domain.sub_specializations)
@@ -250,11 +246,11 @@ local function clamp_rank(value, max_rank)
 end
 
 function domain.clamp_range_rank(value)
-  return clamp_rank(value, domain.range_augment_max)
+  return clamp_rank(value, 0)
 end
 
 function domain.clamp_max_health_rank(value)
-  return clamp_rank(value, domain.max_health_augment_max)
+  return clamp_rank(value, 0)
 end
 
 function domain.get_sub_specialization_variant_segment(specialization_id, sub_specialization_id)
@@ -276,9 +272,6 @@ function domain.get_sub_specialization_variant_segment(specialization_id, sub_sp
 end
 
 function domain.specialized_turret_variant_id(specialization_id, range_rank, health_rank, sub_specialization_id)
-  range_rank = domain.clamp_range_rank(range_rank)
-  health_rank = domain.clamp_max_health_rank(health_rank)
-
   local segments = {}
   if specialization_id and domain.specialization_by_id[specialization_id] then
     segments[#segments + 1] = specialization_id
@@ -286,12 +279,6 @@ function domain.specialized_turret_variant_id(specialization_id, range_rank, hea
     if sub_segment then
       segments[#segments + 1] = sub_segment
     end
-  end
-  if range_rank > 0 then
-    segments[#segments + 1] = "range-" .. tostring(range_rank)
-  end
-  if health_rank > 0 then
-    segments[#segments + 1] = "health-" .. tostring(health_rank)
   end
 
   if #segments == 0 then
@@ -311,8 +298,6 @@ function domain.specialized_turret_name(specialization_id, range_rank, health_ra
 end
 
 function domain.bound_turret_variant_id(specialization_id, range_rank, sub_specialization_id)
-  range_rank = domain.clamp_range_rank(range_rank)
-
   local segments = {}
   if specialization_id and domain.specialization_by_id[specialization_id] then
     segments[#segments + 1] = specialization_id
@@ -320,9 +305,6 @@ function domain.bound_turret_variant_id(specialization_id, range_rank, sub_speci
     if sub_segment then
       segments[#segments + 1] = sub_segment
     end
-  end
-  if range_rank > 0 then
-    segments[#segments + 1] = "range-" .. tostring(range_rank)
   end
 
   if #segments == 0 then
@@ -387,63 +369,33 @@ function domain.combine_variant_settings(primary, secondary)
 end
 
 function domain.for_each_specialized_turret_name(callback)
-  for range_rank = 0, domain.range_augment_max do
-    for health_rank = 0, domain.max_health_augment_max do
-      if range_rank > 0 or health_rank > 0 then
-        callback(domain.specialized_turret_name(nil, range_rank, health_rank), nil, range_rank, health_rank, nil)
-      end
-    end
-  end
-
   for _, specialization in ipairs(domain.specializations) do
-    for range_rank = 0, domain.range_augment_max do
-      for health_rank = 0, domain.max_health_augment_max do
-        callback(
-          domain.specialized_turret_name(specialization.id, range_rank, health_rank),
-          specialization.id,
-          range_rank,
-          health_rank,
-          nil
-        )
-      end
-    end
+    callback(domain.specialized_turret_name(specialization.id, 0, 0), specialization.id, 0, 0, nil)
   end
 
   for _, sub_specialization in ipairs(domain.sub_specializations) do
-    for range_rank = 0, domain.range_augment_max do
-      for health_rank = 0, domain.max_health_augment_max do
-        callback(
-          domain.specialized_turret_name(sub_specialization.parent, range_rank, health_rank, sub_specialization.id),
-          sub_specialization.parent,
-          range_rank,
-          health_rank,
-          sub_specialization.id
-        )
-      end
-    end
+    callback(
+      domain.specialized_turret_name(sub_specialization.parent, 0, 0, sub_specialization.id),
+      sub_specialization.parent,
+      0,
+      0,
+      sub_specialization.id
+    )
   end
 end
 
 function domain.for_each_bound_turret_variant(callback)
-  for range_rank = 1, domain.range_augment_max do
-    callback(domain.bound_turret_variant_id(nil, range_rank), nil, range_rank, nil)
-  end
-
   for _, specialization in ipairs(domain.specializations) do
-    for range_rank = 0, domain.range_augment_max do
-      callback(domain.bound_turret_variant_id(specialization.id, range_rank), specialization.id, range_rank, nil)
-    end
+    callback(domain.bound_turret_variant_id(specialization.id, 0), specialization.id, 0, nil)
   end
 
   for _, sub_specialization in ipairs(domain.sub_specializations) do
-    for range_rank = 0, domain.range_augment_max do
-      callback(
-        domain.bound_turret_variant_id(sub_specialization.parent, range_rank, sub_specialization.id),
-        sub_specialization.parent,
-        range_rank,
-        sub_specialization.id
-      )
-    end
+    callback(
+      domain.bound_turret_variant_id(sub_specialization.parent, 0, sub_specialization.id),
+      sub_specialization.parent,
+      0,
+      sub_specialization.id
+    )
   end
 end
 

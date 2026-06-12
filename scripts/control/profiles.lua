@@ -6,6 +6,20 @@ return function(M)
   local _ENV = M
 
   local bound_turret_item_service = nil
+  local SHIELD_BAR_RENDER_VERSION = 3
+  local SHIELD_BAR_SEGMENTS = 9
+  local SHIELD_BAR_PIXELS_PER_TILE = 32
+  local SHIELD_BAR_PIP_SIZE_TILES = 7 / SHIELD_BAR_PIXELS_PER_TILE
+  local SHIELD_BAR_WIDTH_TILES = SHIELD_BAR_SEGMENTS * SHIELD_BAR_PIP_SIZE_TILES
+  local SHIELD_BAR_CENTER_X_NUDGE_TILES = -0.5 / SHIELD_BAR_PIXELS_PER_TILE
+  local SHIELD_BAR_LEFT_PIP_X = (-SHIELD_BAR_WIDTH_TILES / 2) + (SHIELD_BAR_PIP_SIZE_TILES / 2) + SHIELD_BAR_CENTER_X_NUDGE_TILES
+  -- Factorio exposes the native bar pip sprites, but not the engine-owned HP bar anchor.
+  -- These nudges keep the shield row calibrated just below a gun turret's native HP row.
+  local SHIELD_BAR_PIP_Y = 1.24 + (5 / SHIELD_BAR_PIXELS_PER_TILE)
+  local SHIELD_BAR_FILLED_SPRITE = "utility/shield_bar_pip"
+  local SHIELD_BAR_EMPTY_SPRITE = "utility/bar_gray_pip"
+  local SHIELD_BAR_GUI_VISIBLE_TICKS = 90
+  local SHIELD_BAR_DAMAGE_VISIBLE_TICKS = 180
 
   local function get_bound_turret_item_service()
     if not bound_turret_item_service then
@@ -50,7 +64,8 @@ return function(M)
       label_scale = 2,
       bound_turret = false,
       last_ammo = nil,
-      ammo_regen_progress = 0,
+      ammo_productivity_progress = 0,
+      shield = 0,
     }
   end
 
@@ -72,7 +87,8 @@ return function(M)
     profile.show_name_label = profile.show_name_label == true
     profile.show_label_level = profile.show_label_level ~= false
     profile.bound_turret = profile.bound_turret == true
-    profile.ammo_regen_progress = math.max(0, tonumber(profile.ammo_regen_progress) or 0)
+    profile.ammo_productivity_progress = math.max(0, tonumber(profile.ammo_productivity_progress or profile.ammo_regen_progress) or 0)
+    profile.ammo_regen_progress = nil
     if type(profile.last_ammo) == "table" and feeder.is_ammo_item(profile.last_ammo.name) then
       profile.last_ammo = {
         name = profile.last_ammo.name,
@@ -90,6 +106,7 @@ return function(M)
     end
     profile.label_scale = 2
     ensure_evolution_state(profile)
+    normalize_shield_state(profile, true)
     sync_turret_progression(profile)
     return profile
   end
@@ -166,6 +183,7 @@ return function(M)
       local profile = storage.turret_xp.chips[host.chip_id]
       if profile then
         destroy_name_render(profile)
+        destroy_shield_bar_render(profile)
       end
       if destroy_profile then
         storage.turret_xp.chips[host.chip_id] = nil
@@ -182,7 +200,14 @@ return function(M)
     local result = {}
     for key, child in pairs(value) do
       local skip_runtime_key = type(key) == "string" and string.sub(key, 1, 1) == "_"
-      if not skip_runtime_key and key ~= "entity" and key ~= "name_render" and key ~= "label_entity" and key ~= "feeder" then
+      if
+        not skip_runtime_key
+        and key ~= "entity"
+        and key ~= "name_render"
+        and key ~= "label_entity"
+        and key ~= "shield_bar"
+        and key ~= "feeder"
+      then
         result[key] = copy_serializable(child)
       end
     end
@@ -214,7 +239,8 @@ return function(M)
       xp_kill_credit = profile.xp_kill_credit or profile.kill_credit or 0,
       dev_xp = profile.dev_xp or 0,
       last_ammo = copy_serializable(profile.last_ammo),
-      ammo_regen_progress = profile.ammo_regen_progress or 0,
+      ammo_productivity_progress = profile.ammo_productivity_progress or 0,
+      shield = normalize_shield_state(profile, true),
       evolution = {
         base = copy_serializable(evolution.base or {}),
         augments = copy_serializable(evolution.augments or {}),
@@ -252,7 +278,8 @@ return function(M)
       profile.xp_kill_credit = data.xp_kill_credit
       profile.dev_xp = data.dev_xp or 0
       profile.last_ammo = copy_serializable(data.last_ammo)
-      profile.ammo_regen_progress = data.ammo_regen_progress or 0
+      profile.ammo_productivity_progress = data.ammo_productivity_progress or data.ammo_regen_progress or 0
+      profile.shield = data.shield
       profile.evolution = copy_serializable(data.evolution or {})
     end
 
@@ -455,6 +482,7 @@ return function(M)
             name = stack.name,
             count = stack.count,
             quality = quality_name_from_stack(stack, "normal"),
+            ammo = safe_read(stack, "ammo", nil, "snapshot turret ammo"),
           }
         end
       end
@@ -503,6 +531,22 @@ return function(M)
     return desired
   end
 
+  function build_desired_turret_ammo_stacks(snapshot)
+    local desired = {}
+    for _, ammo in ipairs((snapshot and snapshot.ammo) or {}) do
+      local count = math.max(0, math.floor(tonumber(ammo.count) or 0))
+      if ammo.name and count > 0 then
+        desired[#desired + 1] = {
+          name = ammo.name,
+          quality = ammo.quality or "normal",
+          count = count,
+          ammo = ammo.ammo ~= nil and math.max(0, math.floor(tonumber(ammo.ammo) or 0)) or nil,
+        }
+      end
+    end
+    return desired
+  end
+
   function make_item_stack_definition(name, count, quality)
     local item = {
       name = name,
@@ -514,8 +558,24 @@ return function(M)
     return item
   end
 
+  function find_turret_ammo_stack(inventory, name, quality)
+    if not inventory or not inventory.valid or not name then
+      return nil
+    end
+
+    local expected_quality = quality or "normal"
+    for index = 1, #inventory do
+      local stack = inventory[index]
+      if stack and stack.valid_for_read and stack.name == name and quality_name_from_stack(stack, "normal") == expected_quality then
+        return stack
+      end
+    end
+
+    return nil
+  end
+
   function reconcile_preloaded_turret_ammo(entity, inventory, snapshot)
-    local desired = build_desired_turret_ammo_counts(snapshot)
+    local desired = build_desired_turret_ammo_stacks(snapshot)
     if not inventory or not inventory.valid then
       return desired
     end
@@ -560,6 +620,14 @@ return function(M)
         local inserted = compat.try("restore turret ammo", function()
           return inventory.insert(item)
         end, 0) or 0
+        if inserted > 0 and ammo.ammo ~= nil then
+          local stack = find_turret_ammo_stack(inventory, ammo.name, ammo.quality or "normal")
+          if stack then
+            pcall(function()
+              stack.ammo = ammo.ammo
+            end)
+          end
+        end
         local overflow = (ammo.count or 0) - inserted
         if overflow > 0 then
           spill_stack_definition_at(
@@ -775,6 +843,225 @@ return function(M)
     if profile then
       profile.name_render = nil
       profile.label_entity = nil
+    end
+  end
+
+  local function destroy_render_object(object)
+    if object and object.valid then
+      object.destroy()
+    end
+  end
+
+  destroy_shield_bar_render = function(profile)
+    local bar = profile and profile.shield_bar or nil
+    if bar then
+      if type(bar.segments) == "table" then
+        for _, segment in pairs(bar.segments) do
+          if type(segment) == "table" then
+            destroy_render_object(segment.object)
+            destroy_render_object(segment.background)
+            destroy_render_object(segment.fill)
+            destroy_render_object(segment.border)
+          end
+        end
+      end
+      -- Clean up stale handles from earlier dev builds that rendered a custom HP row
+      -- or a single solid shield bar.
+      destroy_render_object(bar.health_background)
+      destroy_render_object(bar.health_fill)
+      destroy_render_object(bar.health_border)
+      destroy_render_object(bar.shield_background)
+      destroy_render_object(bar.shield_fill)
+      destroy_render_object(bar.shield_border)
+      destroy_render_object(bar.background)
+      destroy_render_object(bar.fill)
+      destroy_render_object(bar.border)
+    end
+
+    if profile then
+      profile.shield_bar = nil
+    end
+  end
+
+  function shield_bar_visible_for_damage(profile)
+    if not profile or not game then
+      return
+    end
+
+    profile._shield_bar_visible_until =
+      math.max(tonumber(profile._shield_bar_visible_until) or 0, game.tick + SHIELD_BAR_DAMAGE_VISIBLE_TICKS)
+  end
+
+  local function shield_bar_target(entity, x, y)
+    return {
+      entity = entity,
+      offset = { x, y },
+    }
+  end
+
+  local function draw_shield_bar_pip(entity, sprite, x, y)
+    local ok, object = pcall(function()
+      return rendering.draw_sprite({
+        surface = entity.surface,
+        sprite = sprite,
+        target = shield_bar_target(entity, x, y),
+        x_scale = 1,
+        y_scale = 1,
+        render_layer = "air-object",
+        forces = { entity.force },
+        only_in_alt_mode = false,
+      })
+    end)
+
+    return ok and object or nil
+  end
+
+  local function update_shield_bar_pip(segment, entity, sprite, x, y)
+    local object = segment.object
+    if object and object.valid then
+      local ok = pcall(function()
+        object.surface = entity.surface
+        object.sprite = sprite
+        object.target = shield_bar_target(entity, x, y)
+        object.x_scale = 1
+        object.y_scale = 1
+        object.render_layer = "air-object"
+        object.forces = { entity.force }
+        object.only_in_alt_mode = false
+      end)
+      if ok then
+        segment.sprite = sprite
+        return object
+      end
+      destroy_render_object(object)
+    end
+
+    object = draw_shield_bar_pip(entity, sprite, x, y)
+    segment.object = object
+    segment.sprite = sprite
+    return object
+  end
+
+  local function discard_legacy_shield_bar_handles(bar)
+    if bar._shield_bar_render_version == SHIELD_BAR_RENDER_VERSION then
+      return
+    end
+
+    if type(bar.segments) == "table" then
+      for _, segment in pairs(bar.segments) do
+        if type(segment) == "table" then
+          destroy_render_object(segment.object)
+          destroy_render_object(segment.background)
+          destroy_render_object(segment.fill)
+          destroy_render_object(segment.border)
+          segment.object = nil
+          segment.background = nil
+          segment.fill = nil
+          segment.border = nil
+        end
+      end
+    end
+    destroy_render_object(bar.health_background)
+    destroy_render_object(bar.health_fill)
+    destroy_render_object(bar.health_border)
+    destroy_render_object(bar.shield_background)
+    destroy_render_object(bar.shield_fill)
+    destroy_render_object(bar.shield_border)
+    destroy_render_object(bar.background)
+    destroy_render_object(bar.fill)
+    destroy_render_object(bar.border)
+    bar.health_background = nil
+    bar.health_fill = nil
+    bar.health_border = nil
+    bar.shield_background = nil
+    bar.shield_fill = nil
+    bar.shield_border = nil
+    bar.background = nil
+    bar.fill = nil
+    bar.border = nil
+    bar._shield_bar_render_version = SHIELD_BAR_RENDER_VERSION
+  end
+
+  local function update_segmented_shield_bar(bar, entity, shield_ratio)
+    discard_legacy_shield_bar_handles(bar)
+
+    if type(bar.segments) ~= "table" then
+      bar.segments = {}
+    end
+
+    local filled_segments = 0
+    if shield_ratio > 0 then
+      filled_segments = math.max(1, math.min(SHIELD_BAR_SEGMENTS, math.ceil(shield_ratio * SHIELD_BAR_SEGMENTS)))
+    end
+
+    for index = 1, SHIELD_BAR_SEGMENTS do
+      local segment = bar.segments[index]
+      if type(segment) ~= "table" then
+        segment = {}
+        bar.segments[index] = segment
+      end
+
+      local filled = index <= filled_segments
+      local sprite = filled and SHIELD_BAR_FILLED_SPRITE or SHIELD_BAR_EMPTY_SPRITE
+      local x = SHIELD_BAR_LEFT_PIP_X + ((index - 1) * SHIELD_BAR_PIP_SIZE_TILES)
+      update_shield_bar_pip(segment, entity, sprite, x, SHIELD_BAR_PIP_Y)
+      segment.filled = filled
+    end
+
+    for index = SHIELD_BAR_SEGMENTS + 1, #bar.segments do
+      local segment = bar.segments[index]
+      if type(segment) == "table" then
+        destroy_render_object(segment.object)
+        destroy_render_object(segment.background)
+        destroy_render_object(segment.fill)
+        destroy_render_object(segment.border)
+      end
+      bar.segments[index] = nil
+    end
+  end
+
+  update_shield_bar_render = function(entity, profile, force_visible)
+    if not profile then
+      return
+    end
+
+    if not is_gun_turret(entity) then
+      destroy_shield_bar_render(profile)
+      return
+    end
+
+    local shield, capacity = normalize_shield_state(profile, true)
+    if capacity <= 0 then
+      destroy_shield_bar_render(profile)
+      return
+    end
+
+    local tick = game and game.tick or 0
+    if force_visible then
+      profile._shield_bar_visible_until = math.max(tonumber(profile._shield_bar_visible_until) or 0, tick + SHIELD_BAR_GUI_VISIBLE_TICKS)
+    end
+
+    local visible_until = tonumber(profile._shield_bar_visible_until) or 0
+    if not force_visible and shield >= capacity and visible_until < tick then
+      destroy_shield_bar_render(profile)
+      return
+    end
+
+    local shield_ratio = math.max(0, math.min(1, shield / capacity))
+    local bar = profile.shield_bar
+    if type(bar) ~= "table" then
+      bar = {}
+      profile.shield_bar = bar
+    end
+    update_segmented_shield_bar(bar, entity, shield_ratio)
+
+    local first_segment = bar.segments and bar.segments[1] or nil
+    bar.background = first_segment and first_segment.object or nil
+    bar.fill = first_segment and first_segment.filled and first_segment.object or nil
+    bar.border = first_segment and first_segment.object or nil
+
+    if not first_segment or not first_segment.object then
+      destroy_shield_bar_render(profile)
     end
   end
 
@@ -996,6 +1283,7 @@ return function(M)
     host.chip_id = profile.chip_id
     feeder.ensure(entity, profile)
     update_name_render(entity, profile)
+    update_shield_bar_render(entity, profile, false)
     return profile
   end
 
@@ -1007,6 +1295,7 @@ return function(M)
 
     local chip_id = profile.chip_id
     destroy_name_render(profile)
+    destroy_shield_bar_render(profile)
     feeder.destroy(profile, entity.position, true)
     profile.entity = nil
     if chip_id then
