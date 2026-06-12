@@ -4,6 +4,8 @@ return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
 
+  local SHIELD_HEALTH_BAR_NUDGE = 0.01
+
   local effect_budget = combat_budget.new({
     ensure_storage = ensure_storage,
     get_storage = function()
@@ -369,6 +371,12 @@ return function(M)
     local restored_health = health + absorbed
     if max_health then
       restored_health = math.min(max_health, restored_health)
+      if absorbed >= damage and restored_health >= max_health then
+        -- Factorio does not expose a runtime API to show the native HP bar.
+        -- Leaving a visually-full scratch lets the engine show its own bar
+        -- during shield-only hits without drawing a custom HP bar.
+        restored_health = math.max(1, max_health - SHIELD_HEALTH_BAR_NUDGE)
+      end
     end
 
     if restored_health > 0 then

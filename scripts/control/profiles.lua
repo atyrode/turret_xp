@@ -6,19 +6,17 @@ return function(M)
   local _ENV = M
 
   local bound_turret_item_service = nil
+  local SHIELD_BAR_RENDER_VERSION = 2
   local STATUS_BAR_HALF_WIDTH = 0.39
-  local STATUS_BAR_BACKGROUND_COLOR = { r = 0.015, g = 0.018, b = 0.02, a = 0.76 }
-  local STATUS_BAR_BORDER_COLOR = { r = 0.02, g = 0.025, b = 0.03, a = 0.88 }
-  local HEALTH_BAR_TOP_Y = 0.84
-  local HEALTH_BAR_BOTTOM_Y = 0.91
-  local SHIELD_BAR_TOP_Y = 0.94
-  local SHIELD_BAR_BOTTOM_Y = 1.01
+  local SHIELD_BAR_SEGMENTS = 9
+  local SHIELD_BAR_SEGMENT_GAP = 0.012
+  local SHIELD_BAR_TOP_Y = 0.99
+  local SHIELD_BAR_BOTTOM_Y = 1.06
   local SHIELD_BAR_GUI_VISIBLE_TICKS = 90
   local SHIELD_BAR_DAMAGE_VISIBLE_TICKS = 180
-  local HEALTH_BAR_HIGH_COLOR = { r = 0.12, g = 0.78, b = 0.18, a = 0.9 }
-  local HEALTH_BAR_MEDIUM_COLOR = { r = 0.95, g = 0.72, b = 0.12, a = 0.9 }
-  local HEALTH_BAR_LOW_COLOR = { r = 0.92, g = 0.18, b = 0.12, a = 0.9 }
+  local SHIELD_BAR_EMPTY_COLOR = { r = 0.16, g = 0.17, b = 0.18, a = 0.86 }
   local SHIELD_BAR_FILL_COLOR = { r = 0.08, g = 0.52, b = 1, a = 0.92 }
+  local SHIELD_BAR_BORDER_COLOR = { r = 0.015, g = 0.018, b = 0.02, a = 0.88 }
 
   local function get_bound_turret_item_service()
     if not bound_turret_item_service then
@@ -812,6 +810,17 @@ return function(M)
   destroy_shield_bar_render = function(profile)
     local bar = profile and profile.shield_bar or nil
     if bar then
+      if type(bar.segments) == "table" then
+        for _, segment in pairs(bar.segments) do
+          if type(segment) == "table" then
+            destroy_render_object(segment.background)
+            destroy_render_object(segment.fill)
+            destroy_render_object(segment.border)
+          end
+        end
+      end
+      -- Clean up stale handles from earlier dev builds that rendered a custom HP row
+      -- or a single solid shield bar.
       destroy_render_object(bar.health_background)
       destroy_render_object(bar.health_fill)
       destroy_render_object(bar.health_border)
@@ -881,53 +890,122 @@ return function(M)
     return draw_shield_bar_rectangle(entity, left, top, right, bottom, color, filled)
   end
 
-  local function health_bar_fill_color(ratio)
-    if ratio <= 0.33 then
-      return HEALTH_BAR_LOW_COLOR
+  local function discard_legacy_shield_bar_handles(bar)
+    if bar._shield_bar_render_version == SHIELD_BAR_RENDER_VERSION then
+      return
     end
-    if ratio <= 0.66 then
-      return HEALTH_BAR_MEDIUM_COLOR
-    end
-    return HEALTH_BAR_HIGH_COLOR
+
+    destroy_render_object(bar.health_background)
+    destroy_render_object(bar.health_fill)
+    destroy_render_object(bar.health_border)
+    destroy_render_object(bar.shield_background)
+    destroy_render_object(bar.shield_fill)
+    destroy_render_object(bar.shield_border)
+    destroy_render_object(bar.background)
+    destroy_render_object(bar.fill)
+    destroy_render_object(bar.border)
+    bar.health_background = nil
+    bar.health_fill = nil
+    bar.health_border = nil
+    bar.shield_background = nil
+    bar.shield_fill = nil
+    bar.shield_border = nil
+    bar.background = nil
+    bar.fill = nil
+    bar.border = nil
+    bar._shield_bar_render_version = SHIELD_BAR_RENDER_VERSION
   end
 
-  local function update_status_bar_row(bar, prefix, entity, left, top, right, bottom, ratio, fill_color)
-    bar[prefix .. "_background"] = update_shield_bar_rectangle(
-      bar[prefix .. "_background"],
+  local function update_shield_bar_segment(segment, entity, left, top, right, bottom, fill_ratio)
+    segment.background = update_shield_bar_rectangle(
+      segment.background,
       entity,
       left,
       top,
       right,
       bottom,
-      STATUS_BAR_BACKGROUND_COLOR,
+      SHIELD_BAR_EMPTY_COLOR,
       true
     )
-    bar[prefix .. "_border"] = update_shield_bar_rectangle(
-      bar[prefix .. "_border"],
+    segment.border = update_shield_bar_rectangle(
+      segment.border,
       entity,
       left,
       top,
       right,
       bottom,
-      STATUS_BAR_BORDER_COLOR,
+      SHIELD_BAR_BORDER_COLOR,
       false
     )
 
-    if ratio > 0 then
-      local fill_right = left + ((right - left) * ratio)
-      bar[prefix .. "_fill"] = update_shield_bar_rectangle(
-        bar[prefix .. "_fill"],
+    if fill_ratio > 0 then
+      local fill_right = left + ((right - left) * fill_ratio)
+      segment.fill = update_shield_bar_rectangle(
+        segment.fill,
         entity,
         left,
         top,
         fill_right,
         bottom,
-        fill_color,
+        SHIELD_BAR_FILL_COLOR,
         true
       )
     else
-      destroy_render_object(bar[prefix .. "_fill"])
-      bar[prefix .. "_fill"] = nil
+      destroy_render_object(segment.fill)
+      segment.fill = nil
+    end
+  end
+
+  local function update_segmented_shield_bar(bar, entity, shield_ratio)
+    discard_legacy_shield_bar_handles(bar)
+
+    if type(bar.segments) ~= "table" then
+      bar.segments = {}
+    end
+
+    local left = -STATUS_BAR_HALF_WIDTH
+    local right = STATUS_BAR_HALF_WIDTH
+    local total_width = right - left
+    local gap_total = SHIELD_BAR_SEGMENT_GAP * (SHIELD_BAR_SEGMENTS - 1)
+    local segment_width = (total_width - gap_total) / SHIELD_BAR_SEGMENTS
+
+    for index = 1, SHIELD_BAR_SEGMENTS do
+      local segment = bar.segments[index]
+      if type(segment) ~= "table" then
+        segment = {}
+        bar.segments[index] = segment
+      end
+
+      local segment_left = left + ((index - 1) * (segment_width + SHIELD_BAR_SEGMENT_GAP))
+      local segment_right = segment_left + segment_width
+      local segment_start = (index - 1) / SHIELD_BAR_SEGMENTS
+      local segment_end = index / SHIELD_BAR_SEGMENTS
+      local fill_ratio = 0
+      if shield_ratio >= segment_end then
+        fill_ratio = 1
+      elseif shield_ratio > segment_start then
+        fill_ratio = (shield_ratio - segment_start) * SHIELD_BAR_SEGMENTS
+      end
+
+      update_shield_bar_segment(
+        segment,
+        entity,
+        segment_left,
+        SHIELD_BAR_TOP_Y,
+        segment_right,
+        SHIELD_BAR_BOTTOM_Y,
+        fill_ratio
+      )
+    end
+
+    for index = SHIELD_BAR_SEGMENTS + 1, #bar.segments do
+      local segment = bar.segments[index]
+      if type(segment) == "table" then
+        destroy_render_object(segment.background)
+        destroy_render_object(segment.fill)
+        destroy_render_object(segment.border)
+      end
+      bar.segments[index] = nil
     end
   end
 
@@ -962,48 +1040,19 @@ return function(M)
     end
 
     local shield_ratio = math.max(0, math.min(1, shield / capacity))
-    local health = safe_read(entity, "health")
-    local max_health = safe_read(entity, "max_health")
-    local health_ratio = health and max_health and max_health > 0 and math.max(0, math.min(1, health / max_health)) or 1
     local bar = profile.shield_bar
     if type(bar) ~= "table" then
       bar = {}
       profile.shield_bar = bar
     end
-    bar.shield_background = bar.shield_background or bar.background
-    bar.shield_fill = bar.shield_fill or bar.fill
-    bar.shield_border = bar.shield_border or bar.border
+    update_segmented_shield_bar(bar, entity, shield_ratio)
 
-    local left = -STATUS_BAR_HALF_WIDTH
-    local right = STATUS_BAR_HALF_WIDTH
-    update_status_bar_row(
-      bar,
-      "health",
-      entity,
-      left,
-      HEALTH_BAR_TOP_Y,
-      right,
-      HEALTH_BAR_BOTTOM_Y,
-      health_ratio,
-      health_bar_fill_color(health_ratio)
-    )
-    update_status_bar_row(
-      bar,
-      "shield",
-      entity,
-      left,
-      SHIELD_BAR_TOP_Y,
-      right,
-      SHIELD_BAR_BOTTOM_Y,
-      shield_ratio,
-      SHIELD_BAR_FILL_COLOR
-    )
+    local first_segment = bar.segments and bar.segments[1] or nil
+    bar.background = first_segment and first_segment.background or nil
+    bar.fill = first_segment and first_segment.fill or nil
+    bar.border = first_segment and first_segment.border or nil
 
-    bar.background = bar.shield_background
-    bar.fill = bar.shield_fill
-    bar.border = bar.shield_border
-
-    if not bar.health_background or not bar.health_border or not bar.shield_background or not bar.shield_border then
+    if not first_segment or not first_segment.background or not first_segment.border then
       destroy_shield_bar_render(profile)
     end
   end
