@@ -52,6 +52,21 @@ function migrations.new(deps)
     move_scaled("siphon", "siphon", 10)
   end
 
+  function service.migrate_legacy_base_xp_upgrade(evolution)
+    if not evolution or type(evolution.base) ~= "table" then
+      return
+    end
+
+    local legacy_rank = unsigned_int(evolution.base.xp)
+    evolution.base.xp = nil
+    if legacy_rank <= 0 then
+      return
+    end
+
+    evolution.augments = type(evolution.augments) == "table" and evolution.augments or {}
+    evolution.augments.veteran_training = unsigned_int(evolution.augments.veteran_training) + legacy_rank
+  end
+
   function service.normalize_legacy_element_mastery(mastery)
     if type(mastery) ~= "table" then
       return
@@ -120,14 +135,24 @@ function migrations.new(deps)
   end
 
   function service.migrate_legacy_skills(state, evolution)
-    if not state or not evolution or evolution.migrated_legacy_skills or type(state.skills) ~= "table" then
+    if not state or not evolution or type(state.skills) ~= "table" then
       return
     end
 
-    evolution.base.damage = (evolution.base.damage or 0) + unsigned_int(state.skills.ballistics)
-    evolution.base.xp = (evolution.base.xp or 0) + unsigned_int(state.skills.kill_chain) + unsigned_int(state.skills.targeting_data)
-    evolution.augments.repair = (evolution.augments.repair or 0) + unsigned_int(state.skills.field_repairs)
+    if evolution.migrated_legacy_skills then
+      state.skills = nil
+      return
+    end
+
+    evolution.base = type(evolution.base) == "table" and evolution.base or {}
+    evolution.augments = type(evolution.augments) == "table" and evolution.augments or {}
+    evolution.base.damage = unsigned_int(evolution.base.damage) + unsigned_int(state.skills.ballistics)
+    evolution.augments.veteran_training = unsigned_int(evolution.augments.veteran_training)
+      + unsigned_int(state.skills.kill_chain)
+      + unsigned_int(state.skills.targeting_data)
+    evolution.augments.repair = unsigned_int(evolution.augments.repair) + unsigned_int(state.skills.field_repairs)
     evolution.migrated_legacy_skills = true
+    state.skills = nil
   end
 
   return service

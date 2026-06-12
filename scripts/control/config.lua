@@ -55,7 +55,6 @@ return function(M)
     stats = MOD_PREFIX .. "stats",
     stats_scroll = MOD_PREFIX .. "stats-scroll",
     dev = MOD_PREFIX .. "dev",
-    skill_points = MOD_PREFIX .. "skill-points",
     evolution_summary = MOD_PREFIX .. "evolution-summary",
     evolution = MOD_PREFIX .. "evolution",
     active_elements = MOD_PREFIX .. "active-elements",
