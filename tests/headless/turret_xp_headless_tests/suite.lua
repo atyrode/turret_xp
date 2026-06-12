@@ -189,6 +189,24 @@ local function run_profile_label_test(surface)
   assert_eq(summary.name_render_valid, false, "custom RGB label fell back to rendering text")
 end
 
+local function run_gui_action_dispatch_test(surface)
+  local turret = create_turret(surface, { 4, 0 }, 10)
+  local summary = call("install_core", turret, {
+    custom_name = "Dispatch",
+    show_name_label = true,
+    label_color = { 1, 0.86, 0.46 },
+    label_color_preset = "gold",
+  })
+  assert_true(summary ~= nil, "failed to install core for GUI action dispatch test")
+
+  summary = call("dispatch_cycle_label_color", turret)
+  assert_true(summary ~= nil, "GUI action dispatch did not return a turret summary")
+  assert_eq(summary.label_color_preset, "white", "GUI action dispatch did not cycle the label color preset")
+  assert_eq(summary.label_color[1], 1, "GUI action dispatch changed the red label channel unexpectedly")
+  assert_eq(summary.label_color[2], 1, "GUI action dispatch did not update the green label channel")
+  assert_eq(summary.label_color[3], 1, "GUI action dispatch did not update the blue label channel")
+end
+
 local function run_evolution_body_test(surface)
   local turret = create_turret(surface, { 8, 0 }, 20)
   call("install_core", turret, { level = 40 })
@@ -1539,6 +1557,7 @@ local function run_immediate_tests()
   run_prototype_budget_test()
   run_place_result_regression_test()
   run_profile_label_test(surface)
+  run_gui_action_dispatch_test(surface)
   run_modded_base_range_variant_test(surface)
   run_turret_ammo_range_compat_test()
   run_level_zero_points_test(surface)

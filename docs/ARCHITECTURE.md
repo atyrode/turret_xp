@@ -208,6 +208,7 @@ storage.turret_xp = {
 - Entity lifecycle registrations use Factorio name filters for known gun-turret bodies and bound placeholders where that does not reduce behavior coverage. Damage and death handlers stay broadly registered because they also account enemy damage and kill-credit events.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI. The attached panel is a fixed-width two-column layout: core, XP, dev controls, and scrollable stats on the left; a shallow Evolution content pane with a static summary header and one bounded scrollable section body on the right.
 - `on_gui_closed`: remove the panel.
+- GUI click routing is table-driven in `events.lua`. Mutations that follow the common opened-turret lookup, state mutation, and GUI refresh flow should use the `opened_turret_action` helper in `actions.lua` instead of repeating that transaction shape.
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open.
 - Hidden display-panel label entities: draw optional chip-carried labels above currently installed turret bodies as `name (lvl N)`. Preset colors and RGB slider colors use hidden display-panel variants; custom RGB is quantized to the nearest generated prototype color because display-panel text color is prototype-defined.
 - `/turret-xp`: fallback command for opening the selected turret's GUI/panel.
