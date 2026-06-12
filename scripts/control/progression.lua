@@ -116,6 +116,7 @@ return function(M)
     evolution.element_mastery = evolution.element_mastery or {}
     local migrations = get_legacy_migration_service()
     migrations.normalize_legacy_element_slots(evolution)
+    migrations.migrate_moved_base_upgrades(evolution)
 
     for _, upgrade in ipairs(BASE_UPGRADES) do
       evolution.base[upgrade.id] = math.max(0, math.floor(tonumber(evolution.base[upgrade.id]) or 0))
@@ -199,16 +200,6 @@ return function(M)
     end
 
     state.shield = math.max(0, math.min(capacity, current))
-    return state.shield, capacity
-  end
-
-  function refill_shield(state)
-    if not state then
-      return 0, 0
-    end
-
-    local capacity = get_shield_capacity(state)
-    state.shield = capacity
     return state.shield, capacity
   end
 

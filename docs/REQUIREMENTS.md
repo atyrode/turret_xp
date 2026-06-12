@@ -40,10 +40,10 @@
 - When XP progression increases an installed core's level, a short in-world level-up popup should appear above the turret.
 - Evolution points must be derived from turret level and spent allocations.
 - Clicking an allocatable core upgrade or augment must allocate one rank to the opened turret and refresh the panel.
-- Shield core upgrade ranks must add scripted shield capacity that absorbs incoming damage before HP and recharges after a short delay without damage.
+- Shield core upgrade ranks must add 10 scripted shield capacity per rank, absorb incoming damage before HP, recharge in small increments after a short delay without incoming damage, and keep current shield unchanged when capacity changes except for clamping down to a lower maximum.
 - Retired Range and Max HP augment ranks from old profiles must be normalized away so old tags do not keep dead upgrade state.
 - Resistance core upgrade ranks must reduce non-lethal incoming damage through scripted mitigation without adding more hidden turret variants.
-- Ammo Recovery core upgrade ranks must regenerate the current or remembered ammo item over time, but must not create ammo for a turret that has never held ammo.
+- Ammo Productivity core upgrade ranks must add 1% ammo spending productivity per rank. Spent ammo should fill a custom purple horizontal progress bar under the ammo slot in the stats panel, and every full bar should restore one matching ammo item after a shot.
 - Clicking an element option must assign rank 1 for free when the corresponding level gate is unlocked.
 - Unlocked elements must always show their current rank, technical effect, next-rank material, and passive progress bar; there is no separate upgrade-start click.
 - Feeding required items into the turret's hidden material input must advance the selected element's passive material progress and increase the element rank when requirements are complete.
@@ -65,7 +65,7 @@
 - On space-platform turrets, show platform hub Veteran Core options when cores are available there.
 - Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.
 - Show a nine-pip blue in-world Shield bar under Factorio's native turret HP bar when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open. The Shield row should use Factorio's exposed native shield and gray pip sprites, deplete one whole pip at a time, and stay centered under the native HP row.
-- Show Shield, Resistance, Ammo Recovery, and other active custom stat rows when ranked.
+- Show Shield, Resistance, Ammo Productivity, and other active custom stat rows when ranked. Ammo Productivity should appear as a horizontal bar under the loaded-ammo slot when ranked.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
 - Show turret attack range in tiles, including quality range multiplier when relevant.
 - Show loaded ammo and count.

@@ -50,8 +50,8 @@ scripts/install-local.sh
 22. Run `/turret-xp-dev` and use `+1` and `+5` dev buttons to reach levels 10, 20, 30, 40, and 50 quickly.
 23. Run `/turret-xp-dev` again and confirm dev controls hide/show without breaking the panel layout.
 24. Spend core upgrade points and confirm ranks and remaining points refresh immediately without moving the whole vanilla turret GUI.
-24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, displays Factorio's native HP bar above a nine-pip blue Shield bar, and starts recharging only after the no-damage delay.
-24b. Spend Ammo Recovery ranks, let the turret remember loaded ammo, empty the turret, and confirm recovered ammo is slowly inserted back into the turret ammo inventory.
+24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, displays Factorio's native HP bar above a nine-pip blue Shield bar, does not recharge while the turret is still being hit, and recharges in small increments only after the no-damage delay. Add or remove Shield ranks while damaged and confirm current shield does not refill for free.
+24b. Spend Ammo Productivity ranks, let the turret fire loaded ammo, and confirm the purple bar appears under the ammo slot, advances as ammo is spent, and restores one matching ammo item when it fills.
 24c. Spend Resistance ranks, damage the turret with enemies, and confirm the stats panel shows reduced damage taken while the turret still dies normally to overwhelming lethal hits.
 25. Confirm unlocked Evolution choices have category headers, right-side status text, horizontal delimiters, and are easier to scan.
 25a. Confirm Evolution section frames have balanced left/right padding, visible right margin, and spacing between adjacent sections.
@@ -67,8 +67,8 @@ scripts/install-local.sh
 35. Confirm ammo inserters keep feeding ammo while element material feeding is available.
 36. Use `Materials` and confirm it completes the next passive material rank for an unlocked element.
 37. Confirm specialization choices use the same card rhythm as element choices: icon/title row, full-width description, separator, colored multiplier row, and right-aligned Pick button.
-37a. Confirm the role-specific secondary multiplier is visible and functional: Sniper boosts Crit Damage, Machine Gun boosts Ammo Recovery, Bulwark boosts Regeneration, and Brawler boosts Lifesteal.
-37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: x3 damage, x0.5 fire rate, short range, and lifesteal.
+37a. Confirm the role-specific secondary multiplier is visible and functional: Sniper boosts Crit Damage, Machine Gun boosts Ammo Productivity, and Bulwark boosts Regeneration.
+37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: x3 damage, x0.5 fire rate, short range, and innate 10% Lifesteal.
 38. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
 39. Pick Sniper or a range-changing sub-specialization and confirm the displayed range changes and the turret can actually fire farther.
 39a. Level a turret through combat and confirm a short `Level up!` popup appears above the turret when the core gains a level.
@@ -83,8 +83,8 @@ scripts/install-local.sh
 47. Let the turret shoot enemies and confirm XP, damage dealt, kills, active custom stat rows, and upgrade/element visual feedback feel visible enough to judge. Electric arc visuals should disappear quickly instead of staying on the map. Crits, double shots, bounce, Fire burn, and Toxic poison should be readable enough to notice when they happen.
 47a. Confirm the stats panel reserves space for its scrollbar when it becomes scrollable, and that Crit Chance and Crit Damage appear under Damage Dealt as regular baseline stats.
 47b. Confirm stat, upgrade, augment, and element value text colors only the numeric parts, with units and descriptive words staying neutral; elemental damage numbers should use their element color.
-48. Damage turrets with Shield and Regeneration ranks and confirm Shield protects HP first, then passive repair scales with current max HP, especially after Bulwark/Guardian choices.
-49. Try Lifesteal in combat and check whether vampiric healing is understandable.
+48. Damage turrets with Shield and Regeneration augment ranks and confirm Shield protects HP first, then passive repair scales with current max HP, especially after Bulwark/Guardian choices.
+49. Try Brawler Lifesteal and Shield on Hit in combat and check whether HP healing versus shield generation is understandable.
 50. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
 51. Spend points, toggle label settings, unlock elements, use Change actions, and reset Evolution while the vanilla turret GUI is moved. Confirm the whole vanilla turret GUI does not jump back to its default position.
 52. Select the turret and run `/turret-xp` as a fallback path.

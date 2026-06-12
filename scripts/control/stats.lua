@@ -373,19 +373,28 @@ return function(M)
   end
 
   function get_repair_base_per_second(state, entity)
-    return get_base_rank(state, "repair") * REPAIR_MAX_HEALTH_FRACTION_PER_RANK * get_repair_reference_health(state, entity)
+    return get_augment_rank(state, "repair") * REPAIR_MAX_HEALTH_FRACTION_PER_RANK * get_repair_reference_health(state, entity)
   end
 
   function get_repair_per_second(state, entity)
     return get_repair_base_per_second(state, entity) * get_specialization_multiplier(state, "repair_multiplier")
   end
 
+  function get_ammo_productivity_fraction(state)
+    return get_base_rank(state, "ammo_regen") * AMMO_PRODUCTIVITY_PER_RANK * get_specialization_multiplier(state, "ammo_recovery_multiplier")
+  end
+
   function get_ammo_recovery_per_minute(state)
-    return get_base_rank(state, "ammo_regen") * get_specialization_multiplier(state, "ammo_recovery_multiplier")
+    return get_ammo_productivity_fraction(state) * 100
+  end
+
+  function get_shield_on_hit_fraction(state)
+    return get_augment_rank(state, "siphon") * SHIELD_ON_HIT_FRACTION_PER_RANK
   end
 
   function get_lifesteal_rate(state)
-    return get_base_rank(state, "siphon") * 0.004 * get_specialization_multiplier(state, "lifesteal_multiplier")
+    local specialization = get_specialization(state)
+    return specialization and (tonumber(specialization.lifesteal_fraction) or 0) or 0
   end
 
   function get_damage_resistance_fraction(state)

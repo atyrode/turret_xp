@@ -141,7 +141,7 @@ return function(M)
 
     evolution.base[upgrade_id] = rank + amount
     if upgrade_id == "shield" then
-      refill_shield(state)
+      normalize_shield_state(state, false)
       update_shield_bar_render(entity, state, true)
     end
     sync_turret_progression(state)

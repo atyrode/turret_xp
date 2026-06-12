@@ -44,6 +44,8 @@ return function(M)
     shooting_speed = MOD_PREFIX .. "shooting-speed",
     range = MOD_PREFIX .. "range",
     ammo = MOD_PREFIX .. "ammo",
+    ammo_productivity_bar = MOD_PREFIX .. "ammo-productivity-bar",
+    ammo_productivity_label = MOD_PREFIX .. "ammo-productivity-label",
     damage = MOD_PREFIX .. "damage",
     dps = MOD_PREFIX .. "dps",
     kills = MOD_PREFIX .. "kills",
@@ -65,12 +67,14 @@ return function(M)
 
   SHIELD_PER_RANK = DOMAIN.shield_per_rank
   SHIELD_RECHARGE_DELAY_TICKS = 60 * 5
+  SHIELD_RECHARGE_TICKS = 5
   SHIELD_RECHARGE_FRACTION_PER_SECOND = 0.15
   RESISTANCE_PER_RANK = 0.0025
   RESISTANCE_MAX = 0.60
   RESISTANCE_MAX_RANK = math.floor(RESISTANCE_MAX / RESISTANCE_PER_RANK)
-  AMMO_REGEN_TICKS_PER_ROUND = 60 * 60
-  REPAIR_MAX_HEALTH_FRACTION_PER_RANK = 0.001
+  AMMO_PRODUCTIVITY_PER_RANK = 0.01
+  REPAIR_MAX_HEALTH_FRACTION_PER_RANK = 0.01
+  SHIELD_ON_HIT_FRACTION_PER_RANK = 0.04
   ELEMENT_FREE_RANK = DOMAIN.element_free_rank
   FEEDER_INSERTER_RADIUS = 8
   FEEDER_INPUT_BUFFER_SLOTS = 100
@@ -86,14 +90,6 @@ return function(M)
       effect = "damage",
     },
     {
-      id = "repair",
-      sprite = "item/repair-pack",
-      name = "Regeneration",
-      description = "+0.1% of max HP per second as passive repair per rank.",
-      value = "+0.1% max HP/s",
-      effect = "repair",
-    },
-    {
       id = "resistance",
       sprite = "item/heavy-armor",
       name = "Resistance",
@@ -106,25 +102,17 @@ return function(M)
       id = "shield",
       sprite = "item/energy-shield-equipment",
       name = "Shield",
-      description = "+50 shield per rank. Shield absorbs damage before HP and starts recharging after a short delay without damage.",
-      value = "+50 shield",
+      description = "+10 shield per rank. Shield absorbs damage before HP and recharges smoothly after a short delay without incoming damage.",
+      value = "+10 shield",
       effect = "shield",
     },
     {
       id = "ammo_regen",
       sprite = "item/piercing-rounds-magazine",
-      name = "Ammo recovery",
-      description = "Recovers 1 loaded or remembered ammo item per minute per rank.",
-      value = "+1 / min",
+      name = "Ammo productivity",
+      description = "+1% ammo spending productivity per rank. Spent ammo fills a productivity bar; at 100%, one matching ammo item is restored.",
+      value = "+1%",
       effect = "ammo_regen",
-    },
-    {
-      id = "siphon",
-      sprite = "item/steel-plate",
-      name = "Lifesteal",
-      description = "Heals for 0.4% of gun-turret damage dealt per rank.",
-      value = "+0.4%",
-      effect = "siphon",
     },
     {
       id = "crit_chance",
@@ -159,6 +147,13 @@ return function(M)
 
   AUGMENTS = {
     {
+      id = "repair",
+      sprite = "item/repair-pack",
+      name = "Regeneration",
+      value = "+1% max HP/s",
+      description = "+1% of max HP per second as passive repair per rank.",
+    },
+    {
       id = "bounce",
       sprite = "item/piercing-rounds-magazine",
       name = "Bullet bounce",
@@ -171,6 +166,13 @@ return function(M)
       name = "Double shot",
       value = "+4% double-shot chance",
       description = "+4% chance per rank to fire a second shot at the same target.",
+    },
+    {
+      id = "siphon",
+      sprite = "item/energy-shield-equipment",
+      name = "Shield on hit",
+      value = "+4% damage as shield",
+      description = "+4% of gun-turret damage dealt per rank as shield, up to current Shield capacity.",
     },
     {
       id = "luck",

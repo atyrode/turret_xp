@@ -190,10 +190,13 @@ return function(M)
       shield_bar_filled_segments = shield_bar_filled_segments,
       bound_turret = state.bound_turret == true,
       last_ammo = copy_serializable(state.last_ammo),
-      ammo_regen_progress = state.ammo_regen_progress or 0,
+      ammo_productivity_progress = state.ammo_productivity_progress or state.ammo_regen_progress or 0,
+      ammo_regen_progress = state.ammo_productivity_progress or state.ammo_regen_progress or 0,
       derived = {
         repair_per_second = get_repair_per_second(state, current_entity),
+        ammo_productivity_fraction = get_ammo_productivity_fraction(state),
         ammo_recovery_per_minute = get_ammo_recovery_per_minute(state),
+        shield_on_hit_fraction = get_shield_on_hit_fraction(state),
         lifesteal_rate = get_lifesteal_rate(state),
         crit_damage_fraction = get_crit_damage_fraction(state),
         crit_chance_fraction = get_crit_chance_fraction(state),
@@ -291,6 +294,9 @@ return function(M)
       "kills",
       "kill_credit",
       "damage",
+      "ammo_productivity_progress",
+      "ammo_regen_progress",
+      "shield",
     }) do
       if fields[key] ~= nil then
         profile[key] = copy_serializable(fields[key])
@@ -411,6 +417,32 @@ return function(M)
         apply_passive_evolution_effects()
       end
       return true
+    end,
+
+    apply_shield_recharge = function(ticks)
+      apply_shield_recharge_effects(math.max(1, math.floor(tonumber(ticks) or SHIELD_RECHARGE_TICKS)))
+      return true
+    end,
+
+    remember_loaded_ammo = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      combat.remember_loaded_ammo(entity, state)
+      return turret_xp_test_state_summary(entity)
+    end,
+
+    apply_ammo_productivity = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      state._ammo_productivity_last_tick = nil
+      combat.apply_ammo_productivity(entity, state)
+      return turret_xp_test_state_summary(entity)
     end,
 
     age_shield_damage = function(entity, ticks)
@@ -542,7 +574,7 @@ return function(M)
 
       ensure_evolution_state(state)
       if shield_rank_changed then
-        refill_shield(state)
+        normalize_shield_state(state, false)
         update_shield_bar_render(entity, state, true)
       end
       sync_turret_progression(state)

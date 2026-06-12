@@ -40,7 +40,7 @@ domain.gates = {
   second_element = 50,
 }
 
-domain.shield_per_rank = 50
+domain.shield_per_rank = 10
 domain.element_free_rank = 1
 domain.label_custom_color_steps = 5
 
@@ -104,8 +104,8 @@ domain.specializations = {
     health_multiplier = 0.9,
     rotation_speed_multiplier = 1.6667,
     ammo_recovery_multiplier = 2.0,
-    value = "x2 fire rate, x2 ammo recovery, x0.58 damage, x0.89 range, x0.9 HP",
-    description = "Much faster fire rate and ammo recovery, slightly shorter range, lower shot damage.",
+    value = "x2 fire rate, x2 ammo productivity, x0.58 damage, x0.89 range, x0.9 HP",
+    description = "Much faster fire rate and ammo productivity, slightly shorter range, lower shot damage.",
   },
   {
     id = "bulwark",
@@ -129,9 +129,9 @@ domain.specializations = {
     damage_multiplier = 3.0,
     health_multiplier = 1.625,
     rotation_speed_multiplier = 1.3334,
-    lifesteal_multiplier = 2.5,
-    value = "x3 damage, x2.5 lifesteal, x0.5 fire rate, x0.39 range, x1.63 HP",
-    description = "Very short range, high shot damage, stronger lifesteal and durability, slower fire rate.",
+    lifesteal_fraction = 0.10,
+    value = "x3 damage, 10% lifesteal, x0.5 fire rate, x0.39 range, x1.63 HP",
+    description = "[color=1,0.36,0.30]Lifesteal[/color]: heals HP equal to 10% of gun-turret damage dealt. Very short range, high shot damage, stronger durability, slower fire rate.",
   },
 }
 domain.specialization_by_id = index_by_id(domain.specializations)
@@ -176,7 +176,7 @@ domain.sub_specializations = {
     name = "Sustained fire",
     cooldown_multiplier = 0.85,
     ammo_recovery_multiplier = 1.75,
-    value = "x1.18 fire rate, x1.75 ammo recovery",
+    value = "x1.18 fire rate, x1.75 ammo productivity",
     description = "Improves sustained uptime by firing faster and recovering ammunition more aggressively.",
   },
   {
@@ -207,20 +207,18 @@ domain.sub_specializations = {
     name = "Executioner",
     damage_multiplier = 1.35,
     crit_damage_multiplier = 1.35,
-    lifesteal_multiplier = 0.80,
-    value = "x1.35 damage, x1.35 crit damage, x0.8 lifesteal",
-    description = "Makes Brawler more lethal at close range while softening its sustain.",
+    value = "x1.35 damage, x1.35 crit damage",
+    description = "Makes Brawler more lethal at close range while keeping its innate [color=1,0.36,0.30]Lifesteal[/color].",
   },
   {
     id = "brawler_vampire",
     parent = "brawler",
     sprite = "item/steel-plate",
     name = "Vampire",
-    lifesteal_multiplier = 1.80,
     health_multiplier = 1.18,
     damage_multiplier = 0.90,
-    value = "x1.8 lifesteal, x1.18 HP, x0.9 damage",
-    description = "Turns Brawler into a self-sustaining close-range anchor.",
+    value = "x1.18 HP, x0.9 damage",
+    description = "Turns Brawler into a steadier self-sustaining close-range anchor while keeping its innate [color=1,0.36,0.30]Lifesteal[/color].",
   },
 }
 domain.sub_specialization_by_id = index_by_id(domain.sub_specializations)

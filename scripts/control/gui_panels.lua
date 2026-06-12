@@ -569,20 +569,78 @@ return function(M)
     add_platform_core_list(core_panel, entity, state)
   end
 
-  function render_ammo_flow(flow, ammo_name, ammo_count, ammo_quality)
+  function render_ammo_productivity(parent, state)
+    if not state or get_base_rank(state, "ammo_regen") <= 0 then
+      return
+    end
+
+    local progress = math.max(0, tonumber(state.ammo_productivity_progress or state.ammo_regen_progress) or 0)
+    progress = progress - math.floor(progress)
+    local productivity = get_ammo_productivity_fraction(state)
+    local caption = "+" .. format_percent(productivity, 0)
+    local tooltip = { "turret-xp.ammo-productivity-tooltip", caption, format_percent(progress, 0) }
+
+    local row = parent.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(row, "top_margin", 3)
+    set_style(row, "horizontal_spacing", 5)
+    set_style(row, "vertical_align", "center")
+    set_style(row, "horizontally_stretchable", true)
+
+    local bar = row.add({
+      type = "progressbar",
+      name = GUI.ammo_productivity_bar,
+      style = "turret_xp_ammo_productivity_progressbar",
+      value = progress,
+      tooltip = tooltip,
+    })
+    set_style(bar, "height", 10)
+    set_style(bar, "width", 108)
+    set_style(bar, "minimal_width", 108)
+    set_style(bar, "maximal_width", 108)
+
+    local label = row.add({
+      type = "label",
+      name = GUI.ammo_productivity_label,
+      caption = rich_number(caption, { 0.72, 0.33, 0.95 }),
+      tooltip = tooltip,
+      style = "caption_label",
+    })
+    set_style(label, "single_line", true)
+    set_style(label, "font_color", COLOR.muted)
+  end
+
+  function render_ammo_flow(flow, ammo_name, ammo_count, ammo_quality, state)
     flow.clear()
+    local stack = flow.add({
+      type = "flow",
+      direction = "vertical",
+    })
+    set_style(stack, "horizontal_align", "right")
+    set_style(stack, "horizontally_stretchable", true)
+
+    local slot_row = stack.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(slot_row, "horizontal_align", "right")
+    set_style(slot_row, "horizontally_stretchable", true)
+
     if not ammo_name then
-      flow.add({
+      slot_row.add({
         type = "sprite",
         sprite = "flib_indicator_yellow",
         style = "flib_indicator",
         tooltip = { "turret-xp.no-ammo" },
       })
+      render_ammo_productivity(stack, state)
       return
     end
 
     local ok, button = pcall(function()
-      return flow.add({
+      return slot_row.add({
         type = "sprite-button",
         sprite = "item/" .. ammo_name,
         quality = ammo_quality or "normal",
@@ -598,26 +656,32 @@ return function(M)
     if ok and button then
       set_element_style(button, "flib_slot_button_green")
       set_style(button, "size", 36)
+      render_ammo_productivity(stack, state)
       return
     end
 
-    flow.add({
+    slot_row.add({
       type = "label",
       caption = string.format("[item=%s] x%d", ammo_name, ammo_count),
     })
+    render_ammo_productivity(stack, state)
   end
 
-  function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality)
+  function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality, state)
     local flow = find_gui_element(panel, GUI.ammo)
     if not flow then
       return
     end
 
     local current_tags = flow.tags or {}
+    local productivity_progress = state and (state.ammo_productivity_progress or state.ammo_regen_progress) or 0
+    local productivity_fraction = state and get_ammo_productivity_fraction(state) or 0
     if
       current_tags.ammo_name == (ammo_name or "")
       and current_tags.ammo_count == (ammo_count or 0)
       and current_tags.ammo_quality == (ammo_quality or "")
+      and current_tags.ammo_productivity_progress == productivity_progress
+      and current_tags.ammo_productivity_fraction == productivity_fraction
     then
       return
     end
@@ -626,9 +690,11 @@ return function(M)
       ammo_name = ammo_name or "",
       ammo_count = ammo_count or 0,
       ammo_quality = ammo_quality or "",
+      ammo_productivity_progress = productivity_progress,
+      ammo_productivity_fraction = productivity_fraction,
     }
 
-    render_ammo_flow(flow, ammo_name, ammo_count, ammo_quality)
+    render_ammo_flow(flow, ammo_name, ammo_count, ammo_quality, state)
   end
 
   function format_percent(value, decimals)
@@ -753,7 +819,7 @@ return function(M)
       add_custom_stat(stats, { "turret-xp.stat-core-damage" }, rich_number("+" .. format_number(damage_rank * 0.5, 1)) .. " / shot")
     end
 
-    local repair_rank = get_base_rank(state, "repair")
+    local repair_rank = get_augment_rank(state, "repair")
     if repair_rank > 0 then
       add_custom_stat(
         stats,
@@ -776,32 +842,27 @@ return function(M)
       )
     end
 
-    local ammo_regen_rank = get_base_rank(state, "ammo_regen")
-    if ammo_regen_rank > 0 then
-      local caption = format_bonus_value_with_multiplier(
-        ammo_regen_rank,
-        get_specialization_multiplier(state, "ammo_recovery_multiplier"),
-        " ammo/min",
-        0
-      )
-      if state.last_ammo and state.last_ammo.name then
-        caption = { "", caption, " [item=", state.last_ammo.name, "]" }
-      end
-      add_custom_stat(stats, { "turret-xp.stat-ammo-recovery" }, caption)
-    end
-
-    local siphon_rank = get_base_rank(state, "siphon")
-    if siphon_rank > 0 then
+    local shield_on_hit_rank = get_augment_rank(state, "siphon")
+    if shield_on_hit_rank > 0 then
       add_custom_stat(
         stats,
-        { "turret-xp.stat-lifesteal" },
+        { "turret-xp.stat-shield-on-hit" },
         format_bonus_value_with_multiplier(
-          (siphon_rank * 0.004) * 100,
-          get_specialization_multiplier(state, "lifesteal_multiplier"),
-          " of damage",
+          get_shield_on_hit_fraction(state) * 100,
+          1,
+          " of damage as shield",
           1,
           "%"
         )
+      )
+    end
+
+    local lifesteal_rate = get_lifesteal_rate(state)
+    if lifesteal_rate > 0 then
+      add_custom_stat(
+        stats,
+        { "turret-xp.stat-lifesteal" },
+        { "", rich_number(format_percent(lifesteal_rate, 0), { 1, 0.36, 0.30 }), " of damage healed as HP" }
       )
     end
 
@@ -912,7 +973,7 @@ return function(M)
       flow_name = GUI.ammo,
       flow_only = true,
     })
-    render_ammo_flow(ammo_flow, ammo_name, ammo_count, ammo_quality)
+    render_ammo_flow(ammo_flow, ammo_name, ammo_count, ammo_quality, state)
 
     if ammo_name then
       local damage_values = get_damage_formula_values(entity, state, ammo_name)
@@ -1100,7 +1161,7 @@ return function(M)
       },
       machine_gun = {
         { fire_rate_multiplier, " fire rate" },
-        { specialization.ammo_recovery_multiplier, " ammo recovery" },
+        { specialization.ammo_recovery_multiplier, " ammo productivity" },
         { specialization.damage_multiplier, " damage" },
         { specialization.range_multiplier, " range" },
         { specialization.health_multiplier, " HP" },
@@ -1114,7 +1175,11 @@ return function(M)
       },
       brawler = {
         { specialization.damage_multiplier, " damage" },
-        { specialization.lifesteal_multiplier, " lifesteal" },
+        {
+          specialization.lifesteal_fraction and (specialization.lifesteal_fraction * 100) or nil,
+          " [color=1,0.36,0.30]lifesteal[/color]",
+          "percent",
+        },
         { specialization.range_multiplier, " range" },
         { specialization.health_multiplier, " HP" },
         { fire_rate_multiplier, " fire rate" },
@@ -1133,7 +1198,9 @@ return function(M)
     for index, entry in ipairs(entries) do
       local multiplier = entry[1] or 1
       local label = entry[2] or ""
-      local formatted = format_colored_multiplier(multiplier) or ("x" .. format_number(multiplier, 2))
+      local formatted = entry[3] == "percent" and rich_number(format_number(multiplier, 0) .. "%", { 1, 0.36, 0.30 })
+        or format_colored_multiplier(multiplier)
+        or ("x" .. format_number(multiplier, 2))
       if index > 1 then
         caption[#caption + 1] = ", "
       end
@@ -1163,8 +1230,7 @@ return function(M)
       { value = sub_specialization.health_multiplier, label = " HP", kind = "multiplier" },
       { value = sub_specialization.resistance_flat, label = " resistance", kind = "percent" },
       { value = sub_specialization.repair_multiplier, label = " regeneration", kind = "multiplier" },
-      { value = sub_specialization.ammo_recovery_multiplier, label = " ammo recovery", kind = "multiplier" },
-      { value = sub_specialization.lifesteal_multiplier, label = " lifesteal", kind = "multiplier" },
+      { value = sub_specialization.ammo_recovery_multiplier, label = " ammo productivity", kind = "multiplier" },
     }
 
     local caption = { "" }

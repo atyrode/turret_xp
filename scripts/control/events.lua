@@ -366,6 +366,7 @@ return function(M)
     if is_gun_turret(cause) then
       local state = get_turret_state(cause)
       if state then
+        combat.apply_ammo_productivity(cause, state)
         add_profile_damage(state, damage, cause, event.entity)
         combat.apply_evolution_damage_effects(event, cause, state, damage)
         sync_turret_progression(state)
@@ -570,6 +571,10 @@ return function(M)
     end
   end
 
+  function handlers.on_shield_recharge_tick()
+    apply_shield_recharge_effects(SHIELD_RECHARGE_TICKS)
+  end
+
   script.on_init(function()
     ensure_storage()
     unlock_core_recipes_for_existing_tech()
@@ -617,6 +622,7 @@ return function(M)
   script.on_event(defines.events.on_robot_mined_entity, handlers.on_turret_mined_entity)
   script.on_event(defines.events.on_tick, handlers.on_tick)
   script.on_nth_tick(REFRESH_TICKS, handlers.on_refresh_tick)
+  script.on_nth_tick(SHIELD_RECHARGE_TICKS, handlers.on_shield_recharge_tick)
 
   space_platform_built_event = defines.events.on_space_platform_built_entity
   if space_platform_built_event then

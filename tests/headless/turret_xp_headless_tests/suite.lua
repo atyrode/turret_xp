@@ -201,9 +201,11 @@ local function run_evolution_body_test(surface)
     specialization = "sniper",
     base = {
       damage = 2,
-      repair = 1,
       crit_chance = 4,
       crit_damage = 3,
+    },
+    augments = {
+      repair = 1,
     },
   })
 
@@ -270,22 +272,22 @@ local function run_specialization_secondary_multiplier_test(surface)
     },
   })
   assert_near(
-    summary.derived.ammo_recovery_per_minute,
-    6,
+    summary.derived.ammo_productivity_fraction,
+    0.06,
     0.0001,
-    "machine gun ammo recovery multiplier did not affect derived ammo recovery"
+    "machine gun ammo productivity multiplier did not affect derived ammo productivity"
   )
 
   turret = require_turret_near(surface, { x = 14, y = 8 }, "specialization multiplier turret not found after machine gun body swap")
   summary = call("set_evolution", turret, {
     specialization = "bulwark",
-    base = {
+    augments = {
       repair = 2,
     },
   })
   assert_near(
     summary.derived.repair_per_second,
-    summary.max_health * 0.001 * 2 * 2.5,
+    summary.max_health * 0.01 * 2 * 2.5,
     0.0001,
     "bulwark regeneration multiplier did not affect max-health-based repair"
   )
@@ -294,11 +296,8 @@ local function run_specialization_secondary_multiplier_test(surface)
   turret = require_turret_near(surface, { x = 14, y = 8 }, "specialization multiplier turret not found after bulwark body swap")
   summary = call("set_evolution", turret, {
     specialization = "brawler",
-    base = {
-      siphon = 4,
-    },
   })
-  assert_near(summary.derived.lifesteal_rate, 0.04, 0.0001, "brawler lifesteal multiplier did not affect derived lifesteal")
+  assert_near(summary.derived.lifesteal_rate, 0.10, 0.0001, "brawler did not expose its innate lifesteal")
   assert_near(summary.attack_cooldown, base_cooldown * 2, 0.0001, "brawler cooldown multiplier did not reduce fire rate to x0.5")
   assert_near(summary.attack_damage_modifier, base_damage_modifier * 3, 0.0001, "brawler damage multiplier did not reduce to x3")
 end
@@ -381,71 +380,110 @@ local function run_shield_test(surface)
   summary = call("set_evolution", turret, {
     base = {
       shield = 4,
-      repair = 1,
     },
   })
   assert_eq(summary.entity_name, "gun-turret", "shield rank should not swap to a health variant")
   assert_eq(summary.max_health, 400, "shield rank should not increase real max health")
   assert_eq(summary.evolution.base.shield, 4, "shield rank did not persist in base upgrade state")
-  assert_eq(summary.derived.shield_capacity, 200, "shield capacity did not scale with rank")
-  assert_eq(summary.shield, 200, "new shield ranks should refill shield")
+  assert_eq(summary.derived.shield_capacity, 40, "shield capacity did not scale with rank")
+  assert_eq(summary.shield, 0, "new shield ranks should not refill current shield")
+
+  call("age_shield_damage", turret, 60 * 6)
+  call("apply_shield_recharge", 5)
+  summary = call("get_state", turret)
+  assert_near(summary.shield, 0.5, 0.001, "shield should recharge in small fractional ticks")
+
+  call("apply_shield_recharge", 60 * 10)
+  summary = call("get_state", turret)
+  assert_eq(summary.shield, 40, "shield did not recharge to the new capacity")
 
   turret = require_turret_near(surface, turret_position, "shield test turret not found")
   local before_health = turret.health
-  local applied = turret.damage(120, game.forces.enemy, "physical")
+  local applied = turret.damage(24, game.forces.enemy, "physical")
   assert_true(applied and applied > 0, "shield test did not apply incoming damage")
   summary = call("get_state", turret)
-  assert_eq(summary.shield, 80, "shield did not absorb incoming damage before HP")
+  assert_eq(summary.shield, 16, "shield did not absorb incoming damage before HP")
   assert_near(turret.health, before_health, 0.05, "shielded damage should not reduce HP while shield remains")
   assert_true(summary.shield_bar_valid, "shield damage did not create the in-world shield bar")
   assert_true(summary.shield_bar_fill_valid, "partially filled shield should render a shield fill")
   assert_eq(summary.shield_bar_segment_count, 9, "shield bar should render as nine pips")
   assert_eq(summary.shield_bar_filled_segments, 4, "40% shield should display four whole shield pips")
 
-  applied = turret.damage(100, game.forces.enemy, "physical")
+  applied = turret.damage(20, game.forces.enemy, "physical")
   assert_true(applied and applied > 0, "shield spillover test did not apply incoming damage")
   summary = call("get_state", turret)
   assert_eq(summary.shield, 0, "shield should be empty after absorbing remaining capacity")
-  assert_near(turret.health, before_health - 20, 0.05, "only damage beyond shield should reach HP")
+  assert_near(turret.health, before_health - 4, 0.05, "only damage beyond shield should reach HP")
   assert_true(summary.shield_bar_valid, "empty shield should keep its in-world bar visible during recharge delay")
   assert_eq(summary.shield_bar_fill_valid, false, "empty shield should not render a filled shield segment")
   assert_eq(summary.shield_bar_segment_count, 9, "empty shield should keep the nine-pip shield bar visible")
   assert_eq(summary.shield_bar_filled_segments, 0, "empty shield should display zero filled shield pips")
 
-  call("apply_passive", 5)
-  summary = call("get_state", turret)
-  assert_eq(summary.shield, 0, "shield should not recharge before its delay")
   call("age_shield_damage", turret, 60 * 6)
-  call("apply_passive", 1)
+  applied = turret.damage(1, game.forces.enemy, "physical")
+  assert_true(applied and applied > 0, "empty-shield hit did not apply incoming damage")
+  call("apply_shield_recharge", 60)
+  summary = call("get_state", turret)
+  assert_eq(summary.shield, 0, "shield should not recharge while the turret is still being hit")
+
+  call("age_shield_damage", turret, 60 * 6)
+  call("apply_shield_recharge", 5)
   summary = call("get_state", turret)
   assert_gt(summary.shield, 0, "shield did not start recharging after its delay")
-end
-
-local function run_ammo_regen_test(surface)
-  local turret_position = { x = 44, y = 0 }
-  local turret = create_turret(surface, turret_position, 1)
-  local summary = call("install_core", turret, { level = 80 })
-  assert_true(summary ~= nil, "failed to install core for ammo regen test")
 
   summary = call("set_evolution", turret, {
     base = {
-      ammo_regen = 60,
+      shield = 6,
     },
   })
-  assert_eq(summary.evolution.base.ammo_regen, 60, "ammo regen rank did not persist in evolution state")
+  assert_eq(summary.derived.shield_capacity, 60, "shield capacity did not increase after respec")
+  assert_near(summary.shield, 0.5, 0.001, "increasing shield capacity should keep current shield value")
 
-  call("apply_passive", 1)
-  summary = call("get_state", turret)
-  assert_true(summary.last_ammo ~= nil and summary.last_ammo.name == "firearm-magazine", "ammo regen did not remember loaded ammo")
+  summary = call("set_profile", turret, { shield = 25 })
+  assert_eq(summary.shield, 25, "test setup did not set current shield under increased capacity")
+  summary = call("set_evolution", turret, {
+    base = {
+      shield = 2,
+    },
+  })
+  assert_eq(summary.derived.shield_capacity, 20, "shield capacity did not decrease after respec")
+  assert_eq(summary.shield, 20, "decreasing shield capacity should clamp current shield to the new maximum")
+end
+
+local function run_ammo_productivity_test(surface)
+  local turret_position = { x = 44, y = 0 }
+  local turret = create_turret(surface, turret_position, 10)
+  local summary = call("install_core", turret, { level = 80 })
+  assert_true(summary ~= nil, "failed to install core for ammo productivity test")
+
+  summary = call("set_evolution", turret, {
+    base = {
+      ammo_regen = 25,
+    },
+  })
+  assert_eq(summary.evolution.base.ammo_regen, 25, "ammo productivity rank did not persist in evolution state")
+  assert_near(summary.derived.ammo_productivity_fraction, 0.25, 0.0001, "ammo productivity did not derive expected percent")
 
   local inventory = turret.get_inventory(defines.inventory.turret_ammo)
-  assert_true(inventory ~= nil and inventory.valid, "ammo regen test turret had no ammo inventory")
-  inventory.remove({ name = "firearm-magazine", count = inventory.get_item_count("firearm-magazine") })
-  assert_eq(inventory.get_item_count("firearm-magazine"), 0, "ammo regen test failed to empty turret ammo")
+  assert_true(inventory ~= nil and inventory.valid, "ammo productivity test turret had no ammo inventory")
+  call("remember_loaded_ammo", turret)
+  local expected_count = inventory.get_item_count("firearm-magazine")
+  assert_eq(expected_count, 10, "ammo productivity test setup did not load expected ammo")
 
-  call("apply_passive", 1)
-  summary = call("get_state", turret)
-  assert_gt(summary.turret_ammo["firearm-magazine"] or 0, 0, "ammo regen did not recover remembered ammo into an empty turret")
+  for shot = 1, 3 do
+    inventory.remove({ name = "firearm-magazine", count = 1 })
+    expected_count = expected_count - 1
+    summary = call("apply_ammo_productivity", turret)
+    assert_near(summary.ammo_productivity_progress, shot * 0.25, 0.0001, "ammo productivity progress did not advance per spent round")
+    assert_eq(summary.turret_ammo["firearm-magazine"] or 0, expected_count, "ammo productivity restored ammo before the bar filled")
+  end
+
+  inventory.remove({ name = "firearm-magazine", count = 1 })
+  expected_count = expected_count - 1
+  summary = call("apply_ammo_productivity", turret)
+  expected_count = expected_count + 1
+  assert_near(summary.ammo_productivity_progress, 0, 0.0001, "ammo productivity did not consume a full bar")
+  assert_eq(summary.turret_ammo["firearm-magazine"] or 0, expected_count, "ammo productivity did not restore one matching ammo at 100%")
 end
 
 local function feed_one(entity, item_name)
@@ -479,7 +517,7 @@ local function run_legacy_migration_test()
   })
   assert_eq(skills.evolution.base.damage, 2, "legacy Ballistics skill did not migrate into Damage")
   assert_eq(skills.evolution.base.xp, 7, "legacy XP skills did not migrate into Veteran Training")
-  assert_eq(skills.evolution.base.repair, 1, "legacy Field Repairs skill did not migrate into Regeneration")
+  assert_eq(skills.evolution.augments.repair, 1, "legacy Field Repairs skill did not migrate into Regeneration")
   assert_eq(skills.evolution.migrated_legacy_skills, true, "legacy skill migration was not marked complete")
 
   local skills_again = call("normalize_profile_snapshot", {
@@ -491,12 +529,26 @@ local function run_legacy_migration_test()
     },
     evolution = {
       base = skills.evolution.base,
+      augments = skills.evolution.augments,
       migrated_legacy_skills = true,
     },
   })
   assert_eq(skills_again.evolution.base.damage, 2, "legacy skill migration was not idempotent for Damage")
   assert_eq(skills_again.evolution.base.xp, 7, "legacy skill migration was not idempotent for Veteran Training")
-  assert_eq(skills_again.evolution.base.repair, 1, "legacy skill migration was not idempotent for Regeneration")
+  assert_eq(skills_again.evolution.augments.repair, 1, "legacy skill migration was not idempotent for Regeneration")
+
+  local moved_base = call("normalize_profile_snapshot", {
+    evolution = {
+      base = {
+        repair = 11,
+        siphon = 12,
+      },
+    },
+  })
+  assert_eq(moved_base.evolution.base.repair, nil, "retired base Regeneration rank was not removed")
+  assert_eq(moved_base.evolution.base.siphon, nil, "retired base Lifesteal rank was not removed")
+  assert_eq(moved_base.evolution.augments.repair, 2, "retired base Regeneration did not migrate to augment ranks")
+  assert_eq(moved_base.evolution.augments.siphon, 2, "retired base Lifesteal did not migrate to Shield on Hit augment ranks")
 
   local tagged = call("deserialize_profile_snapshot", {
     schema = 1,
@@ -902,10 +954,10 @@ local function run_targeted_reset_test(surface)
   summary = call("set_evolution", turret, {
     base = {
       damage = 3,
-      repair = 2,
       resistance = 4,
     },
     augments = {
+      repair = 2,
       luck = 1,
     },
     specialization = "sniper",
@@ -926,18 +978,21 @@ local function run_targeted_reset_test(surface)
     },
   })
   assert_eq(summary.evolution.base.damage, 3, "test setup did not apply base ranks")
+  assert_eq(summary.evolution.augments.repair, 2, "test setup did not apply augment regeneration ranks")
   assert_eq(summary.evolution.augments.luck, 1, "test setup did not apply augment ranks")
   assert_eq(summary.evolution.specialization, "sniper", "test setup did not apply specialization")
 
   turret = require_turret_near(surface, turret_position, "targeted reset turret not found after setup body swap")
   summary = call("reset_evolution_section", turret, "base")
   assert_eq(summary.evolution.base.damage or 0, 0, "base reset did not clear damage ranks")
+  assert_eq(summary.evolution.augments.repair, 2, "base reset incorrectly changed regeneration augment ranks")
   assert_eq(summary.evolution.augments.luck, 1, "base reset incorrectly changed augments")
   assert_eq(summary.evolution.specialization, "sniper", "base reset incorrectly changed specialization")
 
   turret = require_turret_near(surface, turret_position, "targeted reset turret not found after base reset")
   summary = call("reset_evolution_section", turret, "augments")
   assert_eq(summary.evolution.augments.luck or 0, 0, "augment reset did not clear augment ranks")
+  assert_eq(summary.evolution.augments.repair or 0, 0, "augment reset did not clear regeneration augment ranks")
   assert_eq(summary.evolution.specialization, "sniper", "augment reset incorrectly changed specialization")
   assert_eq(summary.evolution.elements[1], "fire", "augment reset incorrectly changed first element")
 
@@ -984,12 +1039,12 @@ local function run_full_evolution_reset_test(surface)
   summary = call("set_evolution", turret, {
     base = {
       damage = 3,
-      repair = 2,
       resistance = 4,
       crit_chance = 4,
       crit_damage = 5,
     },
     augments = {
+      repair = 2,
       luck = 2,
     },
     specialization = "sniper",
@@ -1330,7 +1385,7 @@ local function setup_combat_test(surface)
   for index = 1, 5 do
     local biter = surface.create_entity({
       name = "small-biter",
-      position = { -10 + index, index - 3 },
+      position = { -6 + index, 6 + (index * 0.5) },
       force = "enemy",
     })
     assert_true(biter and biter.valid, "failed to create combat test biter")
@@ -1345,9 +1400,7 @@ local function setup_status_damage_test(surface)
   local summary = call("install_core", turret, { level = 20 })
   assert_true(summary ~= nil, "failed to install core for status damage test")
   summary = call("set_evolution", turret, {
-    base = {
-      siphon = 25,
-    },
+    specialization = "brawler",
   })
   assert_true(summary ~= nil, "failed to configure status damage test evolution")
   turret = require_turret_near(surface, { x = -30, y = 0 }, "status damage turret not found")
@@ -1406,7 +1459,7 @@ local function run_immediate_tests()
   run_turret_ammo_range_compat_test()
   run_level_zero_points_test(surface)
   run_shield_test(surface)
-  run_ammo_regen_test(surface)
+  run_ammo_productivity_test(surface)
   run_evolution_body_test(surface)
   run_specialization_secondary_multiplier_test(surface)
   run_resistance_test(surface)

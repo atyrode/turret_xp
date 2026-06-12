@@ -66,7 +66,7 @@ return function(M)
       label_scale = 2,
       bound_turret = false,
       last_ammo = nil,
-      ammo_regen_progress = 0,
+      ammo_productivity_progress = 0,
       shield = 0,
     }
   end
@@ -89,7 +89,9 @@ return function(M)
     profile.show_name_label = profile.show_name_label == true
     profile.show_label_level = profile.show_label_level ~= false
     profile.bound_turret = profile.bound_turret == true
-    profile.ammo_regen_progress = math.max(0, tonumber(profile.ammo_regen_progress) or 0)
+    profile.ammo_productivity_progress =
+      math.max(0, tonumber(profile.ammo_productivity_progress or profile.ammo_regen_progress) or 0)
+    profile.ammo_regen_progress = nil
     if type(profile.last_ammo) == "table" and feeder.is_ammo_item(profile.last_ammo.name) then
       profile.last_ammo = {
         name = profile.last_ammo.name,
@@ -240,7 +242,7 @@ return function(M)
       xp_kill_credit = profile.xp_kill_credit or profile.kill_credit or 0,
       dev_xp = profile.dev_xp or 0,
       last_ammo = copy_serializable(profile.last_ammo),
-      ammo_regen_progress = profile.ammo_regen_progress or 0,
+      ammo_productivity_progress = profile.ammo_productivity_progress or 0,
       shield = normalize_shield_state(profile, true),
       evolution = {
         base = copy_serializable(evolution.base or {}),
@@ -279,7 +281,7 @@ return function(M)
       profile.xp_kill_credit = data.xp_kill_credit
       profile.dev_xp = data.dev_xp or 0
       profile.last_ammo = copy_serializable(data.last_ammo)
-      profile.ammo_regen_progress = data.ammo_regen_progress or 0
+      profile.ammo_productivity_progress = data.ammo_productivity_progress or data.ammo_regen_progress or 0
       profile.shield = data.shield
       profile.evolution = copy_serializable(data.evolution or {})
     end
