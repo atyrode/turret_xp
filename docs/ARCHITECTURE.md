@@ -205,6 +205,7 @@ storage.turret_xp = {
 - `on_built_entity`, `on_robot_built_entity`, and `on_space_platform_built_entity`, when available: restore bound veteran turret profiles from tagged placeable turret items after converting the bound-only placeholder into a real gun turret.
 - `on_pre_player_mined_item` and `on_robot_pre_mined`: detach and return/spill installed Veteran Cores for mined unbound gun turrets, or snapshot bound turrets for mining-buffer replacement while leaving the bound profile attached until conversion.
 - `on_player_mined_entity`, `on_robot_mined_entity`, and `on_space_platform_mined_entity`, when available: complete bound turret mining-buffer replacement or return/spill installed Veteran Cores for platform-mined unbound gun turrets.
+- Entity lifecycle registrations use Factorio name filters for known gun-turret bodies and bound placeholders where that does not reduce behavior coverage. Damage and death handlers stay broadly registered because they also account enemy damage and kill-credit events.
 - `on_gui_opened`: attach the Turret XP panel to the opened vanilla gun turret GUI. The attached panel is a fixed-width two-column layout: core, XP, dev controls, and scrollable stats on the left; a shallow Evolution content pane with a static summary header and one bounded scrollable section body on the right.
 - `on_gui_closed`: remove the panel.
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open.
