@@ -2,6 +2,19 @@ return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
 
+  function opened_turret_action(player, mutator)
+    local entity, state = get_open_turret_state(player)
+    if not state then
+      return false
+    end
+
+    local anchor, should_refresh = mutator(entity, state)
+    if should_refresh ~= false then
+      refresh_open_turret(player, entity, anchor)
+    end
+    return true
+  end
+
   function dev_create_core(player)
     local profile = create_blank_profile()
     if not insert_chip_item(player, profile) then
@@ -22,27 +35,21 @@ return function(M)
       return
     end
 
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    state.custom_name = sanitize_core_name(element.text)
-    if state.custom_name ~= element.text then
-      element.text = state.custom_name
-    end
-    update_name_render(entity, state)
+    opened_turret_action(player, function(entity, state)
+      state.custom_name = sanitize_core_name(element.text)
+      if state.custom_name ~= element.text then
+        element.text = state.custom_name
+      end
+      update_name_render(entity, state)
+      return nil, false
+    end)
   end
 
   function set_core_label_visibility(player, visible)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    state.show_name_label = visible == true
-    update_name_render(entity, state)
-    refresh_open_turret(player, entity)
+    opened_turret_action(player, function(entity, state)
+      state.show_name_label = visible == true
+      update_name_render(entity, state)
+    end)
   end
 
   function update_label_color_preview(player, state)
@@ -87,21 +94,42 @@ return function(M)
   end
 
   function set_label_color_channel(player, channel, value)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
     local index = channel == "r" and 1 or channel == "g" and 2 or channel == "b" and 3 or nil
     if not index then
       return
     end
 
-    state.label_color = state.label_color or { 1, 0.86, 0.46 }
-    state.label_color[index] = math.max(0, math.min(255, tonumber(value) or 0)) / 255
-    state.label_color_preset = "custom"
-    update_name_render(entity, state)
-    update_label_color_preview(player, state)
+    opened_turret_action(player, function(entity, state)
+      state.label_color = state.label_color or { 1, 0.86, 0.46 }
+      state.label_color[index] = math.max(0, math.min(255, tonumber(value) or 0)) / 255
+      state.label_color_preset = "custom"
+      update_name_render(entity, state)
+      update_label_color_preview(player, state)
+      return nil, false
+    end)
+  end
+
+  function cycle_label_color(player)
+    opened_turret_action(player, function(entity, state)
+      local presets = COLOR.label_presets
+      local next_index = 1
+      local current_preset = find_matching_label_color_preset(state)
+      for index, preset in ipairs(presets) do
+        if current_preset and preset.id == current_preset.id then
+          next_index = (index % #presets) + 1
+          break
+        end
+      end
+      state.label_color = {
+        presets[next_index].color[1],
+        presets[next_index].color[2],
+        presets[next_index].color[3],
+      }
+      state.label_color_preset = presets[next_index].id
+      update_name_render(entity, state)
+      update_label_color_preview(player, state)
+      return nil, false
+    end)
   end
 
   function allocate_base_upgrade(player, upgrade_id, amount)
@@ -304,13 +332,10 @@ return function(M)
   end
 
   function reset_base_upgrades(player)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    reset_base_upgrades_state(state)
-    refresh_open_turret(player, entity, evolution_anchor_name("base", "damage"))
+    opened_turret_action(player, function(_, state)
+      reset_base_upgrades_state(state)
+      return evolution_anchor_name("base", "damage")
+    end)
   end
 
   function choose_specialization(player, specialization_id)
@@ -370,24 +395,18 @@ return function(M)
   end
 
   function reset_sub_specialization(player)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    ensure_evolution_state(state).sub_specialization = nil
-    combat.mark_turret_body_sync_pending(state)
-    refresh_open_turret(player, entity, evolution_anchor_name("sub-specialization", "choice"))
+    opened_turret_action(player, function(_, state)
+      ensure_evolution_state(state).sub_specialization = nil
+      combat.mark_turret_body_sync_pending(state)
+      return evolution_anchor_name("sub-specialization", "choice")
+    end)
   end
 
   function reset_specialization(player)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    reset_specialization_state(state)
-    refresh_open_turret(player, entity, evolution_anchor_name("specialization", "sniper"))
+    opened_turret_action(player, function(_, state)
+      reset_specialization_state(state)
+      return evolution_anchor_name("specialization", "sniper")
+    end)
   end
 
   function allocate_augment(player, augment_id, amount)
@@ -458,13 +477,10 @@ return function(M)
   end
 
   function reset_augments(player)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    reset_augments_state(state)
-    refresh_open_turret(player, entity, evolution_anchor_name("augment", "bounce"))
+    opened_turret_action(player, function(_, state)
+      reset_augments_state(state)
+      return evolution_anchor_name("augment", "bounce")
+    end)
   end
 
   function reset_evolution_state(entity, state, spill)
@@ -491,13 +507,9 @@ return function(M)
   end
 
   function reset_evolution(player)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    reset_evolution_state(entity, state, true)
-    refresh_open_turret(player, entity)
+    opened_turret_action(player, function(entity, state)
+      reset_evolution_state(entity, state, true)
+    end)
   end
 
   function reset_element_slot(player, slot)
@@ -595,72 +607,59 @@ return function(M)
   end
 
   function dev_complete_next_element_rank(player)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    if not complete_next_element_rank(state) then
-      local evolution = ensure_evolution_state(state)
-      for _, element_id in ipairs(evolution.elements or {}) do
-        local element = ELEMENT_BY_ID[element_id]
-        local mastery = element and evolution.element_mastery[element_id] or nil
-        if mastery and (mastery.rank or 0) > 0 then
-          mastery.rank = (mastery.rank or ELEMENT_FREE_RANK) + 1
-          mastery.delivered = 0
-          break
+    opened_turret_action(player, function(entity, state)
+      if not complete_next_element_rank(state) then
+        local evolution = ensure_evolution_state(state)
+        for _, element_id in ipairs(evolution.elements or {}) do
+          local element = ELEMENT_BY_ID[element_id]
+          local mastery = element and evolution.element_mastery[element_id] or nil
+          if mastery and (mastery.rank or 0) > 0 then
+            mastery.rank = (mastery.rank or ELEMENT_FREE_RANK) + 1
+            mastery.delivered = 0
+            break
+          end
         end
       end
-    end
 
-    feeder.ensure(entity, state)
-    refresh_open_turret(player, entity)
+      feeder.ensure(entity, state)
+    end)
   end
 
   function add_dev_levels(player, levels)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
+    opened_turret_action(player, function(_, state)
+      levels = math.max(1, math.floor(tonumber(levels) or 1))
+      sync_turret_progression(state)
+      local target_level = (state.level or 0) + levels
+      local needed_total = 0
+      for level = 0, target_level - 1 do
+        needed_total = needed_total + xp_required(level)
+      end
 
-    levels = math.max(1, math.floor(tonumber(levels) or 1))
-    sync_turret_progression(state)
-    local target_level = (state.level or 0) + levels
-    local needed_total = 0
-    for level = 0, target_level - 1 do
-      needed_total = needed_total + xp_required(level)
-    end
-
-    state.dev_xp = (state.dev_xp or 0) + math.max(0, needed_total - (state.total_xp or 0))
-    sync_turret_progression(state)
-    refresh_open_turret(player, entity)
+      state.dev_xp = (state.dev_xp or 0) + math.max(0, needed_total - (state.total_xp or 0))
+      sync_turret_progression(state)
+    end)
   end
 
   function dev_reset_core(player)
-    local entity, state = get_open_turret_state(player)
-    if not state then
-      return
-    end
-
-    state.xp = 0
-    state.total_xp = 0
-    state.level = 0
-    state.kills = 0
-    state.kill_credit = 0
-    state.damage = 0
-    state.xp_damage = 0
-    state.xp_kill_credit = 0
-    state.dev_xp = 0
-    state.skills = {}
-    state.evolution = {}
-    state.required_xp = nil
-    state._progress_total_xp = nil
-    state._progress_settings_key = nil
-    feeder.destroy(state, entity.position, false)
-    ensure_evolution_state(state)
-    sync_turret_progression(state)
-    combat.mark_turret_body_sync_pending(state)
-
-    refresh_open_turret(player, entity)
+    opened_turret_action(player, function(entity, state)
+      state.xp = 0
+      state.total_xp = 0
+      state.level = 0
+      state.kills = 0
+      state.kill_credit = 0
+      state.damage = 0
+      state.xp_damage = 0
+      state.xp_kill_credit = 0
+      state.dev_xp = 0
+      state.skills = {}
+      state.evolution = {}
+      state.required_xp = nil
+      state._progress_total_xp = nil
+      state._progress_settings_key = nil
+      feeder.destroy(state, entity.position, false)
+      ensure_evolution_state(state)
+      sync_turret_progression(state)
+      combat.mark_turret_body_sync_pending(state)
+    end)
   end
 end
