@@ -808,7 +808,7 @@ return function(M)
     local display_entries = {}
     for index, entry in ipairs(entries) do
       local value = tonumber(entry.value)
-      local include = false
+      local include
       if entry.special then
         include = value ~= nil and value > 0
       elseif entry.kind == "percent" then
