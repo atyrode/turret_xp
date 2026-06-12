@@ -19,6 +19,9 @@ env:
   FACTORIO_DIR: ${{ github.workspace }}/.factorio-ci/factorio
   FACTORIO_MODS_DIR: ${{ github.workspace }}/.factorio-ci/mods
   PYTHON: python3
+  LUAC: luac5.2
+  STYLUA_VERSION: 2.5.2
+  STYLUA_SHA256: bcb0d855e91f102f28a370e850f8566b3b44b79e6274d806ea5246837c0fd5ab
 
 jobs:
   build-test-attach:
@@ -55,10 +58,26 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install Lua compiler
+      - name: Install Lua tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.4
+          sudo apt-get install -y lua-check lua5.2
+
+          stylua_dir="${RUNNER_TEMP}/stylua"
+          stylua_archive="${RUNNER_TEMP}/stylua.zip"
+          mkdir -p "${stylua_dir}"
+          curl -fsSL \
+            -o "${stylua_archive}" \
+            "https://github.com/JohnnyMorganz/StyLua/releases/download/v${STYLUA_VERSION}/stylua-linux-x86_64.zip"
+          echo "${STYLUA_SHA256}  ${stylua_archive}" | sha256sum -c -
+          python3 -m zipfile -e "${stylua_archive}" "${stylua_dir}"
+          chmod +x "${stylua_dir}/stylua"
+          echo "${stylua_dir}" >> "${GITHUB_PATH}"
+
+      - name: Run strict Lua tooling
+        env:
+          REQUIRE_LUA_TOOLS: "1"
+        run: scripts/lint-lua.sh
 
       - name: Verify tag matches info.json
         run: |
@@ -167,10 +186,21 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install Lua compiler
+      - name: Install Lua tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.4
+          sudo apt-get install -y lua-check lua5.2
+
+          stylua_dir="${RUNNER_TEMP}/stylua"
+          stylua_archive="${RUNNER_TEMP}/stylua.zip"
+          mkdir -p "${stylua_dir}"
+          curl -fsSL \
+            -o "${stylua_archive}" \
+            "https://github.com/JohnnyMorganz/StyLua/releases/download/v${STYLUA_VERSION}/stylua-linux-x86_64.zip"
+          echo "${STYLUA_SHA256}  ${stylua_archive}" | sha256sum -c -
+          python3 -m zipfile -e "${stylua_archive}" "${stylua_dir}"
+          chmod +x "${stylua_dir}/stylua"
+          echo "${stylua_dir}" >> "${GITHUB_PATH}"
 
       - name: Require Mod Portal publish key
         run: |

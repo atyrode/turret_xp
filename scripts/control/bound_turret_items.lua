@@ -6,7 +6,7 @@ function bound_turret_items.new(deps)
   function service.description(profile)
     profile = deps.normalize_profile(profile)
     local name = profile.custom_name or ""
-    local base_description = nil
+    local base_description
     if name ~= "" then
       base_description = { "item-description.turret-xp-bound-gun-turret-profile-named", name, profile.level or 0 }
     else
@@ -27,9 +27,9 @@ function bound_turret_items.new(deps)
       quality = turret_snapshot.quality or "normal",
       tags = {
         [deps.profile_tag] = serialized,
-        [deps.bound_turret_tag] = deps.copy_serializable(turret_snapshot)
+        [deps.bound_turret_tag] = deps.copy_serializable(turret_snapshot),
       },
-      custom_description = service.description(serialized)
+      custom_description = service.description(serialized),
     }
   end
 
@@ -82,14 +82,14 @@ function bound_turret_items.new(deps)
     deps.remove_item_from_inventory(buffer, {
       name = deps.base_turret_name,
       count = 1,
-      quality = turret_snapshot and turret_snapshot.quality or "normal"
+      quality = turret_snapshot and turret_snapshot.quality or "normal",
     })
 
     for _, ammo in ipairs((turret_snapshot and turret_snapshot.ammo) or {}) do
       deps.remove_item_from_inventory(buffer, {
         name = ammo.name,
         count = ammo.count,
-        quality = ammo.quality or "normal"
+        quality = ammo.quality or "normal",
       })
     end
   end

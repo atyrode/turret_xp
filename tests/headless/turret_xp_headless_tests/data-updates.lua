@@ -18,18 +18,18 @@ data:extend({
         target_effects = {
           {
             type = "damage",
-            damage = { amount = 5, type = "physical" }
-          }
-        }
-      }
+            damage = { amount = 5, type = "physical" },
+          },
+        },
+      },
     },
     animation = {
       filename = "__core__/graphics/empty.png",
       width = 1,
       height = 1,
-      frame_count = 1
-    }
-  }
+      frame_count = 1,
+    },
+  },
 })
 
 local firearm_magazine = data.raw.ammo and data.raw.ammo["firearm-magazine"]
@@ -45,10 +45,10 @@ if firearm_magazine then
             projectile = "turret-xp-headless-test-bullet",
             starting_speed = 1.5,
             range_deviation = 0.15,
-            max_range = 30
-          }
-        }
-      }
-    }
+            max_range = 30,
+          },
+        },
+      },
+    },
   }
 end

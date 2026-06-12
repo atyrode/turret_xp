@@ -27,7 +27,7 @@ domain.names = {
   profile_tag = "turret_xp_profile",
   bound_turret_tag = "turret_xp_bound_turret",
   base_turret = "gun-turret",
-  specialized_turret_prefix = "turret-xp-gun-turret-"
+  specialized_turret_prefix = "turret-xp-gun-turret-",
 }
 domain.names.bound_turret_variant_prefix = domain.names.bound_turret .. "-"
 domain.names.bound_turret_placeholder_variant_prefix = domain.names.bound_turret_placeholder .. "-"
@@ -37,7 +37,7 @@ domain.gates = {
   first_element = 20,
   augments = 30,
   sub_specialization = 40,
-  second_element = 50
+  second_element = 50,
 }
 
 domain.range_augment_max = 20
@@ -53,7 +53,7 @@ domain.elements = {
     name = "Explosive",
     description = "Shots can splash explosion damage around the target.",
     resource = "grenade",
-    base_requirement = 500
+    base_requirement = 500,
   },
   {
     id = "fire",
@@ -61,7 +61,7 @@ domain.elements = {
     name = "Fire",
     description = "Shots can add fire damage and power incendiary combos.",
     resource = "sulfur",
-    base_requirement = 2500
+    base_requirement = 2500,
   },
   {
     id = "electric",
@@ -69,7 +69,7 @@ domain.elements = {
     name = "Electric",
     description = "Shots can arc electric damage to a nearby enemy.",
     resource = "battery",
-    base_requirement = 750
+    base_requirement = 750,
   },
   {
     id = "toxic",
@@ -77,8 +77,8 @@ domain.elements = {
     name = "Toxic",
     description = "Shots can stack poison damage over time and slow targets.",
     resource = "poison-capsule",
-    base_requirement = 150
-  }
+    base_requirement = 150,
+  },
 }
 domain.element_by_id = index_by_id(domain.elements)
 
@@ -94,7 +94,7 @@ domain.specializations = {
     rotation_speed_multiplier = 0.6667,
     crit_damage_multiplier = 1.8,
     value = "x1.89 range, x2.8 damage, x0.25 fire rate, x1.8 crit damage, x0.88 HP",
-    description = "Very high range and shot damage, stronger critical hits, extremely slow fire rate, lower durability."
+    description = "Very high range and shot damage, stronger critical hits, extremely slow fire rate, lower durability.",
   },
   {
     id = "machine_gun",
@@ -107,7 +107,7 @@ domain.specializations = {
     rotation_speed_multiplier = 1.6667,
     ammo_recovery_multiplier = 2.0,
     value = "x2 fire rate, x2 ammo recovery, x0.58 damage, x0.89 range, x0.9 HP",
-    description = "Much faster fire rate and ammo recovery, slightly shorter range, lower shot damage."
+    description = "Much faster fire rate and ammo recovery, slightly shorter range, lower shot damage.",
   },
   {
     id = "bulwark",
@@ -120,7 +120,7 @@ domain.specializations = {
     rotation_speed_multiplier = 0.8,
     repair_multiplier = 2.5,
     value = "x3 HP, x2.5 regeneration, x0.65 damage, x0.75 fire rate",
-    description = "Triple durability and stronger regeneration, lower shot damage, slightly shorter range."
+    description = "Triple durability and stronger regeneration, lower shot damage, slightly shorter range.",
   },
   {
     id = "brawler",
@@ -133,8 +133,8 @@ domain.specializations = {
     rotation_speed_multiplier = 1.3334,
     lifesteal_multiplier = 2.5,
     value = "x3 damage, x2.5 lifesteal, x0.5 fire rate, x0.39 range, x1.63 HP",
-    description = "Very short range, high shot damage, stronger lifesteal and durability, slower fire rate."
-  }
+    description = "Very short range, high shot damage, stronger lifesteal and durability, slower fire rate.",
+  },
 }
 domain.specialization_by_id = index_by_id(domain.specializations)
 
@@ -148,7 +148,7 @@ domain.sub_specializations = {
     crit_damage_multiplier = 1.25,
     damage_multiplier = 1.08,
     value = "+8% crit chance, x1.25 crit damage, x1.08 damage",
-    description = "Turns Sniper into a precision killer that leans harder into critical shots."
+    description = "Turns Sniper into a precision killer that leans harder into critical shots.",
   },
   {
     id = "sniper_overwatch",
@@ -159,7 +159,7 @@ domain.sub_specializations = {
     cooldown_multiplier = 1.15,
     damage_multiplier = 1.08,
     value = "x1.18 range, x1.08 damage, x0.87 fire rate",
-    description = "Pushes Sniper further into extreme range at the cost of an even slower firing rhythm."
+    description = "Pushes Sniper further into extreme range at the cost of an even slower firing rhythm.",
   },
   {
     id = "machine_shredder",
@@ -169,7 +169,7 @@ domain.sub_specializations = {
     double_shot_chance_flat = 0.12,
     damage_multiplier = 0.92,
     value = "+12% double-shot chance, x0.92 damage",
-    description = "Trades some shot weight for more frequent burst fire."
+    description = "Trades some shot weight for more frequent burst fire.",
   },
   {
     id = "machine_sustained",
@@ -179,7 +179,7 @@ domain.sub_specializations = {
     cooldown_multiplier = 0.85,
     ammo_recovery_multiplier = 1.75,
     value = "x1.18 fire rate, x1.75 ammo recovery",
-    description = "Improves sustained uptime by firing faster and recovering ammunition more aggressively."
+    description = "Improves sustained uptime by firing faster and recovering ammunition more aggressively.",
   },
   {
     id = "bulwark_bastion",
@@ -190,7 +190,7 @@ domain.sub_specializations = {
     resistance_flat = 0.05,
     cooldown_multiplier = 1.10,
     value = "x1.35 HP, +5% resistance, x0.91 fire rate",
-    description = "Commits Bulwark to holding ground through raw durability and extra mitigation."
+    description = "Commits Bulwark to holding ground through raw durability and extra mitigation.",
   },
   {
     id = "bulwark_guardian",
@@ -200,7 +200,7 @@ domain.sub_specializations = {
     repair_multiplier = 1.80,
     range_multiplier = 1.08,
     value = "x1.8 regeneration, x1.08 range",
-    description = "Turns Bulwark into a steadier protector with stronger self-repair and a little more reach."
+    description = "Turns Bulwark into a steadier protector with stronger self-repair and a little more reach.",
   },
   {
     id = "brawler_executioner",
@@ -211,7 +211,7 @@ domain.sub_specializations = {
     crit_damage_multiplier = 1.35,
     lifesteal_multiplier = 0.80,
     value = "x1.35 damage, x1.35 crit damage, x0.8 lifesteal",
-    description = "Makes Brawler more lethal at close range while softening its sustain."
+    description = "Makes Brawler more lethal at close range while softening its sustain.",
   },
   {
     id = "brawler_vampire",
@@ -222,8 +222,8 @@ domain.sub_specializations = {
     health_multiplier = 1.18,
     damage_multiplier = 0.90,
     value = "x1.8 lifesteal, x1.18 HP, x0.9 damage",
-    description = "Turns Brawler into a self-sustaining close-range anchor."
-  }
+    description = "Turns Brawler into a self-sustaining close-range anchor.",
+  },
 }
 domain.sub_specialization_by_id = index_by_id(domain.sub_specializations)
 domain.sub_specializations_by_parent = group_by_parent(domain.sub_specializations)
@@ -234,7 +234,7 @@ domain.label_color_presets = {
   { id = "green", name = "Green", color = { 0.45, 1, 0.45 }, display_color = { 0.45, 1, 0.45, 1 } },
   { id = "blue", name = "Blue", color = { 0.45, 0.78, 1 }, display_color = { 0.45, 0.78, 1, 1 } },
   { id = "red", name = "Red", color = { 1, 0.36, 0.30 }, display_color = { 1, 0.36, 0.30, 1 } },
-  { id = "purple", name = "Purple", color = { 0.86, 0.48, 1 }, display_color = { 0.86, 0.48, 1, 1 } }
+  { id = "purple", name = "Purple", color = { 0.86, 0.48, 1 }, display_color = { 0.86, 0.48, 1, 1 } },
 }
 
 domain.prototype_multiplier_fields = {
@@ -242,7 +242,7 @@ domain.prototype_multiplier_fields = {
   "cooldown_multiplier",
   "damage_multiplier",
   "health_multiplier",
-  "rotation_speed_multiplier"
+  "rotation_speed_multiplier",
 }
 
 local function clamp_rank(value, max_rank)
@@ -349,8 +349,7 @@ function domain.bound_turret_placeholder_name(variant_id)
 end
 
 function domain.is_specialized_turret_name(name)
-  return type(name) == "string"
-    and string.sub(name, 1, #domain.names.specialized_turret_prefix) == domain.names.specialized_turret_prefix
+  return type(name) == "string" and string.sub(name, 1, #domain.names.specialized_turret_prefix) == domain.names.specialized_turret_prefix
 end
 
 function domain.is_bound_turret_item_name(name)
@@ -366,7 +365,8 @@ function domain.is_bound_turret_placeholder_name(name)
   return name == domain.names.bound_turret_placeholder
     or (
       type(name) == "string"
-      and string.sub(name, 1, #domain.names.bound_turret_placeholder_variant_prefix) == domain.names.bound_turret_placeholder_variant_prefix
+      and string.sub(name, 1, #domain.names.bound_turret_placeholder_variant_prefix)
+        == domain.names.bound_turret_placeholder_variant_prefix
     )
 end
 
@@ -398,7 +398,13 @@ function domain.for_each_specialized_turret_name(callback)
   for _, specialization in ipairs(domain.specializations) do
     for range_rank = 0, domain.range_augment_max do
       for health_rank = 0, domain.max_health_augment_max do
-        callback(domain.specialized_turret_name(specialization.id, range_rank, health_rank), specialization.id, range_rank, health_rank, nil)
+        callback(
+          domain.specialized_turret_name(specialization.id, range_rank, health_rank),
+          specialization.id,
+          range_rank,
+          health_rank,
+          nil
+        )
       end
     end
   end

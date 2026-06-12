@@ -6,7 +6,7 @@ data:extend({
     default_value = 0.02,
     minimum_value = 0,
     maximum_value = 100,
-    order = "a"
+    order = "a",
   },
   {
     type = "double-setting",
@@ -15,7 +15,7 @@ data:extend({
     default_value = 25,
     minimum_value = 0,
     maximum_value = 100000,
-    order = "b"
+    order = "b",
   },
   {
     type = "int-setting",
@@ -24,7 +24,7 @@ data:extend({
     default_value = 100,
     minimum_value = 1,
     maximum_value = 1000000,
-    order = "c"
+    order = "c",
   },
   {
     type = "double-setting",
@@ -33,6 +33,6 @@ data:extend({
     default_value = 1.65,
     minimum_value = 1.01,
     maximum_value = 10,
-    order = "d"
-  }
+    order = "d",
+  },
 })

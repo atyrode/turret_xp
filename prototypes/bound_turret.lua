@@ -18,14 +18,14 @@ return function(names)
     {
       icon = "__base__/graphics/icons/gun-turret.png",
       icon_size = 64,
-      scale = 0.5
+      scale = 0.5,
     },
     {
       icon = "__base__/graphics/icons/electronic-circuit.png",
       icon_size = 64,
       scale = 0.22,
-      shift = { 9, -9 }
-    }
+      shift = { 9, -9 },
+    },
   }
   placeholder.icon = nil
 

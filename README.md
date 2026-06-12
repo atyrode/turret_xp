@@ -38,6 +38,16 @@ Run lightweight repository checks:
 scripts/check.sh
 ```
 
+`scripts/check.sh` stays host-friendly: it validates JSON and runs Lua syntax, StyLua, and Luacheck only when those tools are available on `PATH`.
+
+Run the strict Lua tooling suite without installing Lua tools on the host:
+
+```sh
+docker compose run --rm lua-tools
+```
+
+This uses the pinned tooling container from `tools/lua/Dockerfile` and requires `luac`, StyLua, and Luacheck to pass. CI uses the same strict path for package-impacting changes.
+
 Run the Factorio headless regression suite:
 
 ```sh
@@ -56,7 +66,7 @@ scripts/package.sh
 The package is written to `dist/turret_xp_<version>.zip`.
 If `thumbnail.png` exists at the repository root, it is included at the mod zip root for Mod Portal display.
 
-GitHub Actions keeps the required check names stable for pull requests, pushes to `main`, and manual CI runs. Pull requests first classify changed files with `scripts/ci-change-scope.sh`: README/docs/changelog/site-only changes pass the required checks without running package or headless work, while source, workflow, script, prototype, locale, metadata, or test changes run `scripts/package.sh` and, when Mod Portal download credentials are available, `scripts/test-headless.sh`. Pushes to `main` and manual CI runs always run the full validation path. The workflow pins the headless runner version and caches the extracted Factorio directory plus dependency zips; update `FACTORIO_HEADLESS_VERSION` in the workflows when intentionally moving CI to a newer Factorio build.
+GitHub Actions keeps the required check names stable for pull requests, pushes to `main`, and manual CI runs. Pull requests first classify changed files with `scripts/ci-change-scope.sh`: README/docs/changelog/site-only changes pass the required checks without running package or headless work, while source, workflow, script, prototype, locale, metadata, or test changes run strict Lua syntax/format/lint checks, `scripts/package.sh`, and, when Mod Portal download credentials are available, `scripts/test-headless.sh`. Pushes to `main` and manual runs always run the full validation path. The workflow pins StyLua and the headless runner version, verifies the StyLua release hash, and caches the extracted Factorio directory plus dependency zips; update `STYLUA_VERSION`/`STYLUA_SHA256` or `FACTORIO_HEADLESS_VERSION` in the workflows when intentionally moving tooling or Factorio builds.
 
 Install the packaged zip into the default Linux Factorio mods folder:
 
