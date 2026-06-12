@@ -91,6 +91,7 @@
 - Clearly state in playtest-facing guidance that current evolution effects still need balance and readability feedback.
 - Electric visual feedback must expire automatically and must not leave beam or arc entities on the map after combat.
 - Critical hits, double shots, bounce, and elemental procs should have readable visual feedback when possible, preferring optional Bullet Trails entities and vanilla visual prototypes with safe fallbacks.
+- Combat visual and sound feedback must be budgeted so dense defenses can skip non-critical feedback without skipping damage, XP, lifesteal, or other gameplay mechanics.
 - Fire and Toxic damage-over-time ticks must count as turret damage for XP, kill credit contribution, and lifesteal.
 
 ## Operational

@@ -351,6 +351,35 @@ return function(M)
       }
     end,
 
+    combat_budget_samples = function(surface)
+      surface = surface or game.surfaces[1]
+      combat.reset_effect_budget()
+      local limits = combat.get_effect_budget_snapshot().limits
+      local accepted_lines = 0
+      for index = 1, limits.render_lines_per_surface_tick + 2 do
+        if combat.draw_attack_line(surface, { x = -40, y = index * 0.05 }, { x = -39, y = index * 0.05 }, { 1, 1, 1 }, 1, 1) then
+          accepted_lines = accepted_lines + 1
+        end
+      end
+
+      local accepted_status_ticks = 0
+      for _ = 1, limits.status_effect_ticks_per_tick + 2 do
+        if combat.reserve_effect_budget("status_effect_ticks", surface) then
+          accepted_status_ticks = accepted_status_ticks + 1
+        end
+      end
+
+      local snapshot = combat.get_effect_budget_snapshot()
+      combat.reset_effect_budget()
+      return {
+        descriptors = combat.get_effect_descriptor_snapshot(),
+        limits = limits,
+        accepted_lines = accepted_lines,
+        accepted_status_ticks = accepted_status_ticks,
+        skipped = snapshot.skipped or {},
+      }
+    end,
+
     prototype_budget = function()
       return turret_xp_test_prototype_budget()
     end,
