@@ -1,6 +1,206 @@
+local combat_budget = require("scripts.control.combat_budget")
+
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
+
+  local effect_budget = combat_budget.new({
+    ensure_storage = ensure_storage,
+    get_storage = function()
+      return storage and storage.turret_xp or nil
+    end,
+    get_tick = function()
+      return game and game.tick or 0
+    end,
+    get_limits = function()
+      return COMBAT_CONSTANTS.effect_budget
+    end,
+  })
+
+  local ELEMENT_EFFECTS = {
+    fire = {
+      trail = COMBAT_CONSTANTS.trail.fire,
+      color = { 1, 0.28, 0.05 },
+      trail_width = 1,
+      trail_ttl = 10,
+      direct_damage_multiplier = 0.10,
+      status_damage_multiplier = 0.25,
+      status_damage_type = "fire",
+      status_duration = 4 * 60,
+      status_interval = 60,
+      status_sprite = "virtual-signal/signal-fire",
+      visual_entity = COMBAT_CONSTANTS.vfx.fire_flash,
+      fallback_sprite = "virtual-signal/signal-fire",
+      fallback_sprite_scale = 0.45,
+      fallback_sprite_ttl = 24,
+      sound = COMBAT_CONSTANTS.sfx.fire,
+      sound_key = "fire",
+      sound_cooldown = 28,
+      sound_volume = 0.75,
+    },
+    electric = {
+      trail = COMBAT_CONSTANTS.trail.electric_faint,
+      color = { 0.35, 0.75, 1 },
+      trail_width = 1,
+      trail_ttl = 10,
+      arc_trail = COMBAT_CONSTANTS.trail.electric,
+      arc_damage_multiplier = 0.25,
+      arc_damage_type = "electric",
+      arc_radius = 7,
+      arc_visual_entity = COMBAT_CONSTANTS.vfx.electric_arc,
+      sound = COMBAT_CONSTANTS.sfx.electric,
+      sound_key = "electric",
+      sound_cooldown = 20,
+      sound_volume = 0.7,
+    },
+    explosive = {
+      trail = COMBAT_CONSTANTS.trail.explosive,
+      color = { 1, 0.58, 0.15 },
+      trail_width = 1,
+      trail_ttl = 10,
+      splash_damage_multiplier = 0.20,
+      splash_damage_type = "explosion",
+      splash_radius = 3,
+      splash_rank_radius = 0.15,
+      splash_radius_bonus_cap = 3,
+      splash_targets = 4,
+      short_effect = "explosion",
+    },
+    toxic = {
+      trail = COMBAT_CONSTANTS.trail.toxic,
+      color = { 0.42, 0.92, 0.28 },
+      trail_width = 1,
+      trail_ttl = 10,
+      status_damage_multiplier = 0.08,
+      status_damage_type = "poison",
+      status_duration = 8 * 60,
+      status_interval = 60,
+      status_sprite = "virtual-signal/signal-skull",
+      visual_entity = COMBAT_CONSTANTS.vfx.toxic_puff,
+      visual_duration = 90,
+      fallback_sprite = "virtual-signal/signal-skull",
+      fallback_sprite_scale = 0.38,
+      fallback_sprite_ttl = 30,
+    },
+  }
+
+  local COMBO_EFFECTS = {
+    stormfire = {
+      elements = { "fire", "electric" },
+      flags = { "fire", "electric" },
+      damage_multiplier = 0.15,
+      damage_type = "fire",
+      visual_entity = COMBAT_CONSTANTS.vfx.fire_flash,
+      fallback_sprite = "virtual-signal/signal-fire",
+      fallback_sprite_scale = 0.55,
+      fallback_sprite_ttl = 30,
+      sound = COMBAT_CONSTANTS.sfx.fire,
+      sound_key = "combo-fire",
+      sound_cooldown = 36,
+      sound_volume = 0.65,
+    },
+    incendiary = {
+      elements = { "fire", "explosive" },
+      flags = { "fire", "explosive" },
+      damage_multiplier = 0.20,
+      damage_type = "fire",
+      visual_entity = COMBAT_CONSTANTS.vfx.fire_flash,
+      fallback_sprite = "virtual-signal/signal-fire",
+      fallback_sprite_scale = 0.55,
+      fallback_sprite_ttl = 30,
+      short_effect = "explosion-gunshot",
+      sound = COMBAT_CONSTANTS.sfx.fire,
+      sound_key = "combo-fire",
+      sound_cooldown = 36,
+      sound_volume = 0.65,
+    },
+    shockburst = {
+      elements = { "electric", "explosive" },
+      flags = { "electric", "explosive" },
+      damage_multiplier = 0.25,
+      damage_type = "electric",
+      radius = 8,
+      visual_entity = COMBAT_CONSTANTS.vfx.electric_arc,
+      trail = COMBAT_CONSTANTS.trail.electric,
+      color = { 0.35, 0.75, 1 },
+      short_effect = "explosion-gunshot",
+      sound = COMBAT_CONSTANTS.sfx.electric,
+      sound_key = "combo-electric",
+      sound_cooldown = 28,
+      sound_volume = 0.7,
+    },
+    choking = {
+      elements = { "fire", "toxic" },
+      flags = { "fire", "toxic" },
+      status_damage_multiplier = 0.18,
+      status_damage_type = "poison",
+      status_duration = 5 * 60,
+      status_interval = 60,
+      status_sprite = "virtual-signal/signal-skull",
+      color = { 0.42, 0.92, 0.28 },
+      visual_entity = COMBAT_CONSTANTS.vfx.toxic_puff,
+      visual_duration = 90,
+    },
+    static_toxin = {
+      elements = { "electric", "toxic" },
+      flags = { "electric", "toxic" },
+    },
+    dirty_blast = {
+      elements = { "explosive", "toxic" },
+      flags = { "explosive", "toxic" },
+      status_damage_multiplier = 0.06,
+      status_damage_type = "poison",
+      status_duration = 8 * 60,
+      status_interval = 60,
+      status_sprite = "virtual-signal/signal-skull",
+      color = { 0.42, 0.92, 0.28 },
+      radius = 3,
+      spread_targets = 3,
+    },
+  }
+
+  function combat.get_effect_budget_snapshot()
+    return effect_budget.snapshot()
+  end
+
+  function combat.reset_effect_budget()
+    effect_budget.reset()
+  end
+
+  function combat.reserve_effect_budget(bucket_name, surface, cost)
+    if bucket_name == "status_effect_ticks" then
+      return effect_budget.reserve_global(bucket_name, cost)
+    end
+
+    return effect_budget.reserve_surface(surface, bucket_name, cost)
+  end
+
+  function combat.get_effect_descriptor_snapshot()
+    local elements = {}
+    for id, descriptor in pairs(ELEMENT_EFFECTS) do
+      elements[id] = {
+        trail = descriptor.trail,
+        direct_damage_multiplier = descriptor.direct_damage_multiplier,
+        status_damage_multiplier = descriptor.status_damage_multiplier,
+        arc_damage_multiplier = descriptor.arc_damage_multiplier,
+        splash_damage_multiplier = descriptor.splash_damage_multiplier,
+      }
+    end
+
+    local combos = {}
+    for id, descriptor in pairs(COMBO_EFFECTS) do
+      combos[id] = {
+        elements = descriptor.elements,
+        damage_multiplier = descriptor.damage_multiplier,
+        status_damage_multiplier = descriptor.status_damage_multiplier,
+      }
+    end
+
+    return {
+      elements = elements,
+      combos = combos,
+    }
+  end
 
   function apply_passive_evolution_effects()
     ensure_storage()
@@ -264,10 +464,14 @@ return function(M)
 
   function combat.draw_attack_line(surface, from, to, color, width, ttl)
     if not surface or not from or not to then
-      return
+      return false
     end
 
-    pcall(function()
+    if not effect_budget.reserve_surface(surface, "render_lines") then
+      return false
+    end
+
+    local ok = pcall(function()
       rendering.draw_line({
         surface = surface,
         from = from,
@@ -279,6 +483,8 @@ return function(M)
         draw_on_ground = false,
       })
     end)
+
+    return ok
   end
 
   function combat.has_entity_prototype(name)
@@ -301,6 +507,14 @@ return function(M)
 
   function combat.create_visual_entity(surface, name, position, source, target, force, duration)
     if not surface or not name or not position or not combat.has_entity_prototype(name) then
+      return false
+    end
+
+    ensure_storage()
+    if
+      not effect_budget.allow_active("visual_entities_active", #(storage.turret_xp.visual_entities or {}))
+      or not effect_budget.reserve_surface(surface, "visual_entities")
+    then
       return false
     end
 
@@ -329,14 +543,14 @@ return function(M)
 
   function combat.draw_trail(surface, from, to, trail_name, fallback_color, width, ttl, force)
     if not surface or not from or not to then
-      return
+      return false
     end
 
     if combat.create_visual_entity(surface, trail_name, to, from, to, force, ttl or 12) then
-      return
+      return true
     end
 
-    combat.draw_attack_line(surface, from, to, fallback_color, width, ttl)
+    return combat.draw_attack_line(surface, from, to, fallback_color, width, ttl)
   end
 
   function combat.play_effect_sound(state, surface, sound_name, position, key, cooldown, volume)
@@ -349,6 +563,9 @@ return function(M)
     cooldown = cooldown or 20
     local last_tick = state._last_effect_sound_tick[key] or 0
     if game.tick - last_tick < cooldown then
+      return
+    end
+    if not effect_budget.reserve_surface(surface, "sounds") then
       return
     end
     state._last_effect_sound_tick[key] = game.tick
@@ -467,6 +684,10 @@ return function(M)
 
     ensure_storage()
     local visuals = storage.turret_xp.pending_visuals
+    if not effect_budget.allow_active("pending_visuals_active", #visuals) then
+      return
+    end
+
     visuals[#visuals + 1] = {
       tick = game.tick + math.max(0, math.floor(delay or 0)),
       surface_index = surface.index,
@@ -492,15 +713,19 @@ return function(M)
     for index = #visuals, 1, -1 do
       local visual = visuals[index]
       if not visual or not visual.tick or game.tick >= visual.tick then
+        local processed = true
         if visual then
           local surface = game.get_surface(visual.surface_index)
           if visual.trail_name then
-            combat.draw_trail(surface, visual.from, visual.to, visual.trail_name, visual.color, visual.width, visual.ttl, visual.force)
+            processed =
+              combat.draw_trail(surface, visual.from, visual.to, visual.trail_name, visual.color, visual.width, visual.ttl, visual.force)
           else
-            combat.draw_attack_line(surface, visual.from, visual.to, visual.color, visual.width, visual.ttl)
+            processed = combat.draw_attack_line(surface, visual.from, visual.to, visual.color, visual.width, visual.ttl)
           end
         end
-        table.remove(visuals, index)
+        if processed then
+          table.remove(visuals, index)
+        end
       end
     end
   end
@@ -579,7 +804,7 @@ return function(M)
         or (effect.remaining or 0) <= 0
       then
         table.remove(effects, index)
-      elseif game.tick >= (effect.next_tick or 0) then
+      elseif game.tick >= (effect.next_tick or 0) and effect_budget.reserve_global("status_effect_ticks") then
         local force = effect.force_name and game.forces[effect.force_name] or safe_read(turret, "force")
         local amount = math.min(effect.remaining or 0, effect.per_tick or 0)
         local context = combat.get_entity_xp_context(target)
@@ -658,10 +883,14 @@ return function(M)
 
   function combat.draw_effect_sprite(surface, target, sprite, scale, ttl)
     if not surface or not target or not sprite then
-      return
+      return false
     end
 
-    pcall(function()
+    if not effect_budget.reserve_surface(surface, "render_sprites") then
+      return false
+    end
+
+    local ok = pcall(function()
       rendering.draw_sprite({
         surface = surface,
         sprite = sprite,
@@ -672,19 +901,27 @@ return function(M)
         render_layer = "air-object",
       })
     end)
+
+    return ok
   end
 
   function combat.create_short_effect(surface, name, position)
     if not surface or not name or not position then
-      return
+      return false
     end
 
-    pcall(function()
+    if not effect_budget.reserve_surface(surface, "short_effects") then
+      return false
+    end
+
+    local ok = pcall(function()
       surface.create_entity({
         name = name,
         position = position,
       })
     end)
+
+    return ok
   end
 
   function combat.get_element_effect_multiplier(state, element_id)
@@ -724,6 +961,11 @@ return function(M)
       return
     end
 
+    local descriptor = ELEMENT_EFFECTS[element_id]
+    if not descriptor then
+      return
+    end
+
     state._last_element_visual_tick = state._last_element_visual_tick or {}
     local last_tick = state._last_element_visual_tick[element_id] or 0
     if game.tick - last_tick < 8 then
@@ -731,15 +973,7 @@ return function(M)
     end
     state._last_element_visual_tick[element_id] = game.tick
 
-    if element_id == "fire" then
-      combat.draw_trail(surface, from, to, COMBAT_CONSTANTS.trail.fire, { 1, 0.28, 0.05 }, 1, 10, force)
-    elseif element_id == "electric" then
-      combat.draw_trail(surface, from, to, COMBAT_CONSTANTS.trail.electric_faint, { 0.35, 0.75, 1 }, 1, 10, force)
-    elseif element_id == "explosive" then
-      combat.draw_trail(surface, from, to, COMBAT_CONSTANTS.trail.explosive, { 1, 0.58, 0.15 }, 1, 10, force)
-    elseif element_id == "toxic" then
-      combat.draw_trail(surface, from, to, COMBAT_CONSTANTS.trail.toxic, { 0.42, 0.92, 0.28 }, 1, 10, force)
-    end
+    combat.draw_trail(surface, from, to, descriptor.trail, descriptor.color, descriptor.trail_width, descriptor.trail_ttl, force)
   end
 
   function combat.get_active_elements(state)
@@ -762,6 +996,14 @@ return function(M)
     return (elements[1] == a and elements[2] == b) or (elements[1] == b and elements[2] == a)
   end
 
+  function combat.combo_descriptor_is_active(state, flags, descriptor)
+    return descriptor
+      and flags
+      and flags[descriptor.flags[1]]
+      and flags[descriptor.flags[2]]
+      and combat.has_element_pair(state, descriptor.elements[1], descriptor.elements[2])
+  end
+
   function combat.apply_element_effects_to_target(turret, state, target, base_damage, force, source_position)
     local upgrade_damage = 0
     local flags = {
@@ -776,7 +1018,8 @@ return function(M)
         break
       end
 
-      if element_is_powered(state, element_id) then
+      local descriptor = ELEMENT_EFFECTS[element_id]
+      if descriptor and element_is_powered(state, element_id) then
         local element_multiplier = combat.get_element_effect_multiplier(state, element_id)
         local element_proc_chance = apply_luck_to_chance(state, combat.get_element_proc_chance(state, element_id))
         local effect_surface = safe_read(target, "surface")
@@ -786,39 +1029,53 @@ return function(M)
 
         if element_id == "fire" and combat.chance_roll(element_proc_chance) then
           flags.fire = true
-          local amount = base_damage * 0.10 * element_multiplier
-          if combat.apply_tracked_runtime_damage(target, amount, force, "fire", turret) then
+          local amount = base_damage * descriptor.direct_damage_multiplier * element_multiplier
+          if combat.apply_tracked_runtime_damage(target, amount, force, descriptor.status_damage_type, turret) then
             upgrade_damage = upgrade_damage + amount
             combat.schedule_status_damage(
               turret,
               state,
               target,
-              base_damage * 0.25 * element_multiplier,
-              "fire",
-              4 * 60,
-              60,
-              "virtual-signal/signal-fire",
-              { 1, 0.28, 0.05 }
+              base_damage * descriptor.status_damage_multiplier * element_multiplier,
+              descriptor.status_damage_type,
+              descriptor.status_duration,
+              descriptor.status_interval,
+              descriptor.status_sprite,
+              descriptor.color
             )
             if
               not combat.create_visual_entity(
                 effect_surface,
-                COMBAT_CONSTANTS.vfx.fire_flash,
+                descriptor.visual_entity,
                 effect_position,
                 effect_position,
                 effect_position,
                 force
               )
             then
-              combat.draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.45, 24)
+              combat.draw_effect_sprite(
+                effect_surface,
+                effect_position,
+                descriptor.fallback_sprite,
+                descriptor.fallback_sprite_scale,
+                descriptor.fallback_sprite_ttl
+              )
             end
-            combat.play_effect_sound(state, effect_surface, COMBAT_CONSTANTS.sfx.fire, effect_position, "fire", 28, 0.75)
+            combat.play_effect_sound(
+              state,
+              effect_surface,
+              descriptor.sound,
+              effect_position,
+              descriptor.sound_key,
+              descriptor.sound_cooldown,
+              descriptor.sound_volume
+            )
           end
         elseif element_id == "electric" and combat.chance_roll(element_proc_chance) then
           flags.electric = true
           local arc_surface = safe_read(target, "surface")
           local arc_from = safe_read(target, "position")
-          local amount = base_damage * 0.25 * element_multiplier
+          local amount = base_damage * descriptor.arc_damage_multiplier * element_multiplier
           local excluded = {}
           local target_key = entity_tracking_key(target)
           if target_key then
@@ -829,7 +1086,7 @@ return function(M)
             excluded[target_unit_number] = true
           end
           for _ = 1, combat.get_electric_arc_count(state) do
-            local arc_target = combat.find_nearby_enemy(arc_surface, arc_from, force, 7, excluded)
+            local arc_target = combat.find_nearby_enemy(arc_surface, arc_from, force, descriptor.arc_radius, excluded)
             local arc_to = safe_read(arc_target, "position")
             if not arc_target then
               break
@@ -842,18 +1099,27 @@ return function(M)
             if arc_unit_number then
               excluded[arc_unit_number] = true
             end
-            if combat.apply_tracked_runtime_damage(arc_target, amount, force, "electric", turret) then
+            if combat.apply_tracked_runtime_damage(arc_target, amount, force, descriptor.arc_damage_type, turret) then
               upgrade_damage = upgrade_damage + amount
-              if not combat.create_visual_entity(arc_surface, COMBAT_CONSTANTS.vfx.electric_arc, arc_to, arc_from, arc_to, force, 18) then
-                combat.draw_trail(arc_surface, arc_from, arc_to, COMBAT_CONSTANTS.trail.electric, { 0.35, 0.75, 1 }, 2, 18, force)
+              if not combat.create_visual_entity(arc_surface, descriptor.arc_visual_entity, arc_to, arc_from, arc_to, force, 18) then
+                combat.draw_trail(arc_surface, arc_from, arc_to, descriptor.arc_trail, descriptor.color, 2, 18, force)
               end
-              combat.play_effect_sound(state, arc_surface, COMBAT_CONSTANTS.sfx.electric, arc_from, "electric", 20, 0.7)
+              combat.play_effect_sound(
+                state,
+                arc_surface,
+                descriptor.sound,
+                arc_from,
+                descriptor.sound_key,
+                descriptor.sound_cooldown,
+                descriptor.sound_volume
+              )
             end
           end
         elseif element_id == "explosive" and combat.chance_roll(element_proc_chance) then
           flags.explosive = true
           local splashed = 0
-          local splash_radius = 3 + math.min(3, get_element_rank(state, "explosive") * 0.15)
+          local splash_radius = descriptor.splash_radius
+            + math.min(descriptor.splash_radius_bonus_cap, get_element_rank(state, "explosive") * descriptor.splash_rank_radius)
           local splash_surface = safe_read(target, "surface")
           local splash_position = safe_read(target, "position")
           local entities = splash_surface
@@ -865,14 +1131,14 @@ return function(M)
                 },
               })
             or {}
-          combat.create_short_effect(splash_surface, "explosion", splash_position)
+          combat.create_short_effect(splash_surface, descriptor.short_effect, splash_position)
           for _, nearby in pairs(entities) do
-            if splashed >= 4 then
+            if splashed >= descriptor.splash_targets then
               break
             end
             if nearby.valid and nearby ~= target and safe_read(nearby, "health") and nearby.force ~= force then
-              local amount = base_damage * 0.20 * element_multiplier
-              if combat.apply_tracked_runtime_damage(nearby, amount, force, "explosion", turret) then
+              local amount = base_damage * descriptor.splash_damage_multiplier * element_multiplier
+              if combat.apply_tracked_runtime_damage(nearby, amount, force, descriptor.splash_damage_type, turret) then
                 upgrade_damage = upgrade_damage + amount
                 splashed = splashed + 1
               end
@@ -884,26 +1150,32 @@ return function(M)
             turret,
             state,
             target,
-            base_damage * 0.08 * element_multiplier,
-            "poison",
-            8 * 60,
-            60,
-            "virtual-signal/signal-skull",
-            { 0.42, 0.92, 0.28 }
+            base_damage * descriptor.status_damage_multiplier * element_multiplier,
+            descriptor.status_damage_type,
+            descriptor.status_duration,
+            descriptor.status_interval,
+            descriptor.status_sprite,
+            descriptor.color
           )
           combat.apply_slowdown_sticker(target)
           if
             not combat.create_visual_entity(
               effect_surface,
-              COMBAT_CONSTANTS.vfx.toxic_puff,
+              descriptor.visual_entity,
               effect_position,
               effect_position,
               effect_position,
               force,
-              90
+              descriptor.visual_duration
             )
           then
-            combat.draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-skull", 0.38, 30)
+            combat.draw_effect_sprite(
+              effect_surface,
+              effect_position,
+              descriptor.fallback_sprite,
+              descriptor.fallback_sprite_scale,
+              descriptor.fallback_sprite_ttl
+            )
           end
         end
       end
@@ -925,104 +1197,126 @@ return function(M)
     end
 
     local upgrade_damage = 0
-    if flags.fire and flags.electric and combat.has_element_pair(state, "fire", "electric") then
-      local stormfire = base_damage * 0.15
+    local combo = COMBO_EFFECTS.stormfire
+    if combat.combo_descriptor_is_active(state, flags, combo) then
+      local stormfire = base_damage * combo.damage_multiplier
       local effect_surface = safe_read(target, "surface")
       local effect_position = safe_read(target, "position")
-      if combat.apply_tracked_runtime_damage(target, stormfire, force, "fire", turret) then
+      if combat.apply_tracked_runtime_damage(target, stormfire, force, combo.damage_type, turret) then
         upgrade_damage = upgrade_damage + stormfire
         if
-          not combat.create_visual_entity(
-            effect_surface,
-            COMBAT_CONSTANTS.vfx.fire_flash,
-            effect_position,
-            effect_position,
-            effect_position,
-            force
-          )
+          not combat.create_visual_entity(effect_surface, combo.visual_entity, effect_position, effect_position, effect_position, force)
         then
-          combat.draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.55, 30)
+          combat.draw_effect_sprite(
+            effect_surface,
+            effect_position,
+            combo.fallback_sprite,
+            combo.fallback_sprite_scale,
+            combo.fallback_sprite_ttl
+          )
         end
-        combat.play_effect_sound(state, effect_surface, COMBAT_CONSTANTS.sfx.fire, effect_position, "combo-fire", 36, 0.65)
+        combat.play_effect_sound(
+          state,
+          effect_surface,
+          combo.sound,
+          effect_position,
+          combo.sound_key,
+          combo.sound_cooldown,
+          combo.sound_volume
+        )
       end
-    elseif flags.fire and flags.explosive and combat.has_element_pair(state, "fire", "explosive") then
-      local incendiary = base_damage * 0.20
+    elseif combat.combo_descriptor_is_active(state, flags, COMBO_EFFECTS.incendiary) then
+      combo = COMBO_EFFECTS.incendiary
+      local incendiary = base_damage * combo.damage_multiplier
       local effect_surface = safe_read(target, "surface")
       local effect_position = safe_read(target, "position")
-      if combat.apply_tracked_runtime_damage(target, incendiary, force, "fire", turret) then
+      if combat.apply_tracked_runtime_damage(target, incendiary, force, combo.damage_type, turret) then
         upgrade_damage = upgrade_damage + incendiary
         if
-          not combat.create_visual_entity(
-            effect_surface,
-            COMBAT_CONSTANTS.vfx.fire_flash,
-            effect_position,
-            effect_position,
-            effect_position,
-            force
-          )
+          not combat.create_visual_entity(effect_surface, combo.visual_entity, effect_position, effect_position, effect_position, force)
         then
-          combat.draw_effect_sprite(effect_surface, effect_position, "virtual-signal/signal-fire", 0.55, 30)
+          combat.draw_effect_sprite(
+            effect_surface,
+            effect_position,
+            combo.fallback_sprite,
+            combo.fallback_sprite_scale,
+            combo.fallback_sprite_ttl
+          )
         end
-        combat.create_short_effect(effect_surface, "explosion-gunshot", effect_position)
-        combat.play_effect_sound(state, effect_surface, COMBAT_CONSTANTS.sfx.fire, effect_position, "combo-fire", 36, 0.65)
+        combat.create_short_effect(effect_surface, combo.short_effect, effect_position)
+        combat.play_effect_sound(
+          state,
+          effect_surface,
+          combo.sound,
+          effect_position,
+          combo.sound_key,
+          combo.sound_cooldown,
+          combo.sound_volume
+        )
       end
-    elseif flags.electric and flags.explosive and combat.has_element_pair(state, "electric", "explosive") then
+    elseif combat.combo_descriptor_is_active(state, flags, COMBO_EFFECTS.shockburst) then
+      combo = COMBO_EFFECTS.shockburst
       local shock_surface = safe_read(target, "surface")
       local shock_from = safe_read(target, "position")
-      local shockburst_target = combat.find_nearby_enemy(shock_surface, shock_from, force, 8, target)
+      local shockburst_target = combat.find_nearby_enemy(shock_surface, shock_from, force, combo.radius, target)
       local shock_to = safe_read(shockburst_target, "position")
-      if shockburst_target and combat.apply_tracked_runtime_damage(shockburst_target, base_damage * 0.25, force, "electric", turret) then
-        upgrade_damage = upgrade_damage + (base_damage * 0.25)
-        if not combat.create_visual_entity(shock_surface, COMBAT_CONSTANTS.vfx.electric_arc, shock_to, shock_from, shock_to, force, 18) then
-          combat.draw_trail(shock_surface, shock_from, shock_to, COMBAT_CONSTANTS.trail.electric, { 0.35, 0.75, 1 }, 2, 18, force)
+      if
+        shockburst_target
+        and combat.apply_tracked_runtime_damage(shockburst_target, base_damage * combo.damage_multiplier, force, combo.damage_type, turret)
+      then
+        upgrade_damage = upgrade_damage + (base_damage * combo.damage_multiplier)
+        if not combat.create_visual_entity(shock_surface, combo.visual_entity, shock_to, shock_from, shock_to, force, 18) then
+          combat.draw_trail(shock_surface, shock_from, shock_to, combo.trail, combo.color, 2, 18, force)
         end
-        combat.create_short_effect(shock_surface, "explosion-gunshot", shock_from)
-        combat.play_effect_sound(state, shock_surface, COMBAT_CONSTANTS.sfx.electric, shock_from, "combo-electric", 28, 0.7)
+        combat.create_short_effect(shock_surface, combo.short_effect, shock_from)
+        combat.play_effect_sound(state, shock_surface, combo.sound, shock_from, combo.sound_key, combo.sound_cooldown, combo.sound_volume)
       end
-    elseif flags.fire and flags.toxic and combat.has_element_pair(state, "fire", "toxic") then
+    elseif combat.combo_descriptor_is_active(state, flags, COMBO_EFFECTS.choking) then
+      combo = COMBO_EFFECTS.choking
       local effect_surface = safe_read(target, "surface")
       local effect_position = safe_read(target, "position")
-      local choking = base_damage * 0.18
+      local choking = base_damage * combo.status_damage_multiplier
       if
         combat.schedule_status_damage(
           turret,
           state,
           target,
           choking,
-          "poison",
-          5 * 60,
-          60,
-          "virtual-signal/signal-skull",
-          { 0.42, 0.92, 0.28 }
+          combo.status_damage_type,
+          combo.status_duration,
+          combo.status_interval,
+          combo.status_sprite,
+          combo.color
         )
       then
         combat.create_visual_entity(
           effect_surface,
-          COMBAT_CONSTANTS.vfx.toxic_puff,
+          combo.visual_entity,
           effect_position,
           effect_position,
           effect_position,
           force,
-          90
+          combo.visual_duration
         )
       end
-    elseif flags.electric and flags.toxic and combat.has_element_pair(state, "electric", "toxic") then
+    elseif combat.combo_descriptor_is_active(state, flags, COMBO_EFFECTS.static_toxin) then
       combat.apply_slowdown_sticker(target)
-    elseif flags.explosive and flags.toxic and combat.has_element_pair(state, "explosive", "toxic") then
+    elseif combat.combo_descriptor_is_active(state, flags, COMBO_EFFECTS.dirty_blast) then
+      combo = COMBO_EFFECTS.dirty_blast
       local splash_surface = safe_read(target, "surface")
       local splash_position = safe_read(target, "position")
       local entities = splash_surface
           and splash_position
           and splash_surface.find_entities_filtered({
             area = {
-              { splash_position.x - 3, splash_position.y - 3 },
-              { splash_position.x + 3, splash_position.y + 3 },
+              { splash_position.x - combo.radius, splash_position.y - combo.radius },
+              { splash_position.x + combo.radius, splash_position.y + combo.radius },
             },
           })
         or {}
       local spread = 0
       for _, nearby in pairs(entities) do
-        if spread >= 3 then
+        if spread >= combo.spread_targets then
           break
         end
         if nearby.valid and nearby ~= target and safe_read(nearby, "health") and nearby.force ~= force then
@@ -1030,12 +1324,12 @@ return function(M)
             turret,
             state,
             nearby,
-            base_damage * 0.06,
-            "poison",
-            8 * 60,
-            60,
-            "virtual-signal/signal-skull",
-            { 0.42, 0.92, 0.28 }
+            base_damage * combo.status_damage_multiplier,
+            combo.status_damage_type,
+            combo.status_duration,
+            combo.status_interval,
+            combo.status_sprite,
+            combo.color
           )
           combat.apply_slowdown_sticker(nearby)
           spread = spread + 1

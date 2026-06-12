@@ -7,7 +7,7 @@
 - `changelog.txt`: canonical Factorio-compatible release history.
 - `control.lua`: runtime entrypoint that loads modules from `scripts/control/`.
 - `scripts/domain.lua`: pure shared gameplay domain definitions and variant-name helpers used by data stage, runtime, and headless tests.
-- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and explicit helper modules such as Factorio API compatibility, label-color matching, bound turret item handling, migration compatibility, damage accounting, and generic GUI support.
+- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and explicit helper modules such as Factorio API compatibility, label-color matching, bound turret item handling, migration compatibility, damage accounting, combat effect budgets, and generic GUI support.
 - `data.lua`: data-stage entrypoint that loads prototype modules from `prototypes/`.
 - `data-final-fixes.lua`: final-fixes entrypoint that loads hidden turret variant generation from `prototypes/`.
 - `prototypes/`: data-stage modules for names, items, bound-turret placeholder and preview variants, feeder, label panels, styles, effects, and turret variants.
@@ -116,6 +116,24 @@ storage.turret_xp = {
       expires = <MapTick>
     }
   },
+  combat_effect_budget = {
+    tick = <MapTick>,
+    surfaces = {
+      [surface_index] = {
+        render_lines = <uint>,
+        render_sprites = <uint>,
+        visual_entities = <uint>,
+        short_effects = <uint>,
+        sounds = <uint>
+      }
+    },
+    global = {
+      status_effect_ticks = <uint>
+    },
+    skipped = {
+      [budget_name] = <uint>
+    }
+  },
   targets = {
     [unit_number] = {
       total_damage = 0,
@@ -167,7 +185,8 @@ storage.turret_xp = {
 - Data-final variant generation: `data-final-fixes.lua` creates hidden specialization, sub-specialization, Range, and Max HP turret variants after every mod has run `data-updates.lua`. This keeps prototype-backed Turret XP variants aligned with modded base gun-turret range, cooldown, damage modifier, health, and rotation speed before Turret XP adds its own rank/specialization modifiers.
 - Hidden prototype budget: the headless suite measures the current tracked generated budget as 6,498 prototypes: 5,732 hidden turret bodies, 272 bound preview items, 272 bound preview placeholders, and 222 label display panels. New prototype-backed stat axes, higher Range/Max HP caps, or broader label color grids must update the budget assertion and explain the added load/startup cost in the owning issue or PR before they are accepted.
 - Ammo range compatibility: after turret variants exist, `prototypes/ammo_range_compat.lua` scans ammo categories accepted by vanilla `gun-turret`. If projectile ammo in those categories has a shorter delivery range than the generated Turret XP turret range, it adds or patches a `source_type = "turret"` ammo type with a longer projectile `max_range`, leaving default/player/vehicle ammo behavior intact.
-- Runtime visual feedback: scripted bounce, double-shot, crit, and element effects prefer optional Bullet Trails entity names when present, then fall back to render lines. Element procs reuse vanilla electric, fire, poison/slowdown, explosion, and weapon sound prototypes where practical. Delayed burn and poison ticks are processed from `status_effects` so they remain tied to the Veteran Core for XP, kill credit, and lifesteal.
+- Combat effect ownership: `scripts/control/combat_effects.lua` owns combat effect descriptors, proc routing, runtime damage application, VFX/sound calls, passive combat effects, and delayed status damage processing. `scripts/control/combat_budget.lua` owns per-tick visual/sound/status-work budget accounting. Combat damage and progression effects must keep running even when visual or sound feedback is skipped by budget limits.
+- Runtime visual feedback: scripted bounce, double-shot, crit, and element effects prefer optional Bullet Trails entity names when present, then fall back to render lines. Element procs reuse vanilla electric, fire, poison/slowdown, explosion, and weapon sound prototypes where practical. Visual entities, render lines, render sprites, short effects, sounds, pending visuals, and status-effect processing are explicitly budgeted so busy defenses remain readable and bounded. Delayed burn and poison ticks are processed from `status_effects` so they remain tied to the Veteran Core for XP, kill credit, and lifesteal.
 - Runtime damage mitigation: Resistance is a core upgrade handled in `on_entity_damaged` by refunding part of non-lethal final incoming damage after vanilla resistances. It intentionally avoids adding another hidden turret variant dimension.
 - `on_runtime_mod_setting_changed`: resync derived XP/level state and refresh open panels.
 - `on_built_entity`, `on_robot_built_entity`, and `on_space_platform_built_entity`, when available: restore bound veteran turret profiles from tagged placeable turret items after converting the bound-only placeholder into a real gun turret.
@@ -211,6 +230,7 @@ Managed inserters are also intentionally narrow:
 - New pure helper groups should prefer explicit returned-table modules required directly by their callers. Existing `_ENV`/`M` exports can remain during incremental migration, but new helpers should not add hidden dependencies to the shared runtime environment unless they are part of a deliberately broad subsystem boundary.
 - Bound turret item/tag behavior belongs in `scripts/control/bound_turret_items.lua`; live profile installation, detachment, and entity replacement should call that module rather than duplicating tag or mining-buffer logic.
 - Combat accounting behavior belongs in `scripts/control/damage_accounting.lua`; stat display, formula formatting, and GUI captions should not mutate target damage buckets or kill-credit counters.
+- Combat effect refactors should be behavior-preserving unless a separate balance issue approves gameplay changes. New combat effects should add or extend descriptors and use the shared budget helper for visual, sound, pending-visual, and status-work paths.
 - Optional or version-sensitive Factorio API access belongs in `scripts/control/compat.lua` when it fits the existing helper shapes. Keep local guards only for deliberate fallback probes such as trying a quality-aware entity creation and then retrying without quality.
 - Generic GUI formatting and repeated width helpers belong in `scripts/control/gui_support.lua`; domain-specific panel sections should stay in `gui_panels.lua` until a broader componentization pass is explicitly approved.
 - `scripts/control/core_slot.lua` owns tag-preserving Veteran Core install/extract/swap, platform core selection, bind/unbind actions, and future inventory-list selection work.

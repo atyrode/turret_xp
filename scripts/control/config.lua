@@ -247,6 +247,16 @@ return function(M)
       electric = "turret-xp-electric-proc",
       fire = "turret-xp-fire-proc",
     },
+    effect_budget = {
+      render_lines_per_surface_tick = 24,
+      render_sprites_per_surface_tick = 16,
+      visual_entities_per_surface_tick = 12,
+      short_effects_per_surface_tick = 12,
+      sounds_per_surface_tick = 8,
+      status_effect_ticks_per_tick = 256,
+      pending_visuals_active = 512,
+      visual_entities_active = 512,
+    },
   }
   LAYOUT = {
     column_spacing = 8,

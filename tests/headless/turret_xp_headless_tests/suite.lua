@@ -69,6 +69,30 @@ local function run_compat_samples_test(surface)
   assert_eq(samples.diagnostics_enabled, true, "headless tests should run with compatibility diagnostics enabled")
 end
 
+local function run_combat_budget_samples_test(surface)
+  local sample = call("combat_budget_samples", surface)
+  assert_true(sample ~= nil, "combat budget sample did not return")
+  assert_eq(
+    sample.descriptors.elements.fire.direct_damage_multiplier,
+    0.10,
+    "Fire descriptor did not expose the current direct damage multiplier"
+  )
+  assert_eq(
+    sample.descriptors.elements.electric.arc_damage_multiplier,
+    0.25,
+    "Electric descriptor did not expose the current arc damage multiplier"
+  )
+  assert_eq(
+    sample.descriptors.combos.stormfire.damage_multiplier,
+    0.15,
+    "Stormfire descriptor did not expose the current combo damage multiplier"
+  )
+  assert_eq(sample.accepted_lines, sample.limits.render_lines_per_surface_tick, "render line budget did not cap accepted visual lines")
+  assert_eq(sample.skipped.render_lines, 2, "render line budget did not track skipped visual lines")
+  assert_eq(sample.accepted_status_ticks, sample.limits.status_effect_ticks_per_tick, "status tick budget did not cap accepted status work")
+  assert_eq(sample.skipped.status_effect_ticks, 2, "status tick budget did not track skipped status work")
+end
+
 local function run_prototype_budget_test()
   local budget = call("prototype_budget")
   assert_true(type(budget) == "table", "prototype budget was not exposed to the headless suite")
@@ -1351,6 +1375,7 @@ local function run_immediate_tests()
   run_layout_constants_test()
   run_gui_support_samples_test()
   run_compat_samples_test(surface)
+  run_combat_budget_samples_test(surface)
   run_legacy_migration_test()
   run_prototype_budget_test()
   run_place_result_regression_test()
