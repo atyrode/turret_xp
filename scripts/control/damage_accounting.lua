@@ -33,7 +33,7 @@ function damage_accounting.new(deps)
         total_damage = service.target_prior_damage(event, damage),
         target_context = deps.get_entity_xp_context(event.entity),
         turrets = {},
-        tick = deps.game_tick()
+        tick = deps.game_tick(),
       }
       storage_root.targets[key] = entry
     elseif entry and not entry.target_context then
@@ -65,7 +65,7 @@ function damage_accounting.new(deps)
       contributor = {
         damage = 0,
         entity = turret,
-        chip_id = profile.chip_id
+        chip_id = profile.chip_id,
       }
       entry.turrets[key] = contributor
     end

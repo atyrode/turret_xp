@@ -59,7 +59,7 @@ return function()
       category = "weapon",
       filename = "__base__/sound/fight/electric-beam.ogg",
       volume = 0.28,
-      audible_distance_modifier = 0.45
+      audible_distance_modifier = 0.45,
     },
     {
       type = "sound",
@@ -67,7 +67,7 @@ return function()
       category = "weapon",
       filename = "__base__/sound/fire-1.ogg",
       volume = 0.22,
-      audible_distance_modifier = 0.35
-    }
+      audible_distance_modifier = 0.35,
+    },
   })
 end

@@ -23,10 +23,22 @@ local call = support.call
 local function run_layout_constants_test()
   local layout = call("layout")
   assert_true(type(layout) == "table", "layout constants were not exposed to the headless suite")
-  assert_eq(layout.left_column_width + layout.evolution_column_width + layout.column_spacing, layout.panel_width, "panel width must derive from the column model")
+  assert_eq(
+    layout.left_column_width + layout.evolution_column_width + layout.column_spacing,
+    layout.panel_width,
+    "panel width must derive from the column model"
+  )
   assert_eq(layout.evolution_scroll_width, layout.evolution_column_width, "Evolution scroll pane should own the full right-column viewport")
-  assert_eq(layout.evolution_content_width, layout.evolution_scroll_width - 28, "Evolution content width must reserve the default scrollbar lane")
-  assert_eq(layout.evolution_section_width, layout.evolution_content_width - (layout.evolution_section_margin * 2), "Evolution section width must reserve visible side margins")
+  assert_eq(
+    layout.evolution_content_width,
+    layout.evolution_scroll_width - 28,
+    "Evolution content width must reserve the default scrollbar lane"
+  )
+  assert_eq(
+    layout.evolution_section_width,
+    layout.evolution_content_width - (layout.evolution_section_margin * 2),
+    "Evolution section width must reserve visible side margins"
+  )
   assert_eq(layout.evolution_inner_width, layout.evolution_section_width - 16, "Evolution inner rows must derive from section width")
   assert_eq(layout.evolution_card_inner_width, layout.evolution_inner_width - 28, "Element-card child rows must account for card padding")
   assert_true(layout.evolution_inner_width < layout.evolution_scroll_width, "Evolution rows must stay inside the scroll viewport")
@@ -38,7 +50,11 @@ local function run_gui_support_samples_test()
   assert_eq(samples.percent, "12.5%", "GUI percent formatting changed")
   assert_eq(samples.color, "0.58,0.82,0.38", "GUI rich color conversion changed")
   assert_eq(samples.rich_number, "[color=0.58,0.82,0.38]+5[/color]", "GUI rich number formatting changed")
-  assert_eq(samples.rich_stat, "Damage [color=0.58,0.82,0.38]+5[/color] [color=0.58,0.82,0.38]x1.2[/color]", "GUI rich stat token formatting changed")
+  assert_eq(
+    samples.rich_stat,
+    "Damage [color=0.58,0.82,0.38]+5[/color] [color=0.58,0.82,0.38]x1.2[/color]",
+    "GUI rich stat token formatting changed"
+  )
 end
 
 local function run_prototype_budget_test()
@@ -67,22 +83,54 @@ end
 local function run_place_result_regression_test()
   local placement = call("placement_prototypes")
   assert_eq(placement.gun_turret_place_result, "gun-turret", "vanilla gun turret item no longer places the vanilla gun turret")
-  assert_eq(placement.bound_turret_place_result, "turret-xp-bound-gun-turret-placeholder", "bound veteran turret item still points at the vanilla gun turret")
+  assert_eq(
+    placement.bound_turret_place_result,
+    "turret-xp-bound-gun-turret-placeholder",
+    "bound veteran turret item still points at the vanilla gun turret"
+  )
   assert_true(placement.placeholder_exists, "bound veteran turret placeholder prototype does not exist")
-  assert_eq(placement.sniper_range_3_bound_item, "turret-xp-bound-gun-turret-sniper-range-3", "sniper range bound preview item was not generated")
-  assert_eq(placement.sniper_range_3_bound_place_result, "turret-xp-bound-gun-turret-placeholder-sniper-range-3", "sniper range bound preview item points at the wrong placeholder")
-  assert_gt(placement.sniper_range_3_bound_preview_range, placement.base_bound_preview_range, "sniper range bound preview range did not exceed the base bound preview range")
+  assert_eq(
+    placement.sniper_range_3_bound_item,
+    "turret-xp-bound-gun-turret-sniper-range-3",
+    "sniper range bound preview item was not generated"
+  )
+  assert_eq(
+    placement.sniper_range_3_bound_place_result,
+    "turret-xp-bound-gun-turret-placeholder-sniper-range-3",
+    "sniper range bound preview item points at the wrong placeholder"
+  )
+  assert_gt(
+    placement.sniper_range_3_bound_preview_range,
+    placement.base_bound_preview_range,
+    "sniper range bound preview range did not exceed the base bound preview range"
+  )
   assert_eq(placement.range_3_body_name, "turret-xp-gun-turret-range-3", "shared range-only body name changed")
   assert_true(placement.range_3_body_exists, "shared range-only body prototype was not generated")
   assert_eq(placement.health_2_body_name, "turret-xp-gun-turret-health-2", "shared health-only body name changed")
   assert_true(placement.health_2_body_exists, "shared health-only body prototype was not generated")
   assert_eq(placement.sniper_deadeye_body_name, "turret-xp-gun-turret-sniper-deadeye", "shared sub-specialization body name changed")
   assert_true(placement.sniper_deadeye_body_exists, "shared sub-specialization body prototype was not generated")
-  assert_eq(placement.sniper_overwatch_range_3_body_name, "turret-xp-gun-turret-sniper-overwatch-range-3", "shared sub-specialization range body name changed")
+  assert_eq(
+    placement.sniper_overwatch_range_3_body_name,
+    "turret-xp-gun-turret-sniper-overwatch-range-3",
+    "shared sub-specialization range body name changed"
+  )
   assert_true(placement.sniper_overwatch_range_3_body_exists, "shared sub-specialization range body prototype was not generated")
-  assert_eq(placement.invalid_sub_body_name, "turret-xp-gun-turret-machine_gun", "invalid sub-specialization should fall back to the parent specialization body")
-  assert_eq(placement.sniper_deadeye_bound_item, "turret-xp-bound-gun-turret-sniper-deadeye", "shared sub-specialization bound item name changed")
-  assert_eq(placement.sniper_deadeye_bound_place_result, "turret-xp-bound-gun-turret-placeholder-sniper-deadeye", "shared sub-specialization bound item points at the wrong placeholder")
+  assert_eq(
+    placement.invalid_sub_body_name,
+    "turret-xp-gun-turret-machine_gun",
+    "invalid sub-specialization should fall back to the parent specialization body"
+  )
+  assert_eq(
+    placement.sniper_deadeye_bound_item,
+    "turret-xp-bound-gun-turret-sniper-deadeye",
+    "shared sub-specialization bound item name changed"
+  )
+  assert_eq(
+    placement.sniper_deadeye_bound_place_result,
+    "turret-xp-bound-gun-turret-placeholder-sniper-deadeye",
+    "shared sub-specialization bound item points at the wrong placeholder"
+  )
 end
 
 local function run_profile_label_test(surface)
@@ -91,7 +139,7 @@ local function run_profile_label_test(surface)
     custom_name = "Alpha",
     show_name_label = true,
     label_color = { 1, 0.86, 0.46 },
-    label_color_preset = "gold"
+    label_color_preset = "gold",
   })
 
   assert_true(summary ~= nil, "install_core returned no profile summary")
@@ -102,7 +150,7 @@ local function run_profile_label_test(surface)
 
   summary = call("set_profile", turret, {
     label_color = { 0.12, 0.34, 0.56 },
-    label_color_preset = "custom"
+    label_color_preset = "custom",
   })
   assert_eq(summary.label_color_preset, "custom", "RGB label edit did not mark the profile as custom")
   assert_true(summary.label_entity_valid, "custom RGB label did not keep using a display-panel label entity")
@@ -116,14 +164,14 @@ local function run_evolution_body_test(surface)
   local summary = call("set_evolution", turret, {
     specialization = "sniper",
     augments = {
-      range = 3
+      range = 3,
     },
     base = {
       damage = 2,
       repair = 1,
       crit_chance = 4,
-      crit_damage = 3
-    }
+      crit_damage = 3,
+    },
   })
 
   assert_eq(summary.evolution.specialization, "sniper", "specialization did not persist")
@@ -142,8 +190,8 @@ local function run_specialization_secondary_multiplier_test(surface)
   summary = call("set_evolution", turret, {
     specialization = "sniper",
     base = {
-      crit_damage = 10
-    }
+      crit_damage = 10,
+    },
   })
   assert_near(summary.derived.crit_damage_fraction, 1.08, 0.0001, "sniper crit damage multiplier did not affect derived crit damage")
 
@@ -152,22 +200,27 @@ local function run_specialization_secondary_multiplier_test(surface)
     specialization = "sniper",
     sub_specialization = "sniper_deadeye",
     base = {
-      crit_damage = 10
-    }
+      crit_damage = 10,
+    },
   })
   assert_eq(summary.evolution.sub_specialization, "sniper_deadeye", "sub-specialization did not persist")
   assert_eq(summary.entity_name, "turret-xp-gun-turret-sniper-deadeye", "sub-specialization did not swap to the expected turret body")
   assert_near(summary.derived.crit_chance_fraction, 0.08, 0.0001, "Deadeye crit chance bonus did not affect derived crit chance")
   assert_near(summary.derived.crit_damage_fraction, 1.35, 0.0001, "Deadeye crit damage multiplier did not combine with Sniper")
-  assert_near(summary.attack_damage_modifier, base_damage_modifier * 2.8 * 1.08, 0.0001, "Deadeye damage multiplier did not affect real turret damage modifier")
+  assert_near(
+    summary.attack_damage_modifier,
+    base_damage_modifier * 2.8 * 1.08,
+    0.0001,
+    "Deadeye damage multiplier did not affect real turret damage modifier"
+  )
 
   turret = require_turret_near(surface, { x = 14, y = 8 }, "sub-specialization turret not found after Deadeye body swap")
   summary = call("set_evolution", turret, {
     specialization = "sniper",
     sub_specialization = "sniper_overwatch",
     augments = {
-      range = 3
-    }
+      range = 3,
+    },
   })
   assert_eq(summary.entity_name, "turret-xp-gun-turret-sniper-overwatch-range-3", "sub-specialization/range body name was not generated")
   assert_gt(summary.attack_range, 40, "Overwatch range multiplier did not affect real attack range")
@@ -175,7 +228,7 @@ local function run_specialization_secondary_multiplier_test(surface)
   turret = require_turret_near(surface, { x = 14, y = 8 }, "sub-specialization turret not found after Overwatch body swap")
   summary = call("set_evolution", turret, {
     specialization = "machine_gun",
-    sub_specialization = "sniper_deadeye"
+    sub_specialization = "sniper_deadeye",
   })
   assert_eq(summary.evolution.sub_specialization, nil, "invalid sub-specialization parent was not cleared")
 
@@ -183,27 +236,37 @@ local function run_specialization_secondary_multiplier_test(surface)
   summary = call("set_evolution", turret, {
     specialization = "machine_gun",
     base = {
-      ammo_regen = 3
-    }
+      ammo_regen = 3,
+    },
   })
-  assert_near(summary.derived.ammo_recovery_per_minute, 6, 0.0001, "machine gun ammo recovery multiplier did not affect derived ammo recovery")
+  assert_near(
+    summary.derived.ammo_recovery_per_minute,
+    6,
+    0.0001,
+    "machine gun ammo recovery multiplier did not affect derived ammo recovery"
+  )
 
   turret = require_turret_near(surface, { x = 14, y = 8 }, "specialization multiplier turret not found after machine gun body swap")
   summary = call("set_evolution", turret, {
     specialization = "bulwark",
     base = {
-      repair = 2
-    }
+      repair = 2,
+    },
   })
-  assert_near(summary.derived.repair_per_second, summary.max_health * 0.001 * 2 * 2.5, 0.0001, "bulwark regeneration multiplier did not affect max-health-based repair")
+  assert_near(
+    summary.derived.repair_per_second,
+    summary.max_health * 0.001 * 2 * 2.5,
+    0.0001,
+    "bulwark regeneration multiplier did not affect max-health-based repair"
+  )
   assert_gt(summary.derived.repair_per_second, 1, "max-health-based regeneration should be stronger than the old flat value on Bulwark")
 
   turret = require_turret_near(surface, { x = 14, y = 8 }, "specialization multiplier turret not found after bulwark body swap")
   summary = call("set_evolution", turret, {
     specialization = "brawler",
     base = {
-      siphon = 4
-    }
+      siphon = 4,
+    },
   })
   assert_near(summary.derived.lifesteal_rate, 0.04, 0.0001, "brawler lifesteal multiplier did not affect derived lifesteal")
   assert_near(summary.attack_cooldown, base_cooldown * 2, 0.0001, "brawler cooldown multiplier did not reduce fire rate to x0.5")
@@ -218,8 +281,8 @@ local function run_resistance_test(surface)
 
   summary = call("set_evolution", turret, {
     base = {
-      resistance = 40
-    }
+      resistance = 40,
+    },
   })
   assert_near(summary.derived.damage_resistance_fraction, 0.10, 0.0001, "resistance rank did not produce expected mitigation")
 
@@ -231,8 +294,8 @@ local function run_resistance_test(surface)
 
   summary = call("set_evolution", turret, {
     base = {
-      resistance = 400
-    }
+      resistance = 400,
+    },
   })
   assert_eq(summary.evolution.base.resistance, 240, "resistance rank did not cap at max rank")
   assert_near(summary.derived.damage_resistance_fraction, 0.60, 0.0001, "resistance cap did not produce expected mitigation")
@@ -245,8 +308,8 @@ local function run_modded_base_range_variant_test(surface)
 
   summary = call("set_evolution", turret, {
     augments = {
-      range = 1
-    }
+      range = 1,
+    },
   })
   assert_eq(summary.entity_name, "turret-xp-gun-turret-range-1", "range rank 1 did not swap to the range variant")
   assert_eq(summary.attack_range, 26, "range rank 1 variant did not clone the modded base range before adding +1")
@@ -286,11 +349,11 @@ local function run_max_health_variant_test(surface)
 
   summary = call("set_evolution", turret, {
     augments = {
-      max_health = 4
+      max_health = 4,
     },
     base = {
-      repair = 1
-    }
+      repair = 1,
+    },
   })
   assert_eq(summary.entity_name, "turret-xp-gun-turret-health-4", "max health rank did not swap to the expected health variant")
   assert_eq(summary.max_health, 600, "max health augment did not increase real max health")
@@ -306,8 +369,8 @@ local function run_ammo_regen_test(surface)
 
   summary = call("set_evolution", turret, {
     base = {
-      ammo_regen = 60
-    }
+      ammo_regen = 60,
+    },
   })
   assert_eq(summary.evolution.base.ammo_regen, 60, "ammo regen rank did not persist in evolution state")
 
@@ -359,7 +422,11 @@ local function run_feeder_project_test(surface)
 
   local ammo_before = summary.turret_ammo["firearm-magazine"] or 0
   summary = feed_one(turret, "firearm-magazine")
-  assert_gt(summary.turret_ammo["firearm-magazine"] or 0, ammo_before, "ammo inserted into open hidden feeder was not forwarded to turret ammo inventory")
+  assert_gt(
+    summary.turret_ammo["firearm-magazine"] or 0,
+    ammo_before,
+    "ammo inserted into open hidden feeder was not forwarded to turret ammo inventory"
+  )
 
   summary = call("insert_feeder", turret, { name = "sulfur", count = 1 })
   assert_eq(summary.inserted, 1, "passive element feeder did not expose a test slot for an unexpected material")
@@ -394,13 +461,13 @@ local function run_dual_element_feeder_test(surface)
     element_mastery = {
       fire = {
         rank = 1,
-        delivered = 0
+        delivered = 0,
       },
       explosive = {
         rank = 1,
-        delivered = 0
-      }
-    }
+        delivered = 0,
+      },
+    },
   })
 
   assert_eq(summary.evolution.elements[1], "fire", "first element did not persist")
@@ -413,7 +480,7 @@ local function run_dual_element_feeder_test(surface)
     name = "inserter",
     position = { 20, 11 },
     force = "player",
-    raise_built = false
+    raise_built = false,
   })
   assert_true(inserter and inserter.valid, "failed to create inserter for filter regression")
   local managed = call("manage_inserter_filters", turret, inserter)
@@ -440,10 +507,10 @@ local function run_dual_element_feeder_test(surface)
     element_mastery = {
       explosive = {
         rank = 1,
-        delivered = 0
-      }
+        delivered = 0,
+      },
     },
-    element_project = false
+    element_project = false,
   })
 
   assert_eq(summary.evolution.unique_elements[1], "explosive", "duplicate pure element did not report explosive as active")
@@ -456,9 +523,9 @@ local function run_dual_element_feeder_test(surface)
     element_mastery = {
       toxic = {
         rank = 1,
-        delivered = 0
-      }
-    }
+        delivered = 0,
+      },
+    },
   })
   assert_contains(summary.feeder.allowed_items, "poison-capsule", "toxic passive progress did not request poison capsules")
 end
@@ -473,11 +540,11 @@ local function run_targeted_reset_test(surface)
     base = {
       damage = 3,
       repair = 2,
-      resistance = 4
+      resistance = 4,
     },
     augments = {
       range = 2,
-      luck = 1
+      luck = 1,
     },
     specialization = "sniper",
     elements = { "fire", "explosive" },
@@ -486,15 +553,15 @@ local function run_targeted_reset_test(surface)
         rank = 2,
         delivered = 0,
         fuel = 3,
-        burn_remaining = 0
+        burn_remaining = 0,
       },
       explosive = {
         rank = 2,
         delivered = 0,
         fuel = 4,
-        burn_remaining = 0
-      }
-    }
+        burn_remaining = 0,
+      },
+    },
   })
   assert_eq(summary.evolution.base.damage, 3, "test setup did not apply base ranks")
   assert_eq(summary.evolution.augments.range, 2, "test setup did not apply augment ranks")
@@ -522,7 +589,11 @@ local function run_targeted_reset_test(surface)
   assert_eq(summary.evolution.elements[1], "fire", "second element reset incorrectly cleared first element")
   assert_eq(summary.evolution.elements[2], nil, "second element reset did not clear slot 2")
   assert_true(summary.evolution.element_mastery.fire ~= nil, "second element reset incorrectly removed first element mastery")
-  assert_eq(list_count(summary.evolution.unique_elements, "explosive"), 0, "second element reset did not remove explosive from active elements")
+  assert_eq(
+    list_count(summary.evolution.unique_elements, "explosive"),
+    0,
+    "second element reset did not remove explosive from active elements"
+  )
   assert_eq(summary.evolution.element_mastery.explosive.rank or 0, 0, "second element reset did not clear explosive mastery rank")
   assert_eq(summary.evolution.element_mastery.explosive.fuel or 0, 0, "second element reset did not clear explosive fuel")
 
@@ -544,7 +615,7 @@ local function run_full_evolution_reset_test(surface)
     damage = 3456,
     xp = 42,
     total_xp = 12345,
-    custom_name = "Reset Keeper"
+    custom_name = "Reset Keeper",
   })
   assert_true(summary ~= nil, "failed to install core for full evolution reset test")
 
@@ -554,11 +625,11 @@ local function run_full_evolution_reset_test(surface)
       repair = 2,
       resistance = 4,
       crit_chance = 4,
-      crit_damage = 5
+      crit_damage = 5,
     },
     augments = {
       range = 3,
-      luck = 2
+      luck = 2,
     },
     specialization = "sniper",
     elements = { "fire", "explosive" },
@@ -567,22 +638,22 @@ local function run_full_evolution_reset_test(surface)
         rank = 3,
         delivered = 12,
         fuel = 5,
-        burn_remaining = 30
+        burn_remaining = 30,
       },
       explosive = {
         rank = 2,
         delivered = 8,
         fuel = 4,
-        burn_remaining = 20
-      }
+        burn_remaining = 20,
+      },
     },
     element_project = {
       slot = 2,
       element = "electric",
       delivered = {
-        battery = 3
-      }
-    }
+        battery = 3,
+      },
+    },
   })
   assert_eq(summary.evolution.base.damage, 3, "full reset setup did not apply base ranks")
   assert_eq(summary.evolution.augments.range, 3, "full reset setup did not apply augment ranks")
@@ -613,17 +684,17 @@ local function run_damage_accounting_test(surface)
   local first_turret = create_turret(surface, { 42, 0 }, 0)
   local second_turret = create_turret(surface, { 44, 0 }, 0)
   call("install_core", first_turret, {
-    custom_name = "Partial Credit A"
+    custom_name = "Partial Credit A",
   })
   call("install_core", second_turret, {
-    custom_name = "Partial Credit B"
+    custom_name = "Partial Credit B",
   })
 
   local target = surface.create_entity({
     name = "small-biter",
     position = { 46, 0 },
     force = "enemy",
-    raise_built = false
+    raise_built = false,
   })
   assert_true(target and target.valid, "failed to create damage accounting target")
 
@@ -655,7 +726,7 @@ local function run_bound_turret_test(surface)
   call("install_core", turret, {
     level = 12,
     custom_name = "Bounder",
-    show_name_label = true
+    show_name_label = true,
   })
   local summary = call("set_bound", turret, true)
   assert_eq(summary.bound_turret, true, "bound flag did not persist")
@@ -682,7 +753,7 @@ local function run_bound_turret_test(surface)
   local legacy_inventory = game.create_inventory(1)
   local legacy_definition = call("make_legacy_bound_turret_stack", {
     level = 22,
-    custom_name = "Legacy Bound"
+    custom_name = "Legacy Bound",
   })
   local legacy_copied = pcall(function()
     legacy_inventory[1].set_stack(legacy_definition)
@@ -701,21 +772,33 @@ local function run_bound_turret_test(surface)
   call("set_evolution", preview_turret, {
     specialization = "sniper",
     augments = {
-      range = 3
-    }
+      range = 3,
+    },
   })
   preview_turret = require_turret_near(surface, { x = 26, y = -4 }, "bound preview turret not found after body swap")
   call("set_bound", preview_turret, true)
   local preview_stack = call("make_bound_turret_stack", preview_turret)
-  assert_eq(preview_stack.name, "turret-xp-bound-gun-turret-sniper-range-3", "bound turret stack did not use the matching range-preview item")
+  assert_eq(
+    preview_stack.name,
+    "turret-xp-bound-gun-turret-sniper-range-3",
+    "bound turret stack did not use the matching range-preview item"
+  )
 
   local preview_buffer = game.create_inventory(1)
   preview_buffer.insert({ name = "iron-plate", count = 1 })
   local preview_ground_before = ground_item_count(surface, { x = 26, y = -4 }, "turret-xp-bound-gun-turret-sniper-range-3")
   local preview_mined = call("mine_bound_turret", preview_turret, preview_buffer)
   assert_true(preview_mined.converted == true, "specialized bound turret mining did not convert with a full buffer")
-  assert_eq(inventory_count(preview_buffer, "turret-xp-veteran-core"), 0, "specialized full-buffer mining fell back to a separate Veteran Core")
-  assert_gt(ground_item_count(surface, { x = 26, y = -4 }, "turret-xp-bound-gun-turret-sniper-range-3"), preview_ground_before, "specialized full-buffer mining did not spill the preview bound turret item")
+  assert_eq(
+    inventory_count(preview_buffer, "turret-xp-veteran-core"),
+    0,
+    "specialized full-buffer mining fell back to a separate Veteran Core"
+  )
+  assert_gt(
+    ground_item_count(surface, { x = 26, y = -4 }, "turret-xp-bound-gun-turret-sniper-range-3"),
+    preview_ground_before,
+    "specialized full-buffer mining did not spill the preview bound turret item"
+  )
   local preview_ground_stack = find_ground_stack(surface, { x = 26, y = -4 }, "turret-xp-bound-gun-turret-sniper-range-3")
   assert_true(preview_ground_stack ~= nil, "specialized spilled bound turret item was not found on the ground")
   local preview_decoded = call("read_bound_turret_stack", preview_ground_stack)
@@ -733,7 +816,7 @@ local function run_bound_turret_test(surface)
     name = "turret-xp-bound-gun-turret-placeholder",
     position = { 28, 0 },
     force = "player",
-    raise_built = false
+    raise_built = false,
   })
   assert_true(placed and placed.valid, "failed to create bound turret placeholder")
   summary = call("install_bound_turret_stack", placed, consumed_items[1])
@@ -750,7 +833,11 @@ local function run_bound_turret_test(surface)
   summary = call("install_bound_turret_stack", fillme_turret, consumed_items[1])
   assert_true(summary ~= nil, "preloaded bound turret placement did not reinstall its Veteran Core profile")
   assert_eq(summary.turret_ammo["firearm-magazine"] or 0, 7, "preloaded placement ammo changed the bound ammo snapshot")
-  assert_eq(ground_item_count(surface, fillme_position, "firearm-magazine") - spilled_before, 10, "preloaded placement ammo was not fully refunded before restoring the bound snapshot")
+  assert_eq(
+    ground_item_count(surface, fillme_position, "firearm-magazine") - spilled_before,
+    10,
+    "preloaded placement ammo was not fully refunded before restoring the bound snapshot"
+  )
 
   local partial_fillme_position = { x = 30, y = 2 }
   local partial_fillme_turret = create_turret(surface, partial_fillme_position, 3)
@@ -768,13 +855,17 @@ local function run_bound_turret_test(surface)
   assert_true(summary ~= nil, "incompatibly preloaded bound turret placement did not reinstall its profile")
   assert_eq(summary.turret_ammo["firearm-magazine"] or 0, 7, "incompatible preload blocked saved ammo restoration")
   assert_eq(summary.turret_ammo["piercing-rounds-magazine"] or 0, 0, "incompatible preload remained inside the restored turret")
-  assert_eq(ground_item_count(surface, incompatible_fillme_position, "piercing-rounds-magazine") - piercing_before, 4, "incompatible preload was not refunded")
+  assert_eq(
+    ground_item_count(surface, incompatible_fillme_position, "piercing-rounds-magazine") - piercing_before,
+    4,
+    "incompatible preload was not refunded"
+  )
 
   local full_position = { x = 32, y = 0 }
   local full_turret = create_turret(surface, full_position, 5)
   call("install_core", full_turret, {
     level = 18,
-    custom_name = "No Space"
+    custom_name = "No Space",
   })
   call("set_bound", full_turret, true)
   local full_buffer = game.create_inventory(1)
@@ -784,7 +875,11 @@ local function run_bound_turret_test(surface)
   assert_true(mined.converted == true, "bound mining with a full buffer did not complete conversion")
   assert_eq(inventory_count(full_buffer, "turret-xp-bound-gun-turret"), 0, "full buffer unexpectedly accepted the bound turret item")
   assert_eq(inventory_count(full_buffer, "turret-xp-veteran-core"), 0, "full buffer bound mining fell back to a separate Veteran Core")
-  assert_gt(ground_item_count(surface, full_position, "turret-xp-bound-gun-turret"), bound_on_ground_before, "full buffer bound mining did not spill the tagged bound turret item")
+  assert_gt(
+    ground_item_count(surface, full_position, "turret-xp-bound-gun-turret"),
+    bound_on_ground_before,
+    "full buffer bound mining did not spill the tagged bound turret item"
+  )
   local full_ground_stack = find_ground_stack(surface, full_position, "turret-xp-bound-gun-turret")
   assert_true(full_ground_stack ~= nil, "full-buffer spilled bound turret was not found on the ground")
   local full_decoded = call("read_bound_turret_stack", full_ground_stack)
@@ -815,7 +910,7 @@ local function run_bound_turret_mining_ammo_conservation_test(surface)
   local turret = create_turret(surface, position, 7)
   call("install_core", turret, {
     level = 8,
-    custom_name = "No Dupes"
+    custom_name = "No Dupes",
   })
   call("set_bound", turret, true)
 
@@ -825,7 +920,11 @@ local function run_bound_turret_mining_ammo_conservation_test(surface)
   assert_true(mined.converted == true, "bound mining did not convert after simulated vanilla returns")
   assert_eq(inventory_count(buffer, "turret-xp-bound-gun-turret"), 1, "bound mining did not return exactly one bound turret item")
   assert_eq(inventory_count(buffer, "gun-turret"), 0, "bound mining returned a vanilla gun turret alongside the bound turret item")
-  assert_eq(inventory_count(buffer, "turret-xp-veteran-core"), 0, "bound mining returned a separate Veteran Core alongside the bound turret item")
+  assert_eq(
+    inventory_count(buffer, "turret-xp-veteran-core"),
+    0,
+    "bound mining returned a separate Veteran Core alongside the bound turret item"
+  )
   assert_eq(inventory_count(external_returns, "firearm-magazine"), 0, "bound mining left ammo for vanilla to return outside the bound item")
 
   local bound_stack = find_stack(buffer, "turret-xp-bound-gun-turret")
@@ -842,13 +941,17 @@ local function run_bound_turret_mining_ammo_conservation_test(surface)
     name = "turret-xp-bound-gun-turret-placeholder",
     position = { 36, 0 },
     force = "player",
-    raise_built = false
+    raise_built = false,
   })
   assert_true(placed and placed.valid, "failed to create placeholder for mined bound turret")
   local summary = call("install_bound_turret_stack", placed, bound_stack)
   assert_true(summary ~= nil, "mined bound turret could not be placed again")
   assert_eq(summary.turret_ammo["firearm-magazine"] or 0, 7, "mined bound turret did not restore its saved ammo on placement")
-  assert_eq(inventory_count(external_returns, "firearm-magazine"), 0, "placing mined bound turret left duplicated ammo outside the bound item")
+  assert_eq(
+    inventory_count(external_returns, "firearm-magazine"),
+    0,
+    "placing mined bound turret left duplicated ammo outside the bound item"
+  )
 
   pcall(function()
     buffer.destroy()
@@ -862,14 +965,14 @@ local function setup_combat_test(surface)
   local turret = create_turret(surface, { -20, 0 }, 100)
   call("install_core", turret, {
     custom_name = "Combat",
-    level = 1
+    level = 1,
   })
 
   for index = 1, 5 do
     local biter = surface.create_entity({
       name = "small-biter",
       position = { -10 + index, index - 3 },
-      force = "enemy"
+      force = "enemy",
     })
     assert_true(biter and biter.valid, "failed to create combat test biter")
     biter.health = 1
@@ -884,16 +987,17 @@ local function setup_status_damage_test(surface)
   assert_true(summary ~= nil, "failed to install core for status damage test")
   summary = call("set_evolution", turret, {
     base = {
-      siphon = 25
-    }
+      siphon = 25,
+    },
   })
+  assert_true(summary ~= nil, "failed to configure status damage test evolution")
   turret = require_turret_near(surface, { x = -30, y = 0 }, "status damage turret not found")
   turret.health = math.max(1, turret.health - 120)
 
   local biter = surface.create_entity({
     name = "big-biter",
     position = { -25, 0 },
-    force = "enemy"
+    force = "enemy",
   })
   assert_true(biter and biter.valid, "failed to create status damage target")
   biter.health = 1000
@@ -962,5 +1066,5 @@ return {
   check_deferred_tests = function()
     check_combat_test(get_surface())
     check_status_damage_test(get_surface())
-  end
+  end,
 }

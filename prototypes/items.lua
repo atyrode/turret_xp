@@ -9,19 +9,19 @@ return function(names)
         {
           icon = "__base__/graphics/icons/electronic-circuit.png",
           icon_size = 64,
-          scale = 0.5
+          scale = 0.5,
         },
         {
           icon = "__base__/graphics/icons/gun-turret.png",
           icon_size = 64,
           scale = 0.26,
-          shift = { 8, -8 }
-        }
+          shift = { 8, -8 },
+        },
       },
       subgroup = "defensive-structure",
       order = "b[turret]-a[gun-turret]-b[veteran-core]",
       stack_size = 1,
-      weight = 20 * kg
+      weight = 20 * kg,
     },
     {
       type = "item-with-tags",
@@ -32,21 +32,21 @@ return function(names)
         {
           icon = "__base__/graphics/icons/gun-turret.png",
           icon_size = 64,
-          scale = 0.5
+          scale = 0.5,
         },
         {
           icon = "__base__/graphics/icons/electronic-circuit.png",
           icon_size = 64,
           scale = 0.22,
-          shift = { 9, -9 }
-        }
+          shift = { 9, -9 },
+        },
       },
       flags = { "not-stackable" },
       subgroup = "defensive-structure",
       order = "b[turret]-a[gun-turret]-c[bound-veteran]",
       place_result = names.bound_turret_placeholder,
       stack_size = 1,
-      weight = 120 * kg
+      weight = 120 * kg,
     },
     {
       type = "recipe",
@@ -57,13 +57,13 @@ return function(names)
         { type = "item", name = "electronic-circuit", amount = 20 },
         { type = "item", name = "steel-plate", amount = 10 },
         { type = "item", name = "copper-cable", amount = 40 },
-        { type = "item", name = "repair-pack", amount = 2 }
+        { type = "item", name = "repair-pack", amount = 2 },
       },
       results = {
-        { type = "item", name = names.chip, amount = 1 }
+        { type = "item", name = names.chip, amount = 1 },
       },
-      energy_required = 5
-    }
+      energy_required = 5,
+    },
   })
 
   local military = data.raw.technology["military"]
@@ -71,7 +71,7 @@ return function(names)
     military.effects = military.effects or {}
     military.effects[#military.effects + 1] = {
       type = "unlock-recipe",
-      recipe = names.chip
+      recipe = names.chip,
     }
   end
 end

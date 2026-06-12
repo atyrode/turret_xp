@@ -41,10 +41,7 @@ return function(names)
   for r = 0, 5 do
     for g = 0, 5 do
       for b = 0, 5 do
-        add_label_panel(
-          "custom-" .. tostring(r) .. "-" .. tostring(g) .. "-" .. tostring(b),
-          { r / 5, g / 5, b / 5, 1 }
-        )
+        add_label_panel("custom-" .. tostring(r) .. "-" .. tostring(g) .. "-" .. tostring(b), { r / 5, g / 5, b / 5, 1 })
       end
     end
   end

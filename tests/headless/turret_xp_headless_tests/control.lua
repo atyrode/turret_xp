@@ -3,7 +3,7 @@ local suite = require("suite")
 script.on_init(function()
   storage.turret_xp_headless_tests = {
     started_tick = game.tick,
-    passed = false
+    passed = false,
   }
   suite.run_immediate_tests()
   log(suite.test_prefix .. "immediate assertions passed")

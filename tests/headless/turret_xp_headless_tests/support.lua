@@ -1,7 +1,7 @@
 local support = {
   IFACE = "turret_xp_test",
   PASS_TICK = 900,
-  TEST_PREFIX = "[turret_xp_headless_tests] "
+  TEST_PREFIX = "[turret_xp_headless_tests] ",
 }
 
 function support.fail(message)
@@ -57,7 +57,7 @@ end
 function support.area_around(position, radius)
   return {
     { position.x - radius, position.y - radius },
-    { position.x + radius, position.y + radius }
+    { position.x + radius, position.y + radius },
   }
 end
 
@@ -83,10 +83,12 @@ end
 
 function support.ground_item_count(surface, position, item_name, radius)
   local count = 0
-  for _, entity in pairs(surface.find_entities_filtered({
-    area = support.area_around(position, radius or 1.5),
-    type = "item-entity"
-  })) do
+  for _, entity in
+    pairs(surface.find_entities_filtered({
+      area = support.area_around(position, radius or 1.5),
+      type = "item-entity",
+    }))
+  do
     local stack = entity.valid and entity.stack or nil
     if stack and stack.valid_for_read and stack.name == item_name then
       count = count + stack.count
@@ -96,10 +98,12 @@ function support.ground_item_count(surface, position, item_name, radius)
 end
 
 function support.find_ground_stack(surface, position, item_name, radius)
-  for _, entity in pairs(surface.find_entities_filtered({
-    area = support.area_around(position, radius or 1.5),
-    type = "item-entity"
-  })) do
+  for _, entity in
+    pairs(surface.find_entities_filtered({
+      area = support.area_around(position, radius or 1.5),
+      type = "item-entity",
+    }))
+  do
     local stack = entity.valid and entity.stack or nil
     if stack and stack.valid_for_read and stack.name == item_name then
       return stack
@@ -125,7 +129,7 @@ function support.create_turret(surface, position, ammo_count)
     name = "gun-turret",
     position = position,
     force = "player",
-    raise_built = false
+    raise_built = false,
   })
   support.assert_true(turret and turret.valid, "failed to create test gun turret")
   if ammo_count and ammo_count > 0 then
@@ -137,7 +141,7 @@ end
 function support.find_turret_near(surface, position)
   local entities = surface.find_entities_filtered({
     area = support.area_around(position, 0.75),
-    type = "ammo-turret"
+    type = "ammo-turret",
   })
   for _, entity in pairs(entities) do
     if entity.valid and string.find(entity.name, "gun-turret", 1, true) then

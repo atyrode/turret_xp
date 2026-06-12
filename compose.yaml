@@ -1,0 +1,11 @@
+services:
+  lua-tools:
+    build:
+      context: .
+      dockerfile: tools/lua/Dockerfile
+    environment:
+      REQUIRE_LUA_TOOLS: "1"
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: scripts/lint-lua.sh

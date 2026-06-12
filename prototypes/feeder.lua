@@ -16,7 +16,7 @@ return function(names)
   feeder.inventory_properties = {
     stack_size_min = 1,
     stack_size_max = 1,
-    with_bar = true
+    with_bar = true,
   }
   feeder.collision_box = { { -0.35, -0.35 }, { 0.35, 0.35 } }
   feeder.selection_box = { { -0.5, -0.5 }, { 0.5, 0.5 } }
@@ -27,20 +27,20 @@ return function(names)
     {
       icon = "__base__/graphics/icons/iron-chest.png",
       icon_size = 64,
-      tint = { 0.72, 0.86, 1.0 }
+      tint = { 0.72, 0.86, 1.0 },
     },
     {
       icon = "__base__/graphics/icons/electronic-circuit.png",
       icon_size = 64,
       scale = 0.28,
-      shift = { 8, -8 }
-    }
+      shift = { 8, -8 },
+    },
   }
   feeder.picture = {
     filename = "__core__/graphics/empty.png",
     priority = "extra-high",
     width = 1,
-    height = 1
+    height = 1,
   }
 
   data:extend({ feeder })

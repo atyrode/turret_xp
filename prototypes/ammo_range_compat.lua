@@ -154,7 +154,7 @@ local function patch_ammo(ammo, target_range)
     default_ammo_type.source_type = "default"
     ammo.ammo_type = {
       default_ammo_type,
-      turret_ammo_type
+      turret_ammo_type,
     }
     return true
   end

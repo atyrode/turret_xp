@@ -1,0 +1,5 @@
+.git
+.factorio-ci
+codex_tmp
+dist
+*.zip

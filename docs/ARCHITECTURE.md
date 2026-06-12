@@ -13,6 +13,7 @@
 - `settings.lua`: runtime-global XP pacing settings.
 - `locale/en/turret-xp.cfg`: English GUI strings.
 - `scripts/`: validation, packaging, dependency download, install, release, and portal publishing.
+- `.stylua.toml`, `.luacheckrc`, `compose.yaml`, and `tools/lua/Dockerfile`: Lua format/lint configuration and the optional local strict-tooling container.
 - `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`; `control.lua` owns runner lifecycle, `support.lua` owns shared assertions/helpers, and `suite.lua` owns behavior checks.
 - `tests/headless/turret_xp_remote_policy_tests/`: separate headless smoke-test mod used by `scripts/test-headless.sh` to verify private test remotes are absent when the companion suite is not active.
 - `docs/`: project context, playtest guidance, and the GitHub Pages homepage.

@@ -8,6 +8,6 @@ return function()
     color = { 0.98, 0.72, 0.24 },
     height = 18,
     bar_width = 16,
-    embed_text_in_bar = false
+    embed_text_in_bar = false,
   }
 end

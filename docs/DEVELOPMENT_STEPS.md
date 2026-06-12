@@ -397,6 +397,14 @@
 - [x] Add a separate headless smoke test that verifies `turret_xp_test` is absent when the companion suite is not active.
 - [x] Document that `turret_xp_test` is private test surface, not a production integration API.
 
+## Lua Formatting And Linting
+
+- [x] Adopt StyLua with a repository config and apply the one-time formatting baseline.
+- [x] Add Luacheck configuration for Factorio globals and scoped legacy `_ENV` runtime modules.
+- [x] Add strict Lua syntax, format, and lint validation to CI for package-impacting changes.
+- [x] Add a Docker Compose strict tooling path so local validation does not depend on host-installed `luac`, StyLua, or Luacheck.
+- [x] Clean up current Luacheck warnings instead of suppressing dead assignments and shadowing.
+
 ## Likely Next Work
 
 - Playtest V0.10.3 from a local package or Mod Portal release after feedback integration, especially around bound turret ammo conservation, K2/K2SO realistic ammo range compatibility, level-up flying text, Resistance feel, max-HP-based Regeneration, passive element material progress, Toxic and Fire damage-over-time readability, crit/double-shot visuals, richer Evolution summary header, right-column scrollbar containment, specialization multiplier colors, section margins, full Evolution reset, baseline crit stats, Max HP rank body swaps, Ammo Recovery pacing, level-40 sub-specializations, normal/bulk inserter feeding, hidden input ammo forwarding, deferred turret body swaps, bound turret mining/placement, normal turret replacement ghosts, placement-helper ammo refunds, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, asteroid XP pacing, optional Bullet Trails visuals, label controls, modded base turret range compatibility, and high-level turret combat performance.
