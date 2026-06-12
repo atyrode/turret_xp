@@ -1,7 +1,7 @@
 local domain = require("scripts.domain")
 
 local function make_turret_variant(id, settings)
-  local base = data.raw["ammo-turret"] and data.raw["ammo-turret"]["gun-turret"]
+  local base = data.raw["ammo-turret"] and data.raw["ammo-turret"][domain.names.base_turret]
   if not base then
     return nil
   end
@@ -12,8 +12,8 @@ local function make_turret_variant(id, settings)
   variant.localised_description = { "entity-description.turret-xp-specialized-gun-turret" }
   variant.hidden = true
   variant.hidden_in_factoriopedia = true
-  variant.placeable_by = { item = "gun-turret", count = 1 }
-  variant.minable = { mining_time = 0.5, result = "gun-turret" }
+  variant.placeable_by = { item = domain.names.base_turret, count = 1 }
+  variant.minable = { mining_time = 0.5, result = domain.names.base_turret }
   variant.max_health = math.floor((variant.max_health or 1) * (settings.health_multiplier or 1) + 0.5)
   variant.rotation_speed = (variant.rotation_speed or 0) * (settings.rotation_speed_multiplier or 1)
 
