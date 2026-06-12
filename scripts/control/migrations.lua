@@ -28,6 +28,8 @@ function migrations.new(deps)
 
     evolution.augments.piercing = nil
     evolution.augments.longshot = nil
+    evolution.augments.range = nil
+    evolution.augments.max_health = nil
   end
 
   function service.normalize_legacy_element_mastery(mastery)

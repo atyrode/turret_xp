@@ -46,7 +46,7 @@ Combat XP grants levels and points. Materials express industrial commitment: sel
 - Kill credit should be based on damage contribution so final-hit stealing does not erase turret progress.
 - Space-platform combat and asteroid defense should not passively overlevel cores.
 - Strong roles should carry tradeoffs: range for fire rate, fire rate for damage per shot, survivability for peak damage, XP gain for immediate power.
-- Prototype-backed axes such as Range and Max HP should stay capped unless an issue/PR explicitly accepts the added prototype budget.
+- New prototype-backed axes, especially repeatable range or max-HP ranks, should stay out unless an issue/PR explicitly accepts the added prototype budget and migration cost.
 - Scripted effects such as bounce, chain arcs, status damage, and visuals need explicit performance and readability budgets before they grow.
 
 ## Compatibility Direction
@@ -54,7 +54,7 @@ Combat XP grants levels and points. Materials express industrial commitment: sel
 - Start with vanilla `gun-turret`.
 - Hidden turret variants are acceptable for real turret body stats when Factorio exposes no per-entity runtime setter, but new variant dimensions require explicit budget discussion.
 - Resistance should remain scripted unless a better per-core defense model appears, because it avoids another hidden prototype axis.
-- Ammo range compatibility should preserve non-turret ammo behavior while fixing turret-fired projectile caps for upgraded veteran turret ranges.
+- Ammo range compatibility should preserve non-turret ammo behavior while fixing turret-fired projectile caps for upgraded specialist turret ranges.
 - Later support for modded ammo turrets should be prototype-driven.
 - Laser, flamethrower, artillery, and electric turrets likely need separate stat, XP, and UI rules.
 

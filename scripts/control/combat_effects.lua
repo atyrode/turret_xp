@@ -212,6 +212,7 @@ return function(M)
         entity = combat.sync_turret_body_when_idle(entity, state)
         auto_feed_open_turret(state)
         combat.apply_ammo_regeneration(entity, state)
+        combat.recharge_shield(entity, state)
         local repair_per_second = get_repair_per_second(state, entity)
         if repair_per_second > 0 then
           local max_health = safe_read(entity, "max_health")
@@ -310,13 +311,13 @@ return function(M)
     state.ammo_regen_progress = math.min(progress, 1)
   end
 
-  function combat.apply_damage_resistance(event, entity, state)
+  function combat.apply_damage_resistance(event, entity, state, damage_override)
     if not is_gun_turret(entity) or not state then
       return 0
     end
 
     local mitigation = get_damage_resistance_fraction(state)
-    local damage = tonumber(event.final_damage_amount) or 0
+    local damage = tonumber(damage_override) or tonumber(event.final_damage_amount) or 0
     if mitigation <= 0 or damage <= 0 then
       return 0
     end
@@ -339,6 +340,67 @@ return function(M)
 
     entity.health = math.min(max_health, health + refunded)
     return refunded
+  end
+
+  function combat.apply_shield_absorption(event, entity, state)
+    if not is_gun_turret(entity) or not state then
+      return 0
+    end
+
+    local shield, capacity = normalize_shield_state(state, true)
+    local damage = tonumber(event.final_damage_amount) or 0
+    if capacity <= 0 or shield <= 0 or damage <= 0 then
+      return 0
+    end
+
+    local health = safe_read(entity, "health")
+    if health == nil then
+      return 0
+    end
+
+    local absorbed = math.min(shield, damage)
+    if absorbed <= 0 then
+      return 0
+    end
+
+    local max_health = safe_read(entity, "max_health")
+    local restored_health = health + absorbed
+    if max_health then
+      restored_health = math.min(max_health, restored_health)
+    end
+
+    if restored_health > 0 then
+      entity.health = restored_health
+    end
+
+    state.shield = math.max(0, shield - absorbed)
+    state._shield_last_damage_tick = game and game.tick or nil
+    return absorbed
+  end
+
+  function combat.recharge_shield(entity, state)
+    if not is_gun_turret(entity) or not state then
+      return 0
+    end
+
+    local shield, capacity = normalize_shield_state(state, true)
+    if capacity <= 0 or shield >= capacity then
+      return 0
+    end
+
+    local tick = game and game.tick or 0
+    local last_damage_tick = tonumber(state._shield_last_damage_tick) or 0
+    if tick - last_damage_tick < SHIELD_RECHARGE_DELAY_TICKS then
+      return 0
+    end
+
+    local recharge = get_shield_recharge_per_second(state) * (REFRESH_TICKS / 60)
+    if recharge <= 0 then
+      return 0
+    end
+
+    state.shield = math.min(capacity, shield + recharge)
+    return state.shield - shield
   end
 
   function combat.chance_roll(chance)

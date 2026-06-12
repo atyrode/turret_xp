@@ -356,7 +356,9 @@ return function(M)
       get_turret_host(event.entity, false)
       local damaged_state = get_turret_state(event.entity)
       if damaged_state then
-        combat.apply_damage_resistance(event, event.entity, damaged_state)
+        local shield_absorbed = combat.apply_shield_absorption(event, event.entity, damaged_state)
+        local remaining_damage = math.max(0, damage - shield_absorbed)
+        combat.apply_damage_resistance(event, event.entity, damaged_state, remaining_damage)
         update_name_render(event.entity, damaged_state)
       end
     end

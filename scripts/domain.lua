@@ -40,9 +40,7 @@ domain.gates = {
   second_element = 50,
 }
 
-domain.range_augment_max = 20
-domain.max_health_augment_max = 20
-domain.max_health_per_rank = 50
+domain.shield_per_rank = 50
 domain.element_free_rank = 1
 domain.label_custom_color_steps = 5
 
@@ -250,11 +248,11 @@ local function clamp_rank(value, max_rank)
 end
 
 function domain.clamp_range_rank(value)
-  return clamp_rank(value, domain.range_augment_max)
+  return clamp_rank(value, 0)
 end
 
 function domain.clamp_max_health_rank(value)
-  return clamp_rank(value, domain.max_health_augment_max)
+  return clamp_rank(value, 0)
 end
 
 function domain.get_sub_specialization_variant_segment(specialization_id, sub_specialization_id)
@@ -276,9 +274,6 @@ function domain.get_sub_specialization_variant_segment(specialization_id, sub_sp
 end
 
 function domain.specialized_turret_variant_id(specialization_id, range_rank, health_rank, sub_specialization_id)
-  range_rank = domain.clamp_range_rank(range_rank)
-  health_rank = domain.clamp_max_health_rank(health_rank)
-
   local segments = {}
   if specialization_id and domain.specialization_by_id[specialization_id] then
     segments[#segments + 1] = specialization_id
@@ -286,12 +281,6 @@ function domain.specialized_turret_variant_id(specialization_id, range_rank, hea
     if sub_segment then
       segments[#segments + 1] = sub_segment
     end
-  end
-  if range_rank > 0 then
-    segments[#segments + 1] = "range-" .. tostring(range_rank)
-  end
-  if health_rank > 0 then
-    segments[#segments + 1] = "health-" .. tostring(health_rank)
   end
 
   if #segments == 0 then
@@ -311,8 +300,6 @@ function domain.specialized_turret_name(specialization_id, range_rank, health_ra
 end
 
 function domain.bound_turret_variant_id(specialization_id, range_rank, sub_specialization_id)
-  range_rank = domain.clamp_range_rank(range_rank)
-
   local segments = {}
   if specialization_id and domain.specialization_by_id[specialization_id] then
     segments[#segments + 1] = specialization_id
@@ -320,9 +307,6 @@ function domain.bound_turret_variant_id(specialization_id, range_rank, sub_speci
     if sub_segment then
       segments[#segments + 1] = sub_segment
     end
-  end
-  if range_rank > 0 then
-    segments[#segments + 1] = "range-" .. tostring(range_rank)
   end
 
   if #segments == 0 then
@@ -387,63 +371,33 @@ function domain.combine_variant_settings(primary, secondary)
 end
 
 function domain.for_each_specialized_turret_name(callback)
-  for range_rank = 0, domain.range_augment_max do
-    for health_rank = 0, domain.max_health_augment_max do
-      if range_rank > 0 or health_rank > 0 then
-        callback(domain.specialized_turret_name(nil, range_rank, health_rank), nil, range_rank, health_rank, nil)
-      end
-    end
-  end
-
   for _, specialization in ipairs(domain.specializations) do
-    for range_rank = 0, domain.range_augment_max do
-      for health_rank = 0, domain.max_health_augment_max do
-        callback(
-          domain.specialized_turret_name(specialization.id, range_rank, health_rank),
-          specialization.id,
-          range_rank,
-          health_rank,
-          nil
-        )
-      end
-    end
+    callback(domain.specialized_turret_name(specialization.id, 0, 0), specialization.id, 0, 0, nil)
   end
 
   for _, sub_specialization in ipairs(domain.sub_specializations) do
-    for range_rank = 0, domain.range_augment_max do
-      for health_rank = 0, domain.max_health_augment_max do
-        callback(
-          domain.specialized_turret_name(sub_specialization.parent, range_rank, health_rank, sub_specialization.id),
-          sub_specialization.parent,
-          range_rank,
-          health_rank,
-          sub_specialization.id
-        )
-      end
-    end
+    callback(
+      domain.specialized_turret_name(sub_specialization.parent, 0, 0, sub_specialization.id),
+      sub_specialization.parent,
+      0,
+      0,
+      sub_specialization.id
+    )
   end
 end
 
 function domain.for_each_bound_turret_variant(callback)
-  for range_rank = 1, domain.range_augment_max do
-    callback(domain.bound_turret_variant_id(nil, range_rank), nil, range_rank, nil)
-  end
-
   for _, specialization in ipairs(domain.specializations) do
-    for range_rank = 0, domain.range_augment_max do
-      callback(domain.bound_turret_variant_id(specialization.id, range_rank), specialization.id, range_rank, nil)
-    end
+    callback(domain.bound_turret_variant_id(specialization.id, 0), specialization.id, 0, nil)
   end
 
   for _, sub_specialization in ipairs(domain.sub_specializations) do
-    for range_rank = 0, domain.range_augment_max do
-      callback(
-        domain.bound_turret_variant_id(sub_specialization.parent, range_rank, sub_specialization.id),
-        sub_specialization.parent,
-        range_rank,
-        sub_specialization.id
-      )
-    end
+    callback(
+      domain.bound_turret_variant_id(sub_specialization.parent, 0, sub_specialization.id),
+      sub_specialization.parent,
+      0,
+      sub_specialization.id
+    )
   end
 end
 

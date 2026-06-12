@@ -55,18 +55,20 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.10.3</h2>
-          <p>2026-06-10</p>
+          <h2 id="current-title">Version 0.10.4</h2>
+          <p>2026-06-12</p>
         </div>
         <div class="release-notes">
           <h3>Changes</h3>
           <ul>
-            <li>Added a short in-world <code>Level up!</code> flying-text popup above Veteran Core turrets when XP progression raises their level.</li>
+            <li>Replaced the prototype-backed Max HP augment with a scripted Shield core upgrade. Shield adds 50 shield per rank, absorbs incoming damage before turret HP, and starts recharging after a short delay without damage.</li>
+            <li>Removed the Range augment for now. Specialization and sub-specialization range modifiers remain prototype-backed.</li>
+            <li>Reduced the generated hidden turret prototype budget by removing Range/Max HP variant axes from body and bound-preview generation.</li>
+            <li>Added a prototype migration that collapses old Range/Max HP hidden bodies and old range-preview bound items/placeholders onto the new specialization-only prototypes.</li>
           </ul>
           <h3>Bugfixes</h3>
           <ul>
-            <li>Fixed bound veteran turret mining/placement ammo conservation so picking up and replacing a bound turret no longer duplicates its stored ammo snapshot.</li>
-            <li>Added a turret-source projectile range compatibility patch for K2/K2SO-style realistic rifle ammo, so Turret XP range upgrades do not make turrets target enemies that turret-fired ammo cannot physically reach.</li>
+            <li>Retired saved Range and Max HP augment ranks during profile normalization so old Veteran Core and bound turret item tags no longer keep dead upgrade state.</li>
           </ul>
         </div>
       </section>
@@ -80,7 +82,7 @@
           </article>
           <article>
             <h3>Combat Growth</h3>
-            <p>Turrets earn XP from damage and kill contribution. Points buy damage, repair, lifesteal, crits, range, luck, double shots, XP gain, and bouncing bullets.</p>
+            <p>Turrets earn XP from damage and kill contribution. Points buy damage, shield, repair, lifesteal, crits, luck, double shots, XP gain, and bouncing bullets.</p>
           </article>
           <article>
             <h3>Specialized Defenders</h3>

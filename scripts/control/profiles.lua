@@ -51,6 +51,7 @@ return function(M)
       bound_turret = false,
       last_ammo = nil,
       ammo_regen_progress = 0,
+      shield = 0,
     }
   end
 
@@ -90,6 +91,7 @@ return function(M)
     end
     profile.label_scale = 2
     ensure_evolution_state(profile)
+    normalize_shield_state(profile, true)
     sync_turret_progression(profile)
     return profile
   end
@@ -215,6 +217,7 @@ return function(M)
       dev_xp = profile.dev_xp or 0,
       last_ammo = copy_serializable(profile.last_ammo),
       ammo_regen_progress = profile.ammo_regen_progress or 0,
+      shield = normalize_shield_state(profile, true),
       evolution = {
         base = copy_serializable(evolution.base or {}),
         augments = copy_serializable(evolution.augments or {}),
@@ -253,6 +256,7 @@ return function(M)
       profile.dev_xp = data.dev_xp or 0
       profile.last_ammo = copy_serializable(data.last_ammo)
       profile.ammo_regen_progress = data.ammo_regen_progress or 0
+      profile.shield = data.shield
       profile.evolution = copy_serializable(data.evolution or {})
     end
 

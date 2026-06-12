@@ -96,11 +96,11 @@ end
 local function run_prototype_budget_test()
   local budget = call("prototype_budget")
   assert_true(type(budget) == "table", "prototype budget was not exposed to the headless suite")
-  assert_eq(budget.hidden_turret_variants, 5732, "hidden turret variant budget changed")
-  assert_eq(budget.bound_preview_items, 272, "bound preview item budget changed")
-  assert_eq(budget.bound_preview_placeholders, 272, "bound preview placeholder budget changed")
+  assert_eq(budget.hidden_turret_variants, 12, "hidden turret variant budget changed")
+  assert_eq(budget.bound_preview_items, 12, "bound preview item budget changed")
+  assert_eq(budget.bound_preview_placeholders, 12, "bound preview placeholder budget changed")
   assert_eq(budget.label_panels, 222, "label display-panel budget changed")
-  assert_eq(budget.tracked_hidden_variant_total, 6498, "tracked hidden prototype budget changed")
+  assert_eq(budget.tracked_hidden_variant_total, 258, "tracked hidden prototype budget changed")
   log(
     TEST_PREFIX
       .. "prototype budget: hidden_turret_variants="
@@ -126,32 +126,32 @@ local function run_place_result_regression_test()
   )
   assert_true(placement.placeholder_exists, "bound veteran turret placeholder prototype does not exist")
   assert_eq(
-    placement.sniper_range_3_bound_item,
-    "turret-xp-bound-gun-turret-sniper-range-3",
-    "sniper range bound preview item was not generated"
+    placement.sniper_bound_item,
+    "turret-xp-bound-gun-turret-sniper",
+    "sniper bound preview item was not generated"
   )
   assert_eq(
-    placement.sniper_range_3_bound_place_result,
-    "turret-xp-bound-gun-turret-placeholder-sniper-range-3",
-    "sniper range bound preview item points at the wrong placeholder"
+    placement.sniper_bound_place_result,
+    "turret-xp-bound-gun-turret-placeholder-sniper",
+    "sniper bound preview item points at the wrong placeholder"
   )
   assert_gt(
-    placement.sniper_range_3_bound_preview_range,
+    placement.sniper_bound_preview_range,
     placement.base_bound_preview_range,
-    "sniper range bound preview range did not exceed the base bound preview range"
+    "sniper bound preview range did not exceed the base bound preview range"
   )
-  assert_eq(placement.range_3_body_name, "turret-xp-gun-turret-range-3", "shared range-only body name changed")
-  assert_true(placement.range_3_body_exists, "shared range-only body prototype was not generated")
-  assert_eq(placement.health_2_body_name, "turret-xp-gun-turret-health-2", "shared health-only body name changed")
-  assert_true(placement.health_2_body_exists, "shared health-only body prototype was not generated")
+  assert_eq(placement.range_3_body_name, "gun-turret", "range ranks should no longer create a hidden body")
+  assert_true(placement.range_3_body_exists, "range-rank fallback should be the vanilla gun turret")
+  assert_eq(placement.health_2_body_name, "gun-turret", "health ranks should no longer create a hidden body")
+  assert_true(placement.health_2_body_exists, "health-rank fallback should be the vanilla gun turret")
   assert_eq(placement.sniper_deadeye_body_name, "turret-xp-gun-turret-sniper-deadeye", "shared sub-specialization body name changed")
   assert_true(placement.sniper_deadeye_body_exists, "shared sub-specialization body prototype was not generated")
   assert_eq(
     placement.sniper_overwatch_range_3_body_name,
-    "turret-xp-gun-turret-sniper-overwatch-range-3",
-    "shared sub-specialization range body name changed"
+    "turret-xp-gun-turret-sniper-overwatch",
+    "shared sub-specialization body name changed"
   )
-  assert_true(placement.sniper_overwatch_range_3_body_exists, "shared sub-specialization range body prototype was not generated")
+  assert_true(placement.sniper_overwatch_range_3_body_exists, "shared sub-specialization body prototype was not generated")
   assert_eq(
     placement.invalid_sub_body_name,
     "turret-xp-gun-turret-machine_gun",
@@ -199,9 +199,6 @@ local function run_evolution_body_test(surface)
 
   local summary = call("set_evolution", turret, {
     specialization = "sniper",
-    augments = {
-      range = 3,
-    },
     base = {
       damage = 2,
       repair = 1,
@@ -211,8 +208,8 @@ local function run_evolution_body_test(surface)
   })
 
   assert_eq(summary.evolution.specialization, "sniper", "specialization did not persist")
-  assert_eq(summary.evolution.augments.range, 3, "range augment rank did not persist")
-  assert_eq(summary.entity_name, "turret-xp-gun-turret-sniper-range-3", "specialization/range did not swap to the expected turret body")
+  assert_eq(summary.evolution.augments.range, nil, "retired range augment rank should not persist")
+  assert_eq(summary.entity_name, "turret-xp-gun-turret-sniper", "specialization did not swap to the expected turret body")
   assert_gt(summary.attack_range, 35, "sniper range multiplier did not affect real attack range")
 end
 
@@ -254,11 +251,8 @@ local function run_specialization_secondary_multiplier_test(surface)
   summary = call("set_evolution", turret, {
     specialization = "sniper",
     sub_specialization = "sniper_overwatch",
-    augments = {
-      range = 3,
-    },
   })
-  assert_eq(summary.entity_name, "turret-xp-gun-turret-sniper-overwatch-range-3", "sub-specialization/range body name was not generated")
+  assert_eq(summary.entity_name, "turret-xp-gun-turret-sniper-overwatch", "sub-specialization body name was not generated")
   assert_gt(summary.attack_range, 40, "Overwatch range multiplier did not affect real attack range")
 
   turret = require_turret_near(surface, { x = 14, y = 8 }, "sub-specialization turret not found after Overwatch body swap")
@@ -347,8 +341,9 @@ local function run_modded_base_range_variant_test(surface)
       range = 1,
     },
   })
-  assert_eq(summary.entity_name, "turret-xp-gun-turret-range-1", "range rank 1 did not swap to the range variant")
-  assert_eq(summary.attack_range, 26, "range rank 1 variant did not clone the modded base range before adding +1")
+  assert_eq(summary.evolution.augments.range, nil, "retired range augment should be removed during normalization")
+  assert_eq(summary.entity_name, "gun-turret", "retired range rank should not create a range variant")
+  assert_eq(summary.attack_range, 25, "retired range rank should not change attack range")
 end
 
 local function run_turret_ammo_range_compat_test()
@@ -377,24 +372,45 @@ local function run_level_zero_points_test(surface)
   assert_eq(summary.evolution.available_core_points, 10, "level 10 core should have ten available core points")
 end
 
-local function run_max_health_variant_test(surface)
+local function run_shield_test(surface)
   local turret_position = { x = 42, y = 0 }
   local turret = create_turret(surface, turret_position, 10)
   local summary = call("install_core", turret, { level = 25 })
-  assert_true(summary ~= nil, "failed to install core for max health variant test")
+  assert_true(summary ~= nil, "failed to install core for shield test")
 
   summary = call("set_evolution", turret, {
-    augments = {
-      max_health = 4,
-    },
     base = {
+      shield = 4,
       repair = 1,
     },
   })
-  assert_eq(summary.entity_name, "turret-xp-gun-turret-health-4", "max health rank did not swap to the expected health variant")
-  assert_eq(summary.max_health, 600, "max health augment did not increase real max health")
-  assert_eq(summary.evolution.augments.max_health, 4, "max health rank did not persist in augment state")
-  assert_near(summary.derived.repair_per_second, 0.6, 0.0001, "regeneration did not scale from current max health")
+  assert_eq(summary.entity_name, "gun-turret", "shield rank should not swap to a health variant")
+  assert_eq(summary.max_health, 400, "shield rank should not increase real max health")
+  assert_eq(summary.evolution.base.shield, 4, "shield rank did not persist in base upgrade state")
+  assert_eq(summary.derived.shield_capacity, 200, "shield capacity did not scale with rank")
+  assert_eq(summary.shield, 200, "new shield ranks should refill shield")
+
+  turret = require_turret_near(surface, turret_position, "shield test turret not found")
+  local before_health = turret.health
+  local applied = turret.damage(120, game.forces.enemy, "physical")
+  assert_true(applied and applied > 0, "shield test did not apply incoming damage")
+  summary = call("get_state", turret)
+  assert_eq(summary.shield, 80, "shield did not absorb incoming damage before HP")
+  assert_near(turret.health, before_health, 0.05, "shielded damage should not reduce HP while shield remains")
+
+  applied = turret.damage(100, game.forces.enemy, "physical")
+  assert_true(applied and applied > 0, "shield spillover test did not apply incoming damage")
+  summary = call("get_state", turret)
+  assert_eq(summary.shield, 0, "shield should be empty after absorbing remaining capacity")
+  assert_near(turret.health, before_health - 20, 0.05, "only damage beyond shield should reach HP")
+
+  call("apply_passive", 5)
+  summary = call("get_state", turret)
+  assert_eq(summary.shield, 0, "shield should not recharge before its delay")
+  call("age_shield_damage", turret, 60 * 6)
+  call("apply_passive", 1)
+  summary = call("get_state", turret)
+  assert_gt(summary.shield, 0, "shield did not start recharging after its delay")
 end
 
 local function run_ammo_regen_test(surface)
@@ -482,6 +498,7 @@ local function run_legacy_migration_test()
         piercing = 4,
         longshot = 3,
         range = 2,
+        max_health = 5,
       },
       elements = {
         first = "fire",
@@ -504,7 +521,8 @@ local function run_legacy_migration_test()
   })
   assert_eq(tagged.evolution.elements[1], "fire", "legacy first element tag did not migrate to slot 1")
   assert_eq(tagged.evolution.elements[2], "explosive", "legacy second element tag did not migrate to slot 2")
-  assert_eq(tagged.evolution.augments.range, 2, "current augment rank was lost during legacy cleanup")
+  assert_eq(tagged.evolution.augments.range, nil, "retired Range augment was not removed")
+  assert_eq(tagged.evolution.augments.max_health, nil, "retired Max HP augment was not removed")
   assert_eq(tagged.evolution.augments.piercing, nil, "retired Piercing augment was not removed")
   assert_eq(tagged.evolution.augments.longshot, nil, "retired Longshot augment was not removed")
   assert_eq(tagged.evolution.element_mastery.fire.rank, 2, "legacy Fire mastery rank was not preserved")
@@ -880,7 +898,6 @@ local function run_targeted_reset_test(surface)
       resistance = 4,
     },
     augments = {
-      range = 2,
       luck = 1,
     },
     specialization = "sniper",
@@ -901,18 +918,18 @@ local function run_targeted_reset_test(surface)
     },
   })
   assert_eq(summary.evolution.base.damage, 3, "test setup did not apply base ranks")
-  assert_eq(summary.evolution.augments.range, 2, "test setup did not apply augment ranks")
+  assert_eq(summary.evolution.augments.luck, 1, "test setup did not apply augment ranks")
   assert_eq(summary.evolution.specialization, "sniper", "test setup did not apply specialization")
 
   turret = require_turret_near(surface, turret_position, "targeted reset turret not found after setup body swap")
   summary = call("reset_evolution_section", turret, "base")
   assert_eq(summary.evolution.base.damage or 0, 0, "base reset did not clear damage ranks")
-  assert_eq(summary.evolution.augments.range, 2, "base reset incorrectly changed augments")
+  assert_eq(summary.evolution.augments.luck, 1, "base reset incorrectly changed augments")
   assert_eq(summary.evolution.specialization, "sniper", "base reset incorrectly changed specialization")
 
   turret = require_turret_near(surface, turret_position, "targeted reset turret not found after base reset")
   summary = call("reset_evolution_section", turret, "augments")
-  assert_eq(summary.evolution.augments.range or 0, 0, "augment reset did not clear range ranks")
+  assert_eq(summary.evolution.augments.luck or 0, 0, "augment reset did not clear augment ranks")
   assert_eq(summary.evolution.specialization, "sniper", "augment reset incorrectly changed specialization")
   assert_eq(summary.evolution.elements[1], "fire", "augment reset incorrectly changed first element")
 
@@ -965,7 +982,6 @@ local function run_full_evolution_reset_test(surface)
       crit_damage = 5,
     },
     augments = {
-      range = 3,
       luck = 2,
     },
     specialization = "sniper",
@@ -993,7 +1009,7 @@ local function run_full_evolution_reset_test(surface)
     },
   })
   assert_eq(summary.evolution.base.damage, 3, "full reset setup did not apply base ranks")
-  assert_eq(summary.evolution.augments.range, 3, "full reset setup did not apply augment ranks")
+  assert_eq(summary.evolution.augments.luck, 2, "full reset setup did not apply augment ranks")
   assert_eq(summary.evolution.specialization, "sniper", "full reset setup did not apply specialization")
 
   turret = require_turret_near(surface, turret_position, "full reset turret not found after setup body swap")
@@ -1005,7 +1021,7 @@ local function run_full_evolution_reset_test(surface)
   assert_eq(summary.evolution.base.damage or 0, 0, "full reset did not clear base ranks")
   assert_eq(summary.evolution.base.crit_chance or 0, 0, "full reset did not clear crit ranks")
   assert_eq(summary.evolution.base.resistance or 0, 0, "full reset did not clear resistance ranks")
-  assert_eq(summary.evolution.augments.range or 0, 0, "full reset did not clear augment ranks")
+  assert_eq(summary.evolution.augments.luck or 0, 0, "full reset did not clear augment ranks")
   assert_eq(summary.evolution.specialization, nil, "full reset did not clear specialization")
   assert_eq(summary.evolution.elements[1], nil, "full reset did not clear first element")
   assert_eq(summary.evolution.elements[2], nil, "full reset did not clear second element")
@@ -1108,22 +1124,20 @@ local function run_bound_turret_test(surface)
   call("install_core", preview_turret, { level = 45 })
   call("set_evolution", preview_turret, {
     specialization = "sniper",
-    augments = {
-      range = 3,
-    },
   })
   preview_turret = require_turret_near(surface, { x = 26, y = -4 }, "bound preview turret not found after body swap")
   call("set_bound", preview_turret, true)
   local preview_stack = call("make_bound_turret_stack", preview_turret)
+  local preview_item_name = "turret-xp-bound-gun-turret-sniper"
   assert_eq(
     preview_stack.name,
-    "turret-xp-bound-gun-turret-sniper-range-3",
-    "bound turret stack did not use the matching range-preview item"
+    preview_item_name,
+    "bound turret stack did not use the matching specialization preview item"
   )
 
   local preview_buffer = game.create_inventory(1)
   preview_buffer.insert({ name = "iron-plate", count = 1 })
-  local preview_ground_before = ground_item_count(surface, { x = 26, y = -4 }, "turret-xp-bound-gun-turret-sniper-range-3")
+  local preview_ground_before = ground_item_count(surface, { x = 26, y = -4 }, preview_item_name)
   local preview_mined = call("mine_bound_turret", preview_turret, preview_buffer)
   assert_true(preview_mined.converted == true, "specialized bound turret mining did not convert with a full buffer")
   assert_eq(
@@ -1132,16 +1146,16 @@ local function run_bound_turret_test(surface)
     "specialized full-buffer mining fell back to a separate Veteran Core"
   )
   assert_gt(
-    ground_item_count(surface, { x = 26, y = -4 }, "turret-xp-bound-gun-turret-sniper-range-3"),
+    ground_item_count(surface, { x = 26, y = -4 }, preview_item_name),
     preview_ground_before,
     "specialized full-buffer mining did not spill the preview bound turret item"
   )
-  local preview_ground_stack = find_ground_stack(surface, { x = 26, y = -4 }, "turret-xp-bound-gun-turret-sniper-range-3")
+  local preview_ground_stack = find_ground_stack(surface, { x = 26, y = -4 }, preview_item_name)
   assert_true(preview_ground_stack ~= nil, "specialized spilled bound turret item was not found on the ground")
   local preview_decoded = call("read_bound_turret_stack", preview_ground_stack)
   assert_eq(preview_decoded.profile.level, 45, "specialized spilled bound turret lost its core level")
   assert_eq(preview_decoded.profile.evolution.specialization, "sniper", "specialized spilled bound turret lost its specialization")
-  assert_eq(preview_decoded.profile.evolution.augments.range, 3, "specialized spilled bound turret lost its range rank")
+  assert_eq(preview_decoded.profile.evolution.augments.range, nil, "specialized spilled bound turret preserved a retired range rank")
 
   local consumed_items = game.create_inventory(1)
   local copied = pcall(function()
@@ -1383,7 +1397,7 @@ local function run_immediate_tests()
   run_modded_base_range_variant_test(surface)
   run_turret_ammo_range_compat_test()
   run_level_zero_points_test(surface)
-  run_max_health_variant_test(surface)
+  run_shield_test(surface)
   run_ammo_regen_test(surface)
   run_evolution_body_test(surface)
   run_specialization_secondary_multiplier_test(surface)

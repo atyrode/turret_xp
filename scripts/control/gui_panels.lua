@@ -776,15 +776,6 @@ return function(M)
       )
     end
 
-    local max_health_rank = get_augment_rank(state, "max_health")
-    if max_health_rank > 0 then
-      add_custom_stat(
-        stats,
-        { "turret-xp.stat-max-health-augment" },
-        rich_number("+" .. format_number(max_health_rank * MAX_HEALTH_PER_RANK, 0)) .. " HP"
-      )
-    end
-
     local ammo_regen_rank = get_base_rank(state, "ammo_regen")
     if ammo_regen_rank > 0 then
       local caption = format_bonus_value_with_multiplier(
@@ -838,16 +829,6 @@ return function(M)
       add_custom_stat(stats, { "turret-xp.stat-xp-gain" }, rich_number("+" .. format_number(training_rank * 5, 0) .. "%") .. " combat XP")
     end
 
-    local range_rank = get_augment_rank(state, "range")
-    if range_rank > 0 then
-      local value = rich_number("+" .. tostring(range_rank)) .. " attack range"
-      local multiplier = get_specialization_multiplier(state, "range_multiplier")
-      if math.abs(multiplier - 1) >= 0.005 then
-        value = value .. " " .. (format_colored_multiplier(multiplier) or "")
-      end
-      add_custom_stat(stats, { "turret-xp.stat-range-augment" }, value)
-    end
-
     for _, element_id in ipairs(get_unique_active_element_ids(state)) do
       local rank = get_element_rank(state, element_id)
       local summary = get_element_effect_summary_for_rank(state, element_id, rank, true, false)
@@ -884,6 +865,23 @@ return function(M)
         }
       or string.format("%s / %s", format_number(health, 0), format_number(max_health, 0))
     add_stat_value(stats, { "turret-xp.hp" }, with_quality_marker(health_caption, health_tooltip), health_tooltip)
+
+    if state then
+      local shield, shield_capacity = normalize_shield_state(state, true)
+      if shield_capacity > 0 then
+        add_stat_value(
+          stats,
+          { "turret-xp.shield" },
+          {
+            "",
+            format_number(shield, 0),
+            " / ",
+            format_number(shield_capacity, 0),
+          },
+          { "turret-xp.shield-tooltip" }
+        )
+      end
+    end
 
     local speed_values = get_shooting_speed_formula_values(entity, state, ammo_name)
     add_stat_value(

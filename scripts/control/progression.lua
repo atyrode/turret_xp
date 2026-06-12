@@ -178,6 +178,49 @@ return function(M)
     return evolution.base[upgrade_id] or 0
   end
 
+  function get_shield_capacity(state)
+    return get_base_rank(state, "shield") * SHIELD_PER_RANK
+  end
+
+  function normalize_shield_state(state, fill_if_missing)
+    if not state then
+      return 0, 0
+    end
+
+    local capacity = get_shield_capacity(state)
+    if capacity <= 0 then
+      state.shield = 0
+      return 0, 0
+    end
+
+    local current = tonumber(state.shield)
+    if current == nil then
+      current = fill_if_missing ~= false and capacity or 0
+    end
+
+    state.shield = math.max(0, math.min(capacity, current))
+    return state.shield, capacity
+  end
+
+  function refill_shield(state)
+    if not state then
+      return 0, 0
+    end
+
+    local capacity = get_shield_capacity(state)
+    state.shield = capacity
+    return state.shield, capacity
+  end
+
+  function get_shield_recharge_per_second(state)
+    local capacity = get_shield_capacity(state)
+    if capacity <= 0 then
+      return 0
+    end
+
+    return math.max(1, capacity * SHIELD_RECHARGE_FRACTION_PER_SECOND)
+  end
+
   function get_augment_rank(state, augment_id)
     if not state then
       return 0

@@ -723,7 +723,6 @@ return function(M)
     end
 
     local multiplier = get_specialization_multiplier(state, "range_multiplier")
-    local range_rank = get_augment_rank(state, "range")
     local quality = safe_read(prototypes.quality, quality_name or "normal")
     local quality_multiplier = quality and get_quality_multiplier(quality, "range_multiplier") or 1
     local base_range = nil
@@ -734,12 +733,12 @@ return function(M)
     end
 
     if not base_range then
-      base_range = (total / multiplier) - (range_rank * quality_multiplier)
+      base_range = total / multiplier
     end
 
     return {
       base = base_range,
-      additive = range_rank * quality_multiplier,
+      additive = 0,
       multiplier = multiplier,
       total = total,
     }
@@ -751,10 +750,6 @@ return function(M)
     end
 
     local multiplier = get_specialization_multiplier(state, "health_multiplier")
-    local health_rank = get_augment_rank(state, "max_health")
-    local quality = safe_read(prototypes.quality, quality_name or "normal")
-    local quality_multiplier = quality and get_quality_multiplier(quality, "health_multiplier") or 1
-    local additive = health_rank * MAX_HEALTH_PER_RANK * quality_multiplier
     local base_health = nil
     local base_prototype = prototypes.entity[BASE_TURRET_NAME]
     if base_prototype then
@@ -765,12 +760,12 @@ return function(M)
 
     local total = max_health
     if base_health then
-      total = math.floor(((base_health + additive) * multiplier) + 0.5)
+      total = math.floor((base_health * multiplier) + 0.5)
     end
 
     return {
       base = base_health or (max_health / multiplier),
-      additive = additive,
+      additive = 0,
       multiplier = multiplier,
       total = total,
     }

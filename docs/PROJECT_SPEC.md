@@ -1,8 +1,8 @@
 # Project Spec
 
-## Version 0.10.3
+## Version 0.10.4
 
-V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret XP as two narrower attached columns: core identity, XP, dev controls, and scrollable stats on the left; a richer static Evolution summary header plus a bounded scrollable six-section Evolution workflow on the right. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installed cores can optionally bind to their turret body for quick moves: mining a bound veteran turret returns one tagged placeable turret item instead of a separate turret plus core. Bound items place a hidden bound-only placeholder that is immediately converted into a real gun turret with the stored core profile, which keeps normal gun-turret replacement ghosts tied to the normal gun turret item. Installing a core creates an invisible inserter-fed input on the turret tile whenever selected elements need next-rank materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Nearby inserters that are actually sourcing needed materials are pointed at the hidden input and can receive multiple active element filters at once. When input is not needed, inserters are restored to the turret target so ammo logistics keep behaving normally. Specialization, sub-specialization, Range augment, and Max HP choices use hidden gun-turret variants with prototype stat changes generated in `data-final-fixes.lua`, so they inherit final base gun-turret edits from mods that run during `data-updates.lua`. Resistance is intentionally scripted instead of variant-backed: it refunds part of non-lethal final incoming damage after Factorio's vanilla resistance calculation. Body swaps are queued until the turret GUI closes so Factorio does not reset the whole vanilla window position. Combat XP is weighted by surface and target type so asteroid defense, especially on space platforms, does not overlevel cores. The implementation is split into runtime modules under `scripts/control/` and data-stage modules under `prototypes/`.
+V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret XP as two narrower attached columns: core identity, XP, dev controls, and scrollable stats on the left; a richer static Evolution summary header plus a bounded scrollable six-section Evolution workflow on the right. Turret identity is an explicit player choice through a movable Veteran Core item, while ordinary gun turrets stay stackable and inventory-friendly. Installed cores can optionally bind to their turret body for quick moves: mining a bound veteran turret returns one tagged placeable turret item instead of a separate turret plus core. Bound items place a hidden bound-only placeholder that is immediately converted into a real gun turret with the stored core profile, which keeps normal gun-turret replacement ghosts tied to the normal gun turret item. Installing a core creates an invisible inserter-fed input on the turret tile whenever selected elements need next-rank materials, avoiding a visible fake chest beside the turret while routing ammo back into the turret. Nearby inserters that are actually sourcing needed materials are pointed at the hidden input and can receive multiple active element filters at once. When input is not needed, inserters are restored to the turret target so ammo logistics keep behaving normally. Specialization and sub-specialization choices use hidden gun-turret variants with prototype stat changes generated in `data-final-fixes.lua`, so they inherit final base gun-turret edits from mods that run during `data-updates.lua`. Shield and Resistance are intentionally scripted instead of variant-backed: Shield absorbs non-lethal incoming damage before HP and recharges after a delay, while Resistance refunds part of remaining non-lethal final incoming damage after Factorio's vanilla resistance calculation. Body swaps are queued until the turret GUI closes so Factorio does not reset the whole vanilla window position. Combat XP is weighted by surface and target type so asteroid defense, especially on space platforms, does not overlevel cores. The implementation is split into runtime modules under `scripts/control/` and data-stage modules under `prototypes/`.
 
 ## Runtime Behavior
 
@@ -14,7 +14,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - New core profiles start at level 0 with zero XP, kills, kill credit, damage, total XP, custom name, display-label flag, and empty evolution choices.
 - Veteran Cores are non-stackable `item-with-tags` items. Extracted cores serialize their profile into item tags.
 - Bound veteran turrets are non-stackable placeable `item-with-tags` items that serialize the core profile and a small turret snapshot. They place a hidden bound-only placeholder entity first; build handling converts it into a real `gun-turret` before installing the profile.
-- Newly created bound veteran turret stacks use hidden preview item/placeholder variants selected from the stored specialization and Range augment rank. This lets Factorio's native placement range preview match the turret that will be restored, while older generic bound stacks remain a compatibility fallback until placed and mined again.
+- Newly created bound veteran turret stacks use hidden preview item/placeholder variants selected from the stored specialization and sub-specialization. This lets Factorio's native placement range preview match the specialization body that will be restored, while older generic or retired range-preview stacks remain a compatibility fallback until placed and mined again.
 - Bound turret items carry their saved ammo snapshot. If another mod preloads ammo during placement, Turret XP reconciles that ammo against the saved snapshot: matching ammo satisfies the snapshot, while only excess or incompatible placement-time ammo is returned.
 - Bound core detachment happens when mining-buffer conversion creates or spills the tagged bound turret item, not during the pre-mining snapshot. If the inventory cannot accept the bound item, the tagged bound turret is spilled rather than falling back to a separate Veteran Core path.
 - On space platforms, Veteran Cores stay in the platform hub inventory until the player chooses a specific core from the opened turret panel. This avoids inserter ambiguity when multiple cores exist and keeps normal inserters focused on ammo/material feeding.
@@ -43,7 +43,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - Sub-specialization unlocks at level 40 and branches the chosen primary specialization into one of two stronger identities.
 - Second element unlocks at level 50 and creates a combo identity with the first element.
 - Specialization swaps the turret body between vanilla `gun-turret` and hidden `turret-xp-gun-turret-*` variants. Removing the Veteran Core returns the turret body to vanilla `gun-turret`.
-- Hidden turret variants are required for real per-turret range, cooldown, damage modifier, max HP, and rotation-speed changes. They are generated in `data-final-fixes.lua` after all mods' `data-updates.lua` stages, so Range and Max HP ranks add to the final modded base turret instead of an early vanilla copy. Their force gun-turret damage research modifier is synced at runtime from vanilla `gun-turret` instead of being injected into technology effect lists. When the turret GUI is open, body swaps are deferred until close to avoid moving the vanilla entity GUI back to its default location.
+- Hidden turret variants are required for real specialization and sub-specialization changes to per-turret range, cooldown, damage modifier, max HP, and rotation speed. They are generated in `data-final-fixes.lua` after all mods' `data-updates.lua` stages, so role multipliers apply to the final modded base turret instead of an early vanilla copy. Their force gun-turret damage research modifier is synced at runtime from vanilla `gun-turret` instead of being injected into technology effect lists. When the turret GUI is open, body swaps are deferred until close to avoid moving the vanilla entity GUI back to its default location.
 - If a compatible mod gives gun-turret ammo a projectile `max_range` lower than Turret XP's generated turret range, `data-final-fixes.lua` adds or patches a turret-source ammo type with enough projectile range for veteran turrets. Non-turret ammo behavior stays on the original default/source-specific ammo type. This is mainly for K2/K2SO realistic rifle ammo, where the turret can otherwise target farther than the physical bullet can fly.
 - Ammo Recovery stores the last loaded ammo item and quality on the Veteran Core. Each rank recovers one ammo item per minute into the turret ammo inventory, using the currently loaded ammo when present or the remembered ammo when the turret is empty. Factorio ammo is consumed as discrete items; there is no per-round ammo durability to refill.
 - Mined unbound turrets return the installed Veteran Core as a separate item or spill it if there is no inventory room.
@@ -71,16 +71,17 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 
 ## Evolution Sections
 
-- `Core upgrades`: available from level 0 once a Veteran Core is installed. Includes Damage, Regeneration, Resistance, Ammo Recovery, Lifesteal, Crit Chance, and Crit Damage.
+- `Core upgrades`: available from level 0 once a Veteran Core is installed. Includes Damage, Shield, Regeneration, Resistance, Ammo Recovery, Lifesteal, Crit Chance, and Crit Damage.
 - `Specialization`: unlocks at level 10. Picks Sniper, Machine Gun, Bulwark, or Brawler for free.
 - `First element`: unlocks at level 20. Picks Explosive, Fire, Electric, or Toxic for free at rank 1; later ranks use passive material feeding.
-- `Powerful augments`: unlocks at level 30. Includes Bullet Bounce, Double Shot, Luck, Veteran Training, Range, and Max HP. Augment points are earned every ten levels.
+- `Powerful augments`: unlocks at level 30. Includes Bullet Bounce, Double Shot, Luck, and Veteran Training. Augment points are earned every ten levels.
 - `Sub-specialization`: unlocks at level 40. Picks one of two branch identities for the current specialization.
 - `Second element and combo`: unlocks at level 50. Picks a second element for free at rank 1 and derives a combo from the two selected elements.
 
 ## Combat Effects
 
 - Damage adds flat physical bonus damage per shot.
+- Shield adds 50 shield per rank, absorbs incoming damage before turret HP, and starts recharging after a short delay without damage. Because Factorio applies damage before scripts run, a single hit that exceeds the turret's native HP may still be lethal before Shield can respond.
 - Regeneration adds passive turret repair equal to 0.1% of current max HP per second per rank, before specialization regeneration multipliers.
 - Resistance mitigates 0.25% final incoming damage per rank, capped at 60%, by refunding health after non-lethal hits.
 - Ammo Recovery regenerates the current or remembered ammo item at one ammo per minute per rank.
@@ -93,8 +94,6 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - Double Shot can apply a second physical hit to a nearby second target when available, or to the original target when it is alone.
 - Luck increases crit, bounce, double-shot, and element proc odds by a small relative amount per rank.
 - Veteran Training increases combat XP gained from damage and kill credit.
-- Range adds +1 attack range per rank, up to rank 20, through hidden prototype-backed turret variants. Specialization range multipliers apply after Range augment ranks.
-- Max HP adds +50 maximum HP per augment rank, capped at rank 20, through hidden prototype-backed turret variants. Specialization HP multipliers apply after Max HP ranks.
 - Fire can add fire damage and tracked burn damage over time.
 - Electric can arc damage to a nearby enemy.
 - Explosive can splash damage around the target.
@@ -129,7 +128,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 ## Release Target
 
 - Mod name: `turret_xp`
-- Current version: `0.10.3`
+- Current version: `0.10.4`
 - GitHub repository: `atyrode/turret_xp`
 - Factorio Mod Portal title: `Turret XP`
 - Pre-publish validation: pull requests and `main` run GitHub Actions package validation, including a stale generated-public-assets check. Headless tests run in CI when Mod Portal download credentials are configured. A published GitHub Release/tag named `v<info.json version>` triggers the release workflow, which validates the tag, verifies generated public assets, runs the headless suite, attaches the package, and publishes to the Mod Portal behind the `factorio-mod-portal` environment gate. Local release and publishing scripts generate release notes and Mod Portal copy from `info.json`, `changelog.txt`, and `docs/public-copy.json`. Local publishing through `scripts/publish-portal.sh` still runs the headless suite by default before upload. The packaged zip includes root `thumbnail.png` when present.

@@ -20,8 +20,8 @@ The player installs a Veteran Core into a normal gun turret, lets that turret ea
 - Bound veteran turrets are optional tagged placeable items for quick moves of one turret/core pair.
 - Combat XP uses damage contribution and kill credit, with target-aware and space-platform-aware XP weighting.
 - Evolution currently has six level-gated sections: core upgrades, specialization, first element, augments, sub-specialization, and second element/combo.
-- Range, Max HP, specialization, and sub-specialization stat changes use hidden prototype-backed turret variants because Factorio does not expose equivalent per-entity runtime stat mutation.
-- Resistance is scripted rather than prototype-backed to avoid adding another hidden variant axis.
+- Specialization and sub-specialization stat changes use hidden prototype-backed turret variants because Factorio does not expose equivalent per-entity runtime stat mutation.
+- Shield and Resistance are scripted rather than prototype-backed to avoid reintroducing Range/Max HP variant axes.
 - Fire and Toxic delayed damage are tracked so scripted damage-over-time still contributes to XP, kill credit, and lifesteal.
 - Space-platform turrets can select exact Veteran Cores from the platform hub inventory.
 - CI and local validation include strict Lua tooling, packaging, and Factorio headless regression tests where Factorio binaries/credentials are available.

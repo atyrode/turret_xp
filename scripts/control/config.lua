@@ -63,9 +63,9 @@ return function(M)
 
   GATES = DOMAIN.gates
 
-  RANGE_AUGMENT_MAX = DOMAIN.range_augment_max
-  MAX_HEALTH_AUGMENT_MAX = DOMAIN.max_health_augment_max
-  MAX_HEALTH_PER_RANK = DOMAIN.max_health_per_rank
+  SHIELD_PER_RANK = DOMAIN.shield_per_rank
+  SHIELD_RECHARGE_DELAY_TICKS = 60 * 5
+  SHIELD_RECHARGE_FRACTION_PER_SECOND = 0.15
   RESISTANCE_PER_RANK = 0.0025
   RESISTANCE_MAX = 0.60
   RESISTANCE_MAX_RANK = math.floor(RESISTANCE_MAX / RESISTANCE_PER_RANK)
@@ -101,6 +101,14 @@ return function(M)
       value = "-0.25% taken",
       effect = "resistance",
       max_rank = RESISTANCE_MAX_RANK,
+    },
+    {
+      id = "shield",
+      sprite = "item/energy-shield-equipment",
+      name = "Shield",
+      description = "+50 shield per rank. Shield absorbs damage before HP and starts recharging after a short delay without damage.",
+      value = "+50 shield",
+      effect = "shield",
     },
     {
       id = "ammo_regen",
@@ -177,22 +185,6 @@ return function(M)
       name = "Veteran training",
       value = "+5% combat XP",
       description = "+5% combat XP gained per rank.",
-    },
-    {
-      id = "range",
-      sprite = "entity/radar",
-      name = "Range",
-      value = "+1 attack range",
-      description = "+1 tile attack range per rank. Max rank 20.",
-      max_rank = RANGE_AUGMENT_MAX,
-    },
-    {
-      id = "max_health",
-      sprite = "item/stone-wall",
-      name = "Max HP",
-      value = "+50 HP",
-      description = "+50 maximum HP per rank. Max rank 20.",
-      max_rank = MAX_HEALTH_AUGMENT_MAX,
     },
   }
 

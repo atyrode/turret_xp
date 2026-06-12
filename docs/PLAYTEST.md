@@ -4,7 +4,7 @@
 
 Current development playtest:
 
-0.10.3 is the current package target for the next Mod Portal playtest release.
+0.10.4 is the current package target for the next Mod Portal playtest release.
 
 Preferred once published:
 
@@ -40,7 +40,7 @@ scripts/install-local.sh
 16. Mine a turret with an unbound core installed and confirm the gun turret item and Veteran Core are returned separately.
 17. Bind the installed core from the Veteran Core slot row, mine the turret, and confirm inventory receives one bound veteran turret item rather than separate turret/core items.
 18. Place the bound veteran turret item and confirm the turret, installed core profile, name/label settings, quality, health ratio, and loaded ammo restore. Unbind it and confirm mining returns to the separate item behavior.
-18a. Bind a turret with Sniper or Range ranks, hold the bound turret item in hand, and confirm Factorio's native placement range preview matches the restored turret range. Old generic bound stacks may need to be placed and mined once before they become a range-specific preview item.
+18a. Bind a turret with Sniper or a sub-specialization that changes range, hold the bound turret item in hand, and confirm Factorio's native placement range preview matches the restored turret range. Old generic or retired range-preview bound stacks may need to be placed and mined once before they become a specialization-specific preview item.
 18b. Mine a bound turret with ammo loaded, place the bound item again, and confirm the ammo is restored only in the turret: the player inventory must not also receive a duplicate copy.
 18c. With Fill4Me or another placement helper enabled, place a bound turret that already stores ammo and confirm all placement-time ammo is refunded before the saved bound ammo snapshot is restored.
 18d. Mine a bound turret with no free inventory slot and confirm a tagged bound turret item spills on the ground instead of returning only a Veteran Core or losing the profile.
@@ -50,7 +50,7 @@ scripts/install-local.sh
 22. Run `/turret-xp-dev` and use `+1` and `+5` dev buttons to reach levels 10, 20, 30, 40, and 50 quickly.
 23. Run `/turret-xp-dev` again and confirm dev controls hide/show without breaking the panel layout.
 24. Spend core upgrade points and confirm ranks and remaining points refresh immediately without moving the whole vanilla turret GUI.
-24a. Spend Max HP augment ranks, close/reopen if needed for the deferred body swap, and confirm the real HP maximum increases by 50 per rank up to rank 20.
+24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, and starts recharging only after the no-damage delay.
 24b. Spend Ammo Recovery ranks, let the turret remember loaded ammo, empty the turret, and confirm recovered ammo is slowly inserted back into the turret ammo inventory.
 24c. Spend Resistance ranks, damage the turret with enemies, and confirm the stats panel shows reduced damage taken while the turret still dies normally to overwhelming lethal hits.
 25. Confirm unlocked Evolution choices have category headers, right-side status text, horizontal delimiters, and are easier to scan.
@@ -70,9 +70,9 @@ scripts/install-local.sh
 37a. Confirm the role-specific secondary multiplier is visible and functional: Sniper boosts Crit Damage, Machine Gun boosts Ammo Recovery, Bulwark boosts Regeneration, and Brawler boosts Lifesteal.
 37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: x3 damage, x0.5 fire rate, short range, and lifesteal.
 38. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
-39. Buy Range ranks and confirm the displayed range changes and the turret can actually fire farther.
+39. Pick Sniper or a range-changing sub-specialization and confirm the displayed range changes and the turret can actually fire farther.
 39a. Level a turret through combat and confirm a short `Level up!` popup appears above the turret when the core gains a level.
-40. With a mod that changes vanilla gun turret range during data updates, such as K2 Spaced Out, confirm buying Range rank 1 adds to the modded base range instead of reducing it.
+40. With a mod that changes vanilla gun turret range during data updates, such as K2 Spaced Out, confirm specialization range multipliers apply to the modded base range instead of reducing it.
 40a. With K2/K2SO realistic weapons enabled, test a long-range Turret XP build with rifle ammo and confirm the turret no longer shoots endlessly at targets beyond the physical bullet delivery range.
 41. At level 40, pick one of the two sub-specializations for the active role and confirm the stats summary shows the branch identity and combined multipliers.
 42. Confirm an unlocked element card stays inside the Evolution column, keeps its `Change` action visible, and keeps next-rank material progress visible.
@@ -83,7 +83,7 @@ scripts/install-local.sh
 47. Let the turret shoot enemies and confirm XP, damage dealt, kills, active custom stat rows, and upgrade/element visual feedback feel visible enough to judge. Electric arc visuals should disappear quickly instead of staying on the map. Crits, double shots, bounce, Fire burn, and Toxic poison should be readable enough to notice when they happen.
 47a. Confirm the stats panel reserves space for its scrollbar when it becomes scrollable, and that Crit Chance and Crit Damage appear under Damage Dealt as regular baseline stats.
 47b. Confirm stat, upgrade, augment, and element value text colors only the numeric parts, with units and descriptive words staying neutral; elemental damage numbers should use their element color.
-48. Damage turrets with regeneration ranks and confirm passive repair scales with current max HP, especially after Max HP ranks or Bulwark/Guardian choices.
+48. Damage turrets with Shield and Regeneration ranks and confirm Shield protects HP first, then passive repair scales with current max HP, especially after Bulwark/Guardian choices.
 49. Try Lifesteal in combat and check whether vampiric healing is understandable.
 50. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
 51. Spend points, toggle label settings, unlock elements, use Change actions, and reset Evolution while the vanilla turret GUI is moved. Confirm the whole vanilla turret GUI does not jump back to its default position.
@@ -116,9 +116,9 @@ Useful feedback:
 - Did level gates 10, 20, 30, 40, and 50 feel like the right first draft?
 - Were passive material rank requirements understandable?
 - Which element, specialization, or augment felt confusing or too weak?
-- Did Range ranks and specialization multipliers feel meaningful without breaking the turret role?
-- Did specialization, Range, Change actions, and full Evolution Reset avoid moving the whole vanilla turret GUI?
-- If using K2 Spaced Out or another turret-range mod, did Range ranks preserve the modded base range?
+- Did Shield feel like a satisfying survivability replacement for Max HP?
+- Did specialization, Change actions, and full Evolution Reset avoid moving the whole vanilla turret GUI?
+- If using K2 Spaced Out or another turret-range mod, did specialization range multipliers preserve the modded base range?
 - Did XP, kills, evolution points, and ranks update at the pace you expected?
 - Did the platform hub core selector make it clear which Veteran Core was being installed?
 - Did target-aware XP pacing feel closer to the intended progression speed, especially for passive asteroid defense?

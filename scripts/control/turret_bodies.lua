@@ -178,9 +178,7 @@ return function(M)
     local evolution = state and ensure_evolution_state(state) or nil
     local specialization = evolution and evolution.specialization or nil
     local sub_specialization = evolution and evolution.sub_specialization or nil
-    local range_rank = state and get_augment_rank(state, "range") or 0
-    local health_rank = state and get_augment_rank(state, "max_health") or 0
-    local target_name = get_specialized_turret_name(specialization, range_rank, health_rank, sub_specialization)
+    local target_name = get_specialized_turret_name(specialization, 0, 0, sub_specialization)
     return swap_turret_body(entity, target_name)
   end
 
@@ -215,8 +213,8 @@ return function(M)
     local evolution = ensure_evolution_state(state)
     local target_name = get_specialized_turret_name(
       evolution.specialization,
-      get_augment_rank(state, "range"),
-      get_augment_rank(state, "max_health"),
+      0,
+      0,
       evolution.sub_specialization
     )
     if entity.name == target_name then

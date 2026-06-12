@@ -23,7 +23,7 @@
 - Mining a bound veteran turret must not fall back to a separate Veteran Core result or lose the core profile when the mining buffer is full.
 - Mining a bound veteran turret must move loaded ammo into the bound item snapshot and clear the live turret ammo inventory before vanilla mining can return that same ammo separately.
 - Placing a bound veteran turret must restore the saved ammo snapshot without duplicating or deleting ammo inserted by placement helper mods; placement-time ammo is treated as external and returned or spilled before the saved snapshot is restored.
-- Newly created bound veteran turret stacks with specialization or Range ranks should use hidden preview item variants so the cursor placement range visualization reflects the turret that will be restored.
+- Newly created bound veteran turret stacks with specialization or sub-specialization should use hidden preview item variants so the cursor placement range visualization reflects the turret that will be restored.
 - The bound veteran turret item must not be treated as an equivalent replacement item for ordinary vanilla gun-turret ghosts. Destroying a regular gun turret with no installed core must create a normal gun-turret replacement ghost.
 - Installing a Veteran Core must create a real hidden feeder inventory entity on the turret tile.
 - Element rank material progress must consume matching resources from the hidden feeder inventory, not from the player inventory.
@@ -40,8 +40,8 @@
 - When XP progression increases an installed core's level, a short in-world level-up popup should appear above the turret.
 - Evolution points must be derived from turret level and spent allocations.
 - Clicking an allocatable core upgrade or augment must allocate one rank to the opened turret and refresh the panel.
-- Range augment ranks must change real turret attack range, not only the displayed range value.
-- Max HP augment ranks must change real turret max health through hidden prototype-backed variants and must remain capped to avoid unbounded prototype growth.
+- Shield core upgrade ranks must add scripted shield capacity that absorbs incoming damage before HP and recharges after a short delay without damage.
+- Retired Range and Max HP augment ranks from old profiles must be normalized away so old tags do not keep dead upgrade state.
 - Resistance core upgrade ranks must reduce non-lethal incoming damage through scripted mitigation without adding more hidden turret variants.
 - Ammo Recovery core upgrade ranks must regenerate the current or remembered ammo item over time, but must not create ammo for a turret that has never held ammo.
 - Clicking an element option must assign rank 1 for free when the corresponding level gate is unlocked.
@@ -54,7 +54,7 @@
 - The GUI must refresh while the turret GUI remains open.
 - Selecting a gun turret and running `/turret-xp` must open the same panel as a fallback.
 - The packaged zip must include `info.json`, Lua entrypoints, runtime/data prototype module files, locale, docs, README, changelog, and a root `thumbnail.png` when that file exists.
-- Hidden specialization, Range, and Max HP turret variants must inherit late gun-turret prototype edits from other mods before adding Turret XP-specific stat changes.
+- Hidden specialization and sub-specialization turret variants must inherit late gun-turret prototype edits from other mods before adding Turret XP-specific stat changes.
 - Gun-turret accepted projectile ammo with an ammo delivery range below the highest generated Turret XP turret range must receive a turret-source compatibility range patch while preserving the original non-turret ammo behavior.
 
 ## Display
@@ -63,8 +63,8 @@
 - Show whether a Veteran Core is installed and provide install/extract controls.
 - Show Bind/Unbind controls for installed cores.
 - On space-platform turrets, show platform hub Veteran Core options when cores are available there.
-- Show current HP and prototype max HP.
-- Show Max HP augment and Ammo Recovery rows in the active custom stat summary when ranked.
+- Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.
+- Show Shield, Resistance, Ammo Recovery, and other active custom stat rows when ranked.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
 - Show turret attack range in tiles, including quality range multiplier when relevant.
 - Show loaded ammo and count.

@@ -140,6 +140,9 @@ return function(M)
     end
 
     evolution.base[upgrade_id] = rank + amount
+    if upgrade_id == "shield" then
+      refill_shield(state)
+    end
     sync_turret_progression(state)
     refresh_open_turret(player, entity, anchor)
   end
@@ -169,12 +172,16 @@ return function(M)
     else
       evolution.base[upgrade_id] = new_rank
     end
+    if upgrade_id == "shield" then
+      normalize_shield_state(state, false)
+    end
     sync_turret_progression(state)
     refresh_open_turret(player, entity, anchor)
   end
 
   function reset_base_upgrades_state(state)
     ensure_evolution_state(state).base = {}
+    state.shield = 0
     sync_turret_progression(state)
     combat.mark_turret_body_sync_pending(state)
   end
@@ -413,9 +420,6 @@ return function(M)
     amount = math.min(amount, available, remaining_to_max)
     evolution.augments[augment_id] = rank + amount
     sync_turret_progression(state)
-    if augment_id == "range" or augment_id == "max_health" then
-      combat.mark_turret_body_sync_pending(state)
-    end
     refresh_open_turret(player, entity, anchor)
   end
 
@@ -445,9 +449,6 @@ return function(M)
       evolution.augments[augment_id] = new_rank
     end
     sync_turret_progression(state)
-    if augment_id == "range" or augment_id == "max_health" then
-      combat.mark_turret_body_sync_pending(state)
-    end
     refresh_open_turret(player, entity, anchor)
   end
 
@@ -458,7 +459,7 @@ return function(M)
     end
 
     reset_augments_state(state)
-    refresh_open_turret(player, entity, evolution_anchor_name("augment", "range"))
+    refresh_open_turret(player, entity, evolution_anchor_name("augment", "bounce"))
   end
 
   function reset_evolution_state(entity, state, spill)
