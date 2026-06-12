@@ -42,10 +42,12 @@ jobs:
         run: echo "No package-impacting changes detected; skipping package validation."
 
       - name: Set up Python
-        if: steps.changes.outputs.package_changed == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
+
+      - name: Run lightweight checks
+        run: scripts/check.sh
 
       - name: Install Lua tooling
         if: steps.changes.outputs.package_changed == 'true'

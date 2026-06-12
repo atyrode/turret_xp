@@ -95,7 +95,8 @@
 ## Operational
 
 - `.env` must remain ignored and must not be committed.
-- `scripts/check.sh` must validate JSON and Lua syntax when `luac` is available.
+- `scripts/check.sh` must validate JSON, verify generated public assets are current, and check Lua syntax when `luac` is available.
+- Public homepage, GitHub release notes, and Mod Portal description/metadata must be generated from shared sources instead of maintaining duplicate large copy blocks in release scripts.
 - `scripts/package.sh` must create `dist/turret_xp_<info.json version>.zip`.
 - Pull requests and pushes to `main` must run GitHub Actions package validation.
 - GitHub Actions headless tests must use an isolated mods directory, the official Factorio headless Linux build, required Mod Portal dependency zips, repository secrets for authenticated dependency downloads, and caches that do not contain credentials.

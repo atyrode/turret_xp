@@ -22,11 +22,10 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - `scripts/domain.lua` owns shared stable gameplay IDs, caps, specialization data, label presets, and generated variant-name helpers across data stage, runtime, and tests.
 - Lua formatting and linting are enforced through StyLua, Luacheck, Lua 5.2 syntax checks, CI, and the local Docker Compose tooling path.
 - The headless suite covers the current hidden prototype budget, bound turret movement and ammo conservation, modded base turret range inheritance, turret-source projectile ammo range compatibility, damage accounting, GUI helper samples, compatibility helper samples, feeder routing, passive element progress, Resistance, Max HP, Ammo Recovery, status damage, and gated remote policy.
+- Public homepage, GitHub release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and `docs/public-copy.json`, with `scripts/check.sh` detecting stale committed homepage output.
 
 ## Current Roadmap
 
-- Restructure active docs so current guidance is easier to find and historical release notes stay in `changelog.txt`.
-- Generate website, portal copy, and release notes from shared metadata and changelog sources.
 - Decide and harden the hidden feeder material-input architecture before adding more material systems.
 - Isolate legacy migrations and retire stale element-project paths once save-compatibility policy is explicit.
 - Refactor combat effects into descriptors with explicit scan, visual, status, and damage-accounting budgets.
@@ -37,10 +36,11 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 Use the narrowest meaningful checks for each change:
 
 - Documentation-only changes: `scripts/check.sh`, `git diff --check`.
+- Public copy, version, changelog, or homepage changes: `scripts/generate-public-assets.py`, `scripts/generate-public-assets.py --check`, `git diff --check`.
 - Lua/runtime/tooling changes: `scripts/check.sh`, `docker compose run --rm lua-tools`, `scripts/package.sh`.
 - Gameplay, migration, feeder, combat, profile, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
 - Release changes: local script smoke checks where practical, CI on the release branch, and the GitHub Release workflow before Mod Portal publication.
-- Website changes: inspect `docs/index.html` locally or in the built GitHub Pages output, and confirm public links point to current docs.
+- Website changes: inspect generated `docs/index.html` locally or in the built GitHub Pages output, and confirm public links point to current docs.
 
 ## Playtest Focus
 
@@ -63,4 +63,3 @@ Use the narrowest meaningful checks for each change:
 - Combat visual density budget for busy defenses.
 - Whether combat-effect refactors should be behavior-preserving only or include approved balance changes.
 - Destroyed turret policy for installed Veteran Cores.
-- Website/release copy generation model: committed generated output for GitHub Pages or Action-built deployment.

@@ -17,16 +17,16 @@
 - `scripts/download-mod-dependencies.py` downloads required Mod Portal dependency zips for isolated CI/headless test directories using `FACTORIO_SERVICE_USERNAME` and `FACTORIO_SERVICE_TOKEN`.
 - `scripts/test-headless.sh` runs a temporary Factorio test mod against the packaged Turret XP zip before portal publishing. That companion mod activates the gated `turret_xp_test` remote interface; a separate smoke-test mod verifies production runs without the companion mod do not register that interface. Passing runs print the tracked hidden prototype budget so prototype-axis growth is visible in normal validation output.
 - GitHub Actions runs strict Lua syntax/format/lint checks and package validation for pull requests and `main`; when Mod Portal download secrets are configured, it also downloads the official Factorio headless Linux build and runs the headless regression suite. Pull request CI uses `scripts/ci-change-scope.sh` so docs-only changes keep required checks green without running package/headless work, while runtime/tooling/workflow changes run the full path. Pushes to `main` and manual runs always run full validation. The workflows pin `STYLUA_VERSION`, `STYLUA_SHA256`, and `FACTORIO_HEADLESS_VERSION`; they cache the extracted Factorio directory plus dependency zips so repeated CI runs avoid redundant downloads without storing credentials. The release workflow is triggered by a GitHub Release/tag, validates the tag against `info.json`, attaches the built package to the GitHub Release, and publishes to the Factorio Mod Portal behind the `factorio-mod-portal` environment gate.
-- Static GitHub Pages homepage served from `docs/index.html`.
+- `scripts/generate-public-assets.py` generates the committed GitHub Pages homepage plus `dist/` release-note and Mod Portal text from `info.json`, `changelog.txt`, and `docs/public-copy.json`.
+- Static GitHub Pages homepage served from generated `docs/index.html`.
 
 ## Website Direction
 
 - Keep the public website current whenever the mod version, user-visible behavior, documentation, or release status changes.
-- Treat the website as a generated or mostly generated project surface, not as independent marketing copy.
-- Prefer deriving website content from existing sources such as `info.json`, `changelog.txt`, `README.md`, locale strings, and the Markdown docs.
-- Avoid duplicating version numbers, feature lists, playtest steps, and roadmap notes in hand-written HTML when a script can read them from existing files.
-- Near-term acceptable state: a simple static page with a documented obligation to keep it aligned.
-- Target state: a small generator updates `docs/index.html` from repo metadata/docs, and release/publish workflows run or check that generator before publishing.
+- Treat the website as generated committed output, not independent marketing copy.
+- Stable facts come from `info.json` and `changelog.txt`; reusable public wording lives in `docs/public-copy.json`.
+- Avoid duplicating version numbers, feature lists, playtest steps, and roadmap notes in hand-written HTML or shell heredocs.
+- `scripts/check.sh`, CI, `scripts/release.sh`, and `scripts/publish-portal.sh` verify that `docs/index.html` is current before release-sensitive work continues.
 
 ## Dependency Check Policy
 
@@ -147,6 +147,7 @@
 ## Validation Path
 
 - Run `scripts/check.sh`; it skips Lua tools that are not installed on the host.
+- Run `scripts/generate-public-assets.py` after changing `info.json`, `changelog.txt`, or `docs/public-copy.json`.
 - Run `docker compose run --rm lua-tools` for strict local Lua syntax, StyLua, and Luacheck validation without mutating the host.
 - Run `scripts/package.sh`.
 - Run `scripts/test-headless.sh`. It packages the current mod, assembles an isolated mod directory with flib and `tests/headless/turret_xp_headless_tests`, creates a save, benchmark-runs it for deterministic ticks, and fails if the test mod does not log `PASS`. It then runs `tests/headless/turret_xp_remote_policy_tests` separately to verify the private `turret_xp_test` remote interface is absent without the companion suite.

@@ -39,6 +39,14 @@ scripts/check.sh
 ```
 
 `scripts/check.sh` stays host-friendly: it validates JSON and runs Lua syntax, StyLua, and Luacheck only when those tools are available on `PATH`.
+It also verifies that generated public assets are current.
+
+Public website, release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and [docs/public-copy.json](docs/public-copy.json). When public copy, version metadata, or changelog entries change, regenerate the committed homepage and verify it:
+
+```sh
+scripts/generate-public-assets.py
+scripts/generate-public-assets.py --check
+```
 
 Run the strict Lua tooling suite without installing Lua tools on the host:
 
@@ -103,13 +111,15 @@ Local helper for creating or updating the GitHub release for the current `info.j
 scripts/release.sh
 ```
 
+This script checks the generated homepage and writes GitHub release notes into `dist/` from the same public-copy sources before uploading the package.
+
 Local helper for manually publishing or updating the Factorio Mod Portal release:
 
 ```sh
 FACTORIO_MOD_PORTAL_API_KEY=<your-api-key> scripts/publish-portal.sh
 ```
 
-The script runs `scripts/test-headless.sh` before uploading. Set `SKIP_HEADLESS_TESTS=1` only for exceptional machines that cannot run Factorio locally. The script also loads an ignored `.env` file and accepts `FACTORIO_API_KEY=<your-api-key>`. The API key must be created on `https://factorio.com/profile` with `ModPortal: Publish Mods`, `ModPortal: Upload Mods`, and `ModPortal: Edit Mods` usages. Do not commit the key or paste it into chat.
+The script checks generated public assets, writes the Mod Portal description and metadata into `dist/`, and runs `scripts/test-headless.sh` before uploading. Set `SKIP_HEADLESS_TESTS=1` only for exceptional machines that cannot run Factorio locally. The script also loads an ignored `.env` file and accepts `FACTORIO_API_KEY=<your-api-key>`. The API key must be created on `https://factorio.com/profile` with `ModPortal: Publish Mods`, `ModPortal: Upload Mods`, and `ModPortal: Edit Mods` usages. Do not commit the key or paste it into chat.
 
 GitHub setup required for the automated release path:
 
@@ -161,6 +171,7 @@ The focused playtest path is in [docs/PLAYTEST.md](docs/PLAYTEST.md).
 
 - [docs/README.md](docs/README.md): documentation index.
 - [docs/index.html](docs/index.html): GitHub Pages homepage.
+- [docs/public-copy.json](docs/public-copy.json): shared public copy source for the homepage, release notes, and Mod Portal details.
 - [docs/PROJECT_BRIEF.md](docs/PROJECT_BRIEF.md): high-level mod intent, scope, assumptions, and open decisions.
 - [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md): user-visible behavior and release requirements.
 - [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md): concrete first milestone and implementation target.

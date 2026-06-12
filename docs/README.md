@@ -6,7 +6,8 @@ Release history is intentionally not duplicated here. The root [changelog.txt](.
 
 ## Homepage
 
-- [index.html](index.html): static GitHub Pages homepage for the mod.
+- [index.html](index.html): generated GitHub Pages homepage for the mod.
+- [public-copy.json](public-copy.json): shared public copy source for the homepage, release notes, and Mod Portal details. After editing it, run `scripts/generate-public-assets.py`.
 
 ## Index
 

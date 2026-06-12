@@ -229,8 +229,31 @@ h3 {
   color: #d3dbe2;
 }
 
+.band h3 {
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.band ul {
+  margin: 0 0 18px;
+  padding-left: 20px;
+  color: #d3dbe2;
+}
+
+.band li + li {
+  margin-top: 6px;
+}
+
+.band code {
+  color: #fff;
+}
+
 .band .eyebrow {
   color: #8ed0ad;
+}
+
+.release-notes {
+  min-width: 0;
 }
 
 .content {

@@ -88,6 +88,9 @@ jobs:
             exit 1
           fi
 
+      - name: Verify generated public assets
+        run: scripts/generate-public-assets.py --check
+
       - name: Require Mod Portal download credentials
         run: |
           if [ -z "${FACTORIO_SERVICE_USERNAME}" ] || [ -z "${FACTORIO_SERVICE_TOKEN}" ]; then
