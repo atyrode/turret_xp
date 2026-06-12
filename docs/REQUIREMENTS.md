@@ -64,7 +64,7 @@
 - Show Bind/Unbind controls for installed cores.
 - On space-platform turrets, show platform hub Veteran Core options when cores are available there.
 - Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.
-- Show a segmented blue in-world Shield bar under Factorio's native turret HP bar when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open. The Shield row should use the native HP bar's segmented visual language, approximate its width for a vanilla gun turret, and use neutral empty cells so the blue fill remains readable.
+- Show a nine-pip blue in-world Shield bar under Factorio's native turret HP bar when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open. The Shield row should use Factorio's exposed native shield and gray pip sprites, deplete one whole pip at a time, and stay centered under the native HP row.
 - Show Shield, Resistance, Ammo Recovery, and other active custom stat rows when ranked.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
 - Show turret attack range in tiles, including quality range multiplier when relevant.

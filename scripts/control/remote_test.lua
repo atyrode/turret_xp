@@ -158,6 +158,19 @@ return function(M)
     local attack_parameters = get_attack_parameters(current_entity)
     local turret_inventory = feeder.get_entity_inventory(current_entity, defines.inventory.turret_ammo)
     local shield, shield_capacity = normalize_shield_state(state, true)
+    local shield_bar_segments = state.shield_bar and state.shield_bar.segments or nil
+    local shield_bar_valid = false
+    local shield_bar_filled_segments = 0
+    if type(shield_bar_segments) == "table" then
+      for _, segment in pairs(shield_bar_segments) do
+        if type(segment) == "table" and segment.object and segment.object.valid then
+          shield_bar_valid = true
+          if segment.filled == true then
+            shield_bar_filled_segments = shield_bar_filled_segments + 1
+          end
+        end
+      end
+    end
 
     return {
       chip_id = state.chip_id,
@@ -171,14 +184,10 @@ return function(M)
       label_color = copy_serializable(state.label_color or {}),
       label_entity_valid = state.label_entity and state.label_entity.valid or false,
       name_render_valid = state.name_render and state.name_render.valid or false,
-      shield_bar_valid = state.shield_bar
-        and state.shield_bar.background
-        and state.shield_bar.background.valid
-        and state.shield_bar.border
-        and state.shield_bar.border.valid
-        or false,
-      shield_bar_fill_valid = state.shield_bar and state.shield_bar.fill and state.shield_bar.fill.valid or false,
-      shield_bar_segment_count = state.shield_bar and state.shield_bar.segments and #state.shield_bar.segments or 0,
+      shield_bar_valid = shield_bar_valid,
+      shield_bar_fill_valid = shield_bar_filled_segments > 0,
+      shield_bar_segment_count = type(shield_bar_segments) == "table" and #shield_bar_segments or 0,
+      shield_bar_filled_segments = shield_bar_filled_segments,
       bound_turret = state.bound_turret == true,
       last_ammo = copy_serializable(state.last_ammo),
       ammo_regen_progress = state.ammo_regen_progress or 0,
