@@ -222,8 +222,10 @@ return function(M)
           end
         end
         update_name_render(entity, state)
+        update_shield_bar_render(entity, state, false)
       elseif entity and not entity.valid then
         destroy_name_render(state)
+        destroy_shield_bar_render(state)
         state.entity = nil
       end
     end
@@ -375,6 +377,8 @@ return function(M)
 
     state.shield = math.max(0, shield - absorbed)
     state._shield_last_damage_tick = game and game.tick or nil
+    shield_bar_visible_for_damage(state)
+    update_shield_bar_render(entity, state, true)
     return absorbed
   end
 
@@ -400,6 +404,7 @@ return function(M)
     end
 
     state.shield = math.min(capacity, shield + recharge)
+    update_shield_bar_render(entity, state, false)
     return state.shield - shield
   end
 

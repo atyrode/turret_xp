@@ -6,6 +6,14 @@ return function(M)
   local _ENV = M
 
   local bound_turret_item_service = nil
+  local SHIELD_BAR_HALF_WIDTH = 0.39
+  local SHIELD_BAR_TOP_Y = 0.92
+  local SHIELD_BAR_BOTTOM_Y = 0.99
+  local SHIELD_BAR_GUI_VISIBLE_TICKS = 90
+  local SHIELD_BAR_DAMAGE_VISIBLE_TICKS = 180
+  local SHIELD_BAR_BACKGROUND_COLOR = { r = 0.02, g = 0.035, b = 0.06, a = 0.72 }
+  local SHIELD_BAR_FILL_COLOR = { r = 0.12, g = 0.62, b = 1, a = 0.9 }
+  local SHIELD_BAR_BORDER_COLOR = { r = 0.48, g = 0.85, b = 1, a = 0.78 }
 
   local function get_bound_turret_item_service()
     if not bound_turret_item_service then
@@ -168,6 +176,7 @@ return function(M)
       local profile = storage.turret_xp.chips[host.chip_id]
       if profile then
         destroy_name_render(profile)
+        destroy_shield_bar_render(profile)
       end
       if destroy_profile then
         storage.turret_xp.chips[host.chip_id] = nil
@@ -184,7 +193,14 @@ return function(M)
     local result = {}
     for key, child in pairs(value) do
       local skip_runtime_key = type(key) == "string" and string.sub(key, 1, 1) == "_"
-      if not skip_runtime_key and key ~= "entity" and key ~= "name_render" and key ~= "label_entity" and key ~= "feeder" then
+      if
+        not skip_runtime_key
+        and key ~= "entity"
+        and key ~= "name_render"
+        and key ~= "label_entity"
+        and key ~= "shield_bar"
+        and key ~= "feeder"
+      then
         result[key] = copy_serializable(child)
       end
     end
@@ -782,6 +798,162 @@ return function(M)
     end
   end
 
+  local function destroy_render_object(object)
+    if object and object.valid then
+      object.destroy()
+    end
+  end
+
+  destroy_shield_bar_render = function(profile)
+    local bar = profile and profile.shield_bar or nil
+    if bar then
+      destroy_render_object(bar.background)
+      destroy_render_object(bar.fill)
+      destroy_render_object(bar.border)
+    end
+
+    if profile then
+      profile.shield_bar = nil
+    end
+  end
+
+  function shield_bar_visible_for_damage(profile)
+    if not profile or not game then
+      return
+    end
+
+    profile._shield_bar_visible_until = math.max(
+      tonumber(profile._shield_bar_visible_until) or 0,
+      game.tick + SHIELD_BAR_DAMAGE_VISIBLE_TICKS
+    )
+  end
+
+  local function shield_bar_target(entity, x, y)
+    return {
+      entity = entity,
+      offset = { x, y },
+    }
+  end
+
+  local function draw_shield_bar_rectangle(entity, left, top, right, bottom, color, filled)
+    local ok, object = pcall(function()
+      return rendering.draw_rectangle({
+        surface = entity.surface,
+        left_top = shield_bar_target(entity, left, top),
+        right_bottom = shield_bar_target(entity, right, bottom),
+        color = color,
+        filled = filled,
+        forces = { entity.force },
+        only_in_alt_mode = false,
+      })
+    end)
+
+    return ok and object or nil
+  end
+
+  local function update_shield_bar_rectangle(object, entity, left, top, right, bottom, color, filled)
+    if object and object.valid then
+      local ok = pcall(function()
+        object.surface = entity.surface
+        object.left_top = shield_bar_target(entity, left, top)
+        object.right_bottom = shield_bar_target(entity, right, bottom)
+        object.color = color
+        object.forces = { entity.force }
+        object.only_in_alt_mode = false
+      end)
+      if ok then
+        return object
+      end
+      destroy_render_object(object)
+    end
+
+    return draw_shield_bar_rectangle(entity, left, top, right, bottom, color, filled)
+  end
+
+  update_shield_bar_render = function(entity, profile, force_visible)
+    if not profile then
+      return
+    end
+
+    if not is_gun_turret(entity) then
+      destroy_shield_bar_render(profile)
+      return
+    end
+
+    local shield, capacity = normalize_shield_state(profile, true)
+    if capacity <= 0 then
+      destroy_shield_bar_render(profile)
+      return
+    end
+
+    local tick = game and game.tick or 0
+    if force_visible then
+      profile._shield_bar_visible_until = math.max(
+        tonumber(profile._shield_bar_visible_until) or 0,
+        tick + SHIELD_BAR_GUI_VISIBLE_TICKS
+      )
+    end
+
+    local visible_until = tonumber(profile._shield_bar_visible_until) or 0
+    if not force_visible and shield >= capacity and visible_until < tick then
+      destroy_shield_bar_render(profile)
+      return
+    end
+
+    local ratio = math.max(0, math.min(1, shield / capacity))
+    local bar = profile.shield_bar
+    if type(bar) ~= "table" then
+      bar = {}
+      profile.shield_bar = bar
+    end
+
+    local left = -SHIELD_BAR_HALF_WIDTH
+    local right = SHIELD_BAR_HALF_WIDTH
+    local top = SHIELD_BAR_TOP_Y
+    local bottom = SHIELD_BAR_BOTTOM_Y
+    bar.background = update_shield_bar_rectangle(
+      bar.background,
+      entity,
+      left,
+      top,
+      right,
+      bottom,
+      SHIELD_BAR_BACKGROUND_COLOR,
+      true
+    )
+    bar.border = update_shield_bar_rectangle(
+      bar.border,
+      entity,
+      left,
+      top,
+      right,
+      bottom,
+      SHIELD_BAR_BORDER_COLOR,
+      false
+    )
+
+    if ratio > 0 then
+      local fill_right = left + ((right - left) * ratio)
+      bar.fill = update_shield_bar_rectangle(
+        bar.fill,
+        entity,
+        left,
+        top,
+        fill_right,
+        bottom,
+        SHIELD_BAR_FILL_COLOR,
+        true
+      )
+    else
+      destroy_render_object(bar.fill)
+      bar.fill = nil
+    end
+
+    if not bar.background or not bar.border then
+      destroy_shield_bar_render(profile)
+    end
+  end
+
   function find_matching_label_color_preset(profile)
     if not profile then
       return nil
@@ -1000,6 +1172,7 @@ return function(M)
     host.chip_id = profile.chip_id
     feeder.ensure(entity, profile)
     update_name_render(entity, profile)
+    update_shield_bar_render(entity, profile, false)
     return profile
   end
 
@@ -1011,6 +1184,7 @@ return function(M)
 
     local chip_id = profile.chip_id
     destroy_name_render(profile)
+    destroy_shield_bar_render(profile)
     feeder.destroy(profile, entity.position, true)
     profile.entity = nil
     if chip_id then

@@ -378,6 +378,7 @@ return function(M)
     if is_gun_turret(event.entity) then
       local profile = get_turret_state(event.entity)
       destroy_name_render(profile)
+      destroy_shield_bar_render(profile)
       feeder.destroy(profile, event.entity.position, true)
       remove_turret_state(event.entity, true)
     elseif event.entity and event.entity.valid and event.entity.name == FEEDER_NAME then
@@ -585,8 +586,10 @@ return function(M)
       ensure_evolution_state(state)
       sync_turret_progression(state)
       destroy_name_render(state)
+      destroy_shield_bar_render(state)
       if is_gun_turret(state.entity) then
         update_name_render(state.entity, state)
+        update_shield_bar_render(state.entity, state, false)
       end
     end
     for _, player in pairs(game.players) do

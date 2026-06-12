@@ -282,6 +282,9 @@ return function(M)
   safe_read = nil
   build_turret_gui = nil
   destroy_name_render = nil
+  destroy_shield_bar_render = nil
+  shield_bar_visible_for_damage = nil
+  update_shield_bar_render = nil
   get_element_effect_summary = nil
   get_combo_caption = nil
   get_unique_active_element_ids = nil

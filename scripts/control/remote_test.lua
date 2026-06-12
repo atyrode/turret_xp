@@ -171,6 +171,13 @@ return function(M)
       label_color = copy_serializable(state.label_color or {}),
       label_entity_valid = state.label_entity and state.label_entity.valid or false,
       name_render_valid = state.name_render and state.name_render.valid or false,
+      shield_bar_valid = state.shield_bar
+        and state.shield_bar.background
+        and state.shield_bar.background.valid
+        and state.shield_bar.border
+        and state.shield_bar.border.valid
+        or false,
+      shield_bar_fill_valid = state.shield_bar and state.shield_bar.fill and state.shield_bar.fill.valid or false,
       bound_turret = state.bound_turret == true,
       last_ammo = copy_serializable(state.last_ammo),
       ammo_regen_progress = state.ammo_regen_progress or 0,
@@ -526,6 +533,7 @@ return function(M)
       ensure_evolution_state(state)
       if shield_rank_changed then
         refill_shield(state)
+        update_shield_bar_render(entity, state, true)
       end
       sync_turret_progression(state)
       local synced = combat.sync_turret_body_when_idle(entity, state)
@@ -848,6 +856,7 @@ return function(M)
       if is_gun_turret(entity) then
         local state = get_turret_state(entity)
         destroy_name_render(state)
+        destroy_shield_bar_render(state)
         feeder.destroy(state, entity.position, true)
         remove_turret_state(entity, true)
       end

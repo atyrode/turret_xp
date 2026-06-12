@@ -81,7 +81,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 ## Combat Effects
 
 - Damage adds flat physical bonus damage per shot.
-- Shield adds 50 shield per rank, absorbs incoming damage before turret HP, and starts recharging after a short delay without damage. Because Factorio applies damage before scripts run, a single hit that exceeds the turret's native HP may still be lethal before Shield can respond.
+- Shield adds 50 shield per rank, absorbs incoming damage before turret HP, starts recharging after a short delay without damage, and shows a blue in-world shield bar under the native turret HP bar while relevant. Because Factorio applies damage before scripts run, a single hit that exceeds the turret's native HP may still be lethal before Shield can respond.
 - Regeneration adds passive turret repair equal to 0.1% of current max HP per second per rank, before specialization regeneration multipliers.
 - Resistance mitigates 0.25% final incoming damage per rank, capped at 60%, by refunding health after non-lethal hits.
 - Ammo Recovery regenerates the current or remembered ammo item at one ammo per minute per rank.

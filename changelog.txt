@@ -3,7 +3,7 @@
 Version: 0.10.4
 Date: 2026-06-12
   Changes:
-    - Replaced the prototype-backed Max HP augment with a scripted Shield core upgrade. Shield adds 50 shield per rank, absorbs incoming damage before turret HP, and starts recharging after a short delay without damage.
+    - Replaced the prototype-backed Max HP augment with a scripted Shield core upgrade. Shield adds 50 shield per rank, absorbs incoming damage before turret HP, displays a blue in-world shield bar under the native HP bar while relevant, and starts recharging after a short delay without damage.
     - Removed the Range augment for now. Specialization and sub-specialization range modifiers remain prototype-backed.
     - Reduced the generated hidden turret prototype budget by removing Range/Max HP variant axes from body and bound-preview generation.
     - Added a prototype migration that collapses old Range/Max HP hidden bodies and old range-preview bound items/placeholders onto the new specialization-only prototypes.

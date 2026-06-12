@@ -2225,6 +2225,9 @@ return function(M)
     set_gui_caption(panel, GUI.xp_percent, state and { "turret-xp.progress-percent", format_number(progress * 100, 0) } or "")
 
     update_stats_panel(panel, entity, state, ammo_name, ammo_count, ammo_quality, quality_name, max_health, health)
+    if state then
+      update_shield_bar_render(entity, state, true)
+    end
     update_evolution_panel(panel, state, evolution_anchor)
 
     return true

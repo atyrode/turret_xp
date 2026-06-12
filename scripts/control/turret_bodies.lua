@@ -106,6 +106,7 @@ return function(M)
     local profile = chip_id and storage.turret_xp.chips[chip_id] or nil
     if profile then
       destroy_name_render(profile)
+      destroy_shield_bar_render(profile)
       profile.entity = new_entity
     end
 
@@ -121,6 +122,7 @@ return function(M)
 
     if profile then
       update_name_render(new_entity, profile)
+      update_shield_bar_render(new_entity, profile, false)
       feeder.ensure(new_entity, profile)
     end
 
