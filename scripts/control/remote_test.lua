@@ -304,6 +304,35 @@ return function(M)
       return turret_xp_test_state_summary(entity)
     end,
 
+    selection_overlay = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local text = build_selection_overlay_text(entity, state)
+      local result = {
+        no_player = true,
+        updated = false,
+        render_valid = false,
+        time_to_live = 0,
+        title = text and text[3] or nil,
+      }
+      local player = game.players[1]
+      if not player then
+        return result
+      end
+
+      local updated = update_selection_overlay(player, entity, state)
+      ensure_storage()
+      local entry = storage.turret_xp.selection_overlays[player.index]
+      result.no_player = false
+      result.updated = updated == true
+      result.render_valid = entry and entry.render and entry.render.valid or false
+      result.time_to_live = entry and entry.render and entry.render.valid and entry.render.time_to_live or 0
+      return result
+    end,
+
     record_damage_contribution = function(target, turret, damage, final_health)
       record_damage_contribution({
         entity = target,

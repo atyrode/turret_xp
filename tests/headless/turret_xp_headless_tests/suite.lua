@@ -193,6 +193,29 @@ local function run_profile_label_test(surface)
   assert_eq(summary.name_render_valid, false, "custom RGB label fell back to rendering text")
 end
 
+local function run_selection_overlay_test(surface)
+  local turret = create_turret(surface, { 4, 0 }, 10)
+  local summary = call("install_core", turret, {
+    custom_name = "Overlay",
+    level = 3,
+  })
+  assert_true(summary ~= nil, "failed to install core for selection overlay test")
+
+  local overlay = call("selection_overlay", turret)
+  assert_true(overlay ~= nil, "selection overlay did not return a smoke-test summary")
+  assert_eq(overlay.title, "Overlay", "selection overlay should use the core name when present")
+  if not overlay.no_player then
+    assert_true(overlay.updated, "selection overlay did not report a successful update")
+    assert_true(overlay.render_valid, "selection overlay render object was not valid")
+    assert_gt(overlay.time_to_live, 0, "selection overlay should expire instead of living forever")
+  end
+
+  call("cleanup_entity", turret)
+  if turret and turret.valid then
+    turret.destroy({ raise_destroy = false })
+  end
+end
+
 local function run_evolution_body_test(surface)
   local turret = create_turret(surface, { 8, 0 }, 20)
   call("install_core", turret, { level = 40 })
@@ -1380,6 +1403,7 @@ local function run_immediate_tests()
   run_prototype_budget_test()
   run_place_result_regression_test()
   run_profile_label_test(surface)
+  run_selection_overlay_test(surface)
   run_modded_base_range_variant_test(surface)
   run_turret_ammo_range_compat_test()
   run_level_zero_points_test(surface)

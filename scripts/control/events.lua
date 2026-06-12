@@ -268,6 +268,13 @@ return function(M)
     end
   end
 
+  function handlers.on_selected_entity_changed(event)
+    local player = game.get_player(event.player_index)
+    if player then
+      refresh_selected_turret_overlay(player)
+    end
+  end
+
   function handlers.on_runtime_mod_setting_changed(event)
     if not event.setting or string.sub(event.setting, 1, #MOD_PREFIX) ~= MOD_PREFIX then
       return
@@ -283,6 +290,7 @@ return function(M)
     for _, player in pairs(game.players) do
       if player and player.valid and player.connected then
         refresh_player_gui(player)
+        refresh_selected_turret_overlay(player)
       end
     end
   end
@@ -555,6 +563,7 @@ return function(M)
     ensure_storage()
     cleanup_target_damage()
     cleanup_pending_bound_mining()
+    cleanup_selection_overlays()
     apply_passive_evolution_effects()
 
     for player_index in pairs(storage.turret_xp.players) do
@@ -564,6 +573,10 @@ return function(M)
       else
         storage.turret_xp.players[player_index] = nil
       end
+    end
+
+    for _, player in pairs(game.connected_players) do
+      refresh_selected_turret_overlay(player)
     end
   end
 
@@ -577,6 +590,7 @@ return function(M)
     unlock_core_recipes_for_existing_tech()
     combat.sync_all_turret_attack_modifiers()
     combat.destroy_existing_visual_entities()
+    destroy_all_selection_overlays()
     storage.turret_xp.status_effects = {}
     storage.turret_xp.targets = {}
     for _, state in pairs(storage.turret_xp.chips) do
@@ -599,6 +613,7 @@ return function(M)
   script.on_event(defines.events.on_gui_checked_state_changed, handlers.on_gui_checked_state_changed)
   script.on_event(defines.events.on_gui_value_changed, handlers.on_gui_value_changed)
   script.on_event(defines.events.on_gui_text_changed, handlers.on_gui_text_changed)
+  script.on_event(defines.events.on_selected_entity_changed, handlers.on_selected_entity_changed)
   script.on_event(defines.events.on_runtime_mod_setting_changed, handlers.on_runtime_mod_setting_changed)
   script.on_event(defines.events.on_research_finished, handlers.on_research_finished)
   script.on_event(defines.events.on_force_created, handlers.on_force_created)

@@ -15,6 +15,7 @@ return function(M)
     storage.turret_xp.pending_bound_mined = storage.turret_xp.pending_bound_mined or {}
     storage.turret_xp.pending_visuals = storage.turret_xp.pending_visuals or {}
     storage.turret_xp.visual_entities = storage.turret_xp.visual_entities or {}
+    storage.turret_xp.selection_overlays = storage.turret_xp.selection_overlays or {}
     storage.turret_xp.status_effects = storage.turret_xp.status_effects or {}
     storage.turret_xp.combat_effect_budget = storage.turret_xp.combat_effect_budget or {}
   end

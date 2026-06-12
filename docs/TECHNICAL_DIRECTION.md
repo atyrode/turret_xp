@@ -130,6 +130,12 @@
 - The headless test mod intentionally patches vanilla gun turret range during `data-updates.lua`, then asserts Turret XP's `data-final-fixes.lua` variants inherit that range. It also gives firearm magazines a K2-style projectile `max_range` of 30 and asserts the turret-source ammo type is raised high enough for the generated Turret XP range while the non-turret ammo type keeps the original cap.
 - `LuaSurface::create_entity` can spawn vanilla electric beams, fire flashes, poison smoke visuals, slowdown stickers, explosions, and Bullet Trails hidden trail entities for short-lived visual feedback. These are used as cosmetic feedback around runtime-applied damage and are guarded by prototype-existence checks. Turret XP avoids spawning the vanilla `poison-cloud` damage entity directly because its damage would bypass Turret XP XP/lifesteal accounting; Toxic uses scripted poison damage plus a short custom visual puff instead.
 
+## Experiment: Selected Veteran Overlay
+
+Issue #53 tracks a branch experiment for moving veteran turrets toward a Turret XP-owned presentation model. The first spike does not replace the combat entity yet; it adds a per-player `LuaRendering.draw_text` overlay above selected installed-core turrets using `on_selected_entity_changed` and `LuaPlayer.selected`. The overlay is refreshed while selected and lingers briefly after selection changes, so it can be judged as a replacement direction for the native hover tooltip.
+
+This is intentionally not the final shell/proxy architecture. The next experimental step is to test whether a non-selectable combat turret shell plus a selectable lightweight proxy can remove misleading native turret stats while keeping normal combat, mining, robots, ghosts, ammo logistics, and Turret XP profile ownership understandable. Until that is proven, the native tooltip remains present and the overlay is an additional stat source, not the only stat source.
+
 ## Risks
 
 - Damage estimation only covers direct damage effects in ammo prototype data. More complex projectile or nested modded ammo may show `Unknown`.
