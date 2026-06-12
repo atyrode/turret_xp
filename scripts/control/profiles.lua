@@ -8,12 +8,16 @@ return function(M)
   local bound_turret_item_service = nil
   local SHIELD_BAR_RENDER_VERSION = 3
   local SHIELD_BAR_SEGMENTS = 9
-  local SHIELD_BAR_PIP_SIZE_TILES = 7 / 32
+  local SHIELD_BAR_PIXELS_PER_TILE = 32
+  local SHIELD_BAR_PIP_SIZE_TILES = 7 / SHIELD_BAR_PIXELS_PER_TILE
   local SHIELD_BAR_WIDTH_TILES = SHIELD_BAR_SEGMENTS * SHIELD_BAR_PIP_SIZE_TILES
-  local SHIELD_BAR_LEFT_PIP_X = (-SHIELD_BAR_WIDTH_TILES / 2) + (SHIELD_BAR_PIP_SIZE_TILES / 2)
+  local SHIELD_BAR_CENTER_X_NUDGE_TILES = -1.5 / SHIELD_BAR_PIXELS_PER_TILE
+  local SHIELD_BAR_LEFT_PIP_X = (-SHIELD_BAR_WIDTH_TILES / 2)
+    + (SHIELD_BAR_PIP_SIZE_TILES / 2)
+    + SHIELD_BAR_CENTER_X_NUDGE_TILES
   -- Factorio exposes the native bar pip sprites, but not the engine-owned HP bar anchor.
-  -- This keeps the shield row centered and calibrated just below a gun turret's native HP row.
-  local SHIELD_BAR_PIP_Y = 1.24
+  -- These nudges keep the shield row calibrated just below a gun turret's native HP row.
+  local SHIELD_BAR_PIP_Y = 1.24 + (10 / SHIELD_BAR_PIXELS_PER_TILE)
   local SHIELD_BAR_FILLED_SPRITE = "utility/shield_bar_pip"
   local SHIELD_BAR_EMPTY_SPRITE = "utility/bar_gray_pip"
   local SHIELD_BAR_GUI_VISIBLE_TICKS = 90
