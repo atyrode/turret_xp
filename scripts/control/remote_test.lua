@@ -26,6 +26,42 @@ return function(M)
     return count
   end
 
+  function turret_xp_test_inserter_summary(inserter)
+    if not inserter or not inserter.valid then
+      return {
+        valid = false,
+      }
+    end
+
+    ensure_storage()
+    local unit_number = safe_read(inserter, "unit_number")
+    local count = feeder.get_inserter_filter_slot_count(inserter)
+    local filters = {}
+    for index = 1, count do
+      local ok, filter = pcall(function()
+        return inserter.get_filter(index)
+      end)
+      if ok then
+        filters[index] = feeder.filter_name(filter)
+      end
+    end
+
+    local drop_target = safe_read(inserter, "drop_target")
+    local pickup_position = safe_read(inserter, "pickup_position")
+    local drop_position = safe_read(inserter, "drop_position")
+    return {
+      valid = true,
+      unit_number = unit_number,
+      filter_count = count,
+      filters = filters,
+      managed = unit_number and storage.turret_xp.managed_inserters[unit_number] ~= nil or false,
+      drop_target_name = drop_target and drop_target.valid and drop_target.name or nil,
+      drop_target_unit_number = drop_target and drop_target.valid and drop_target.unit_number or nil,
+      pickup_position = pickup_position and { x = pickup_position.x, y = pickup_position.y } or nil,
+      drop_position = drop_position and { x = drop_position.x, y = drop_position.y } or nil,
+    }
+  end
+
   function turret_xp_test_as_array(value)
     if not value then
       return {}
@@ -544,6 +580,53 @@ return function(M)
         applied = applied,
         filters = filters,
       }
+    end,
+
+    update_feeder_inserters = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      feeder.ensure(entity, state)
+      feeder.update_nearby_inserters(entity, state)
+      return turret_xp_test_state_summary(entity)
+    end,
+
+    inserter_state = function(inserter)
+      return turret_xp_test_inserter_summary(inserter)
+    end,
+
+    restore_inserter_filters = function(inserter)
+      if not inserter or not inserter.valid then
+        return nil
+      end
+
+      feeder.restore_inserter_filters(inserter)
+      return turret_xp_test_inserter_summary(inserter)
+    end,
+
+    feeder_inserter_probe = function(entity, inserter)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state or not inserter or not inserter.valid then
+        return nil
+      end
+
+      local allowed_items = feeder.get_allowed_items(state)
+      local filter_count = feeder.get_inserter_filter_slot_count(inserter)
+      local has_filter, has_allowed_filter = feeder.inserter_filters_match_allowed(inserter, allowed_items, filter_count)
+      return {
+        points_at_turret = feeder.inserter_points_at_turret(inserter, entity, state.feeder),
+        has_source_item = feeder.inserter_source_has_allowed_item(inserter, allowed_items),
+        has_filter = has_filter,
+        has_allowed_filter = has_allowed_filter,
+        allowed_items = feeder.allowed_item_names(state),
+      }
+    end,
+
+    feeder_owner = function(unit_number)
+      ensure_storage()
+      return storage.turret_xp.feeders[unit_number]
     end,
 
     set_bound = function(entity, bound)

@@ -180,6 +180,28 @@ storage.turret_xp = {
 - `/turret-xp-dev`: per-player toggle for dev controls in the attached panel.
 - `remote.interfaces.turret_xp_test`: controlled test-only API used by the headless test mod to install cores, inspect sanitized profile state, drive feeder state, reset individual evolution sections, and create tagged test stacks. `control.lua` registers this interface only when `script.active_mods["turret_xp_headless_tests"]` is present, so gameplay and other mods must not depend on it.
 
+## Invisible Feeder Contract
+
+The invisible feeder is the accepted material-input architecture for the current line. It is intentionally narrow:
+
+- A feeder may exist only for an installed Veteran Core whose selected active elements have a remaining next-rank material requirement.
+- The feeder is colocated with the turret, is not player-facing, is not a general storage chest, and should not become a second inventory surface for unrelated behavior.
+- The feeder may hold selected element materials long enough for bounded inserter throughput between routing ticks.
+- Inserter-fed ammo that lands in the feeder is forwarded into the turret ammo inventory.
+- Unsupported non-ammo items that reach the feeder are ejected so hidden junk cannot block future material progress.
+- When no selected element needs material, the feeder input is closed and the feeder is destroyed once no contents remain.
+- Removing, mining, or resetting the installed core destroys the feeder and spills owned leftover contents according to the calling flow.
+- `storage.turret_xp.feeders` must map live feeder unit numbers to the owning core only while the feeder is valid.
+
+Managed inserters are also intentionally narrow:
+
+- Only nearby same-force inserters that already target the turret/feeder tile are eligible.
+- An inserter is temporarily managed only while the turret needs material and the inserter either has an allowed material at its pickup source, already has an allowed filter, or is already managed from an earlier active routing pass.
+- Temporary filters should prioritize allowed materials actually present at that inserter's pickup source, then fall back to the turret-wide material priority.
+- Original inserter filters must be restored and the inserter must be pointed back at the turret when material input is no longer needed.
+- Managed inserter tracking must be scoped to the owning turret/feeder and stale or invalid managed entries must be restored or forgotten during feeder update and teardown paths.
+- Headless tests must cover lifecycle, ownership cleanup, source-aware filter priority, no-source non-management, filter restoration, ammo forwarding, wrong-item cleanup, mixed-element requests, and passive material progress before feeder behavior is expanded.
+
 ## Boundaries
 
 - Runtime state remains under `storage.turret_xp`; modules must not create separate save roots for core gameplay state.
