@@ -36,6 +36,42 @@ version="$("$python_bin" -c 'import json; print(json.load(open("info.json"))["ve
 description_path="dist/mod-portal-description.md"
 metadata_path="dist/mod-portal-metadata.env"
 
+print_response_body() {
+  local body_path="$1"
+  if [ ! -s "$body_path" ]; then
+    echo "(empty response)" >&2
+    return
+  fi
+
+  "$python_bin" -m json.tool "$body_path" >&2 || cat "$body_path" >&2
+}
+
+curl_mod_portal() {
+  local label="$1"
+  shift
+
+  local body_path
+  body_path="$(mktemp)"
+
+  local status
+  if ! status="$(curl -sS -w "%{http_code}" -o "$body_path" "$@")"; then
+    echo "${label} failed before receiving a complete Mod Portal response:" >&2
+    print_response_body "$body_path"
+    rm -f "$body_path"
+    return 1
+  fi
+
+  if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+    echo "${label} failed with HTTP ${status}:" >&2
+    print_response_body "$body_path"
+    rm -f "$body_path"
+    return 1
+  fi
+
+  cat "$body_path"
+  rm -f "$body_path"
+}
+
 scripts/generate-public-assets.py --check
 scripts/generate-public-assets.py --portal-description "$description_path" --portal-metadata "$metadata_path"
 . "$metadata_path"
@@ -57,9 +93,9 @@ else
 fi
 
 init_response="$(
-  curl -fsS \
+  curl_mod_portal "Initializing Mod Portal ${mode} upload" \
     -H "Authorization: Bearer ${api_key}" \
-    -F "mod=${mod_name}" \
+    --data-urlencode "mod=${mod_name}" \
     "$init_url"
 )"
 
@@ -69,7 +105,7 @@ upload_url="$(
 
 if [ "$mode" = "publish" ]; then
   upload_response="$(
-    curl -fsS \
+    curl_mod_portal "Publishing ${mod_name} ${version}" \
       -F "file=@${package_path}" \
       -F "description=<${description_path}" \
       -F "category=${MOD_PORTAL_CATEGORY}" \
@@ -78,7 +114,7 @@ if [ "$mode" = "publish" ]; then
   )"
 else
   upload_response="$(
-    curl -fsS \
+    curl_mod_portal "Uploading ${mod_name} ${version}" \
       -F "file=@${package_path}" \
       "$upload_url"
   )"
@@ -87,7 +123,7 @@ fi
 printf '%s\n' "$upload_response" | "$python_bin" -m json.tool
 
 if edit_response="$(
-  curl -fsS \
+  curl_mod_portal "Editing ${mod_name} Mod Portal details" \
     -H "Authorization: Bearer ${api_key}" \
     -F "mod=${mod_name}" \
     -F "title=${MOD_PORTAL_TITLE}" \

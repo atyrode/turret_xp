@@ -4,7 +4,7 @@
   "mod_portal_url": "https://mods.factorio.com/mod/turret_xp",
   "release_url": "https://github.com/atyrode/turret_xp/releases/latest",
   "portal": {
-    "category": "tweaks",
+    "category": "content",
     "tags": "combat",
     "summary": "Make chosen gun turrets level up, specialize, and carry Veteran Core progression between battlefields."
   },
