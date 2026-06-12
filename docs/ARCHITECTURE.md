@@ -13,7 +13,8 @@
 - `settings.lua`: runtime-global XP pacing settings.
 - `locale/en/turret-xp.cfg`: English GUI strings.
 - `scripts/`: validation, packaging, dependency download, install, release, and portal publishing.
-- `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`.
+- `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`; `control.lua` owns runner lifecycle, `support.lua` owns shared assertions/helpers, and `suite.lua` owns behavior checks.
+- `tests/headless/turret_xp_remote_policy_tests/`: separate headless smoke-test mod used by `scripts/test-headless.sh` to verify private test remotes are absent when the companion suite is not active.
 - `docs/`: project context, playtest guidance, and the GitHub Pages homepage.
 
 ## Runtime State
@@ -174,7 +175,7 @@ storage.turret_xp = {
 - Hidden display-panel label entities: draw optional chip-carried labels above currently installed turret bodies as `name (lvl N)`. Preset colors and RGB slider colors use hidden display-panel variants; custom RGB is quantized to the nearest generated prototype color because display-panel text color is prototype-defined.
 - `/turret-xp`: fallback command for opening the selected turret's GUI/panel.
 - `/turret-xp-dev`: per-player toggle for dev controls in the attached panel.
-- `remote.interfaces.turret_xp_test`: controlled test-only API used by the headless test mod to install cores, inspect sanitized profile state, drive feeder state, reset individual evolution sections, and create tagged test stacks. Gameplay should not depend on this interface.
+- `remote.interfaces.turret_xp_test`: controlled test-only API used by the headless test mod to install cores, inspect sanitized profile state, drive feeder state, reset individual evolution sections, and create tagged test stacks. `control.lua` registers this interface only when `script.active_mods["turret_xp_headless_tests"]` is present, so gameplay and other mods must not depend on it.
 
 ## Boundaries
 
@@ -189,4 +190,5 @@ storage.turret_xp = {
 - Release scripts should stay data-driven from `info.json` where practical.
 - CI and release workflows should reuse the same scripts as local operators where practical, so GitHub package/release behavior does not drift from local validation.
 - `scripts/download-mod-dependencies.py` owns authenticated Mod Portal dependency downloads for CI/headless tests. It must read credentials from environment variables and must not print token-bearing URLs.
+- The headless test companion mod may exercise private internals through `turret_xp_test`, but those hooks must stay gated to the companion mod and must not be documented or stabilized as third-party integration surface.
 - The website should stay tightly coupled to mod metadata and docs. As it grows, prefer a small generator over manually maintaining duplicate homepage content.

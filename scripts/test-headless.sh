@@ -114,4 +114,26 @@ if [ -n "$budget_line" ]; then
   echo "$budget_line"
 fi
 
+remote_policy_mods_dir="$tmpdir/remote-policy-mods"
+mkdir -p "$remote_policy_mods_dir"
+cp "$package_path" "$remote_policy_mods_dir/"
+cp "$flib_zip" "$remote_policy_mods_dir/"
+if [ -n "$bullet_trails_zip" ]; then
+  cp "$bullet_trails_zip" "$remote_policy_mods_dir/"
+fi
+
+remote_policy_version="$("$python_bin" -c 'import json; print(json.load(open("tests/headless/turret_xp_remote_policy_tests/info.json"))["version"])')"
+cp -R "tests/headless/turret_xp_remote_policy_tests" "$remote_policy_mods_dir/turret_xp_remote_policy_tests_$remote_policy_version"
+
+mods_dir="$remote_policy_mods_dir"
+remote_policy_save_path="$tmpdir/remote-policy-test.zip"
+remote_policy_create_log="$tmpdir/remote-policy-create.log"
+run_factorio "$remote_policy_create_log" --create "$remote_policy_save_path" --map-gen-seed 1
+
+if ! grep -q "\[turret_xp_remote_policy_tests\] PASS" "$remote_policy_create_log"; then
+  cat "$remote_policy_create_log" >&2
+  echo "Remote policy smoke test did not report PASS." >&2
+  exit 1
+fi
+
 echo "Headless tests passed."

@@ -13,7 +13,9 @@ require("scripts.control.core_slot")(M)
 require("scripts.control.actions")(M)
 require("scripts.control.combat_effects")(M)
 require("scripts.control.events")(M)
-require("scripts.control.remote_test")(M)
+if script.active_mods["turret_xp_headless_tests"] then
+  require("scripts.control.remote_test")(M)
+end
 require("scripts.control.commands")(M)
 
 return M
