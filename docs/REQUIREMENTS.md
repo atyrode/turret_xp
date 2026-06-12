@@ -43,7 +43,7 @@
 - Shield core upgrade ranks must add 10 scripted shield capacity per rank, absorb incoming damage before HP, recharge in small increments after a short delay without incoming damage, and keep current shield unchanged when capacity changes except for clamping down to a lower maximum.
 - Retired Range and Max HP augment ranks from old profiles must be normalized away so old tags do not keep dead upgrade state.
 - Resistance core upgrade ranks must reduce non-lethal incoming damage through scripted mitigation without adding more hidden turret variants.
-- Ammo Productivity core upgrade ranks must add 1% raw magazine productivity per rank, then apply diminishing returns as `raw / (raw + 1)` for effective refill progress so the stat can scale indefinitely without reaching free ammo. Spent ammo should fill a custom purple horizontal progress bar in a separate stat row immediately after Magazine, and every full bar should restore +1 ammo inside the current loaded magazine without exceeding that ammo prototype's normal magazine size or creating full ammo items.
+- Ammo Productivity core upgrade ranks must add 1% raw magazine productivity per rank, then apply diminishing returns as `raw / (raw + 1)` for effective refill progress so the stat can scale indefinitely without reaching free ammo. Spent ammo should fill a custom purple horizontal progress bar in a separate stat row immediately after Ammo, and every full bar should restore +1 ammo inside the current loaded magazine without exceeding that ammo prototype's normal magazine size or creating full ammo items.
 - Clicking an element option must assign rank 1 for free when the corresponding level gate is unlocked.
 - Unlocked elements must always show their current rank, technical effect, next-rank material, and passive progress bar; there is no separate upgrade-start click.
 - Feeding required items into the turret's hidden material input must advance the selected element's passive material progress and increase the element rank when requirements are complete.
@@ -66,10 +66,10 @@
 - Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.
 - Show a nine-pip blue in-world Shield bar under Factorio's native turret HP bar when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open. The Shield row should use Factorio's exposed native shield and gray pip sprites, deplete one whole pip at a time, and stay centered under the native HP row.
 - Show Specialization first, then HP and HP Regeneration, then Shield and Shield Regeneration when ranked.
-- Show Shield, Resistance, Ammo Productivity, and other active custom stat rows when ranked. Ammo Productivity should appear as a horizontal bar in its own row immediately after Magazine when ranked.
+- Show Shield, Resistance, Ammo Productivity, and other active custom stat rows when ranked. Ammo Productivity should appear as a horizontal bar in its own row immediately after Ammo when ranked.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
 - Show turret attack range in tiles, including quality range multiplier when relevant.
-- Show loaded ammo stack and current magazine ammo as separate `Ammo` and `Magazine` stat rows.
+- Show the loaded magazine stack and current ammo count as separate `Magazine` and `Ammo` stat rows.
 - Show estimated loaded-ammo damage per shot and estimated DPS when they can be derived from prototype data.
 - Show kills, lifetime damage, and evolution points.
 - Keep stat rows compact by showing final values in the panel and moving current formulas into the stat-name info hover. HP and Range quality breakdowns should be available from the quality diamond beside the value, not from the stat-name info hover.
@@ -84,7 +84,7 @@
 - Always show baseline Crit Chance and Crit Damage in the stats summary when a core is installed, directly under Damage Dealt.
 - Show active Resistance in the stats summary only after at least one Resistance rank is allocated.
 - Apply and show specialization and sub-specialization multipliers, including Sniper Deadeye/Overwatch, Machine Gun Shredder/Sustained Fire, Bulwark Bastion/Guardian, and Brawler Executioner/Vampire.
-- Reserve stats-scrollbar space so scrollable stat values do not render underneath the scrollbar.
+- Reserve stats-scrollbar space before scrolling is needed so stat values do not shift or render underneath the scrollbar when additional rows make the panel scrollable.
 - Color numeric fragments only in stat, upgrade, augment, specialization, sub-specialization, element, and material-count values. Units and descriptive text must remain neutral, and elemental damage amounts should color the number with the corresponding element color.
 - Show a core naming field and a `Show` floating-label checkbox when a core is installed; show preset/RGB color controls only when the floating label is enabled, with the `Level` checkbox under the RGB picker.
 - Custom RGB floating-label colors should keep the Factorio-style display-panel background and sizing, accepting palette quantization if arbitrary runtime display-panel text color is unavailable.

@@ -240,11 +240,11 @@ local function run_specialization_secondary_multiplier_test(surface)
   })
   assert_eq(summary.evolution.sub_specialization, "sniper_deadeye", "sub-specialization did not persist")
   assert_eq(summary.entity_name, "turret-xp-gun-turret-sniper-deadeye", "sub-specialization did not swap to the expected turret body")
-  assert_near(summary.derived.crit_chance_fraction, 0.08, 0.0001, "Deadeye crit chance bonus did not affect derived crit chance")
+  assert_near(summary.derived.crit_chance_fraction, 0.10, 0.0001, "Deadeye crit chance bonus did not affect derived crit chance")
   assert_near(summary.derived.crit_damage_fraction, 1.35, 0.0001, "Deadeye crit damage multiplier did not combine with Sniper")
   assert_near(
     summary.attack_damage_modifier,
-    base_damage_modifier * 2.8 * 1.08,
+    base_damage_modifier * 2.8 * 1.10,
     0.0001,
     "Deadeye damage multiplier did not affect real turret damage modifier"
   )

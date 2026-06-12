@@ -760,15 +760,27 @@ return function(M)
     }
   end
 
-  function format_estimated_dps(entity, ammo_name, state)
+  function get_estimated_dps_values(entity, ammo_name, state)
     local expected = get_expected_damage_per_shot(entity, state, ammo_name)
     local speed = get_final_shots_per_second(entity, ammo_name, state)
     if not expected or not speed then
-      return "-"
+      return nil
     end
 
     local damage = expected.total
-    local total = damage * speed
+    return {
+      expected = expected,
+      speed = speed,
+      total = damage * speed,
+    }
+  end
+
+  function format_estimated_dps_formula(values)
+    if not values then
+      return "-"
+    end
+
+    local expected = values.expected
     if expected.expected_bonus and expected.expected_bonus >= 0.005 then
       return {
         "",
@@ -777,14 +789,23 @@ return function(M)
         " ",
         format_colored_bonus(expected.expected_bonus, 1),
         ") x ",
-        format_number(speed, 2),
+        format_number(values.speed, 2),
         "/s = ",
-        format_number(total, 1),
+        format_number(values.total, 1),
         "/s",
       }
     end
 
-    return format_number(total, 1) .. "/s"
+    return format_number(expected.total, 1) .. " x " .. format_number(values.speed, 2) .. "/s = " .. format_number(values.total, 1) .. "/s"
+  end
+
+  function format_estimated_dps(entity, ammo_name, state)
+    local values = get_estimated_dps_values(entity, ammo_name, state)
+    if not values then
+      return "-"
+    end
+
+    return format_number(values.total, 1) .. "/s"
   end
 
   function get_range_formula_values(entity, state, quality_name)

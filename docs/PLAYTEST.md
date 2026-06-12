@@ -28,7 +28,7 @@ scripts/install-local.sh
 4. Open the turret and confirm the `Turret XP` panel appears to the right of the vanilla GUI.
 5. Confirm the panel says no Veteran Core is installed and XP/evolution are inactive.
 6. Craft or dev-create a Veteran Core and install it.
-7. Check that the panel shows level, XP progress, HP, shooting speed, range, separate Ammo and Magazine rows, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
+7. Check that the panel shows level, XP progress, HP, shooting speed, range, separate Magazine and Ammo rows, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
 8. Name the core and confirm the `Show` checkbox sits beside the name field, with label color controls hidden while `Show` is off.
 9. Enable `Show label` and confirm the floating text appears as `name (lvl N)` above the turret.
 10. Change label color with RGB sliders and the preset/custom color button below them, then confirm presets keep their preset names, RGB slider edits show `Custom`, `Level` appears below the color button, and the floating label keeps its display-panel-style backing.
@@ -51,7 +51,7 @@ scripts/install-local.sh
 23. Run `/turret-xp-dev` again and confirm dev controls hide/show without breaking the panel layout.
 24. Spend core upgrade points and confirm ranks and remaining points refresh immediately without moving the whole vanilla turret GUI.
 24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, displays Factorio's native HP bar above a nine-pip blue Shield bar, does not recharge while the turret is still being hit, and recharges in small increments only after the no-damage delay. Add or remove Shield ranks while damaged and confirm current shield does not refill for free.
-24b. Spend Ammo Productivity ranks, let the turret fire loaded ammo, and confirm the purple bar appears in its own row after Magazine, advances as ammo is spent, restores +1 ammo inside the current magazine when it fills, uses diminishing returns so 100% raw productivity is not free ammo, does not overfill the magazine above its normal capacity, and does not create full ammo items.
+24b. Spend Ammo Productivity ranks, let the turret fire loaded ammo, and confirm the purple bar appears in its own row after Ammo, advances as ammo is spent, restores +1 ammo inside the current magazine when it fills, uses diminishing returns so 100% raw productivity is not free ammo, does not overfill the magazine above its normal capacity, and does not create full ammo items.
 24d. Hover stat-name info markers and confirm formulas appear there instead of inline in the stats panel. For HP and Range, confirm the info marker explains the stat/formula while the quality diamond lists quality-specific values.
 24c. Spend Resistance ranks, damage the turret with enemies, and confirm the stats panel shows reduced damage taken while the turret still dies normally to overwhelming lethal hits.
 25. Confirm unlocked Evolution choices have category headers, right-side status text, horizontal delimiters, and are easier to scan.
@@ -67,9 +67,9 @@ scripts/install-local.sh
 34. Repeat material feeding with normal and bulk inserters; confirm only resources for selected elements are accepted and no item pile forms around the turret. If a stale inserter hand drops the wrong material once, confirm the hidden input clears it and the correct material can still advance the progress bar.
 35. Confirm ammo inserters keep feeding ammo while element material feeding is available.
 36. Use `Materials` and confirm it completes the next passive material rank for an unlocked element.
-37. Confirm specialization choices use the same card rhythm as element choices: icon/title row, full-width description, separator, colored multiplier row, and right-aligned Pick button.
+37. Confirm specialization choices use the updated card rhythm: icon/title row, full-width description with the Pick button justified right, then a full-width vertical technical stat table.
 37a. Confirm the role-specific secondary multiplier is visible and functional: Sniper boosts Crit Damage, Machine Gun boosts Ammo Productivity, and Bulwark boosts Regeneration.
-37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: x3 damage, x0.5 fire rate, short range, and innate 10% Lifesteal.
+37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: +200% damage, -50% attack speed, short range, and innate 10% Lifesteal.
 38. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
 39. Pick Sniper or a range-changing sub-specialization and confirm the displayed range changes and the turret can actually fire farther.
 39a. Level a turret through combat and confirm a short `Level up!` popup appears above the turret when the core gains a level.
@@ -82,7 +82,7 @@ scripts/install-local.sh
 45. Test a duplicate pair such as Explosive + Explosive and confirm the stats summary shows one Explosive line plus the combo identity, not two Explosive stat rows.
 46. Extract or mine the core and confirm leftover feeder contents spill instead of disappearing.
 47. Let the turret shoot enemies and confirm XP, damage dealt, kills, active custom stat rows, and upgrade/element visual feedback feel visible enough to judge. Electric arc visuals should disappear quickly instead of staying on the map. Crits, double shots, bounce, Fire burn, and Toxic poison should be readable enough to notice when they happen.
-47a. Confirm the stats panel reserves space for its scrollbar when it becomes scrollable, and that Crit Chance and Crit Damage appear under Damage Dealt as regular baseline stats with compact percentage values such as `0%`, not inline unit text like `0% / shot`.
+47a. Confirm the stats panel reserves scrollbar space even before the scrollbar appears, does not shift when extra rows make it scrollable, and that Crit Chance and Crit Damage appear under Damage Dealt as regular baseline stats with compact percentage values such as `0%`, not inline unit text like `0% / shot`. Confirm Est. DPS also shows only a compact final value and keeps its formula in the info hover.
 47b. Confirm stat, upgrade, augment, and element value text colors only the numeric parts, with units and descriptive words staying neutral; elemental damage numbers should use their element color.
 48. Damage turrets with Shield and Regeneration augment ranks and confirm Shield protects HP first, then passive repair scales with current max HP, especially after Bulwark/Guardian choices.
 49. Try Brawler Lifesteal and Shield on Hit in combat and check whether HP healing versus shield generation is understandable.

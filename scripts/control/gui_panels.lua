@@ -79,7 +79,7 @@ return function(M)
       style = "caption_label",
     })
     set_style(percent, "font_color", COLOR.muted)
-    set_style(percent, "left_margin", 2)
+    set_style(percent, "left_margin", 0)
 
     top.add({
       type = "empty-widget",
@@ -621,7 +621,7 @@ return function(M)
     set_style(label, "font_color", COLOR.muted)
   end
 
-  function render_ammo_stack_flow(flow, ammo_name, ammo_count, ammo_quality)
+  function render_magazine_stack_flow(flow, ammo_name, ammo_count, ammo_quality)
     flow.clear()
     local slot_row = flow.add({
       type = "flow",
@@ -642,8 +642,8 @@ return function(M)
       return
     end
 
-    local ammo_tooltip = {
-      "turret-xp.ammo-stack-tooltip",
+    local magazine_tooltip = {
+      "turret-xp.magazine-stack-tooltip",
       format_number(ammo_count or 0, 0),
     }
     local ok, button = pcall(function()
@@ -652,7 +652,7 @@ return function(M)
         sprite = "item/" .. ammo_name,
         quality = ammo_quality or "normal",
         number = ammo_count,
-        tooltip = ammo_tooltip,
+        tooltip = magazine_tooltip,
         elem_tooltip = {
           type = "item-with-quality",
           name = ammo_name,
@@ -676,7 +676,7 @@ return function(M)
     })
   end
 
-  function render_magazine_flow(flow, ammo_in_magazine, ammo_magazine_size)
+  function render_current_ammo_flow(flow, ammo_in_magazine, ammo_magazine_size)
     flow.clear()
     local row = flow.add({
       type = "flow",
@@ -706,13 +706,13 @@ return function(M)
   end
 
   function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality, ammo_in_magazine, ammo_magazine_size, state)
-    local ammo_flow = find_gui_element(panel, GUI.ammo)
     local magazine_flow = find_gui_element(panel, GUI.magazine)
+    local ammo_flow = find_gui_element(panel, GUI.ammo)
     if not ammo_flow and not magazine_flow then
       return
     end
 
-    local current_tags = (ammo_flow and ammo_flow.tags) or (magazine_flow and magazine_flow.tags) or {}
+    local current_tags = (magazine_flow and magazine_flow.tags) or (ammo_flow and ammo_flow.tags) or {}
     local productivity_progress = state and (state.ammo_productivity_progress or state.ammo_regen_progress) or 0
     local productivity_fraction = state and get_ammo_productivity_fraction(state) or 0
     local effective_productivity_fraction = state and get_effective_ammo_productivity_fraction(state) or 0
@@ -740,13 +740,13 @@ return function(M)
       effective_ammo_productivity_fraction = effective_productivity_fraction,
     }
 
-    if ammo_flow then
-      ammo_flow.tags = tags
-      render_ammo_stack_flow(ammo_flow, ammo_name, ammo_count, ammo_quality)
-    end
     if magazine_flow then
       magazine_flow.tags = tags
-      render_magazine_flow(magazine_flow, ammo_in_magazine, ammo_magazine_size)
+      render_magazine_stack_flow(magazine_flow, ammo_name, ammo_count, ammo_quality)
+    end
+    if ammo_flow then
+      ammo_flow.tags = tags
+      render_current_ammo_flow(ammo_flow, ammo_in_magazine, ammo_magazine_size)
     end
 
     local productivity_flow = find_gui_element(panel, GUI.ammo_productivity)
@@ -800,10 +800,6 @@ return function(M)
     return format_effect_percent((multiplier - 1) * 100, 0)
   end
 
-  function format_fixed_number(value, decimals)
-    return string.format("%." .. tostring(decimals or 2) .. "f", value or 0)
-  end
-
   function effect_percent_for_entry(entry)
     if entry.kind == "percent" then
       return entry.value * 100
@@ -833,8 +829,6 @@ return function(M)
           lifesteal = entry.lifesteal == true,
           special = entry.special == true,
           order = entry.order or index,
-          shots_per_second = entry.shots_per_second,
-          reference_label = entry.reference_label,
         }
         copy.effect_percent = effect_percent_for_entry(copy)
         display_entries[#display_entries + 1] = copy
@@ -866,58 +860,12 @@ return function(M)
     return display_entries
   end
 
-  function preview_evolution_state(state, specialization_id, sub_specialization_id)
-    if not state then
-      return nil
-    end
-
-    local preview = {}
-    for key, value in pairs(state) do
-      preview[key] = value
-    end
-
-    local source_evolution = ensure_evolution_state(state)
-    local evolution = {}
-    for key, value in pairs(source_evolution) do
-      evolution[key] = value
-    end
-    evolution.specialization = specialization_id
-    evolution.sub_specialization = sub_specialization_id
-    preview.evolution = evolution
-
-    return preview
-  end
-
-  function add_fire_rate_preview(entry, entity, state, ammo_name, specialization_id, sub_specialization_id, reference_label)
-    if not entry or not entity then
-      return entry
-    end
-
-    local preview_state = preview_evolution_state(state, specialization_id, sub_specialization_id)
-    local shots_per_second = preview_state and get_final_shots_per_second(entity, ammo_name, preview_state) or nil
-    if shots_per_second then
-      entry.shots_per_second = shots_per_second
-      entry.reference_label = reference_label
-    end
-
-    return entry
-  end
-
   function specialization_effect_entries(specialization, entity, state, ammo_name)
     if not specialization then
       return {}
     end
 
     local fire_rate_multiplier = 1 / (specialization.cooldown_multiplier or 1)
-    local fire_rate_entry = add_fire_rate_preview(
-      { value = fire_rate_multiplier, label = "Attack speed", kind = "multiplier" },
-      entity,
-      state,
-      ammo_name,
-      specialization.id,
-      nil,
-      "base"
-    )
 
     return build_specialization_effect_entries({
       {
@@ -931,7 +879,7 @@ return function(M)
       { value = specialization.range_multiplier, label = "Range", kind = "multiplier" },
       { value = specialization.damage_multiplier, label = "Damage", kind = "multiplier" },
       { value = specialization.crit_damage_multiplier, label = "Crit damage", kind = "multiplier" },
-      fire_rate_entry,
+      { value = fire_rate_multiplier, label = "Attack speed", kind = "multiplier" },
       { value = specialization.health_multiplier, label = "HP", kind = "multiplier" },
       { value = specialization.repair_multiplier, label = "Regeneration", kind = "multiplier" },
       { value = specialization.ammo_recovery_multiplier, label = "Ammo prod.", kind = "multiplier" },
@@ -944,16 +892,6 @@ return function(M)
     end
 
     local fire_rate_multiplier = sub_specialization.cooldown_multiplier and (1 / sub_specialization.cooldown_multiplier) or nil
-    local parent = sub_specialization.parent and SPECIALIZATION_BY_ID[sub_specialization.parent] or nil
-    local fire_rate_entry = add_fire_rate_preview(
-      { value = fire_rate_multiplier, label = "Attack speed", kind = "multiplier" },
-      entity,
-      state,
-      ammo_name,
-      sub_specialization.parent,
-      sub_specialization.id,
-      parent and parent.name or "role"
-    )
 
     return build_specialization_effect_entries({
       { value = sub_specialization.range_multiplier, label = "Range", kind = "multiplier" },
@@ -961,7 +899,7 @@ return function(M)
       { value = sub_specialization.crit_chance_flat, label = "Crit chance", kind = "percent" },
       { value = sub_specialization.crit_damage_multiplier, label = "Crit damage", kind = "multiplier" },
       { value = sub_specialization.double_shot_chance_flat, label = "Double shot", kind = "percent" },
-      fire_rate_entry,
+      { value = fire_rate_multiplier, label = "Attack speed", kind = "multiplier" },
       { value = sub_specialization.health_multiplier, label = "HP", kind = "multiplier" },
       { value = sub_specialization.resistance_flat, label = "Resistance", kind = "percent" },
       { value = sub_specialization.repair_multiplier, label = "Regeneration", kind = "multiplier" },
@@ -972,17 +910,6 @@ return function(M)
   function specialization_effect_value_caption(entry)
     if entry.lifesteal then
       return format_number(entry.value * 100, 0) .. "%"
-    end
-    if entry.label == "Attack speed" and entry.shots_per_second then
-      return {
-        "",
-        format_fixed_number(entry.shots_per_second, 2),
-        "/s (",
-        entry.reference_label or "base",
-        " ",
-        format_effect_percent(entry.effect_percent, 0),
-        ")",
-      }
     end
     if entry.kind == "percent" then
       return format_effect_percent(entry.value * 100, 1)
@@ -996,6 +923,9 @@ return function(M)
       type = "table",
       column_count = 2,
     })
+    set_style(table_element, "width", LAYOUT.evolution_card_inner_width)
+    set_style(table_element, "minimal_width", LAYOUT.evolution_card_inner_width)
+    set_style(table_element, "maximal_width", LAYOUT.evolution_card_inner_width)
     set_style(table_element, "horizontally_stretchable", true)
     set_style(table_element, "horizontal_spacing", 8)
     set_style(table_element, "vertical_spacing", 1)
@@ -1013,7 +943,7 @@ return function(M)
       })
       set_style(label, "font_color", entry.lifesteal and { 0.95, 0.22, 0.42 } or COLOR.muted)
       set_style(label, "single_line", true)
-      set_style(label, "maximal_width", 92)
+      set_style(label, "maximal_width", 180)
 
       local value = table_element.add({
         type = "label",
@@ -1022,7 +952,7 @@ return function(M)
       })
       set_style(value, "single_line", false)
       set_style(value, "horizontal_align", "right")
-      set_style(value, "maximal_width", 102)
+      set_style(value, "maximal_width", 180)
     end
 
     if #entries == 0 then
@@ -1042,7 +972,7 @@ return function(M)
       type = "scroll-pane",
       name = GUI.stats_scroll,
       direction = "vertical",
-      vertical_scroll_policy = "auto",
+      vertical_scroll_policy = "auto-and-reserve-space",
       horizontal_scroll_policy = "never",
     })
     set_style(scroll, "top_margin", 8)
@@ -1109,7 +1039,7 @@ return function(M)
         tooltip = quality_tooltip,
         style = "caption_label",
       })
-      set_style(marker, "left_margin", 4)
+      set_style(marker, "left_margin", 0)
       set_style(marker, "single_line", true)
     end
 
@@ -1221,8 +1151,15 @@ return function(M)
     if bounce_rank > 0 then
       add_custom_stat(
         stats,
-        { "turret-xp.stat-bullet-bounce" },
-        rich_number(format_percent(apply_luck_to_chance(state, bounce_rank * 0.05), 1)) .. ", " .. rich_number("35%") .. " shot damage"
+        { "turret-xp.stat-bounce-chance" },
+        format_percent(apply_luck_to_chance(state, bounce_rank * 0.05), 1),
+        { "turret-xp.bounce-chance-tooltip" }
+      )
+      add_custom_stat(
+        stats,
+        { "turret-xp.stat-bounce-damage" },
+        "35%",
+        { "turret-xp.bounce-damage-tooltip" }
       )
     end
 
@@ -1372,24 +1309,24 @@ return function(M)
       range_tooltip
     )
 
-    local _, ammo_flow = add_stat_row(stats, { "turret-xp.ammo" }, nil, {
-      info_tooltip = { "turret-xp.ammo-tooltip" },
-      flow_name = GUI.ammo,
-      flow_only = true,
-    })
-    render_ammo_stack_flow(ammo_flow, ammo_name, ammo_count, ammo_quality)
-
-    local magazine_tooltip = {
-      "turret-xp.magazine-tooltip",
-      ammo_in_magazine and format_number(ammo_in_magazine, 0) or "-",
-      ammo_magazine_size and ammo_magazine_size > 0 and format_number(ammo_magazine_size, 0) or "-",
-    }
     local _, magazine_flow = add_stat_row(stats, { "turret-xp.magazine" }, nil, {
-      info_tooltip = magazine_tooltip,
+      info_tooltip = { "turret-xp.magazine-tooltip" },
       flow_name = GUI.magazine,
       flow_only = true,
     })
-    render_magazine_flow(magazine_flow, ammo_in_magazine, ammo_magazine_size)
+    render_magazine_stack_flow(magazine_flow, ammo_name, ammo_count, ammo_quality)
+
+    local ammo_tooltip = {
+      "turret-xp.ammo-tooltip",
+      ammo_in_magazine and format_number(ammo_in_magazine, 0) or "-",
+      ammo_magazine_size and ammo_magazine_size > 0 and format_number(ammo_magazine_size, 0) or "-",
+    }
+    local _, ammo_flow = add_stat_row(stats, { "turret-xp.ammo" }, nil, {
+      info_tooltip = ammo_tooltip,
+      flow_name = GUI.ammo,
+      flow_only = true,
+    })
+    render_current_ammo_flow(ammo_flow, ammo_in_magazine, ammo_magazine_size)
 
     if state and get_base_rank(state, "ammo_regen") > 0 then
       local productivity_progress = math.min(1, math.max(0, tonumber(state.ammo_productivity_progress or state.ammo_regen_progress) or 0))
@@ -1422,7 +1359,14 @@ return function(M)
           }
         or { "turret-xp.damage-value", format_damage_per_shot(entity, ammo_name) }
       add_stat_value(stats, { "turret-xp.damage" }, damage_caption, stat_formula_tooltip({ "turret-xp.damage-tooltip" }, damage_formula))
-      add_stat_value(stats, { "turret-xp.dps" }, format_estimated_dps(entity, ammo_name, state), { "turret-xp.dps-tooltip" })
+      local dps_values = get_estimated_dps_values(entity, ammo_name, state)
+      local dps_formula = dps_values and format_estimated_dps_formula(dps_values) or nil
+      add_stat_value(
+        stats,
+        { "turret-xp.dps" },
+        dps_values and (format_number(dps_values.total, 1) .. "/s") or "-",
+        stat_formula_tooltip({ "turret-xp.dps-tooltip" }, dps_formula)
+      )
     else
       add_stat_value(stats, { "turret-xp.damage" }, { "turret-xp.damage-no-ammo" }, nil)
       add_stat_value(stats, { "turret-xp.dps" }, "-", nil)
@@ -2248,92 +2192,61 @@ return function(M)
     set_evolution_content_width(row, true)
     set_style(row, "top_margin", 6)
 
-    local stats_width = 176
-    local identity_width = LAYOUT.evolution_card_inner_width - stats_width - 12
-
-    local content = row.add({
-      type = "table",
-      column_count = 2,
-    })
-    set_evolution_card_child_width(content)
-    set_style(content, "horizontal_spacing", 12)
-    set_style(content, "vertical_spacing", 0)
-    pcall(function()
-      content.style.column_alignments[1] = "left"
-      content.style.column_alignments[2] = "right"
-    end)
-
-    local identity = content.add({
+    local title_row = row.add({
       type = "flow",
       direction = "horizontal",
     })
-    set_style(identity, "width", identity_width)
-    set_style(identity, "minimal_width", identity_width)
-    set_style(identity, "maximal_width", identity_width)
-    set_style(identity, "horizontal_spacing", 8)
-    set_style(identity, "vertical_align", "top")
+    set_evolution_card_child_width(title_row)
+    set_style(title_row, "horizontal_spacing", 8)
+    set_style(title_row, "vertical_align", "center")
 
-    local icon = identity.add({
+    local icon = title_row.add({
       type = "sprite",
       sprite = sprite,
     })
     set_style(icon, "size", 28)
 
-    local text = identity.add({
-      type = "flow",
-      direction = "vertical",
-    })
-    set_style(text, "maximal_width", identity_width - 36)
-
-    local title = text.add({
+    local title = title_row.add({
       type = "label",
       caption = name,
       style = "caption_label",
     })
     set_style(title, "font", "default-bold")
     set_style(title, "single_line", true)
-    set_style(title, "maximal_width", identity_width - 36)
+    set_style(title, "maximal_width", LAYOUT.evolution_card_inner_width - 36)
 
-    local description_label = text.add({
+    local description_row = row.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_evolution_card_child_width(description_row)
+    set_style(description_row, "horizontal_spacing", 8)
+    set_style(description_row, "vertical_align", "center")
+    set_style(description_row, "top_margin", 2)
+
+    local description_label = description_row.add({
       type = "label",
       caption = description,
       style = "caption_label",
     })
     set_style(description_label, "font_color", COLOR.muted)
     set_style(description_label, "single_line", false)
-    set_style(description_label, "maximal_width", identity_width - 36)
+    set_style(description_label, "horizontally_stretchable", true)
+    set_style(description_label, "maximal_width", selected and LAYOUT.evolution_card_inner_width or (LAYOUT.evolution_card_inner_width - 72))
 
-    local stats = content.add({
-      type = "flow",
-      direction = "vertical",
-    })
-    set_style(stats, "width", stats_width)
-    set_style(stats, "minimal_width", stats_width)
-    set_style(stats, "maximal_width", stats_width)
-    set_style(stats, "horizontal_align", "right")
-
-    add_specialization_effect_table(stats, effects)
-
-    if selected then
-      return
+    if not selected then
+      local button = description_row.add({
+        type = "button",
+        caption = { "turret-xp.evolution-action-pick" },
+        tags = action_tags,
+      })
+      set_style(button, "width", 56)
+      set_style(button, "minimal_width", 56)
+      set_style(button, "maximal_width", 56)
     end
 
-    local action_row = stats.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(action_row, "top_margin", 4)
-    set_style(action_row, "horizontal_align", "right")
-    set_style(action_row, "horizontally_stretchable", true)
-
-    local button = action_row.add({
-      type = "button",
-      caption = { "turret-xp.evolution-action-pick" },
-      tags = action_tags,
-    })
-    set_style(button, "width", 56)
-    set_style(button, "minimal_width", 56)
-    set_style(button, "maximal_width", 56)
+    local effects_table = add_specialization_effect_table(row, effects)
+    set_style(effects_table, "top_margin", 4)
   end
 
   function add_specialization_option(parent, specialization, selected, entity, state, ammo_name)
