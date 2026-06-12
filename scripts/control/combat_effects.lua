@@ -249,16 +249,18 @@ return function(M)
       return nil
     end
 
-    local ammo_name, ammo_count, ammo_quality = get_loaded_ammo(entity)
-    if ammo_name and (ammo_count or 0) > 0 and feeder.is_ammo_item(ammo_name) then
+    local snapshot = get_loaded_ammo_snapshot(entity)
+    if snapshot and snapshot.name and (snapshot.count or 0) > 0 and feeder.is_ammo_item(snapshot.name) then
       state.last_ammo = {
-        name = ammo_name,
-        quality = ammo_quality or "normal",
+        name = snapshot.name,
+        quality = snapshot.quality or "normal",
       }
       state._ammo_productivity_last = {
-        name = ammo_name,
-        quality = ammo_quality or "normal",
-        count = math.max(0, math.floor(tonumber(ammo_count) or 0)),
+        name = snapshot.name,
+        quality = snapshot.quality or "normal",
+        count = math.max(0, math.floor(tonumber(snapshot.count) or 0)),
+        ammo = math.max(0, math.floor(tonumber(snapshot.ammo) or 0)),
+        magazine_size = math.max(0, math.floor(tonumber(snapshot.magazine_size) or 0)),
       }
     end
 
@@ -266,17 +268,20 @@ return function(M)
   end
 
   local function current_ammo_snapshot(entity)
-    local ammo_name, ammo_count, ammo_quality = get_loaded_ammo(entity)
-    if ammo_name and (ammo_count or 0) > 0 and feeder.is_ammo_item(ammo_name) then
+    local snapshot = get_loaded_ammo_snapshot(entity)
+    if snapshot and snapshot.name and (snapshot.count or 0) > 0 and feeder.is_ammo_item(snapshot.name) then
       return {
-        name = ammo_name,
-        quality = ammo_quality or "normal",
-        count = math.max(0, math.floor(tonumber(ammo_count) or 0)),
+        name = snapshot.name,
+        quality = snapshot.quality or "normal",
+        count = math.max(0, math.floor(tonumber(snapshot.count) or 0)),
+        ammo = math.max(0, math.floor(tonumber(snapshot.ammo) or 0)),
+        magazine_size = math.max(0, math.floor(tonumber(snapshot.magazine_size) or 0)),
       }
     end
 
     return {
       count = 0,
+      ammo = 0,
     }
   end
 
@@ -294,6 +299,8 @@ return function(M)
         name = snapshot.name,
         quality = snapshot.quality or "normal",
         count = math.max(0, math.floor(tonumber(snapshot.count) or 0)),
+        ammo = math.max(0, math.floor(tonumber(snapshot.ammo) or 0)),
+        magazine_size = math.max(0, math.floor(tonumber(snapshot.magazine_size) or 0)),
       }
     else
       state._ammo_productivity_last = nil
@@ -336,6 +343,93 @@ return function(M)
     return 0
   end
 
+  local function set_stack_ammo(stack, amount)
+    if not stack or not stack.valid_for_read then
+      return 0
+    end
+
+    local before = math.max(0, math.floor(tonumber(safe_read(stack, "ammo")) or 0))
+    local target = math.max(0, math.floor(tonumber(amount) or 0))
+    local ok = pcall(function()
+      stack.ammo = target
+    end)
+    if not ok then
+      local delta = target - before
+      if delta > 0 then
+        pcall(function()
+          stack.add_ammo(delta)
+        end)
+      elseif delta < 0 then
+        pcall(function()
+          stack.drain_ammo(-delta)
+        end)
+      end
+    end
+
+    local after = math.max(0, math.floor(tonumber(safe_read(stack, "ammo")) or before))
+    return math.max(0, after - before)
+  end
+
+  function combat.add_productivity_ammo(entity, ammo, amount)
+    local bonus_ammo = math.max(0, math.floor(tonumber(amount) or 0))
+    if not is_gun_turret(entity) or not ammo or not ammo.name or bonus_ammo <= 0 then
+      return 0
+    end
+
+    local snapshot = get_loaded_ammo_snapshot(entity, ammo)
+    local stack = snapshot and snapshot.stack or nil
+
+    if not stack or not stack.valid_for_read then
+      local inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
+      if not inventory or not inventory.valid then
+        return 0
+      end
+
+      local stack_definition = {
+        name = ammo.name,
+        count = 1,
+      }
+      if ammo.quality and ammo.quality ~= "" then
+        stack_definition.quality = ammo.quality
+      end
+
+      local inserted = compat.try("insert productivity magazine shell", function()
+        return inventory.insert(stack_definition)
+      end, 0) or 0
+      if inserted <= 0 and stack_definition.quality then
+        stack_definition.quality = nil
+        inserted = compat.try("insert productivity magazine shell fallback", function()
+          return inventory.insert(stack_definition)
+        end, 0) or 0
+      end
+      if inserted <= 0 then
+        return 0
+      end
+
+      snapshot = get_loaded_ammo_snapshot(entity, ammo)
+      stack = snapshot and snapshot.stack or nil
+      if not stack or not stack.valid_for_read then
+        return 0
+      end
+
+      local magazine_size = tonumber(safe_read(safe_read(stack, "prototype"), "magazine_size")) or 0
+      if magazine_size > 0 then
+        pcall(function()
+          stack.drain_ammo(magazine_size)
+        end)
+      end
+    end
+
+    local before = math.max(0, math.floor(tonumber(safe_read(stack, "ammo")) or 0))
+    local magazine_size = tonumber(safe_read(safe_read(stack, "prototype"), "magazine_size")) or tonumber(snapshot and snapshot.magazine_size) or 0
+    local target = before + bonus_ammo
+    if magazine_size > 0 then
+      target = math.min(magazine_size, target)
+    end
+
+    return set_stack_ammo(stack, target)
+  end
+
   function combat.apply_ammo_productivity(entity, state)
     local rank = get_base_rank(state, "ammo_regen")
     local current = current_ammo_snapshot(entity)
@@ -362,7 +456,11 @@ return function(M)
         quality = previous.quality or "normal",
       }
       if current.name == previous.name and (current.quality or "normal") == (previous.quality or "normal") then
-        spent = math.max(0, (previous.count or 0) - (current.count or 0))
+        if (current.count or 0) < (previous.count or 0) then
+          spent = math.max(1, (previous.count or 0) - (current.count or 0))
+        elseif previous.ammo and current.ammo then
+          spent = math.max(0, (previous.ammo or 0) - (current.ammo or 0))
+        end
       elseif not current.name and (previous.count or 0) > 0 then
         spent = 1
       elseif current.name then
@@ -388,17 +486,15 @@ return function(M)
 
     local productivity = get_ammo_productivity_fraction(state)
     local progress = math.max(0, tonumber(state.ammo_productivity_progress or state.ammo_regen_progress) or 0) + (spent * productivity)
-    local free_rounds = math.floor(progress)
-    if free_rounds > 0 then
-      local inserted = combat.insert_recovered_ammo(entity, spent_ammo, free_rounds)
-      if inserted > 0 then
-        progress = math.max(0, progress - inserted)
-      else
-        progress = math.min(progress, 1)
+    local bonus_ammo = math.floor(progress)
+    if bonus_ammo > 0 then
+      local added = combat.add_productivity_ammo(entity, spent_ammo, bonus_ammo)
+      if added > 0 then
+        progress = math.max(0, progress - added)
       end
     end
 
-    state.ammo_productivity_progress = progress
+    state.ammo_productivity_progress = math.min(progress, 1)
     state.ammo_regen_progress = nil
     remember_ammo_snapshot(state, current_ammo_snapshot(entity))
   end

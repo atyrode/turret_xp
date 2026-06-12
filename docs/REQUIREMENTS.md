@@ -43,7 +43,7 @@
 - Shield core upgrade ranks must add 10 scripted shield capacity per rank, absorb incoming damage before HP, recharge in small increments after a short delay without incoming damage, and keep current shield unchanged when capacity changes except for clamping down to a lower maximum.
 - Retired Range and Max HP augment ranks from old profiles must be normalized away so old tags do not keep dead upgrade state.
 - Resistance core upgrade ranks must reduce non-lethal incoming damage through scripted mitigation without adding more hidden turret variants.
-- Ammo Productivity core upgrade ranks must add 1% ammo spending productivity per rank. Spent ammo should fill a custom purple horizontal progress bar under the ammo slot in the stats panel, and every full bar should restore one matching ammo item after a shot.
+- Ammo Productivity core upgrade ranks must add 1% magazine productivity per rank. Spent ammo should fill a custom purple horizontal progress bar in a separate stat row immediately after Magazine, and every full bar should restore +1 ammo inside the current loaded magazine without exceeding that ammo prototype's normal magazine size or creating full ammo items.
 - Clicking an element option must assign rank 1 for free when the corresponding level gate is unlocked.
 - Unlocked elements must always show their current rank, technical effect, next-rank material, and passive progress bar; there is no separate upgrade-start click.
 - Feeding required items into the turret's hidden material input must advance the selected element's passive material progress and increase the element rank when requirements are complete.
@@ -65,7 +65,8 @@
 - On space-platform turrets, show platform hub Veteran Core options when cores are available there.
 - Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.
 - Show a nine-pip blue in-world Shield bar under Factorio's native turret HP bar when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open. The Shield row should use Factorio's exposed native shield and gray pip sprites, deplete one whole pip at a time, and stay centered under the native HP row.
-- Show Shield, Resistance, Ammo Productivity, and other active custom stat rows when ranked. Ammo Productivity should appear as a horizontal bar under the loaded-ammo slot when ranked.
+- Show Specialization first, then HP and HP Regeneration, then Shield and Shield Regeneration when ranked.
+- Show Shield, Resistance, Ammo Productivity, and other active custom stat rows when ranked. Ammo Productivity should appear as a horizontal bar in its own row immediately after Magazine when ranked.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
 - Show turret attack range in tiles, including quality range multiplier when relevant.
 - Show loaded ammo and count.

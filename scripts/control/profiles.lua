@@ -485,6 +485,7 @@ return function(M)
             name = stack.name,
             count = stack.count,
             quality = quality_name_from_stack(stack, "normal"),
+            ammo = safe_read(stack, "ammo", nil, "snapshot turret ammo"),
           }
         end
       end
@@ -533,6 +534,22 @@ return function(M)
     return desired
   end
 
+  function build_desired_turret_ammo_stacks(snapshot)
+    local desired = {}
+    for _, ammo in ipairs((snapshot and snapshot.ammo) or {}) do
+      local count = math.max(0, math.floor(tonumber(ammo.count) or 0))
+      if ammo.name and count > 0 then
+        desired[#desired + 1] = {
+          name = ammo.name,
+          quality = ammo.quality or "normal",
+          count = count,
+          ammo = ammo.ammo ~= nil and math.max(0, math.floor(tonumber(ammo.ammo) or 0)) or nil,
+        }
+      end
+    end
+    return desired
+  end
+
   function make_item_stack_definition(name, count, quality)
     local item = {
       name = name,
@@ -544,8 +561,24 @@ return function(M)
     return item
   end
 
+  function find_turret_ammo_stack(inventory, name, quality)
+    if not inventory or not inventory.valid or not name then
+      return nil
+    end
+
+    local expected_quality = quality or "normal"
+    for index = 1, #inventory do
+      local stack = inventory[index]
+      if stack and stack.valid_for_read and stack.name == name and quality_name_from_stack(stack, "normal") == expected_quality then
+        return stack
+      end
+    end
+
+    return nil
+  end
+
   function reconcile_preloaded_turret_ammo(entity, inventory, snapshot)
-    local desired = build_desired_turret_ammo_counts(snapshot)
+    local desired = build_desired_turret_ammo_stacks(snapshot)
     if not inventory or not inventory.valid then
       return desired
     end
@@ -590,6 +623,14 @@ return function(M)
         local inserted = compat.try("restore turret ammo", function()
           return inventory.insert(item)
         end, 0) or 0
+        if inserted > 0 and ammo.ammo ~= nil then
+          local stack = find_turret_ammo_stack(inventory, ammo.name, ammo.quality or "normal")
+          if stack then
+            pcall(function()
+              stack.ammo = ammo.ammo
+            end)
+          end
+        end
         local overflow = (ammo.count or 0) - inserted
         if overflow > 0 then
           spill_stack_definition_at(

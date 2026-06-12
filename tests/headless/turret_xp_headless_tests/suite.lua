@@ -466,24 +466,49 @@ local function run_ammo_productivity_test(surface)
 
   local inventory = turret.get_inventory(defines.inventory.turret_ammo)
   assert_true(inventory ~= nil and inventory.valid, "ammo productivity test turret had no ammo inventory")
+  local ammo_stack = inventory[1]
+  assert_true(ammo_stack and ammo_stack.valid_for_read, "ammo productivity test setup did not expose a loaded magazine")
   call("remember_loaded_ammo", turret)
-  local expected_count = inventory.get_item_count("firearm-magazine")
-  assert_eq(expected_count, 10, "ammo productivity test setup did not load expected ammo")
+  local expected_count = ammo_stack.count
+  local expected_magazine_ammo = ammo_stack.ammo
+  assert_eq(expected_count, 10, "ammo productivity test setup did not load expected magazine stack count")
+  assert_eq(expected_magazine_ammo, 10, "ammo productivity test setup did not start with a full magazine")
 
   for shot = 1, 3 do
-    inventory.remove({ name = "firearm-magazine", count = 1 })
-    expected_count = expected_count - 1
+    ammo_stack.drain_ammo(1)
+    expected_magazine_ammo = expected_magazine_ammo - 1
     summary = call("apply_ammo_productivity", turret)
     assert_near(summary.ammo_productivity_progress, shot * 0.25, 0.0001, "ammo productivity progress did not advance per spent round")
-    assert_eq(summary.turret_ammo["firearm-magazine"] or 0, expected_count, "ammo productivity restored ammo before the bar filled")
+    assert_eq(ammo_stack.count, expected_count, "ammo productivity changed the loaded magazine stack count before the bar filled")
+    assert_eq(ammo_stack.ammo, expected_magazine_ammo, "ammo productivity restored magazine ammo before the bar filled")
   end
 
-  inventory.remove({ name = "firearm-magazine", count = 1 })
-  expected_count = expected_count - 1
+  ammo_stack.drain_ammo(1)
+  expected_magazine_ammo = expected_magazine_ammo - 1
   summary = call("apply_ammo_productivity", turret)
-  expected_count = expected_count + 1
+  expected_magazine_ammo = expected_magazine_ammo + 1
   assert_near(summary.ammo_productivity_progress, 0, 0.0001, "ammo productivity did not consume a full bar")
-  assert_eq(summary.turret_ammo["firearm-magazine"] or 0, expected_count, "ammo productivity did not restore one matching ammo at 100%")
+  assert_eq(ammo_stack.count, expected_count, "ammo productivity should not create or remove magazine items")
+  assert_eq(ammo_stack.ammo, expected_magazine_ammo, "ammo productivity did not restore one bullet inside the current magazine at 100%")
+
+  summary = call("set_evolution", turret, {
+    base = {
+      ammo_regen = 200,
+    },
+  })
+  assert_near(summary.derived.ammo_productivity_fraction, 2, 0.0001, "ammo productivity should keep its uncapped derived percent")
+  ammo_stack.ammo = 10
+  call("remember_loaded_ammo", turret)
+  ammo_stack.drain_ammo(1)
+  summary = call("apply_ammo_productivity", turret)
+  assert_near(summary.ammo_productivity_progress, 1, 0.0001, "over-100 ammo productivity should keep one pending refill")
+  assert_eq(ammo_stack.count, expected_count, "over-100 ammo productivity should not create magazine items")
+  assert_eq(ammo_stack.ammo, 10, "over-100 ammo productivity should refill only to the magazine size")
+
+  ammo_stack.drain_ammo(1)
+  summary = call("apply_ammo_productivity", turret)
+  assert_near(summary.ammo_productivity_progress, 1, 0.0001, "pending ammo productivity refill should stay ready after another capped refill")
+  assert_eq(ammo_stack.ammo, 10, "pending ammo productivity refill should not overflow the magazine")
 end
 
 local function feed_one(entity, item_name)

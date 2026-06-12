@@ -131,7 +131,7 @@ domain.specializations = {
     rotation_speed_multiplier = 1.3334,
     lifesteal_fraction = 0.10,
     value = "x3 damage, 10% lifesteal, x0.5 fire rate, x0.39 range, x1.63 HP",
-    description = "[color=1,0.36,0.30]Lifesteal[/color]: heals HP equal to 10% of gun-turret damage dealt. Very short range, high shot damage, stronger durability, slower fire rate.",
+    description = "Very short range, high shot damage, stronger durability, slower fire rate.",
   },
 }
 domain.specialization_by_id = index_by_id(domain.specializations)

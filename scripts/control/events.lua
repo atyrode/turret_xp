@@ -573,6 +573,18 @@ return function(M)
 
   function handlers.on_shield_recharge_tick()
     apply_shield_recharge_effects(SHIELD_RECHARGE_TICKS)
+
+    for player_index in pairs(storage.turret_xp.players) do
+      local player = game.get_player(player_index)
+      if player and player.valid and player.connected then
+        local entity = get_remembered_turret(player)
+        if entity then
+          refresh_open_turret_stats(player, entity)
+        end
+      else
+        storage.turret_xp.players[player_index] = nil
+      end
+    end
   end
 
   script.on_init(function()

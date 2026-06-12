@@ -17,6 +17,12 @@ return function(M)
     end
   end
 
+  function refresh_open_turret_stats(player, entity)
+    if entity and entity.valid then
+      update_turret_gui_stats(player, entity)
+    end
+  end
+
   function sanitize_core_name(name)
     name = tostring(name or "")
     name = name:gsub("[%c\r\n\t]", " ")

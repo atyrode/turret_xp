@@ -44,7 +44,7 @@
             <span>HP</span><strong>400 / 400</strong>
             <span>Shooting speed</span><strong>10 + 15/s</strong>
             <span>Range</span><strong>18</strong>
-            <span>Ammo</span><strong>piercing x42</strong>
+            <span>Magazine</span><strong>piercing x42, 10/10 ammo</strong>
             <span>Est. DPS</span><strong>157.5/s</strong>
             <span>Kills</span><strong>18</strong>
             <span>Damage dealt</span><strong>3,860</strong>
@@ -64,8 +64,8 @@
             <li>Replaced the prototype-backed Max HP augment with a scripted Shield core upgrade. Shield adds 10 shield per rank, absorbs incoming damage before turret HP, displays a nine-pip blue in-world Shield bar under the native HP bar while relevant, recharges in small increments after a short delay without incoming damage, and no longer refills current shield when capacity changes.</li>
             <li>Removed the Range augment for now. Specialization and sub-specialization range modifiers remain prototype-backed.</li>
             <li>Moved Regeneration into the augment section and rebalanced it to 1% max HP per second per augment rank.</li>
-            <li>Replaced the old general Lifesteal upgrade with a Shield on Hit augment that grants shield from gun-turret damage dealt, while Brawler now keeps Lifesteal as an innate 10% HP-healing specialization mechanic.</li>
-            <li>Replaced passive Ammo Recovery with Ammo Productivity: spent ammo fills a purple bar under the ammo slot, and a full bar restores one matching ammo item after a shot.</li>
+            <li>Replaced the old general Lifesteal upgrade with a Shield on Hit augment that grants shield from gun-turret damage dealt, while Brawler now lists 10% Lifesteal as an innate specialization stat with a stats-panel info tooltip.</li>
+            <li>Replaced passive Ammo Recovery with Ammo Productivity: spent ammo fills a purple stat-row bar after Magazine, and a full bar restores +1 ammo inside the current loaded magazine without overfilling it or creating full ammo items.</li>
             <li>Reduced the generated hidden turret prototype budget by removing Range/Max HP variant axes from body and bound-preview generation.</li>
             <li>Added a prototype migration that collapses old Range/Max HP hidden bodies and old range-preview bound items/placeholders onto the new specialization-only prototypes.</li>
           </ul>
@@ -85,7 +85,7 @@
           </article>
           <article>
             <h3>Combat Growth</h3>
-            <p>Turrets earn XP from damage and kill contribution. Points buy damage, shield, ammo productivity, shield-on-hit, repair, crits, luck, double shots, XP gain, and bouncing bullets. Brawler adds innate lifesteal.</p>
+            <p>Turrets earn XP from damage and kill contribution. Points buy damage, shield, ammo productivity, shield-on-hit, repair, crits, luck, double shots, XP gain, and bouncing bullets. Brawler lists 10% Lifesteal as an innate specialization stat.</p>
           </article>
           <article>
             <h3>Specialized Defenders</h3>

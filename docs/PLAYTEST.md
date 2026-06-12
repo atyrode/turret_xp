@@ -28,7 +28,7 @@ scripts/install-local.sh
 4. Open the turret and confirm the `Turret XP` panel appears to the right of the vanilla GUI.
 5. Confirm the panel says no Veteran Core is installed and XP/evolution are inactive.
 6. Craft or dev-create a Veteran Core and install it.
-7. Check that the panel shows level, XP progress, HP, shooting speed, range, loaded ammo, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
+7. Check that the panel shows level, XP progress, HP, shooting speed, range, loaded magazine, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
 8. Name the core and confirm the `Show` checkbox sits beside the name field, with label color controls hidden while `Show` is off.
 9. Enable `Show label` and confirm the floating text appears as `name (lvl N)` above the turret.
 10. Change label color with RGB sliders and the preset/custom color button below them, then confirm presets keep their preset names, RGB slider edits show `Custom`, `Level` appears below the color button, and the floating label keeps its display-panel-style backing.
@@ -51,7 +51,7 @@ scripts/install-local.sh
 23. Run `/turret-xp-dev` again and confirm dev controls hide/show without breaking the panel layout.
 24. Spend core upgrade points and confirm ranks and remaining points refresh immediately without moving the whole vanilla turret GUI.
 24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, displays Factorio's native HP bar above a nine-pip blue Shield bar, does not recharge while the turret is still being hit, and recharges in small increments only after the no-damage delay. Add or remove Shield ranks while damaged and confirm current shield does not refill for free.
-24b. Spend Ammo Productivity ranks, let the turret fire loaded ammo, and confirm the purple bar appears under the ammo slot, advances as ammo is spent, and restores one matching ammo item when it fills.
+24b. Spend Ammo Productivity ranks, let the turret fire loaded ammo, and confirm the purple bar appears in its own row after Magazine, advances as ammo is spent, restores +1 ammo inside the current magazine when it fills, does not overfill the magazine above its normal capacity, and does not create full ammo items.
 24c. Spend Resistance ranks, damage the turret with enemies, and confirm the stats panel shows reduced damage taken while the turret still dies normally to overwhelming lethal hits.
 25. Confirm unlocked Evolution choices have category headers, right-side status text, horizontal delimiters, and are easier to scan.
 25a. Confirm Evolution section frames have balanced left/right padding, visible right margin, and spacing between adjacent sections.

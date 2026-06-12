@@ -22,6 +22,7 @@ return function(M)
             count = stack.count,
           }
           entry.quality = compat.quality_name(stack, nil, "turret body stack quality")
+          entry.ammo = safe_read(stack, "ammo", nil, "turret body stack ammo")
           contents[i] = entry
         end
       end
@@ -45,9 +46,21 @@ return function(M)
       for i, entry in pairs(contents or {}) do
         local stack = inventory[i]
         if stack and entry and entry.name and entry.count and entry.count > 0 then
+          local item = {
+            name = entry.name,
+            count = entry.count,
+          }
+          if entry.quality and entry.quality ~= "" then
+            item.quality = entry.quality
+          end
           pcall(function()
-            stack.set_stack(entry)
+            stack.set_stack(item)
           end)
+          if entry.ammo ~= nil and stack.valid_for_read then
+            pcall(function()
+              stack.ammo = math.max(0, math.floor(tonumber(entry.ammo) or 0))
+            end)
+          end
         end
       end
     end
