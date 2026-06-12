@@ -1,6 +1,38 @@
+local damage_accounting = require("scripts.control.damage_accounting")
+
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
+
+local damage_accounting_service = nil
+
+local function get_damage_accounting_service()
+  if not damage_accounting_service then
+    damage_accounting_service = damage_accounting.new({
+      target_damage_ttl = TARGET_DAMAGE_TTL,
+      ensure_storage = ensure_storage,
+      storage_root = function()
+        return storage.turret_xp
+      end,
+      game_tick = function()
+        return game.tick
+      end,
+      safe_read = safe_read,
+      entity_tracking_key = entity_tracking_key,
+      turret_key = turret_key,
+      is_gun_turret = is_gun_turret,
+      get_turret_state = get_turret_state,
+      get_entity_xp_context = function(entity)
+        return combat.get_entity_xp_context(entity)
+      end,
+      add_profile_kill_credit = add_profile_kill_credit,
+      sync_turret_progression = sync_turret_progression,
+      update_name_render = update_name_render
+    })
+  end
+
+  return damage_accounting_service
+end
 
 function as_array(value)
   if not value then
@@ -795,171 +827,31 @@ format_range_for_quality = function(entity, quality_name)
 end
 
 function target_prior_damage(event, damage)
-  local max_health = safe_read(event.entity, "max_health")
-  local final_health = event.final_health
-
-  if not max_health or not final_health then
-    return 0
-  end
-
-  local pre_hit_health = final_health + damage
-  return math.max(0, max_health - pre_hit_health)
+  return get_damage_accounting_service().target_prior_damage(event, damage)
 end
 
 function get_or_create_target_damage(event, damage, create)
-  ensure_storage()
-
-  local key = entity_tracking_key(event.entity)
-  if not key then
-    return nil
-  end
-
-  local entry = storage.turret_xp.targets[key]
-  if not entry and create then
-    entry = {
-      total_damage = target_prior_damage(event, damage),
-      target_context = combat.get_entity_xp_context(event.entity),
-      turrets = {},
-      tick = game.tick
-    }
-    storage.turret_xp.targets[key] = entry
-  elseif entry and not entry.target_context then
-    entry.target_context = combat.get_entity_xp_context(event.entity)
-  end
-
-  return entry, key
+  return get_damage_accounting_service().get_or_create_target_damage(event, damage, create)
 end
 
 function record_damage_contribution(event, turret, damage)
-  local profile = is_gun_turret(turret) and get_turret_state(turret) or nil
-  local create = profile ~= nil
-  local entry = get_or_create_target_damage(event, damage, create)
-
-  if not entry then
-    return
-  end
-
-  entry.total_damage = (entry.total_damage or 0) + damage
-  entry.tick = game.tick
-
-  if not create then
-    return
-  end
-
-  local key = turret_key(turret)
-  local contributor = entry.turrets[key]
-  if not contributor then
-    contributor = {
-      damage = 0,
-      entity = turret,
-      chip_id = profile.chip_id
-    }
-    entry.turrets[key] = contributor
-  end
-
-  contributor.damage = (contributor.damage or 0) + damage
-  contributor.entity = turret
-  contributor.chip_id = profile.chip_id
+  get_damage_accounting_service().record_damage_contribution(event, turret, damage)
 end
 
 function resolve_kill_turret(entry, killing_turret)
-  if is_gun_turret(killing_turret) and get_turret_state(killing_turret) then
-    return killing_turret
-  end
-
-  local best_turret = nil
-  local best_damage = 0
-  for _, contributor in pairs((entry and entry.turrets) or {}) do
-    local damage = contributor.damage or 0
-    if damage > best_damage then
-      local state = contributor.chip_id and storage.turret_xp.chips[contributor.chip_id] or nil
-      local turret = (state and state.entity) or contributor.entity
-      if is_gun_turret(turret) then
-        best_turret = turret
-        best_damage = damage
-      end
-    end
-  end
-
-  return best_turret
+  return get_damage_accounting_service().resolve_kill_turret(entry, killing_turret)
 end
 
 function award_kill_credit(target, killing_turret)
-  ensure_storage()
-
-  local target_key = entity_tracking_key(target)
-  local entry = target_key and storage.turret_xp.targets[target_key] or nil
-  local credited_kill_turret = resolve_kill_turret(entry, killing_turret)
-
-  if entry and entry.total_damage and entry.total_damage > 0 then
-    for contributor_key, contributor in pairs(entry.turrets or {}) do
-      local contribution = math.max(0, contributor.damage or 0)
-      local credit = contribution / entry.total_damage
-
-      if credit > 0 then
-        local turret = contributor.entity
-        local state = nil
-
-        if contributor.chip_id then
-          state = storage.turret_xp.chips[contributor.chip_id]
-        elseif is_gun_turret(turret) then
-          state = get_turret_state(turret)
-        end
-
-        if state then
-          add_profile_kill_credit(state, credit, turret, entry.target_context or target)
-          sync_turret_progression(state)
-          if is_gun_turret(state.entity) then
-            update_name_render(state.entity, state)
-          end
-        end
-      end
-    end
-
-    storage.turret_xp.targets[target_key] = nil
-    return credited_kill_turret
-  end
-
-  if is_gun_turret(killing_turret) then
-    local state = get_turret_state(killing_turret)
-    if state then
-      add_profile_kill_credit(state, 1, killing_turret, target)
-      sync_turret_progression(state)
-      if is_gun_turret(state.entity) then
-        update_name_render(state.entity, state)
-      end
-    end
-    return killing_turret
-  end
-
-  return credited_kill_turret
+  return get_damage_accounting_service().award_kill_credit(target, killing_turret)
 end
 
 function award_visible_kill(turret)
-  if not is_gun_turret(turret) then
-    return
-  end
-
-  local state = get_turret_state(turret)
-  if not state then
-    return
-  end
-
-  local before = math.max(0, math.floor(tonumber(state.kills) or 0))
-  local engine_kills = math.max(0, math.floor(tonumber(safe_read(turret, "kills")) or 0))
-  state.kills = math.max(before + 1, engine_kills)
-  sync_turret_progression(state)
-  update_name_render(turret, state)
+  get_damage_accounting_service().award_visible_kill(turret)
 end
 
 function cleanup_target_damage()
-  ensure_storage()
-
-  for key, entry in pairs(storage.turret_xp.targets) do
-    if not entry.tick or game.tick - entry.tick > TARGET_DAMAGE_TTL then
-      storage.turret_xp.targets[key] = nil
-    end
-  end
+  get_damage_accounting_service().cleanup_target_damage()
 end
 
 function cleanup_pending_bound_mining()

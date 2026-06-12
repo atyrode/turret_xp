@@ -385,6 +385,8 @@
 
 - [x] Move bound turret tagged-item creation, decoding, build-event stack lookup, mining-result cleanup, and insert/spill delivery into `scripts/control/bound_turret_items.lua`.
 - [x] Add headless coverage for legacy/generic bound turret stacks that carry a profile tag but no turret snapshot tag.
+- [x] Move target damage buckets, contributor tracking, proportional kill-credit awards, visible-kill fallback selection, and stale target cleanup into `scripts/control/damage_accounting.lua`.
+- [x] Add headless coverage for multi-turret proportional kill credit and highest-contributor visible-kill assignment.
 
 ## Likely Next Work
 
