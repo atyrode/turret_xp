@@ -119,7 +119,7 @@ Local helper for manually publishing or updating the Factorio Mod Portal release
 FACTORIO_MOD_PORTAL_API_KEY=<your-api-key> scripts/publish-portal.sh
 ```
 
-The script checks generated public assets, writes the Mod Portal description and metadata into `dist/`, and runs `scripts/test-headless.sh` before uploading. Set `SKIP_HEADLESS_TESTS=1` only for exceptional machines that cannot run Factorio locally. The script also loads an ignored `.env` file and accepts `FACTORIO_API_KEY=<your-api-key>`. The API key must be created on `https://factorio.com/profile` with `ModPortal: Publish Mods`, `ModPortal: Upload Mods`, and `ModPortal: Edit Mods` usages. Do not commit the key or paste it into chat.
+The script checks generated public assets, writes the Mod Portal description and metadata into `dist/`, and runs `scripts/test-headless.sh` before uploading. Set `SKIP_HEADLESS_TESTS=1` only for exceptional machines that cannot run Factorio locally. Mod Portal API failures print the portal response body so CI logs show the rejected field or endpoint. The script also loads an ignored `.env` file and accepts `FACTORIO_API_KEY=<your-api-key>`. The API key must be created on `https://factorio.com/profile` with `ModPortal: Publish Mods`, `ModPortal: Upload Mods`, and `ModPortal: Edit Mods` usages. Do not commit the key or paste it into chat.
 
 GitHub setup required for the automated release path:
 
