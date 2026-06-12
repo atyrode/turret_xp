@@ -1,0 +1,12 @@
+{
+  "name": "turret_xp_remote_policy_tests",
+  "version": "0.1.0",
+  "title": "Turret XP Remote Policy Tests",
+  "author": "atyrode",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0.0",
+    "turret_xp >= 0.10.3"
+  ],
+  "description": "Headless smoke tests for Turret XP private remote interface policy."
+}

@@ -390,6 +390,13 @@
 - [x] Move generic GUI rich-text formatting and repeated Evolution width helpers into `scripts/control/gui_support.lua`.
 - [x] Add headless coverage for GUI support formatting helper outputs.
 
+## Headless Test Surface
+
+- [x] Gate `remote.interfaces.turret_xp_test` so it is registered only when the `turret_xp_headless_tests` companion mod is active.
+- [x] Split the headless companion mod into a thin runner, shared support helpers, and the behavior suite.
+- [x] Add a separate headless smoke test that verifies `turret_xp_test` is absent when the companion suite is not active.
+- [x] Document that `turret_xp_test` is private test surface, not a production integration API.
+
 ## Likely Next Work
 
 - Playtest V0.10.3 from a local package or Mod Portal release after feedback integration, especially around bound turret ammo conservation, K2/K2SO realistic ammo range compatibility, level-up flying text, Resistance feel, max-HP-based Regeneration, passive element material progress, Toxic and Fire damage-over-time readability, crit/double-shot visuals, richer Evolution summary header, right-column scrollbar containment, specialization multiplier colors, section margins, full Evolution reset, baseline crit stats, Max HP rank body swaps, Ammo Recovery pacing, level-40 sub-specializations, normal/bulk inserter feeding, hidden input ammo forwarding, deferred turret body swaps, bound turret mining/placement, normal turret replacement ghosts, placement-helper ammo refunds, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, asteroid XP pacing, optional Bullet Trails visuals, label controls, modded base turret range compatibility, and high-level turret combat performance.

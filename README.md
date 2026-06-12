@@ -44,7 +44,8 @@ Run the Factorio headless regression suite:
 scripts/test-headless.sh
 ```
 
-Set `FACTORIO_BIN=/path/to/factorio` if the script cannot autodetect the local Factorio executable. The suite packages the current mod, loads it with a dedicated temporary test mod, reports the tracked hidden prototype budget, and fails if core gameplay invariants break.
+Set `FACTORIO_BIN=/path/to/factorio` if the script cannot autodetect the local Factorio executable. The suite packages the current mod, loads it with a dedicated temporary test mod, reports the tracked hidden prototype budget, and fails if core gameplay invariants break. It also runs a separate smoke test for production remote-interface policy.
+The `turret_xp_test` remote interface is registered only while that temporary test mod is active; it is not a production integration API.
 
 Build a local Factorio mod zip:
 
