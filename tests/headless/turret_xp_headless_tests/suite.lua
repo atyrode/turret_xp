@@ -48,11 +48,11 @@ end
 local function run_gui_support_samples_test()
   local samples = call("gui_support_samples")
   assert_eq(samples.percent, "12.5%", "GUI percent formatting changed")
-  assert_eq(samples.color, "0.58,0.82,0.38", "GUI rich color conversion changed")
-  assert_eq(samples.rich_number, "[color=0.58,0.82,0.38]+5[/color]", "GUI rich number formatting changed")
+  assert_eq(samples.color, "0.55,0.82,0.55", "GUI rich color conversion changed")
+  assert_eq(samples.rich_number, "[color=0.55,0.82,0.55]+5[/color]", "GUI rich number formatting changed")
   assert_eq(
     samples.rich_stat,
-    "Damage [color=0.58,0.82,0.38]+5[/color] [color=0.58,0.82,0.38]x1.2[/color]",
+    "Damage [color=0.55,0.82,0.55]+5[/color] [color=0.55,0.82,0.55]x1.2[/color]",
     "GUI rich stat token formatting changed"
   )
 end
@@ -277,6 +277,12 @@ local function run_specialization_secondary_multiplier_test(surface)
     0.0001,
     "machine gun ammo productivity multiplier did not affect derived ammo productivity"
   )
+  assert_near(
+    summary.derived.effective_ammo_productivity_fraction,
+    0.06 / 1.06,
+    0.0001,
+    "machine gun ammo productivity multiplier did not affect effective diminishing-return productivity"
+  )
 
   turret = require_turret_near(surface, { x = 14, y = 8 }, "specialization multiplier turret not found after machine gun body swap")
   summary = call("set_evolution", turret, {
@@ -463,6 +469,7 @@ local function run_ammo_productivity_test(surface)
   })
   assert_eq(summary.evolution.base.ammo_regen, 25, "ammo productivity rank did not persist in evolution state")
   assert_near(summary.derived.ammo_productivity_fraction, 0.25, 0.0001, "ammo productivity did not derive expected percent")
+  assert_near(summary.derived.effective_ammo_productivity_fraction, 0.2, 0.0001, "ammo productivity did not derive expected effective percent")
 
   local inventory = turret.get_inventory(defines.inventory.turret_ammo)
   assert_true(inventory ~= nil and inventory.valid, "ammo productivity test turret had no ammo inventory")
@@ -474,11 +481,11 @@ local function run_ammo_productivity_test(surface)
   assert_eq(expected_count, 10, "ammo productivity test setup did not load expected magazine stack count")
   assert_eq(expected_magazine_ammo, 10, "ammo productivity test setup did not start with a full magazine")
 
-  for shot = 1, 3 do
+  for shot = 1, 4 do
     ammo_stack.drain_ammo(1)
     expected_magazine_ammo = expected_magazine_ammo - 1
     summary = call("apply_ammo_productivity", turret)
-    assert_near(summary.ammo_productivity_progress, shot * 0.25, 0.0001, "ammo productivity progress did not advance per spent round")
+    assert_near(summary.ammo_productivity_progress, shot * 0.2, 0.0001, "ammo productivity progress did not advance per spent round")
     assert_eq(ammo_stack.count, expected_count, "ammo productivity changed the loaded magazine stack count before the bar filled")
     assert_eq(ammo_stack.ammo, expected_magazine_ammo, "ammo productivity restored magazine ammo before the bar filled")
   end
@@ -497,18 +504,25 @@ local function run_ammo_productivity_test(surface)
     },
   })
   assert_near(summary.derived.ammo_productivity_fraction, 2, 0.0001, "ammo productivity should keep its uncapped derived percent")
+  assert_near(summary.derived.effective_ammo_productivity_fraction, 2 / 3, 0.0001, "over-100 ammo productivity should use diminishing returns")
+  call("set_profile", turret, { ammo_productivity_progress = 0 })
   ammo_stack.ammo = 10
   call("remember_loaded_ammo", turret)
   ammo_stack.drain_ammo(1)
   summary = call("apply_ammo_productivity", turret)
-  assert_near(summary.ammo_productivity_progress, 1, 0.0001, "over-100 ammo productivity should keep one pending refill")
+  assert_near(summary.ammo_productivity_progress, 2 / 3, 0.0001, "over-100 ammo productivity should not refill every shot")
   assert_eq(ammo_stack.count, expected_count, "over-100 ammo productivity should not create magazine items")
-  assert_eq(ammo_stack.ammo, 10, "over-100 ammo productivity should refill only to the magazine size")
+  assert_eq(ammo_stack.ammo, 9, "over-100 ammo productivity should still spend ammo sometimes")
 
   ammo_stack.drain_ammo(1)
   summary = call("apply_ammo_productivity", turret)
-  assert_near(summary.ammo_productivity_progress, 1, 0.0001, "pending ammo productivity refill should stay ready after another capped refill")
-  assert_eq(ammo_stack.ammo, 10, "pending ammo productivity refill should not overflow the magazine")
+  assert_near(summary.ammo_productivity_progress, 1 / 3, 0.0001, "over-100 ammo productivity should keep fractional progress after a refill")
+  assert_eq(ammo_stack.ammo, 9, "over-100 ammo productivity should refill only one magazine ammo after two shots")
+
+  ammo_stack.drain_ammo(1)
+  summary = call("apply_ammo_productivity", turret)
+  assert_near(summary.ammo_productivity_progress, 0, 0.0001, "over-100 ammo productivity should consume exact full bars")
+  assert_eq(ammo_stack.ammo, 9, "over-100 ammo productivity should still have net ammo cost over repeated shots")
 end
 
 local function feed_one(entity, item_name)

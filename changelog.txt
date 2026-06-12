@@ -7,7 +7,8 @@ Date: 2026-06-12
     - Removed the Range augment for now. Specialization and sub-specialization range modifiers remain prototype-backed.
     - Moved Regeneration into the augment section and rebalanced it to 1% max HP per second per augment rank.
     - Replaced the old general Lifesteal upgrade with a Shield on Hit augment that grants shield from gun-turret damage dealt, while Brawler now lists 10% Lifesteal as an innate specialization stat with a stats-panel info tooltip.
-    - Replaced passive Ammo Recovery with Ammo Productivity: spent ammo fills a purple stat-row bar after Magazine, and a full bar restores +1 ammo inside the current loaded magazine without overfilling it or creating full ammo items.
+    - Replaced passive Ammo Recovery with Ammo Productivity: raw productivity now has diminishing returns for refill progress, spent ammo fills a purple stat-row bar after Magazine, and a full bar restores +1 ammo inside the current loaded magazine without overfilling it, creating full ammo items, or reaching free ammo.
+    - Cleaned up the stats panel so formulas live in stat-name info hovers, HP/Range quality breakdowns live on the quality diamond, Ammo and Magazine are separate rows, and visible values use calmer neutral/bonus/penalty coloring.
     - Reduced the generated hidden turret prototype budget by removing Range/Max HP variant axes from body and bound-preview generation.
     - Added a prototype migration that collapses old Range/Max HP hidden bodies and old range-preview bound items/placeholders onto the new specialization-only prototypes.
   Bugfixes:

@@ -436,8 +436,17 @@ return function(M)
     return get_base_rank(state, "ammo_regen") * AMMO_PRODUCTIVITY_PER_RANK * get_specialization_multiplier(state, "ammo_recovery_multiplier")
   end
 
+  function get_effective_ammo_productivity_fraction(state)
+    local raw = math.max(0, get_ammo_productivity_fraction(state))
+    if raw <= 0 then
+      return 0
+    end
+
+    return raw / (raw + 1)
+  end
+
   function get_ammo_recovery_per_minute(state)
-    return get_ammo_productivity_fraction(state) * 100
+    return get_effective_ammo_productivity_fraction(state) * 100
   end
 
   function get_shield_on_hit_fraction(state)

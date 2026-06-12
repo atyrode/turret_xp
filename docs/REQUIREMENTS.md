@@ -43,7 +43,7 @@
 - Shield core upgrade ranks must add 10 scripted shield capacity per rank, absorb incoming damage before HP, recharge in small increments after a short delay without incoming damage, and keep current shield unchanged when capacity changes except for clamping down to a lower maximum.
 - Retired Range and Max HP augment ranks from old profiles must be normalized away so old tags do not keep dead upgrade state.
 - Resistance core upgrade ranks must reduce non-lethal incoming damage through scripted mitigation without adding more hidden turret variants.
-- Ammo Productivity core upgrade ranks must add 1% magazine productivity per rank. Spent ammo should fill a custom purple horizontal progress bar in a separate stat row immediately after Magazine, and every full bar should restore +1 ammo inside the current loaded magazine without exceeding that ammo prototype's normal magazine size or creating full ammo items.
+- Ammo Productivity core upgrade ranks must add 1% raw magazine productivity per rank, then apply diminishing returns as `raw / (raw + 1)` for effective refill progress so the stat can scale indefinitely without reaching free ammo. Spent ammo should fill a custom purple horizontal progress bar in a separate stat row immediately after Magazine, and every full bar should restore +1 ammo inside the current loaded magazine without exceeding that ammo prototype's normal magazine size or creating full ammo items.
 - Clicking an element option must assign rank 1 for free when the corresponding level gate is unlocked.
 - Unlocked elements must always show their current rank, technical effect, next-rank material, and passive progress bar; there is no separate upgrade-start click.
 - Feeding required items into the turret's hidden material input must advance the selected element's passive material progress and increase the element rank when requirements are complete.
@@ -69,9 +69,10 @@
 - Show Shield, Resistance, Ammo Productivity, and other active custom stat rows when ranked. Ammo Productivity should appear as a horizontal bar in its own row immediately after Magazine when ranked.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
 - Show turret attack range in tiles, including quality range multiplier when relevant.
-- Show loaded ammo and count.
+- Show loaded ammo stack and current magazine ammo as separate `Ammo` and `Magazine` stat rows.
 - Show estimated loaded-ammo damage per shot and estimated DPS when they can be derived from prototype data.
 - Show kills, lifetime damage, and evolution points.
+- Keep stat rows compact by showing final values in the panel and moving current formulas into the stat-name info hover. HP and Range quality breakdowns should be available from the quality diamond beside the value, not from the stat-name info hover.
 - Show a six-section Evolution column to the right of the core, XP, dev, and scrollable stats column: core upgrades, specialization, first element, powerful augments, sub-specialization, and second element/combo.
 - Keep Core points, Augment points, and current Specialization summary in a static Evolution header above the scrollable section body instead of repeating those summaries inside sections. Format the header as `Core: value`, `Aug: value`, and `Spec: value` with white labels and colored values.
 - Show clear section headers, right-side point/status text, and delimiters between choices inside the unlocked Evolution sections.

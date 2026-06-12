@@ -18,12 +18,13 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Attach Turret XP as a bounded two-column panel: Veteran Core identity, XP, dev controls, and stats on the left; Evolution on the right.
 - Keep the Evolution column stable: a fixed summary header, one scrollable section body, section widths derived from the viewport, and no content rendering under the scrollbar.
 - Use direct labels, compact controls, restrained rich text markers, and vanilla-like layout rhythm.
+- Keep stat rows scannable: show final values in the panel, put formulas in the stat-name info hover, and reserve the quality diamond for quality-specific HP/range breakdowns.
 - Keep dev controls hidden by default and toggled through `/turret-xp-dev`.
 - Use the Veteran Core slot as a scripted tag-preserving control. Do not imply native arbitrary inventory-slot support inside the vanilla turret GUI.
 - Keep platform core selection explicit: when multiple tagged cores are in a platform hub, the player chooses the exact row.
 - Keep Bind/Unbind visually attached to the installed Veteran Core, because bound turret movement is an opt-in quick-move mode for that core/turret pair.
 - Keep floating-label controls top-down and conditional: name field plus `Show`, RGB sliders/preset controls only when the label is shown, then the `Level` option.
-- Keep numeric value coloring precise: color numbers and multipliers, keep units and prose neutral, and use element colors only for elemental damage numbers.
+- Keep numeric value coloring precise: unchanged values stay neutral, beneficial deltas use muted green, harmful deltas use muted red, units/prose stay neutral, and element colors are reserved for elemental damage numbers.
 - Use optional Bullet Trails and vanilla visual prototypes for readability, but keep fallback visuals lightweight and avoid visual spam.
 
 ## Progression Direction

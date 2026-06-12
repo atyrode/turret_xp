@@ -484,9 +484,9 @@ return function(M)
       return
     end
 
-    local productivity = get_ammo_productivity_fraction(state)
+    local productivity = get_effective_ammo_productivity_fraction(state)
     local progress = math.max(0, tonumber(state.ammo_productivity_progress or state.ammo_regen_progress) or 0) + (spent * productivity)
-    local bonus_ammo = math.floor(progress)
+    local bonus_ammo = math.floor(progress + 0.000001)
     if bonus_ammo > 0 then
       local added = combat.add_productivity_ammo(entity, spent_ammo, bonus_ammo)
       if added > 0 then

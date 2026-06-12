@@ -42,9 +42,10 @@
           </div>
           <div class="stats-grid">
             <span>HP</span><strong>400 / 400</strong>
-            <span>Shooting speed</span><strong>10 + 15/s</strong>
+            <span>Shooting speed</span><strong>25/s</strong>
             <span>Range</span><strong>18</strong>
-            <span>Magazine</span><strong>piercing x42, 10/10 ammo</strong>
+            <span>Ammo</span><strong>piercing x42</strong>
+            <span>Magazine</span><strong>10 / 10</strong>
             <span>Est. DPS</span><strong>157.5/s</strong>
             <span>Kills</span><strong>18</strong>
             <span>Damage dealt</span><strong>3,860</strong>
@@ -65,7 +66,8 @@
             <li>Removed the Range augment for now. Specialization and sub-specialization range modifiers remain prototype-backed.</li>
             <li>Moved Regeneration into the augment section and rebalanced it to 1% max HP per second per augment rank.</li>
             <li>Replaced the old general Lifesteal upgrade with a Shield on Hit augment that grants shield from gun-turret damage dealt, while Brawler now lists 10% Lifesteal as an innate specialization stat with a stats-panel info tooltip.</li>
-            <li>Replaced passive Ammo Recovery with Ammo Productivity: spent ammo fills a purple stat-row bar after Magazine, and a full bar restores +1 ammo inside the current loaded magazine without overfilling it or creating full ammo items.</li>
+            <li>Replaced passive Ammo Recovery with Ammo Productivity: raw productivity now has diminishing returns for refill progress, spent ammo fills a purple stat-row bar after Magazine, and a full bar restores +1 ammo inside the current loaded magazine without overfilling it, creating full ammo items, or reaching free ammo.</li>
+            <li>Cleaned up the stats panel so formulas live in stat-name info hovers, HP/Range quality breakdowns live on the quality diamond, Ammo and Magazine are separate rows, and visible values use calmer neutral/bonus/penalty coloring.</li>
             <li>Reduced the generated hidden turret prototype budget by removing Range/Max HP variant axes from body and bound-preview generation.</li>
             <li>Added a prototype migration that collapses old Range/Max HP hidden bodies and old range-preview bound items/placeholders onto the new specialization-only prototypes.</li>
           </ul>

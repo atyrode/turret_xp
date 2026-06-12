@@ -195,6 +195,7 @@ return function(M)
       derived = {
         repair_per_second = get_repair_per_second(state, current_entity),
         ammo_productivity_fraction = get_ammo_productivity_fraction(state),
+        effective_ammo_productivity_fraction = get_effective_ammo_productivity_fraction(state),
         ammo_recovery_per_minute = get_ammo_recovery_per_minute(state),
         shield_on_hit_fraction = get_shield_on_hit_fraction(state),
         lifesteal_rate = get_lifesteal_rate(state),

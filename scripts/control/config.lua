@@ -44,6 +44,7 @@ return function(M)
     shooting_speed = MOD_PREFIX .. "shooting-speed",
     range = MOD_PREFIX .. "range",
     ammo = MOD_PREFIX .. "ammo",
+    magazine = MOD_PREFIX .. "magazine",
     ammo_productivity = MOD_PREFIX .. "ammo-productivity",
     ammo_productivity_bar = MOD_PREFIX .. "ammo-productivity-bar",
     ammo_productivity_label = MOD_PREFIX .. "ammo-productivity-label",
@@ -111,7 +112,7 @@ return function(M)
       id = "ammo_regen",
       sprite = "item/piercing-rounds-magazine",
       name = "Ammo productivity",
-      description = "+1% magazine productivity per rank. Spent ammo fills a productivity bar; a full bar restores +1 ammo inside the current loaded magazine, up to its normal capacity.",
+      description = "+1% raw magazine productivity per rank. Raw productivity has diminishing returns for refill progress, so it can keep scaling without reaching free ammo.",
       value = "+1%",
       effect = "ammo_regen",
     },
@@ -213,8 +214,8 @@ return function(M)
   COLOR = {
     caption = { 0.62, 0.62, 0.62 },
     muted = { 0.74, 0.74, 0.74 },
-    bonus = { 0.58, 0.82, 0.38 },
-    penalty = { 1.0, 0.36, 0.30 },
+    bonus = { 0.55, 0.82, 0.55 },
+    penalty = { 0.95, 0.50, 0.48 },
     label_presets = label_colors.presets,
   }
 
