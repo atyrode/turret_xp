@@ -1084,25 +1084,6 @@ return function(M)
     return label_colors.preset_from_color(profile.label_color)
   end
 
-  function get_label_panel_name(profile)
-    local preset = find_matching_label_color_preset(profile)
-    if preset then
-      return LABEL_PANEL_PREFIX .. preset.id
-    end
-
-    local color = profile and profile.label_color or { 1, 0.86, 0.46 }
-    local function quantize(value)
-      return math.max(0, math.min(LABEL_CUSTOM_COLOR_STEPS, math.floor((tonumber(value) or 0) * LABEL_CUSTOM_COLOR_STEPS + 0.5)))
-    end
-    return LABEL_PANEL_PREFIX
-      .. "custom-"
-      .. tostring(quantize(color[1]))
-      .. "-"
-      .. tostring(quantize(color[2]))
-      .. "-"
-      .. tostring(quantize(color[3]))
-  end
-
   function get_profile_label_text(profile)
     profile = normalize_profile(profile)
     local name = profile.custom_name or ""
@@ -1133,77 +1114,12 @@ return function(M)
       return
     end
 
-    local label_panel_name = get_label_panel_name(profile)
-    if label_panel_name and prototypes.entity[label_panel_name] then
-      if profile.name_render and profile.name_render.valid then
-        profile.name_render.destroy()
-        profile.name_render = nil
-      end
-
-      if
-        profile.label_entity
-        and profile.label_entity.valid
-        and profile.label_entity.name == label_panel_name
-        and profile.label_entity.surface == entity.surface
-      then
-        local ok = pcall(function()
-          profile.label_entity.teleport(entity.position, entity.surface)
-          profile.label_entity.force = entity.force
-          profile.label_entity.display_panel_text = text
-          profile.label_entity.display_panel_always_show = true
-          profile.label_entity.display_panel_show_in_chart = false
-          profile.label_entity.display_panel_icon = nil
-        end)
-        if ok then
-          return
-        end
-      end
-
-      if profile.label_entity and profile.label_entity.valid then
-        pcall(function()
-          profile.label_entity.destroy({ raise_destroy = false })
-        end)
-        profile.label_entity = nil
-      end
-
-      local ok, label_entity = pcall(function()
-        return entity.surface.create_entity({
-          name = label_panel_name,
-          position = entity.position,
-          force = entity.force,
-          raise_built = false,
-          create_build_effect_smoke = false,
-        })
-      end)
-
-      if ok and label_entity then
-        pcall(function()
-          label_entity.destructible = false
-        end)
-        pcall(function()
-          label_entity.minable_flag = false
-        end)
-        pcall(function()
-          label_entity.operable = false
-        end)
-        pcall(function()
-          label_entity.rotatable = false
-        end)
-        pcall(function()
-          label_entity.display_panel_text = text
-          label_entity.display_panel_always_show = true
-          label_entity.display_panel_show_in_chart = false
-          label_entity.display_panel_icon = nil
-        end)
-        profile.label_entity = label_entity
-        return
-      end
-    elseif profile.label_entity and profile.label_entity.valid then
+    if profile.label_entity and profile.label_entity.valid then
       pcall(function()
         profile.label_entity.destroy({ raise_destroy = false })
       end)
-      profile.label_entity = nil
     end
+    profile.label_entity = nil
 
     if profile.name_render and profile.name_render.valid then
       local ok = pcall(function()

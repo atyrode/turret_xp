@@ -113,6 +113,7 @@ return function(M)
   end
 
   function turret_xp_test_prototype_budget()
+    local retired_label_panel_prefix = "turret-xp-label-panel-"
     local counts = {
       hidden_turret_variants = 0,
       bound_preview_items = 0,
@@ -126,7 +127,7 @@ return function(M)
         counts.hidden_turret_variants = counts.hidden_turret_variants + 1
       elseif turret_xp_test_has_prefix(name, BOUND_TURRET_PLACEHOLDER_VARIANT_PREFIX) then
         counts.bound_preview_placeholders = counts.bound_preview_placeholders + 1
-      elseif turret_xp_test_has_prefix(name, LABEL_PANEL_PREFIX) then
+      elseif turret_xp_test_has_prefix(name, retired_label_panel_prefix) then
         counts.label_panels = counts.label_panels + 1
       end
     end
@@ -137,10 +138,7 @@ return function(M)
       end
     end
 
-    counts.tracked_hidden_variant_total = counts.hidden_turret_variants
-      + counts.bound_preview_items
-      + counts.bound_preview_placeholders
-      + counts.label_panels
+    counts.tracked_hidden_variant_total = counts.hidden_turret_variants + counts.bound_preview_items + counts.bound_preview_placeholders
 
     return counts
   end
@@ -522,6 +520,32 @@ return function(M)
       update_name_render(entity, state)
       local synced = combat.sync_turret_body_when_idle(entity, state)
       return turret_xp_test_state_summary(synced or entity)
+    end,
+
+    attach_stale_label_entity = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local ok, label_entity = pcall(function()
+        return entity.surface.create_entity({
+          name = "display-panel",
+          position = entity.position,
+          force = entity.force,
+          raise_built = false,
+          create_build_effect_smoke = false,
+        })
+      end)
+      if not ok or not label_entity then
+        return nil
+      end
+
+      state.label_entity = label_entity
+      update_name_render(entity, state)
+      local summary = turret_xp_test_state_summary(entity)
+      summary.stale_label_entity_valid = label_entity.valid
+      return summary
     end,
 
     normalize_profile_snapshot = function(fields)

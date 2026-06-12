@@ -99,8 +99,8 @@ local function run_prototype_budget_test()
   assert_eq(budget.hidden_turret_variants, 12, "hidden turret variant budget changed")
   assert_eq(budget.bound_preview_items, 12, "bound preview item budget changed")
   assert_eq(budget.bound_preview_placeholders, 12, "bound preview placeholder budget changed")
-  assert_eq(budget.label_panels, 222, "label display-panel budget changed")
-  assert_eq(budget.tracked_hidden_variant_total, 258, "tracked hidden prototype budget changed")
+  assert_eq(budget.label_panels, 0, "retired label display-panel prototypes were generated")
+  assert_eq(budget.tracked_hidden_variant_total, 36, "tracked hidden prototype budget changed")
   log(
     TEST_PREFIX
       .. "prototype budget: hidden_turret_variants="
@@ -178,15 +178,22 @@ local function run_profile_label_test(surface)
   assert_eq(summary.custom_name, "Alpha", "core custom name did not persist")
   assert_eq(summary.show_name_label, true, "show label flag did not persist")
   assert_eq(summary.label_color_preset, "gold", "preset label color did not persist")
-  assert_true(summary.label_entity_valid or summary.name_render_valid, "enabled label did not create a label object")
+  assert_eq(summary.label_entity_valid, false, "preset label unexpectedly used a display-panel entity")
+  assert_true(summary.name_render_valid, "enabled label did not create a render object")
 
   summary = call("set_profile", turret, {
     label_color = { 0.12, 0.34, 0.56 },
     label_color_preset = "custom",
   })
   assert_eq(summary.label_color_preset, "custom", "RGB label edit did not mark the profile as custom")
-  assert_true(summary.label_entity_valid, "custom RGB label did not keep using a display-panel label entity")
-  assert_eq(summary.name_render_valid, false, "custom RGB label fell back to rendering text")
+  assert_eq(summary.label_entity_valid, false, "custom RGB label unexpectedly used a display-panel entity")
+  assert_true(summary.name_render_valid, "custom RGB label did not keep using rendered text")
+
+  summary = call("attach_stale_label_entity", turret)
+  assert_true(summary ~= nil, "stale label cleanup did not return a profile summary")
+  assert_eq(summary.stale_label_entity_valid, false, "stale display-panel label entity was not destroyed")
+  assert_eq(summary.label_entity_valid, false, "stale display-panel label handle was preserved")
+  assert_true(summary.name_render_valid, "stale label cleanup did not leave a render object label")
 end
 
 local function run_evolution_body_test(surface)
@@ -1423,6 +1430,7 @@ end
 
 local function setup_combat_test(surface)
   local turret = create_turret(surface, { -20, 0 }, 100)
+  turret.destructible = false
   call("install_core", turret, {
     custom_name = "Combat",
     level = 1,

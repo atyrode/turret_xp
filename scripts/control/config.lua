@@ -13,7 +13,6 @@ return function(M)
   BOUND_TURRET_VARIANT_PREFIX = DOMAIN.names.bound_turret_variant_prefix
   BOUND_TURRET_PLACEHOLDER_VARIANT_PREFIX = DOMAIN.names.bound_turret_placeholder_variant_prefix
   FEEDER_NAME = DOMAIN.names.feeder
-  LABEL_PANEL_PREFIX = DOMAIN.names.label_panel_prefix
   PROFILE_TAG = DOMAIN.names.profile_tag
   BOUND_TURRET_TAG = DOMAIN.names.bound_turret_tag
   BASE_TURRET_NAME = DOMAIN.names.base_turret
@@ -80,7 +79,6 @@ return function(M)
   ELEMENT_FREE_RANK = DOMAIN.element_free_rank
   FEEDER_INSERTER_RADIUS = 8
   FEEDER_INPUT_BUFFER_SLOTS = 100
-  LABEL_CUSTOM_COLOR_STEPS = DOMAIN.label_custom_color_steps
 
   BASE_UPGRADES = {
     {
