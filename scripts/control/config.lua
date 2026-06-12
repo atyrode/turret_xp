@@ -277,6 +277,7 @@ return function(M)
     - LAYOUT.element_mastery_icon_width
     - LAYOUT.element_mastery_action_width
     - 40
+  compat = nil
   safe_read = nil
   build_turret_gui = nil
   destroy_name_render = nil

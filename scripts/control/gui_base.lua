@@ -130,20 +130,4 @@ return function(M)
       end)
     end
   end
-
-  safe_read = function(object, property)
-    if not object then
-      return nil
-    end
-
-    local ok, value = pcall(function()
-      return object[property]
-    end)
-
-    if ok then
-      return value
-    end
-
-    return nil
-  end
 end

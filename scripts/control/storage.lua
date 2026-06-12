@@ -33,6 +33,24 @@ return function(M)
     return player and ensure_player_settings(player).dev_controls == true
   end
 
+  function compat_diagnostics_enabled()
+    if script.active_mods["turret_xp_headless_tests"] then
+      return true
+    end
+
+    if not storage or not storage.turret_xp or not storage.turret_xp.player_settings then
+      return false
+    end
+
+    for _, settings_table in pairs(storage.turret_xp.player_settings) do
+      if type(settings_table) == "table" and settings_table.dev_controls == true then
+        return true
+      end
+    end
+
+    return false
+  end
+
   function unlock_core_recipes_for_existing_tech()
     if not game or not game.forces then
       return
@@ -103,11 +121,7 @@ return function(M)
   end
 
   function combat.entity_prototype_exists(name)
-    local ok, prototype = pcall(function()
-      return prototypes.entity[name]
-    end)
-
-    return ok and prototype ~= nil
+    return compat.prototype_exists(prototypes.entity, name, "entity prototype")
   end
 
   function combat.sync_force_turret_attack_modifiers(force)
@@ -115,16 +129,16 @@ return function(M)
       return
     end
 
-    local ok, base_modifier = pcall(function()
+    local base_modifier = compat.try("read base turret attack modifier", function()
       return force.get_turret_attack_modifier(BASE_TURRET_NAME)
     end)
-    if not ok then
+    if base_modifier == nil then
       return
     end
 
     combat.for_each_specialized_turret_name(function(variant_name)
       if combat.entity_prototype_exists(variant_name) then
-        pcall(function()
+        compat.try("sync turret attack modifier", function()
           force.set_turret_attack_modifier(variant_name, base_modifier or 0)
         end)
       end

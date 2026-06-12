@@ -276,17 +276,12 @@ return function(M)
       return nil
     end
 
-    local data = nil
-    pcall(function()
-      data = stack.get_tag(PROFILE_TAG)
+    local data = compat.try("read core profile tag", function()
+      return stack.get_tag(PROFILE_TAG)
     end)
 
     local profile = deserialize_profile(data)
-    pcall(function()
-      if stack.quality and stack.quality.name then
-        profile.chip_quality = stack.quality.name
-      end
-    end)
+    profile.chip_quality = compat.quality_name(stack, profile.chip_quality or "normal", "core stack quality")
     return normalize_profile(profile)
   end
 
@@ -469,23 +464,11 @@ return function(M)
   end
 
   function quality_name_from_stack(stack, fallback)
-    local quality = fallback or "normal"
-    pcall(function()
-      if stack and stack.quality and stack.quality.name then
-        quality = stack.quality.name
-      end
-    end)
-    return quality
+    return compat.quality_name(stack, fallback or "normal", "stack quality")
   end
 
   function quality_name_from_entity(entity, fallback)
-    local quality = fallback or "normal"
-    pcall(function()
-      if entity and entity.quality and entity.quality.name then
-        quality = entity.quality.name
-      end
-    end)
-    return quality
+    return compat.quality_name(entity, fallback or "normal", "entity quality")
   end
 
   function snapshot_turret_item_state(entity)
@@ -615,13 +598,9 @@ return function(M)
     for _, ammo in pairs(remaining) do
       if ammo.name and (ammo.count or 0) > 0 then
         local item = make_item_stack_definition(ammo.name, ammo.count, ammo.quality or "normal")
-        local inserted = 0
-        local ok, result = pcall(function()
+        local inserted = compat.try("restore turret ammo", function()
           return inventory.insert(item)
-        end)
-        if ok and result then
-          inserted = result
-        end
+        end, 0) or 0
         local overflow = (ammo.count or 0) - inserted
         if overflow > 0 then
           spill_stack_definition_at(
@@ -690,11 +669,11 @@ return function(M)
 
   function insert_chip_item(player, profile)
     local stack = make_chip_item_stack(profile)
-    local ok, can_insert = pcall(function()
+    local can_insert = compat.try("player can_insert core", function()
       return player.can_insert(stack)
-    end)
+    end, false)
 
-    if not ok or not can_insert then
+    if not can_insert then
       return false
     end
 
@@ -708,11 +687,11 @@ return function(M)
     end
 
     local stack = make_chip_item_stack(profile)
-    local ok, can_insert = pcall(function()
+    local can_insert = compat.try("inventory can_insert core", function()
       return inventory.can_insert(stack)
-    end)
+    end, false)
 
-    if not ok or not can_insert then
+    if not can_insert then
       return false
     end
 
@@ -724,21 +703,7 @@ return function(M)
       return nil
     end
 
-    local surface = safe_read(entity, "surface")
-    local platform = surface and safe_read(surface, "platform") or nil
-    local hub = platform and safe_read(platform, "hub") or nil
-    if not hub or not hub.valid then
-      return nil
-    end
-
-    local ok, inventory = pcall(function()
-      return hub.get_inventory(defines.inventory.hub_main)
-    end)
-    if ok and inventory and inventory.valid then
-      return inventory
-    end
-
-    return nil
+    return compat.platform_hub_inventory(entity, defines.inventory.hub_main)
   end
 
   function get_platform_core_options(entity)
@@ -751,15 +716,9 @@ return function(M)
     for index = 1, #inventory do
       local stack = inventory[index]
       if stack and stack.valid_for_read and stack.name == CHIP_NAME then
-        local quality = "normal"
-        pcall(function()
-          if stack.quality and stack.quality.name then
-            quality = stack.quality.name
-          end
-        end)
         options[#options + 1] = {
           index = index,
-          quality = quality,
+          quality = quality_name_from_stack(stack, "normal"),
           profile = read_profile_from_chip_stack(stack),
         }
       end
@@ -773,14 +732,15 @@ return function(M)
       return false
     end
 
-    local ok = pcall(function()
+    local ok = compat.try("spill core item", function()
       entity.surface.spill_item_stack({
         position = entity.position,
         stack = make_chip_item_stack(profile),
         enable_looted = true,
         allow_belts = false,
       })
-    end)
+      return true
+    end, false)
 
     return ok
   end
@@ -798,14 +758,15 @@ return function(M)
       return false
     end
 
-    local ok = pcall(function()
+    local ok = compat.try("spill stack definition", function()
       surface.spill_item_stack({
         position = position,
         stack = stack,
         enable_looted = true,
         allow_belts = false,
       })
-    end)
+      return true
+    end, false)
     return ok
   end
 
@@ -814,10 +775,10 @@ return function(M)
       return 0
     end
 
-    local ok, removed = pcall(function()
+    local removed = compat.try("inventory remove item", function()
       return inventory.remove(item)
-    end)
-    if ok and removed and removed > 0 then
+    end, 0)
+    if removed and removed > 0 then
       return removed
     end
 
@@ -825,10 +786,10 @@ return function(M)
       name = item.name,
       count = item.count,
     }
-    ok, removed = pcall(function()
+    removed = compat.try("inventory remove fallback item", function()
       return inventory.remove(fallback)
-    end)
-    return ok and removed or 0
+    end, 0)
+    return removed or 0
   end
 
   function remove_bound_turret_mining_results(buffer, turret_snapshot)

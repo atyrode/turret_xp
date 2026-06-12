@@ -3,22 +3,7 @@ return function(M)
   local _ENV = M
 
   function feeder.get_entity_inventory(entity, inventory_id)
-    if not entity or not entity.valid then
-      return nil
-    end
-    if not inventory_id then
-      return nil
-    end
-
-    local ok, inventory = pcall(function()
-      return entity.get_inventory(inventory_id)
-    end)
-
-    if ok and inventory and inventory.valid then
-      return inventory
-    end
-
-    return nil
+    return compat.get_entity_inventory(entity, inventory_id, "entity inventory")
   end
 
   function feeder.get_inventory(entity)
@@ -34,11 +19,7 @@ return function(M)
       name = stack.name,
       count = stack.count,
     }
-    pcall(function()
-      if stack.quality and stack.quality.name then
-        item.quality = stack.quality.name
-      end
-    end)
+    item.quality = compat.quality_name(stack, nil, "spill stack quality")
     pcall(function()
       entity.surface.spill_item_stack({
         position = position or entity.position,
@@ -725,24 +706,17 @@ return function(M)
       name = stack.name,
       count = count or stack.count,
     }
-    pcall(function()
-      if stack.quality and stack.quality.name then
-        item.quality = stack.quality.name
-      end
-    end)
+    item.quality = compat.quality_name(stack, nil, "feeder stack quality")
     return item
   end
 
   function feeder.is_ammo_item(item_name)
-    local prototype = item_name and prototypes.item[item_name] or nil
+    local prototype = item_name and safe_read(prototypes.item, item_name, nil, "item prototype") or nil
     if not prototype then
       return false
     end
 
-    local ok, ammo_category = pcall(function()
-      return prototype.ammo_category
-    end)
-    return ok and ammo_category ~= nil
+    return safe_read(prototype, "ammo_category", nil, "item ammo_category") ~= nil
   end
 
   function feeder.route_contents(state)
@@ -767,10 +741,7 @@ return function(M)
     end
     feeder.set_input_open(inventory, feeder.get_input_slot_count(state, inventory))
 
-    local turret_inventory = nil
-    pcall(function()
-      turret_inventory = state.entity.get_inventory(defines.inventory.turret_ammo)
-    end)
+    local turret_inventory = feeder.get_entity_inventory(state.entity, defines.inventory.turret_ammo)
 
     local allowed_feed_items = feeder.get_allowed_items(state)
     for index = 1, #inventory do

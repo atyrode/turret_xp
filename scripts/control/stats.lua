@@ -179,15 +179,9 @@ return function(M)
       return nil
     end
 
-    local ok, ammo_type = pcall(function()
+    return compat.try("ammo type for turret", function()
       return ammo.get_ammo_type("turret")
     end)
-
-    if ok then
-      return ammo_type
-    end
-
-    return nil
   end
 
   function get_ammo_category_name(entity, ammo_name)
@@ -545,11 +539,11 @@ return function(M)
     local ammo_category_name = get_ammo_category_name(entity, ammo_name)
 
     if force and ammo_category_name then
-      local ok, modifier = pcall(function()
+      local modifier = compat.try("gun speed modifier", function()
         return force.get_gun_speed_modifier(ammo_category_name)
       end)
 
-      if ok and modifier then
+      if modifier then
         speed_modifier = modifier
       end
     end
@@ -581,21 +575,21 @@ return function(M)
     local turret_modifier = 0
 
     if force and ammo_category_name then
-      local ok, modifier = pcall(function()
+      local modifier = compat.try("ammo damage modifier", function()
         return force.get_ammo_damage_modifier(ammo_category_name)
       end)
 
-      if ok and modifier then
+      if modifier then
         ammo_modifier = modifier
       end
     end
 
     if force then
-      local ok, modifier = pcall(function()
+      local modifier = compat.try("turret attack modifier", function()
         return force.get_turret_attack_modifier(entity.name)
       end)
 
-      if ok and modifier then
+      if modifier then
         turret_modifier = modifier
       end
     end
@@ -764,12 +758,9 @@ return function(M)
     local base_health = nil
     local base_prototype = prototypes.entity[BASE_TURRET_NAME]
     if base_prototype then
-      local ok, value = pcall(function()
+      base_health = compat.try("base prototype max health", function()
         return base_prototype.get_max_health(quality_name or "normal")
       end)
-      if ok then
-        base_health = value
-      end
     end
 
     local total = max_health
@@ -791,15 +782,9 @@ return function(M)
       return nil
     end
 
-    local ok, max_health = pcall(function()
+    return compat.try("prototype max health", function()
       return prototype.get_max_health(quality_name)
     end)
-
-    if ok then
-      return max_health
-    end
-
-    return nil
   end
 
   format_range_for_quality = nil

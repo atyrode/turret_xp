@@ -8,7 +8,7 @@ return function(M)
     end
 
     local function snapshot_inventory_contents(source, inventory_id)
-      local inventory = source.get_inventory(inventory_id)
+      local inventory = compat.get_entity_inventory(source, inventory_id, "turret body snapshot inventory")
       local contents = {}
       if not inventory or not inventory.valid then
         return contents
@@ -21,11 +21,7 @@ return function(M)
             name = stack.name,
             count = stack.count,
           }
-          pcall(function()
-            if stack.quality and stack.quality.name then
-              entry.quality = stack.quality.name
-            end
-          end)
+          entry.quality = compat.quality_name(stack, nil, "turret body stack quality")
           contents[i] = entry
         end
       end
@@ -34,7 +30,7 @@ return function(M)
     end
 
     local function restore_inventory_contents(destination, inventory_id, contents)
-      local inventory = destination.get_inventory(inventory_id)
+      local inventory = compat.get_entity_inventory(destination, inventory_id, "turret body restore inventory")
       if not inventory or not inventory.valid then
         return
       end

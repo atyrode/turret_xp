@@ -276,6 +276,19 @@ return function(M)
       }
     end,
 
+    compat_samples = function(entity)
+      local turret_inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
+      return {
+        nil_read_fallback = safe_read(nil, "missing", "fallback"),
+        entity_quality = quality_name_from_entity(entity, "normal"),
+        inventory_valid = turret_inventory and turret_inventory.valid or false,
+        platform_inventory_present = get_platform_hub_inventory(entity) ~= nil,
+        base_prototype_exists = combat.entity_prototype_exists(BASE_TURRET_NAME),
+        missing_prototype_exists = combat.entity_prototype_exists("turret-xp-missing-prototype") == true,
+        diagnostics_enabled = compat_diagnostics_enabled(),
+      }
+    end,
+
     prototype_budget = function()
       return turret_xp_test_prototype_budget()
     end,
