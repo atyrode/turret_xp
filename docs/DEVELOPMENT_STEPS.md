@@ -381,6 +381,11 @@
 - [x] Move label color preset lookup/matching into explicit returned-table module `scripts/control/label_colors.lua`.
 - [x] Document the incremental rule: new pure helper groups should prefer direct `require` dependencies and returned tables instead of widening shared globals.
 
+## Runtime Ownership Split
+
+- [x] Move bound turret tagged-item creation, decoding, build-event stack lookup, mining-result cleanup, and insert/spill delivery into `scripts/control/bound_turret_items.lua`.
+- [x] Add headless coverage for legacy/generic bound turret stacks that carry a profile tag but no turret snapshot tag.
+
 ## Likely Next Work
 
 - Playtest V0.10.3 from a local package or Mod Portal release after feedback integration, especially around bound turret ammo conservation, K2/K2SO realistic ammo range compatibility, level-up flying text, Resistance feel, max-HP-based Regeneration, passive element material progress, Toxic and Fire damage-over-time readability, crit/double-shot visuals, richer Evolution summary header, right-column scrollbar containment, specialization multiplier colors, section margins, full Evolution reset, baseline crit stats, Max HP rank body swaps, Ammo Recovery pacing, level-40 sub-specializations, normal/bulk inserter feeding, hidden input ammo forwarding, deferred turret body swaps, bound turret mining/placement, normal turret replacement ghosts, placement-helper ammo refunds, range stacking, specialization multipliers, Luck/proc effects, platform hub core selection, asteroid XP pacing, optional Bullet Trails visuals, label controls, modded base turret range compatibility, and high-level turret combat performance.

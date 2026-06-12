@@ -769,6 +769,23 @@ local function run_bound_turret_test(surface)
   assert_eq(decoded.profile.level, 12, "bound turret item lost core level")
   assert_eq(#(decoded.turret.ammo or {}), 1, "bound turret item did not snapshot loaded ammo")
 
+  local legacy_inventory = game.create_inventory(1)
+  local legacy_definition = call("make_legacy_bound_turret_stack", {
+    level = 22,
+    custom_name = "Legacy Bound"
+  })
+  local legacy_copied = pcall(function()
+    legacy_inventory[1].set_stack(legacy_definition)
+  end)
+  assert_true(legacy_copied and legacy_inventory[1].valid_for_read, "failed to create legacy bound turret stack")
+  local legacy_decoded = call("read_bound_turret_stack", legacy_inventory[1])
+  assert_true(legacy_decoded ~= nil, "legacy bound turret stack did not decode")
+  assert_eq(legacy_decoded.profile.custom_name, "Legacy Bound", "legacy bound stack lost profile name")
+  assert_eq(legacy_decoded.profile.bound_turret, true, "legacy bound stack did not normalize bound flag")
+  assert_eq(legacy_decoded.profile.level, 22, "legacy bound stack lost core level")
+  assert_eq(legacy_decoded.turret.quality, "normal", "legacy bound stack did not default turret quality")
+  assert_eq(#(legacy_decoded.turret.ammo or {}), 0, "legacy bound stack should decode with an empty ammo snapshot")
+
   local preview_turret = create_turret(surface, { 26, -4 }, 5)
   call("install_core", preview_turret, { level = 45 })
   call("set_evolution", preview_turret, {
@@ -866,6 +883,9 @@ local function run_bound_turret_test(surface)
   assert_eq(full_decoded.profile.level, 18, "full-buffer spilled bound turret lost its core level")
   assert_eq(#(full_decoded.turret.ammo or {}), 1, "full-buffer spilled bound turret did not preserve ammo in its snapshot")
 
+  pcall(function()
+    legacy_inventory.destroy()
+  end)
   pcall(function()
     buffer.destroy()
   end)
