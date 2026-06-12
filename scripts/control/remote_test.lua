@@ -18,6 +18,14 @@ function turret_xp_test_inventory_counts(inventory)
   return counts
 end
 
+function turret_xp_test_table_count(values)
+  local count = 0
+  for _, _ in pairs(values or {}) do
+    count = count + 1
+  end
+  return count
+end
+
 function turret_xp_test_as_array(value)
   if not value then
     return {}
@@ -233,6 +241,27 @@ remote.add_interface("turret_xp_test", {
 
   get_state = function(entity)
     return turret_xp_test_state_summary(entity)
+  end,
+
+  record_damage_contribution = function(target, turret, damage, final_health)
+    record_damage_contribution({
+      entity = target,
+      final_health = final_health
+    }, turret, damage or 0)
+    ensure_storage()
+    return {
+      target_entry_count = turret_xp_test_table_count(storage.turret_xp.targets)
+    }
+  end,
+
+  award_recorded_kill_credit = function(target, killing_turret)
+    local credited_turret = award_kill_credit(target, killing_turret)
+    award_visible_kill(credited_turret)
+    ensure_storage()
+    return {
+      credited_unit_number = credited_turret and credited_turret.valid and credited_turret.unit_number or nil,
+      target_entry_count = turret_xp_test_table_count(storage.turret_xp.targets)
+    }
   end,
 
   layout = function()

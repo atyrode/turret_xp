@@ -739,6 +739,46 @@ local function run_full_evolution_reset_test(surface)
   assert_eq(summary.evolution.element_mastery.explosive.fuel or 0, 0, "full reset did not clear explosive fuel")
 end
 
+local function run_damage_accounting_test(surface)
+  local first_turret = create_turret(surface, { 42, 0 }, 0)
+  local second_turret = create_turret(surface, { 44, 0 }, 0)
+  call("install_core", first_turret, {
+    custom_name = "Partial Credit A"
+  })
+  call("install_core", second_turret, {
+    custom_name = "Partial Credit B"
+  })
+
+  local target = surface.create_entity({
+    name = "small-biter",
+    position = { 46, 0 },
+    force = "enemy",
+    raise_built = false
+  })
+  assert_true(target and target.valid, "failed to create damage accounting target")
+
+  local max_health = target.health or 15
+  local recorded = call("record_damage_contribution", target, first_turret, 4, max_health - 4)
+  assert_eq(recorded.target_entry_count, 1, "first damage contribution did not create target accounting")
+  recorded = call("record_damage_contribution", target, second_turret, 6, max_health - 10)
+  assert_eq(recorded.target_entry_count, 1, "second damage contribution created duplicate target accounting")
+
+  local awarded = call("award_recorded_kill_credit", target)
+  assert_eq(awarded.credited_unit_number, second_turret.unit_number, "kill credit did not pick the highest-damage contributor")
+  assert_eq(awarded.target_entry_count, 0, "target damage accounting was not cleared after kill credit award")
+
+  local first_summary = call("get_state", first_turret)
+  local second_summary = call("get_state", second_turret)
+  assert_near(first_summary.kill_credit, 0.4, 0.0001, "first contributor did not receive proportional kill credit")
+  assert_near(second_summary.kill_credit, 0.6, 0.0001, "second contributor did not receive proportional kill credit")
+  assert_eq(first_summary.kills, 0, "lower-damage contributor incorrectly received the visible kill")
+  assert_eq(second_summary.kills, 1, "highest-damage contributor did not receive the visible kill")
+
+  pcall(function()
+    target.destroy()
+  end)
+end
+
 local function run_bound_turret_test(surface)
   local turret = create_turret(surface, { 24, 0 }, 7)
   turret.health = 250
@@ -1037,6 +1077,7 @@ local function run_immediate_tests()
   run_dual_element_feeder_test(surface)
   run_targeted_reset_test(surface)
   run_full_evolution_reset_test(surface)
+  run_damage_accounting_test(surface)
   run_bound_turret_test(surface)
   run_bound_turret_mining_ammo_conservation_test(surface)
   setup_combat_test(surface)
