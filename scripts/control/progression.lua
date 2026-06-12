@@ -1,6 +1,23 @@
+local legacy_migrations = require("scripts.control.migrations")
+
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
+
+  local legacy_migration_service = nil
+
+  local function get_legacy_migration_service()
+    if not legacy_migration_service then
+      legacy_migration_service = legacy_migrations.new({
+        element_by_id = ELEMENT_BY_ID,
+        element_free_rank = ELEMENT_FREE_RANK,
+        get_element_requirements = get_element_requirements,
+        advance_element_mastery_if_ready = advance_element_mastery_if_ready,
+      })
+    end
+
+    return legacy_migration_service
+  end
 
   function get_xp_settings()
     return {
@@ -97,12 +114,8 @@ return function(M)
     evolution.augments = evolution.augments or {}
     evolution.elements = evolution.elements or {}
     evolution.element_mastery = evolution.element_mastery or {}
-    if evolution.elements.first or evolution.elements.second then
-      evolution.elements = {
-        evolution.elements[1] or evolution.elements.first,
-        evolution.elements[2] or evolution.elements.second,
-      }
-    end
+    local migrations = get_legacy_migration_service()
+    migrations.normalize_legacy_element_slots(evolution)
 
     for _, upgrade in ipairs(BASE_UPGRADES) do
       evolution.base[upgrade.id] = math.max(0, math.floor(tonumber(evolution.base[upgrade.id]) or 0))
@@ -117,8 +130,7 @@ return function(M)
         evolution.augments[augment.id] = math.min(augment.max_rank, evolution.augments[augment.id])
       end
     end
-    evolution.augments.piercing = nil
-    evolution.augments.longshot = nil
+    migrations.remove_retired_augments(evolution)
 
     if evolution.specialization and not SPECIALIZATION_BY_ID[evolution.specialization] then
       evolution.specialization = nil
@@ -148,63 +160,11 @@ return function(M)
       end
       mastery.rank = math.max(0, math.floor(tonumber(mastery.rank) or 0))
       mastery.delivered = math.max(0, math.floor(tonumber(mastery.delivered) or 0))
-      mastery.fuel = nil
-      mastery.burn_remaining = nil
+      migrations.normalize_legacy_element_mastery(mastery)
     end
 
-    if evolution.element_project ~= nil and type(evolution.element_project) ~= "table" then
-      evolution.element_project = nil
-    end
-
-    local project = evolution.element_project
-    if project then
-      local element = ELEMENT_BY_ID[project.element]
-      if not element or (project.slot ~= 1 and project.slot ~= 2) then
-        evolution.element_project = nil
-      else
-        project.delivered = project.delivered or {}
-        local old_delivered = project.delivered[element.resource] or 0
-        if project.requirements and project.requirements[1] and project.requirements[1].name ~= element.resource then
-          for _, requirement in ipairs(project.requirements) do
-            old_delivered = old_delivered + math.floor(tonumber(project.delivered[requirement.name]) or 0)
-          end
-          project.delivered = {
-            [element.resource] = old_delivered,
-          }
-        end
-        local mastery = evolution.element_mastery[project.element]
-        if not project.target_rank then
-          local current_rank = mastery and (mastery.rank or 0) or 0
-          project.target_rank = current_rank > 0 and (current_rank + 1) or ELEMENT_FREE_RANK
-        end
-        project.target_rank = math.max(ELEMENT_FREE_RANK, math.floor(tonumber(project.target_rank) or ELEMENT_FREE_RANK))
-        project.requirements = get_element_requirements(element, project.target_rank)
-        for _, requirement in ipairs(project.requirements) do
-          project.delivered[requirement.name] = math.max(0, math.floor(tonumber(project.delivered[requirement.name]) or 0))
-        end
-        if mastery then
-          local delivered = project.delivered[element.resource] or 0
-          if (mastery.rank or 0) <= 0 and project.target_rank <= ELEMENT_FREE_RANK then
-            evolution.elements[project.slot] = project.element
-            mastery.rank = ELEMENT_FREE_RANK
-          elseif delivered > 0 then
-            mastery.delivered = (mastery.delivered or 0) + delivered
-          end
-        end
-        local migrated_element = project.element
-        evolution.element_project = nil
-        advance_element_mastery_if_ready(state, migrated_element)
-      end
-    end
-
-    if not evolution.migrated_legacy_skills and type(state.skills) == "table" then
-      evolution.base.damage = evolution.base.damage + math.max(0, math.floor(tonumber(state.skills.ballistics) or 0))
-      evolution.base.xp = (evolution.base.xp or 0)
-        + math.max(0, math.floor(tonumber(state.skills.kill_chain) or 0))
-        + math.max(0, math.floor(tonumber(state.skills.targeting_data) or 0))
-      evolution.base.repair = evolution.base.repair + math.max(0, math.floor(tonumber(state.skills.field_repairs) or 0))
-      evolution.migrated_legacy_skills = true
-    end
+    migrations.migrate_legacy_element_project(state, evolution)
+    migrations.migrate_legacy_skills(state, evolution)
 
     return evolution
   end

@@ -224,6 +224,32 @@ return function(M)
     }
   end
 
+  function turret_xp_test_profile_summary(profile)
+    profile = normalize_profile(copy_serializable(profile or {}))
+    local evolution = ensure_evolution_state(profile)
+
+    return {
+      level = profile.level or 0,
+      kills = profile.kills or 0,
+      damage = profile.damage or 0,
+      skills = copy_serializable(profile.skills or {}),
+      evolution = {
+        base = copy_serializable(evolution.base or {}),
+        augments = copy_serializable(evolution.augments or {}),
+        elements = {
+          evolution.elements and evolution.elements[1] or nil,
+          evolution.elements and evolution.elements[2] or nil,
+        },
+        unique_elements = get_unique_active_element_ids(profile),
+        element_mastery = copy_serializable(evolution.element_mastery or {}),
+        specialization = evolution.specialization,
+        sub_specialization = evolution.sub_specialization,
+        element_project = copy_serializable(evolution.element_project),
+        migrated_legacy_skills = evolution.migrated_legacy_skills == true,
+      },
+    }
+  end
+
   function turret_xp_test_set_profile_fields(profile, fields)
     if type(fields) ~= "table" then
       return profile
@@ -405,6 +431,14 @@ return function(M)
       return turret_xp_test_state_summary(synced or entity)
     end,
 
+    normalize_profile_snapshot = function(fields)
+      return turret_xp_test_profile_summary(fields)
+    end,
+
+    deserialize_profile_snapshot = function(data)
+      return turret_xp_test_profile_summary(deserialize_profile(data))
+    end,
+
     set_evolution = function(entity, fields)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -489,7 +523,7 @@ return function(M)
       return turret_xp_test_state_summary(synced or entity)
     end,
 
-    start_element_project = function(entity, slot, element_id)
+    pick_element = function(entity, slot, element_id)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       local element = ELEMENT_BY_ID[element_id]
       if not state or not element then
@@ -504,7 +538,7 @@ return function(M)
       if not evolution.elements[slot] then
         assign_element_rank(state, slot, element_id, ELEMENT_FREE_RANK)
       elseif evolution.elements[slot] == element_id then
-        start_element_rank_project(entity, state, element_id, slot)
+        ensure_element_material_input(entity, state, element_id, slot)
       end
       feeder.ensure(entity, state)
       return turret_xp_test_state_summary(entity)

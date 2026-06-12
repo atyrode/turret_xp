@@ -419,6 +419,160 @@ local function feed_element_until_rank(entity, item_name, element_id, target_ran
   return summary
 end
 
+local function run_legacy_migration_test()
+  local skills = call("normalize_profile_snapshot", {
+    skills = {
+      ballistics = 2,
+      kill_chain = 3,
+      targeting_data = 4,
+      field_repairs = 1,
+    },
+    evolution = {},
+  })
+  assert_eq(skills.evolution.base.damage, 2, "legacy Ballistics skill did not migrate into Damage")
+  assert_eq(skills.evolution.base.xp, 7, "legacy XP skills did not migrate into Veteran Training")
+  assert_eq(skills.evolution.base.repair, 1, "legacy Field Repairs skill did not migrate into Regeneration")
+  assert_eq(skills.evolution.migrated_legacy_skills, true, "legacy skill migration was not marked complete")
+
+  local skills_again = call("normalize_profile_snapshot", {
+    skills = {
+      ballistics = 2,
+      kill_chain = 3,
+      targeting_data = 4,
+      field_repairs = 1,
+    },
+    evolution = {
+      base = skills.evolution.base,
+      migrated_legacy_skills = true,
+    },
+  })
+  assert_eq(skills_again.evolution.base.damage, 2, "legacy skill migration was not idempotent for Damage")
+  assert_eq(skills_again.evolution.base.xp, 7, "legacy skill migration was not idempotent for Veteran Training")
+  assert_eq(skills_again.evolution.base.repair, 1, "legacy skill migration was not idempotent for Regeneration")
+
+  local tagged = call("deserialize_profile_snapshot", {
+    schema = 1,
+    level = 50,
+    evolution = {
+      augments = {
+        piercing = 4,
+        longshot = 3,
+        range = 2,
+      },
+      elements = {
+        first = "fire",
+        second = "explosive",
+      },
+      element_mastery = {
+        fire = {
+          rank = 2,
+          delivered = 12,
+          fuel = 99,
+          burn_remaining = 30,
+        },
+        explosive = {
+          rank = 1,
+          delivered = 8,
+          fuel = 4,
+        },
+      },
+    },
+  })
+  assert_eq(tagged.evolution.elements[1], "fire", "legacy first element tag did not migrate to slot 1")
+  assert_eq(tagged.evolution.elements[2], "explosive", "legacy second element tag did not migrate to slot 2")
+  assert_eq(tagged.evolution.augments.range, 2, "current augment rank was lost during legacy cleanup")
+  assert_eq(tagged.evolution.augments.piercing, nil, "retired Piercing augment was not removed")
+  assert_eq(tagged.evolution.augments.longshot, nil, "retired Longshot augment was not removed")
+  assert_eq(tagged.evolution.element_mastery.fire.rank, 2, "legacy Fire mastery rank was not preserved")
+  assert_eq(tagged.evolution.element_mastery.fire.delivered, 12, "legacy Fire delivered material was not preserved")
+  assert_eq(tagged.evolution.element_mastery.fire.fuel, nil, "legacy Fire fuel buffer was not removed")
+  assert_eq(tagged.evolution.element_mastery.fire.burn_remaining, nil, "legacy Fire burn state was not removed")
+
+  local free_pick = call("normalize_profile_snapshot", {
+    evolution = {
+      element_project = {
+        slot = 1,
+        element = "fire",
+        target_rank = 1,
+        delivered = {},
+        requirements = {},
+      },
+    },
+  })
+  assert_eq(free_pick.evolution.elements[1], "fire", "legacy free element project did not assign the element")
+  assert_eq(free_pick.evolution.element_mastery.fire.rank, 1, "legacy free element project did not grant free rank")
+  assert_eq(free_pick.evolution.element_project, nil, "legacy free element project was not removed")
+
+  local renamed_materials = call("normalize_profile_snapshot", {
+    evolution = {
+      elements = { "electric" },
+      element_mastery = {
+        electric = {
+          rank = 1,
+          delivered = 4,
+        },
+      },
+      element_project = {
+        slot = 1,
+        element = "electric",
+        target_rank = 2,
+        requirements = {
+          { name = "copper-cable", count = 100 },
+          { name = "iron-plate", count = 100 },
+        },
+        delivered = {
+          ["copper-cable"] = 7,
+          ["iron-plate"] = 5,
+        },
+      },
+    },
+  })
+  assert_eq(renamed_materials.evolution.element_project, nil, "legacy renamed-resource project was not removed")
+  assert_eq(renamed_materials.evolution.element_mastery.electric.rank, 1, "partial legacy project unexpectedly ranked Electric")
+  assert_eq(
+    renamed_materials.evolution.element_mastery.electric.delivered,
+    16,
+    "legacy renamed resources did not migrate into delivered progress"
+  )
+
+  local completed_project = call("normalize_profile_snapshot", {
+    evolution = {
+      elements = { "explosive" },
+      element_mastery = {
+        explosive = {
+          rank = 1,
+          delivered = 0,
+        },
+      },
+      element_project = {
+        slot = 1,
+        element = "explosive",
+        target_rank = 2,
+        requirements = {
+          { name = "grenade", count = 500 },
+        },
+        delivered = {
+          grenade = 500,
+        },
+      },
+    },
+  })
+  assert_eq(completed_project.evolution.element_project, nil, "completed legacy project was not removed")
+  assert_eq(completed_project.evolution.element_mastery.explosive.rank, 2, "completed legacy project did not advance rank")
+  assert_eq(
+    completed_project.evolution.element_mastery.explosive.delivered,
+    0,
+    "completed legacy project did not consume delivered materials"
+  )
+
+  local invalid_project = call("normalize_profile_snapshot", {
+    evolution = {
+      element_project = true,
+    },
+  })
+  assert_eq(invalid_project.evolution.element_project, nil, "invalid legacy project value was not removed")
+end
+
 local function create_source_chest(surface, position, item_name)
   local chest = surface.create_entity({
     name = "wooden-chest",
@@ -450,12 +604,12 @@ local function cleanup_test_turret(turret)
   end
 end
 
-local function run_feeder_project_test(surface)
+local function run_feeder_material_progress_test(surface)
   local turret = create_turret(surface, { 16, 0 }, 10)
   local summary = call("install_core", turret, { level = 20 })
   assert_true(summary ~= nil, "failed to install core for feeder test")
 
-  summary = call("start_element_project", turret, 1, "explosive")
+  summary = call("pick_element", turret, 1, "explosive")
   assert_eq(summary.evolution.elements[1], "explosive", "free explosive pick did not select the first element")
   assert_eq(summary.evolution.element_mastery.explosive.rank, 1, "free explosive pick did not start at rank 1")
   assert_eq(summary.evolution.element_project, nil, "free element pick should not keep legacy material project state")
@@ -487,8 +641,8 @@ local function run_feeder_project_test(surface)
     summary = feed_one(turret, "grenade")
   end
 
-  assert_eq(summary.evolution.elements[1], "explosive", "element project did not unlock explosive after required feed")
-  assert_eq(summary.evolution.element_mastery.explosive.rank, 2, "completed explosive project did not increase mastery to rank 2")
+  assert_eq(summary.evolution.elements[1], "explosive", "passive progress did not keep explosive selected after required feed")
+  assert_eq(summary.evolution.element_mastery.explosive.rank, 2, "completed passive progress did not increase mastery to rank 2")
   assert_true(summary.evolution.element_project == nil, "passive element progress should not create legacy projects")
   assert_eq(summary.feeder.needs_input, true, "feeder should continue requesting the next passive element rank")
   assert_contains(summary.feeder.allowed_items, "grenade", "feeder did not continue requesting explosive material after rank up")
@@ -502,7 +656,7 @@ local function run_feeder_contract_test(surface)
   assert_eq(summary.feeder.valid, false, "a core with no selected element should not create an invisible feeder")
   assert_eq(summary.feeder.needs_input, false, "a core with no selected element should not need material input")
 
-  summary = call("start_element_project", turret, 1, "fire")
+  summary = call("pick_element", turret, 1, "fire")
   assert_eq(summary.feeder.valid, true, "selected element did not create the invisible feeder")
   assert_eq(summary.feeder.needs_input, true, "selected element did not request passive material input")
   assert_contains(summary.feeder.allowed_items, "sulfur", "fire passive progress did not request sulfur")
@@ -647,16 +801,16 @@ local function run_dual_element_feeder_test(surface)
 
   summary = feed_one(turret, "sulfur")
   assert_eq(summary.evolution.element_mastery.fire.delivered, 1, "fire progress did not consume sulfur")
-  assert_eq(summary.evolution.element_mastery.explosive.rank, 1, "feeding fire project changed explosive mastery")
+  assert_eq(summary.evolution.element_mastery.explosive.rank, 1, "feeding fire progress changed explosive mastery")
 
   summary = feed_element_until_rank(turret, "sulfur", "fire", 2, 40)
   assert_eq(summary.evolution.element_mastery.fire.rank, 2, "fire passive progress did not complete rank 2")
-  assert_contains(summary.feeder.allowed_items, "grenade", "explosive rank project did not request grenades")
+  assert_contains(summary.feeder.allowed_items, "grenade", "explosive rank progress did not request grenades")
   managed = call("manage_inserter_filters", turret, inserter)
   assert_contains(managed.filters, "grenade", "managed inserter stopped exposing explosive material")
 
   summary = feed_one(turret, "grenade")
-  assert_eq(summary.evolution.element_mastery.fire.rank, 2, "feeding explosive project changed fire mastery")
+  assert_eq(summary.evolution.element_mastery.fire.rank, 2, "feeding explosive progress changed fire mastery")
   assert_eq(summary.evolution.element_mastery.explosive.delivered, 1, "explosive progress did not consume grenade")
 
   summary = call("set_evolution", turret, {
@@ -1197,6 +1351,7 @@ local function run_immediate_tests()
   run_layout_constants_test()
   run_gui_support_samples_test()
   run_compat_samples_test(surface)
+  run_legacy_migration_test()
   run_prototype_budget_test()
   run_place_result_regression_test()
   run_profile_label_test(surface)
@@ -1208,7 +1363,7 @@ local function run_immediate_tests()
   run_evolution_body_test(surface)
   run_specialization_secondary_multiplier_test(surface)
   run_resistance_test(surface)
-  run_feeder_project_test(surface)
+  run_feeder_material_progress_test(surface)
   run_feeder_contract_test(surface)
   run_dual_element_feeder_test(surface)
   run_targeted_reset_test(surface)

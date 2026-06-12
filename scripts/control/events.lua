@@ -200,16 +200,12 @@ return function(M)
       reset_augments(player)
     elseif action == "reset-evolution" then
       reset_evolution(player)
-    elseif action == "allocate-element-mastery" then
-      allocate_element_mastery(player, tags.element, event.shift and 10 or 1)
-    elseif action == "deallocate-element-mastery" then
-      deallocate_element_mastery(player, tags.element, event.shift and 10 or 1)
     elseif action == "reset-element-slot" then
       reset_element_slot(player, tags.slot)
     elseif action == "start-element" then
-      start_element_project(player, tags.slot, tags.element)
-    elseif action == "dev-complete-project" then
-      dev_complete_project(player)
+      pick_element(player, tags.slot, tags.element)
+    elseif action == "dev-complete-element-rank" then
+      dev_complete_next_element_rank(player)
     elseif action == "dev-level" then
       add_dev_levels(player, tags.levels)
     elseif action == "dev-reset-core" then
