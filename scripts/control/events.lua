@@ -206,6 +206,18 @@ return function(M)
     end,
   }
 
+  function dispatch_gui_click_action(player, event, tags)
+    tags = tags or {}
+    local action = tags.turret_xp_action
+    local handler = action and gui_click_dispatch[action] or nil
+    if not handler then
+      return false
+    end
+
+    handler(player, event or {}, tags)
+    return true
+  end
+
   function handlers.on_gui_click(event)
     local element = event.element
     if not element or not element.valid then
@@ -218,11 +230,7 @@ return function(M)
     end
 
     local tags = element.tags or {}
-    local action = tags.turret_xp_action
-    local handler = action and gui_click_dispatch[action] or nil
-    if handler then
-      handler(player, event, tags)
-    end
+    dispatch_gui_click_action(player, event, tags)
   end
 
   function handlers.on_gui_checked_state_changed(event)
