@@ -171,6 +171,14 @@ local function run_layout_constants_test()
   assert_true(layout.evolution_detail_width < layout.evolution_inner_width, "Evolution text details must stay capped inside inner rows")
 end
 
+local function run_gui_support_samples_test()
+  local samples = call("gui_support_samples")
+  assert_eq(samples.percent, "12.5%", "GUI percent formatting changed")
+  assert_eq(samples.color, "0.58,0.82,0.38", "GUI rich color conversion changed")
+  assert_eq(samples.rich_number, "[color=0.58,0.82,0.38]+5[/color]", "GUI rich number formatting changed")
+  assert_eq(samples.rich_stat, "Damage [color=0.58,0.82,0.38]+5[/color] [color=0.58,0.82,0.38]x1.2[/color]", "GUI rich stat token formatting changed")
+end
+
 local function run_prototype_budget_test()
   local budget = call("prototype_budget")
   assert_true(type(budget) == "table", "prototype budget was not exposed to the headless suite")
@@ -1062,6 +1070,7 @@ local function run_immediate_tests()
   assert_true(remote.interfaces[IFACE] ~= nil, "Turret XP test remote interface is unavailable")
 
   run_layout_constants_test()
+  run_gui_support_samples_test()
   run_prototype_budget_test()
   run_place_result_regression_test()
   run_profile_label_test(surface)

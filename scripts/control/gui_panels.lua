@@ -1,6 +1,23 @@
+local gui_support = require("scripts.control.gui_support")
+
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
+
+local gui_support_service = nil
+
+local function get_gui_support_service()
+  if not gui_support_service then
+    gui_support_service = gui_support.new({
+      COLOR = COLOR,
+      LAYOUT = LAYOUT,
+      format_number = format_number,
+      set_style = set_style
+    })
+  end
+
+  return gui_support_service
+end
 
 function add_stat_row(parent, label, element_name, options)
   options = options or {}
@@ -646,31 +663,19 @@ function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality)
 end
 
 function format_percent(value, decimals)
-  return format_number((value or 0) * 100, decimals or 1) .. "%"
+  return get_gui_support_service().format_percent(value, decimals)
 end
 
 function color_to_rich_string(color)
-  local source = color or COLOR.bonus
-  if type(source) == "table" then
-    return tostring(source[1]) .. "," .. tostring(source[2]) .. "," .. tostring(source[3])
-  end
-
-  return tostring(source)
+  return get_gui_support_service().color_to_rich_string(color)
 end
 
 function rich_number(text, color)
-  return rich_color(color_to_rich_string(color or COLOR.bonus), text)
+  return get_gui_support_service().rich_number(text, color)
 end
 
 function rich_stat_text(text, color)
-  if type(text) ~= "string" then
-    return text
-  end
-
-  local color_string = color_to_rich_string(color or COLOR.bonus)
-  return string.gsub(text, "([%+%-]?x?%d+%.?%d*%%?)", function(token)
-    return rich_color(color_string, token)
-  end)
+  return get_gui_support_service().rich_stat_text(text, color)
 end
 
 function add_stats_panel(parent)
@@ -994,35 +999,15 @@ function add_evolution_panel(parent)
 end
 
 function set_evolution_content_width(element, inner)
-  if not element then
-    return
-  end
-
-  local width = inner and LAYOUT.evolution_inner_width or LAYOUT.evolution_section_width
-  set_style(element, "horizontally_stretchable", true)
-  set_style(element, "width", width)
-  set_style(element, "minimal_width", width)
-  set_style(element, "maximal_width", width)
+  get_gui_support_service().set_evolution_content_width(element, inner)
 end
 
 function set_card_text_width(element)
-  if not element then
-    return
-  end
-
-  set_style(element, "single_line", false)
-  set_style(element, "maximal_width", LAYOUT.evolution_card_inner_width)
+  get_gui_support_service().set_card_text_width(element)
 end
 
 function set_evolution_card_child_width(element)
-  if not element then
-    return
-  end
-
-  set_style(element, "horizontally_stretchable", true)
-  set_style(element, "width", LAYOUT.evolution_card_inner_width)
-  set_style(element, "minimal_width", LAYOUT.evolution_card_inner_width)
-  set_style(element, "maximal_width", LAYOUT.evolution_card_inner_width)
+  get_gui_support_service().set_evolution_card_child_width(element)
 end
 
 element_name = function(element_id)
@@ -2065,7 +2050,7 @@ get_combo_caption_for_pair = function(first, second)
 end
 
 function rich_color(color, text)
-  return "[color=" .. color .. "]" .. tostring(text) .. "[/color]"
+  return get_gui_support_service().rich_color(color, text)
 end
 
 function get_element_proc_chance_for_rank(state, rank)

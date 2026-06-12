@@ -387,6 +387,8 @@
 - [x] Add headless coverage for legacy/generic bound turret stacks that carry a profile tag but no turret snapshot tag.
 - [x] Move target damage buckets, contributor tracking, proportional kill-credit awards, visible-kill fallback selection, and stale target cleanup into `scripts/control/damage_accounting.lua`.
 - [x] Add headless coverage for multi-turret proportional kill credit and highest-contributor visible-kill assignment.
+- [x] Move generic GUI rich-text formatting and repeated Evolution width helpers into `scripts/control/gui_support.lua`.
+- [x] Add headless coverage for GUI support formatting helper outputs.
 
 ## Likely Next Work
 
