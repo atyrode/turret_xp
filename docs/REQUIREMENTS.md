@@ -64,7 +64,7 @@
 - Show Bind/Unbind controls for installed cores.
 - On space-platform turrets, show platform hub Veteran Core options when cores are available there.
 - Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.
-- Show a blue in-world Shield bar under the native turret HP bar when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open.
+- Show a two-row in-world HP/Shield status stack when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open. The HP row must sit above the Shield row, both rows must share the same width, and the Shield row should use a dark neutral frame so the blue fill remains readable.
 - Show Shield, Resistance, Ammo Recovery, and other active custom stat rows when ranked.
 - Show shooting speed in shots per second, including force gun-speed bonuses.
 - Show turret attack range in tiles, including quality range multiplier when relevant.

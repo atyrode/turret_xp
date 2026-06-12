@@ -74,9 +74,12 @@ storage.turret_xp = {
       entity = <LuaEntity>,
       name_render = <LuaRenderObject>,
       shield_bar = {
-        background = <LuaRenderObject>,
-        fill = <LuaRenderObject>,
-        border = <LuaRenderObject>
+        health_background = <LuaRenderObject>,
+        health_fill = <LuaRenderObject>,
+        health_border = <LuaRenderObject>,
+        shield_background = <LuaRenderObject>,
+        shield_fill = <LuaRenderObject>,
+        shield_border = <LuaRenderObject>
       },
       feeder = <LuaEntity>
       _body_sync_pending = <boolean>
@@ -186,7 +189,7 @@ storage.turret_xp = {
 - Damage accounting ownership: `scripts/control/damage_accounting.lua` owns target damage buckets, contributor tracking, proportional kill-credit awards, visible-kill fallback selection, and stale target cleanup. `stats.lua` still owns stat display formatting and exposes compatibility wrappers for existing event handlers.
 - Factorio API compatibility ownership: `scripts/control/compat.lua` owns safe optional API reads, guarded single-call helpers, quality-name reads, entity inventory lookup, prototype-existence checks, platform hub inventory lookup, and one-shot diagnostics for unexpected failures. Runtime modules should use it for known optional API paths instead of adding anonymous `pcall` wrappers.
 - Hidden turret variant sync: runtime sync copies the force's vanilla `gun-turret` attack modifier to hidden `turret-xp-gun-turret-*` variants on init, configuration change, force creation, and research completion. This keeps research bonuses correct without adding every hidden variant to technology effect lists.
-- Shield bar rendering: `profiles.lua` owns a small `LuaRendering::draw_rectangle` status bar attached to the turret entity. The bar is runtime-only, follows body swaps through profile cleanup/recreation, appears below the native HP bar when the shield is depleted, recharging, or the turret GUI is open, and is destroyed with the profile.
+- Shield/HP status rendering: `profiles.lua` owns a small two-row `LuaRendering::draw_rectangle` status stack attached to the turret entity. The stack is runtime-only, follows body swaps through profile cleanup/recreation, shows HP above Shield with equal row widths when the shield is depleted, recharging, or the turret GUI is open, and is destroyed with the profile.
 - Open-GUI body swaps: specialization, sub-specialization, install, extract, and section resets can require swapping the underlying turret prototype. While the vanilla turret GUI is open, those swaps are queued on the profile or host and applied after close so the whole vanilla window does not jump back to its default position.
 - GUI support ownership: `scripts/control/gui_support.lua` owns generic GUI rich-text formatting and repeated Evolution width helpers. `scripts/control/gui_components.lua` owns reusable panel primitives such as stat rows, stat tables, Evolution section shells, summary labels, delimiters, and generic choice rows. `gui_panels.lua` still owns domain-specific panel composition, wording decisions, action tags, and refresh behavior.
 - Migration compatibility ownership: `scripts/control/migrations.lua` owns published old-save/profile shape upgrades such as legacy element slot encodings, active element projects, retired element fuel buffers, retired augment IDs, and old skill-tree ranks. Normal progression code should express current passive element state, not carry old project UI or dead action paths.

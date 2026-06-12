@@ -6,14 +6,19 @@ return function(M)
   local _ENV = M
 
   local bound_turret_item_service = nil
-  local SHIELD_BAR_HALF_WIDTH = 0.39
-  local SHIELD_BAR_TOP_Y = 0.92
-  local SHIELD_BAR_BOTTOM_Y = 0.99
+  local STATUS_BAR_HALF_WIDTH = 0.39
+  local STATUS_BAR_BACKGROUND_COLOR = { r = 0.015, g = 0.018, b = 0.02, a = 0.76 }
+  local STATUS_BAR_BORDER_COLOR = { r = 0.02, g = 0.025, b = 0.03, a = 0.88 }
+  local HEALTH_BAR_TOP_Y = 0.84
+  local HEALTH_BAR_BOTTOM_Y = 0.91
+  local SHIELD_BAR_TOP_Y = 0.94
+  local SHIELD_BAR_BOTTOM_Y = 1.01
   local SHIELD_BAR_GUI_VISIBLE_TICKS = 90
   local SHIELD_BAR_DAMAGE_VISIBLE_TICKS = 180
-  local SHIELD_BAR_BACKGROUND_COLOR = { r = 0.02, g = 0.035, b = 0.06, a = 0.72 }
-  local SHIELD_BAR_FILL_COLOR = { r = 0.12, g = 0.62, b = 1, a = 0.9 }
-  local SHIELD_BAR_BORDER_COLOR = { r = 0.48, g = 0.85, b = 1, a = 0.78 }
+  local HEALTH_BAR_HIGH_COLOR = { r = 0.12, g = 0.78, b = 0.18, a = 0.9 }
+  local HEALTH_BAR_MEDIUM_COLOR = { r = 0.95, g = 0.72, b = 0.12, a = 0.9 }
+  local HEALTH_BAR_LOW_COLOR = { r = 0.92, g = 0.18, b = 0.12, a = 0.9 }
+  local SHIELD_BAR_FILL_COLOR = { r = 0.08, g = 0.52, b = 1, a = 0.92 }
 
   local function get_bound_turret_item_service()
     if not bound_turret_item_service then
@@ -807,6 +812,12 @@ return function(M)
   destroy_shield_bar_render = function(profile)
     local bar = profile and profile.shield_bar or nil
     if bar then
+      destroy_render_object(bar.health_background)
+      destroy_render_object(bar.health_fill)
+      destroy_render_object(bar.health_border)
+      destroy_render_object(bar.shield_background)
+      destroy_render_object(bar.shield_fill)
+      destroy_render_object(bar.shield_border)
       destroy_render_object(bar.background)
       destroy_render_object(bar.fill)
       destroy_render_object(bar.border)
@@ -870,6 +881,56 @@ return function(M)
     return draw_shield_bar_rectangle(entity, left, top, right, bottom, color, filled)
   end
 
+  local function health_bar_fill_color(ratio)
+    if ratio <= 0.33 then
+      return HEALTH_BAR_LOW_COLOR
+    end
+    if ratio <= 0.66 then
+      return HEALTH_BAR_MEDIUM_COLOR
+    end
+    return HEALTH_BAR_HIGH_COLOR
+  end
+
+  local function update_status_bar_row(bar, prefix, entity, left, top, right, bottom, ratio, fill_color)
+    bar[prefix .. "_background"] = update_shield_bar_rectangle(
+      bar[prefix .. "_background"],
+      entity,
+      left,
+      top,
+      right,
+      bottom,
+      STATUS_BAR_BACKGROUND_COLOR,
+      true
+    )
+    bar[prefix .. "_border"] = update_shield_bar_rectangle(
+      bar[prefix .. "_border"],
+      entity,
+      left,
+      top,
+      right,
+      bottom,
+      STATUS_BAR_BORDER_COLOR,
+      false
+    )
+
+    if ratio > 0 then
+      local fill_right = left + ((right - left) * ratio)
+      bar[prefix .. "_fill"] = update_shield_bar_rectangle(
+        bar[prefix .. "_fill"],
+        entity,
+        left,
+        top,
+        fill_right,
+        bottom,
+        fill_color,
+        true
+      )
+    else
+      destroy_render_object(bar[prefix .. "_fill"])
+      bar[prefix .. "_fill"] = nil
+    end
+  end
+
   update_shield_bar_render = function(entity, profile, force_visible)
     if not profile then
       return
@@ -900,56 +961,49 @@ return function(M)
       return
     end
 
-    local ratio = math.max(0, math.min(1, shield / capacity))
+    local shield_ratio = math.max(0, math.min(1, shield / capacity))
+    local health = safe_read(entity, "health")
+    local max_health = safe_read(entity, "max_health")
+    local health_ratio = health and max_health and max_health > 0 and math.max(0, math.min(1, health / max_health)) or 1
     local bar = profile.shield_bar
     if type(bar) ~= "table" then
       bar = {}
       profile.shield_bar = bar
     end
+    bar.shield_background = bar.shield_background or bar.background
+    bar.shield_fill = bar.shield_fill or bar.fill
+    bar.shield_border = bar.shield_border or bar.border
 
-    local left = -SHIELD_BAR_HALF_WIDTH
-    local right = SHIELD_BAR_HALF_WIDTH
-    local top = SHIELD_BAR_TOP_Y
-    local bottom = SHIELD_BAR_BOTTOM_Y
-    bar.background = update_shield_bar_rectangle(
-      bar.background,
+    local left = -STATUS_BAR_HALF_WIDTH
+    local right = STATUS_BAR_HALF_WIDTH
+    update_status_bar_row(
+      bar,
+      "health",
       entity,
       left,
-      top,
+      HEALTH_BAR_TOP_Y,
       right,
-      bottom,
-      SHIELD_BAR_BACKGROUND_COLOR,
-      true
+      HEALTH_BAR_BOTTOM_Y,
+      health_ratio,
+      health_bar_fill_color(health_ratio)
     )
-    bar.border = update_shield_bar_rectangle(
-      bar.border,
+    update_status_bar_row(
+      bar,
+      "shield",
       entity,
       left,
-      top,
+      SHIELD_BAR_TOP_Y,
       right,
-      bottom,
-      SHIELD_BAR_BORDER_COLOR,
-      false
+      SHIELD_BAR_BOTTOM_Y,
+      shield_ratio,
+      SHIELD_BAR_FILL_COLOR
     )
 
-    if ratio > 0 then
-      local fill_right = left + ((right - left) * ratio)
-      bar.fill = update_shield_bar_rectangle(
-        bar.fill,
-        entity,
-        left,
-        top,
-        fill_right,
-        bottom,
-        SHIELD_BAR_FILL_COLOR,
-        true
-      )
-    else
-      destroy_render_object(bar.fill)
-      bar.fill = nil
-    end
+    bar.background = bar.shield_background
+    bar.fill = bar.shield_fill
+    bar.border = bar.shield_border
 
-    if not bar.background or not bar.border then
+    if not bar.health_background or not bar.health_border or not bar.shield_background or not bar.shield_border then
       destroy_shield_bar_render(profile)
     end
   end

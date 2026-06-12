@@ -50,7 +50,7 @@ scripts/install-local.sh
 22. Run `/turret-xp-dev` and use `+1` and `+5` dev buttons to reach levels 10, 20, 30, 40, and 50 quickly.
 23. Run `/turret-xp-dev` again and confirm dev controls hide/show without breaking the panel layout.
 24. Spend core upgrade points and confirm ranks and remaining points refresh immediately without moving the whole vanilla turret GUI.
-24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, displays a blue in-world shield bar under the native HP bar, and starts recharging only after the no-damage delay.
+24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, displays equal-width HP and Shield bars with HP above Shield, and starts recharging only after the no-damage delay.
 24b. Spend Ammo Recovery ranks, let the turret remember loaded ammo, empty the turret, and confirm recovered ammo is slowly inserted back into the turret ammo inventory.
 24c. Spend Resistance ranks, damage the turret with enemies, and confirm the stats panel shows reduced damage taken while the turret still dies normally to overwhelming lethal hits.
 25. Confirm unlocked Evolution choices have category headers, right-side status text, horizontal delimiters, and are easier to scan.

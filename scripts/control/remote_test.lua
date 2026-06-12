@@ -178,6 +178,16 @@ return function(M)
         and state.shield_bar.border.valid
         or false,
       shield_bar_fill_valid = state.shield_bar and state.shield_bar.fill and state.shield_bar.fill.valid or false,
+      health_bar_valid = state.shield_bar
+        and state.shield_bar.health_background
+        and state.shield_bar.health_background.valid
+        and state.shield_bar.health_border
+        and state.shield_bar.health_border.valid
+        or false,
+      health_bar_fill_valid = state.shield_bar
+        and state.shield_bar.health_fill
+        and state.shield_bar.health_fill.valid
+        or false,
       bound_turret = state.bound_turret == true,
       last_ammo = copy_serializable(state.last_ammo),
       ammo_regen_progress = state.ammo_regen_progress or 0,
