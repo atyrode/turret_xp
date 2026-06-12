@@ -268,6 +268,15 @@ remote.add_interface("turret_xp_test", {
     return copy_serializable(LAYOUT)
   end,
 
+  gui_support_samples = function()
+    return {
+      percent = format_percent(0.125, 1),
+      color = color_to_rich_string(COLOR.bonus),
+      rich_number = rich_number("+5"),
+      rich_stat = rich_stat_text("Damage +5 x1.2")
+    }
+  end,
+
   prototype_budget = function()
     return turret_xp_test_prototype_budget()
   end,
