@@ -104,7 +104,6 @@ return function(M)
     set_style(bar, "height", 18)
     set_style(bar, "top_margin", 4)
     set_style(bar, "bottom_margin", 0)
-
   end
 
   function add_core_panel(parent)
@@ -786,10 +785,7 @@ return function(M)
     end
 
     local color = value < 0 and COLOR.penalty or COLOR.bonus
-    return rich_color(
-      color_to_rich_string(color),
-      (value < 0 and "-" or "+") .. format_number(math.abs(value), decimals or 0) .. "%"
-    )
+    return rich_color(color_to_rich_string(color), (value < 0 and "-" or "+") .. format_number(math.abs(value), decimals or 0) .. "%")
   end
 
   function format_multiplier_effect_percent(multiplier)
@@ -1127,13 +1123,7 @@ return function(M)
       add_custom_stat(
         stats,
         { "turret-xp.stat-shield-on-hit" },
-        format_bonus_value_with_multiplier(
-          get_shield_on_hit_fraction(state) * 100,
-          1,
-          " of damage as shield",
-          1,
-          "%"
-        )
+        format_bonus_value_with_multiplier(get_shield_on_hit_fraction(state) * 100, 1, " of damage as shield", 1, "%")
       )
     end
 
@@ -1155,12 +1145,7 @@ return function(M)
         format_percent(apply_luck_to_chance(state, bounce_rank * 0.05), 1),
         { "turret-xp.bounce-chance-tooltip" }
       )
-      add_custom_stat(
-        stats,
-        { "turret-xp.stat-bounce-damage" },
-        "35%",
-        { "turret-xp.bounce-damage-tooltip" }
-      )
+      add_custom_stat(stats, { "turret-xp.stat-bounce-damage" }, "35%", { "turret-xp.bounce-damage-tooltip" })
     end
 
     local double_shot_chance = get_double_shot_chance(state)
@@ -1193,7 +1178,19 @@ return function(M)
     end
   end
 
-  function update_stats_panel(panel, entity, state, ammo_name, ammo_count, ammo_quality, ammo_in_magazine, ammo_magazine_size, quality_name, max_health, health)
+  function update_stats_panel(
+    panel,
+    entity,
+    state,
+    ammo_name,
+    ammo_count,
+    ammo_quality,
+    ammo_in_magazine,
+    ammo_magazine_size,
+    quality_name,
+    max_health,
+    health
+  )
     local stats = find_gui_element(panel, GUI.stats)
     if not stats then
       return
@@ -1216,7 +1213,7 @@ return function(M)
     end)
     local health_values = get_health_formula_values(entity, state, quality_name, max_health)
     local health_formula = health_values
-      and format_stat_formula(health_values.base, health_values.additive, health_values.multiplier, health_values.total, "", 0)
+        and format_stat_formula(health_values.base, health_values.additive, health_values.multiplier, health_values.total, "", 0)
       or nil
     local health_caption = health_values
         and {
@@ -1252,17 +1249,12 @@ return function(M)
     if state then
       local shield, shield_capacity = normalize_shield_state(state, true)
       if shield_capacity > 0 then
-        add_stat_value(
-          stats,
-          { "turret-xp.shield" },
-          {
-            "",
-            format_number(shield, 0),
-            " / ",
-            format_number(shield_capacity, 0),
-          },
-          { "turret-xp.shield-tooltip" }
-        )
+        add_stat_value(stats, { "turret-xp.shield" }, {
+          "",
+          format_number(shield, 0),
+          " / ",
+          format_number(shield_capacity, 0),
+        }, { "turret-xp.shield-tooltip" })
         add_stat_value(
           stats,
           { "turret-xp.stat-shield-regeneration" },
@@ -1285,7 +1277,7 @@ return function(M)
 
     local speed_values = get_shooting_speed_formula_values(entity, state, ammo_name)
     local speed_formula = speed_values
-      and format_stat_formula(speed_values.base, speed_values.additive, speed_values.multiplier, speed_values.total, "/s", 2)
+        and format_stat_formula(speed_values.base, speed_values.additive, speed_values.multiplier, speed_values.total, "/s", 2)
       or nil
     add_stat_value(
       stats,
@@ -1299,7 +1291,7 @@ return function(M)
     end)
     local range_values = get_range_formula_values(entity, state, quality_name)
     local range_formula = range_values
-      and format_stat_formula(range_values.base, range_values.additive, range_values.multiplier, range_values.total, "", 1)
+        and format_stat_formula(range_values.base, range_values.additive, range_values.multiplier, range_values.total, "", 1)
       or nil
     add_stat_value_with_quality_marker(
       stats,
@@ -1346,7 +1338,7 @@ return function(M)
     if ammo_name then
       local damage_values = get_damage_formula_values(entity, state, ammo_name)
       local damage_formula = damage_values
-        and format_stat_formula(damage_values.base, damage_values.additive, damage_values.multiplier, damage_values.total, "", 1)
+          and format_stat_formula(damage_values.base, damage_values.additive, damage_values.multiplier, damage_values.total, "", 1)
         or nil
       local damage_caption = damage_values
           and {
@@ -2232,7 +2224,11 @@ return function(M)
     set_style(description_label, "font_color", COLOR.muted)
     set_style(description_label, "single_line", false)
     set_style(description_label, "horizontally_stretchable", true)
-    set_style(description_label, "maximal_width", selected and LAYOUT.evolution_card_inner_width or (LAYOUT.evolution_card_inner_width - 72))
+    set_style(
+      description_label,
+      "maximal_width",
+      selected and LAYOUT.evolution_card_inner_width or (LAYOUT.evolution_card_inner_width - 72)
+    )
 
     if not selected then
       local button = description_row.add({
@@ -2487,7 +2483,11 @@ return function(M)
     local state = context.state
     if state then
       set_gui_caption(panel, GUI.level, { "turret-xp.level", context.progression.level })
-      set_gui_caption(panel, GUI.xp, { "turret-xp.xp-progress", format_number(context.progression.xp, 0), format_number(context.required, 0) })
+      set_gui_caption(
+        panel,
+        GUI.xp,
+        { "turret-xp.xp-progress", format_number(context.progression.xp, 0), format_number(context.required, 0) }
+      )
     else
       set_gui_caption(panel, GUI.level, { "turret-xp.no-core-level" })
       set_gui_caption(panel, GUI.xp, { "turret-xp.no-core-xp" })

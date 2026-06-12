@@ -106,9 +106,7 @@ return function(M)
 
   function get_bound_turret_item_name(profile)
     local evolution = profile and ensure_evolution_state(profile) or nil
-    local variant_id = evolution
-        and get_bound_turret_variant_id(evolution.specialization, 0, evolution.sub_specialization)
-      or nil
+    local variant_id = evolution and get_bound_turret_variant_id(evolution.specialization, 0, evolution.sub_specialization) or nil
     local name = DOMAIN.bound_turret_item_name(variant_id)
     if name ~= BOUND_TURRET_NAME and prototypes and prototypes.item and not prototypes.item[name] then
       return BOUND_TURRET_NAME

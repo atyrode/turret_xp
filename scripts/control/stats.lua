@@ -433,7 +433,9 @@ return function(M)
   end
 
   function get_ammo_productivity_fraction(state)
-    return get_base_rank(state, "ammo_regen") * AMMO_PRODUCTIVITY_PER_RANK * get_specialization_multiplier(state, "ammo_recovery_multiplier")
+    return get_base_rank(state, "ammo_regen")
+      * AMMO_PRODUCTIVITY_PER_RANK
+      * get_specialization_multiplier(state, "ammo_recovery_multiplier")
   end
 
   function get_effective_ammo_productivity_fraction(state)

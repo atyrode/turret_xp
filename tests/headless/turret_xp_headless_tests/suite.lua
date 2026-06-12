@@ -125,11 +125,7 @@ local function run_place_result_regression_test()
     "bound veteran turret item still points at the vanilla gun turret"
   )
   assert_true(placement.placeholder_exists, "bound veteran turret placeholder prototype does not exist")
-  assert_eq(
-    placement.sniper_bound_item,
-    "turret-xp-bound-gun-turret-sniper",
-    "sniper bound preview item was not generated"
-  )
+  assert_eq(placement.sniper_bound_item, "turret-xp-bound-gun-turret-sniper", "sniper bound preview item was not generated")
   assert_eq(
     placement.sniper_bound_place_result,
     "turret-xp-bound-gun-turret-placeholder-sniper",
@@ -469,7 +465,12 @@ local function run_ammo_productivity_test(surface)
   })
   assert_eq(summary.evolution.base.ammo_regen, 25, "ammo productivity rank did not persist in evolution state")
   assert_near(summary.derived.ammo_productivity_fraction, 0.25, 0.0001, "ammo productivity did not derive expected percent")
-  assert_near(summary.derived.effective_ammo_productivity_fraction, 0.2, 0.0001, "ammo productivity did not derive expected effective percent")
+  assert_near(
+    summary.derived.effective_ammo_productivity_fraction,
+    0.2,
+    0.0001,
+    "ammo productivity did not derive expected effective percent"
+  )
 
   local inventory = turret.get_inventory(defines.inventory.turret_ammo)
   assert_true(inventory ~= nil and inventory.valid, "ammo productivity test turret had no ammo inventory")
@@ -504,7 +505,12 @@ local function run_ammo_productivity_test(surface)
     },
   })
   assert_near(summary.derived.ammo_productivity_fraction, 2, 0.0001, "ammo productivity should keep its uncapped derived percent")
-  assert_near(summary.derived.effective_ammo_productivity_fraction, 2 / 3, 0.0001, "over-100 ammo productivity should use diminishing returns")
+  assert_near(
+    summary.derived.effective_ammo_productivity_fraction,
+    2 / 3,
+    0.0001,
+    "over-100 ammo productivity should use diminishing returns"
+  )
   call("set_profile", turret, { ammo_productivity_progress = 0 })
   ammo_stack.ammo = 10
   call("remember_loaded_ammo", turret)
@@ -516,7 +522,12 @@ local function run_ammo_productivity_test(surface)
 
   ammo_stack.drain_ammo(1)
   summary = call("apply_ammo_productivity", turret)
-  assert_near(summary.ammo_productivity_progress, 1 / 3, 0.0001, "over-100 ammo productivity should keep fractional progress after a refill")
+  assert_near(
+    summary.ammo_productivity_progress,
+    1 / 3,
+    0.0001,
+    "over-100 ammo productivity should keep fractional progress after a refill"
+  )
   assert_eq(ammo_stack.ammo, 9, "over-100 ammo productivity should refill only one magazine ammo after two shots")
 
   ammo_stack.drain_ammo(1)
@@ -1231,11 +1242,7 @@ local function run_bound_turret_test(surface)
   call("set_bound", preview_turret, true)
   local preview_stack = call("make_bound_turret_stack", preview_turret)
   local preview_item_name = "turret-xp-bound-gun-turret-sniper"
-  assert_eq(
-    preview_stack.name,
-    preview_item_name,
-    "bound turret stack did not use the matching specialization preview item"
-  )
+  assert_eq(preview_stack.name, preview_item_name, "bound turret stack did not use the matching specialization preview item")
 
   local preview_buffer = game.create_inventory(1)
   preview_buffer.insert({ name = "iron-plate", count = 1 })

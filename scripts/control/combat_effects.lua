@@ -421,7 +421,9 @@ return function(M)
     end
 
     local before = math.max(0, math.floor(tonumber(safe_read(stack, "ammo")) or 0))
-    local magazine_size = tonumber(safe_read(safe_read(stack, "prototype"), "magazine_size")) or tonumber(snapshot and snapshot.magazine_size) or 0
+    local magazine_size = tonumber(safe_read(safe_read(stack, "prototype"), "magazine_size"))
+      or tonumber(snapshot and snapshot.magazine_size)
+      or 0
     local target = before + bonus_ammo
     if magazine_size > 0 then
       target = math.min(magazine_size, target)

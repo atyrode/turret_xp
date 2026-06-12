@@ -226,12 +226,7 @@ return function(M)
     end
 
     local evolution = ensure_evolution_state(state)
-    local target_name = get_specialized_turret_name(
-      evolution.specialization,
-      0,
-      0,
-      evolution.sub_specialization
-    )
+    local target_name = get_specialized_turret_name(evolution.specialization, 0, 0, evolution.sub_specialization)
     if entity.name == target_name then
       state._body_sync_pending = nil
       return entity

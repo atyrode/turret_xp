@@ -12,9 +12,7 @@ return function(M)
   local SHIELD_BAR_PIP_SIZE_TILES = 7 / SHIELD_BAR_PIXELS_PER_TILE
   local SHIELD_BAR_WIDTH_TILES = SHIELD_BAR_SEGMENTS * SHIELD_BAR_PIP_SIZE_TILES
   local SHIELD_BAR_CENTER_X_NUDGE_TILES = -0.5 / SHIELD_BAR_PIXELS_PER_TILE
-  local SHIELD_BAR_LEFT_PIP_X = (-SHIELD_BAR_WIDTH_TILES / 2)
-    + (SHIELD_BAR_PIP_SIZE_TILES / 2)
-    + SHIELD_BAR_CENTER_X_NUDGE_TILES
+  local SHIELD_BAR_LEFT_PIP_X = (-SHIELD_BAR_WIDTH_TILES / 2) + (SHIELD_BAR_PIP_SIZE_TILES / 2) + SHIELD_BAR_CENTER_X_NUDGE_TILES
   -- Factorio exposes the native bar pip sprites, but not the engine-owned HP bar anchor.
   -- These nudges keep the shield row calibrated just below a gun turret's native HP row.
   local SHIELD_BAR_PIP_Y = 1.24 + (5 / SHIELD_BAR_PIXELS_PER_TILE)
@@ -89,8 +87,7 @@ return function(M)
     profile.show_name_label = profile.show_name_label == true
     profile.show_label_level = profile.show_label_level ~= false
     profile.bound_turret = profile.bound_turret == true
-    profile.ammo_productivity_progress =
-      math.max(0, tonumber(profile.ammo_productivity_progress or profile.ammo_regen_progress) or 0)
+    profile.ammo_productivity_progress = math.max(0, tonumber(profile.ammo_productivity_progress or profile.ammo_regen_progress) or 0)
     profile.ammo_regen_progress = nil
     if type(profile.last_ammo) == "table" and feeder.is_ammo_item(profile.last_ammo.name) then
       profile.last_ammo = {
@@ -891,10 +888,8 @@ return function(M)
       return
     end
 
-    profile._shield_bar_visible_until = math.max(
-      tonumber(profile._shield_bar_visible_until) or 0,
-      game.tick + SHIELD_BAR_DAMAGE_VISIBLE_TICKS
-    )
+    profile._shield_bar_visible_until =
+      math.max(tonumber(profile._shield_bar_visible_until) or 0, game.tick + SHIELD_BAR_DAMAGE_VISIBLE_TICKS)
   end
 
   local function shield_bar_target(entity, x, y)
@@ -1043,10 +1038,7 @@ return function(M)
 
     local tick = game and game.tick or 0
     if force_visible then
-      profile._shield_bar_visible_until = math.max(
-        tonumber(profile._shield_bar_visible_until) or 0,
-        tick + SHIELD_BAR_GUI_VISIBLE_TICKS
-      )
+      profile._shield_bar_visible_until = math.max(tonumber(profile._shield_bar_visible_until) or 0, tick + SHIELD_BAR_GUI_VISIBLE_TICKS)
     end
 
     local visible_until = tonumber(profile._shield_bar_visible_until) or 0
