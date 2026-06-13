@@ -56,13 +56,14 @@ The ignored local `case_study/` research corpus is supporting evidence, not acti
 
 ### GUI Dependency Decision
 
-Turret XP should move toward a fully custom, polished, Factorio-native Veteran Core GUI rather than staying constrained by the current attached-panel implementation. Runtime dependencies are acceptable for this direction when they earn their cost through better GUI quality, deleted local infrastructure, or lower event/layout risk.
+Turret XP should move toward a fully custom, polished, Factorio-native Veteran Core GUI while staying anchored to the vanilla turret GUI where practical. Runtime dependencies are acceptable for this direction when they earn their cost through better GUI quality, deleted local infrastructure, or lower event/layout risk.
 
 Factory Planner is the strongest current reference for this direction. Its Mod Portal page lists Factory Planner 2.0.50 as Factorio 2.0 compatible, MIT licensed, and dependent on `flib >= 0.15.0`; its source keeps a custom GUI architecture on top of that dependency, with separate `ui/base`, `ui/main`, `ui/dialogs`, and `ui/components` modules, a central GUI event dispatcher, tagged GUI actions, modal/dialog ownership, custom sprites, custom GUI styles, responsive sizing, and screenshot automation. The lesson for Turret XP is not to avoid dependencies. The lesson is to use `flib` as a foundation while owning a domain-specific interface that looks and behaves like it belongs in Factorio. Sources: <https://mods.factorio.com/mod/factoryplanner> and <https://github.com/ClaudeMetz/FactoryPlanner>.
 
 The next major GUI pass should therefore prefer:
 
 - the dedicated Turret XP GUI module tree under `scripts/control/gui/` should keep panel/dialog/section ownership out of `gui_panels.lua`;
+- `scripts/control/gui/shell.lua` should own the anchored top-level frame and column slots, using `flib.gui` for declarative construction while `gui_panels.lua` remains a temporary compatibility coordinator;
 - a small local GUI builder/helper layer for repeated domain widgets such as Veteran Core slots, stat rows, Evolution cards, element progress, and action toolbars;
 - `flib` styles/helpers where they match the desired vanilla language, especially slot buttons, drag handles, pushers, and future dictionary/migration utilities;
 - custom sprites and data-stage styles for Turret XP-specific actions only when vanilla utility sprites or `flib` styles are insufficient;

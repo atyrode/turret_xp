@@ -2,32 +2,6 @@ return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
 
-  function make_gui_frame(player)
-    local ok, frame = pcall(function()
-      return player.gui.relative.add({
-        type = "frame",
-        name = GUI.panel,
-        direction = "vertical",
-        caption = { "turret-xp.panel-title" },
-        anchor = {
-          gui = defines.relative_gui_type.turret_gui,
-          position = defines.relative_gui_position.right,
-        },
-      })
-    end)
-
-    if ok and frame then
-      return frame
-    end
-
-    return player.gui.left.add({
-      type = "frame",
-      name = GUI.panel,
-      direction = "vertical",
-      caption = { "turret-xp.panel-title" },
-    })
-  end
-
   build_turret_gui = function(player, entity, evolution_anchor)
     destroy_gui(player)
 
@@ -38,25 +12,13 @@ return function(M)
 
     remember_open_turret(player, entity)
 
-    local frame = make_gui_frame(player)
-    set_style(frame, "maximal_width", LAYOUT.panel_max_width)
+    local shell = build_gui_shell(player)
+    if not shell then
+      return
+    end
 
-    local columns = frame.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(columns, "horizontally_stretchable", true)
-    set_style(columns, "vertical_align", "top")
-    set_style(columns, "horizontal_spacing", LAYOUT.column_spacing)
-
-    local body = columns.add({
-      type = "frame",
-      direction = "vertical",
-    })
-    set_element_style(body, "inside_shallow_frame_with_padding")
-    set_style(body, "width", LAYOUT.left_column_width)
-    set_style(body, "minimal_width", LAYOUT.left_column_width)
-    set_style(body, "maximal_width", LAYOUT.left_column_width)
+    local body = shell.body or shell.frame
+    local columns = shell.columns or shell.frame
 
     add_core_panel(body)
     add_xp_panel(body)

@@ -4,6 +4,7 @@ local gui_formatters = require("scripts.control.gui.formatters")
 local gui_core_panel = require("scripts.control.gui.core_panel")
 local gui_stats_panel = require("scripts.control.gui.stats_panel")
 local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
+local gui_shell = require("scripts.control.gui.shell")
 
 return function(M)
   setmetatable(M, { __index = _G })
@@ -15,6 +16,20 @@ return function(M)
   local core_panel_service = nil
   local stats_panel_service = nil
   local evolution_panel_service = nil
+  local shell_service = nil
+
+  local function get_shell_service()
+    if not shell_service then
+      shell_service = gui_shell.new({
+        GUI = GUI,
+        LAYOUT = LAYOUT,
+        CHIP_NAME = CHIP_NAME,
+        set_style = set_style,
+      })
+    end
+
+    return shell_service
+  end
 
   local function get_gui_support_service()
     if not gui_support_service then
@@ -329,6 +344,10 @@ return function(M)
 
   function add_xp_panel(parent)
     return get_core_panel_service().add_xp_panel(parent)
+  end
+
+  function build_gui_shell(player)
+    return get_shell_service().build(player)
   end
 
   function add_core_panel(parent)

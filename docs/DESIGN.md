@@ -16,8 +16,10 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 
 - Keep the vanilla turret GUI as the main interaction.
 - Attach Turret XP as a bounded two-column panel: Veteran Core identity, XP, dev controls, and stats on the left; Evolution on the right.
-- Treat this as the transitional implementation, not the ceiling. The next major GUI pass should be a fully custom, Factorio-native Turret XP interface with the same care for hierarchy, icon language, spacing, and action discoverability shown by mature utility mods such as Factory Planner.
+- Treat the 0.11 GUI glowup as an anchored custom interface, not a move away from the vanilla turret GUI unless the relative GUI API blocks a required interaction. The panel should keep living beside the opened turret while adopting the hierarchy, icon language, spacing, and action discoverability shown by mature utility mods such as Factory Planner.
+- Use a Factorio-style header plus shallow content panes as the default frame language: the Turret XP shell owns the anchored frame and top-level columns, while section modules own their local content.
 - Keep the Evolution column stable: a fixed summary header, one scrollable section body, section widths derived from the viewport, and no content rendering under the scrollbar.
+- Keep the Stats pane visually parallel to Evolution: a fixed header and a bounded scroll body for stat rows and ammo readouts.
 - Use direct labels, compact controls, restrained rich text markers, and vanilla-like layout rhythm.
 - Keep stat rows scannable: show final values in the panel, put formulas in the stat-name info hover, and reserve the quality diamond for quality-specific HP/range breakdowns.
 - Keep dev controls hidden by default and toggled through `/turret-xp-dev`.

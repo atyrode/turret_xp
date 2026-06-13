@@ -107,7 +107,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 ## GUI Behavior
 
 - `on_gui_opened` detects vanilla `gun-turret`.
-- The mod creates a frame in `player.gui.relative` anchored to `defines.relative_gui_type.turret_gui` on the right side.
+- The mod creates a `flib.gui`-built frame in `player.gui.relative` anchored to `defines.relative_gui_type.turret_gui` on the right side.
 - If relative anchoring fails, the panel falls back to `player.gui.left`.
 - `on_gui_closed` destroys the panel and clears the remembered player/turret link.
 - The attached frame uses two fixed-width main columns sized to avoid covering more screen than needed. The left column contains core identity, XP, dev controls, and a scrollable stats area. The right column is a shallow content pane with a static Evolution summary header above one scroll pane. Its section and row widths derive from the right-column viewport so content reserves scrollbar space without layering independent margins, and section frames use balanced margins inside the scroll body.
@@ -122,8 +122,8 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - Evolution choices inside the unlocked list sections use horizontal delimiters and section headers with right-side point/status text to improve readability without adding extra explanatory text.
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
 - Point allocation refreshes rebuild the Evolution column in place; prototype body swaps remain deferred while the turret GUI is open so the whole vanilla window does not jump back to its default position.
-- The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and panel styles.
-- Future GUI replacement work should keep `flib` as an accepted foundation and move toward custom Turret XP panel/dialog/section modules rather than growing one generic panel file. The target is a polished Factorio-native interface with domain widgets for Veteran Cores, stats, Evolution choices, element progress, and action toolbars.
+- The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, drag-handle, panel styles, and the top-level shell builder.
+- Future GUI replacement work should keep `flib` as an accepted foundation and move toward custom Turret XP panel/dialog/section modules rather than growing one generic panel file. The target is an anchored polished Factorio-native interface with domain widgets for Veteran Cores, stats, Evolution choices, element progress, and action toolbars.
 - The XP bar uses a custom solid progressbar style defined by the data-stage style prototype module.
 - Magazine and Ammo are separate stat rows: Magazine shows the loaded magazine stack, Ammo shows current rounds in the active magazine, and the Ammo Productivity bar uses a purple custom style on Factorio's native horizontal progressbar widget in a separate stat row immediately after Ammo.
 - While a turret GUI is open, the XP/stat area refreshes on the shield recharge cadence so Shield and Ammo Productivity progress can visibly move more smoothly than the slower full Evolution-column refresh.

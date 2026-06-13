@@ -29,6 +29,8 @@ function tests.run_layout_constants_test()
   assert_eq(layout.evolution_card_inner_width, layout.evolution_inner_width - 28, "Element-card child rows must account for card padding")
   assert_true(layout.evolution_inner_width < layout.evolution_scroll_width, "Evolution rows must stay inside the scroll viewport")
   assert_true(layout.evolution_detail_width < layout.evolution_inner_width, "Evolution text details must stay capped inside inner rows")
+  assert_true(layout.stats_header_height > 0, "Stats pane must reserve a visible subheader")
+  assert_true(layout.stats_scroll_width < layout.left_column_width, "Stats pane must stay inside the left column")
 end
 
 function tests.run_gui_support_samples_test()
