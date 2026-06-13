@@ -13,7 +13,9 @@ return function(M)
 
   function refresh_open_turret(player, entity, evolution_anchor)
     if entity and entity.valid then
-      update_turret_gui(player, entity, evolution_anchor)
+      if not update_turret_gui(player, entity, evolution_anchor) then
+        build_turret_gui(player, entity, evolution_anchor)
+      end
     end
   end
 

@@ -10,6 +10,9 @@ function gui_actions_module.new(deps)
   local install_core_from_platform = deps.install_core_from_platform
   local send_core_to_platform = deps.send_core_to_platform
   local set_bound_turret = deps.set_bound_turret
+  local set_core_picker_sort = deps.set_core_picker_sort
+  local get_remembered_turret = deps.get_remembered_turret
+  local refresh_open_turret = deps.refresh_open_turret
   local update_name_render = deps.update_name_render
 
   local click_dispatch = {
@@ -30,6 +33,10 @@ function gui_actions_module.new(deps)
     end,
     ["platform-send-core"] = function(player)
       send_core_to_platform(player)
+    end,
+    ["set-core-sort"] = function(player, event, tags)
+      set_core_picker_sort(player, tags.sort)
+      refresh_open_turret(player, get_remembered_turret(player))
     end,
     ["bind-turret"] = function(player)
       set_bound_turret(player, true)

@@ -32,9 +32,22 @@ function tests.run_layout_constants_test()
   assert_true(layout.stats_header_height > 0, "Stats pane must reserve a visible subheader")
   assert_true(layout.stats_scroll_width < layout.left_column_width, "Stats pane must stay inside the left column")
   assert_true(layout.inventory_core_picker_width < layout.left_column_width, "inventory core picker must stay inside the left column")
+  assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full two-column shell width")
+  assert_true(
+    layout.empty_inventory_core_picker_width > layout.inventory_core_picker_width,
+    "empty core picker should expand beyond the left column"
+  )
+  assert_true(
+    layout.empty_inventory_core_picker_height > layout.inventory_core_picker_height,
+    "empty core picker should reserve a tall viewport"
+  )
   assert_true(
     layout.inventory_core_detail_width < layout.inventory_core_picker_width,
     "inventory core row details must reserve icon/action space"
+  )
+  assert_true(
+    layout.empty_inventory_core_detail_width < layout.empty_inventory_core_picker_width,
+    "wide inventory core row details must reserve stats/action space"
   )
 end
 
@@ -43,6 +56,9 @@ function tests.run_gui_support_samples_test()
   assert_eq(samples.percent, "12.5%", "GUI percent formatting changed")
   assert_eq(samples.color, "0.55,0.82,0.55", "GUI rich color conversion changed")
   assert_eq(samples.rich_number, "[color=0.55,0.82,0.55]+5[/color]", "GUI rich number formatting changed")
+  assert_eq(samples.rich_value, "[color=0.55,0.82,0.55]42/s[/color]", "GUI rich value formatting changed")
+  assert_eq(samples.rich_metric[2], "HP", "GUI rich metric label changed")
+  assert_eq(samples.rich_metric[4], "[color=0.55,0.82,0.55]400[/color]", "GUI rich metric value changed")
   assert_eq(
     samples.rich_stat,
     "Damage [color=0.55,0.82,0.55]+5[/color] [color=0.55,0.82,0.55]x1.2[/color]",
@@ -117,6 +133,9 @@ function tests.run_inventory_core_picker_test(surface)
   assert_eq(sample.options[1].slot, 2, "inventory core picker lost the source slot for the highest-level core")
   assert_eq(sample.options[2].name, "Mid", "inventory core picker did not sort the middle-level core second")
   assert_eq(sample.options[3].name, "Low", "inventory core picker did not sort the lowest-level core last")
+  assert_eq(sample.sort_samples.kills, "Mid", "inventory core picker did not sort highest kills first")
+  assert_eq(sample.sort_samples.damage, "Mid", "inventory core picker did not sort highest damage first")
+  assert_eq(sample.sort_samples.name, "High", "inventory core picker did not sort alphabetically")
   assert_eq(sample.installed.custom_name, "High", "inventory core picker action did not install the selected slot")
   assert_eq(sample.installed.level, 14, "inventory core picker action lost the selected core level")
   assert_eq(sample.installed.evolution.specialization, "sniper", "inventory core picker action lost the selected specialization")

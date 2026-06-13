@@ -10,6 +10,7 @@ function core_panel_module.new(deps)
   local find_gui_element = deps.find_gui_element
   local get_remembered_turret = deps.get_remembered_turret
   local get_player_core_options = deps.get_player_core_options
+  local get_core_picker_sort = deps.get_core_picker_sort
   local get_platform_core_options = deps.get_platform_core_options
   local get_platform_hub_inventory = deps.get_platform_hub_inventory
   local create_blank_profile = deps.create_blank_profile
@@ -26,6 +27,8 @@ function core_panel_module.new(deps)
   local get_shooting_speed_formula_values = deps.get_shooting_speed_formula_values
   local get_range_formula_values = deps.get_range_formula_values
   local format_number = deps.format_number
+  local rich_value = deps.rich_value
+  local rich_metric = deps.rich_metric
   local widgets = deps.widgets
 
   local function add_xp_panel(parent)
@@ -43,6 +46,7 @@ function core_panel_module.new(deps)
     })
     set_style(top, "horizontally_stretchable", true)
     set_style(top, "vertical_align", "center")
+    set_style(top, "horizontal_spacing", 6)
 
     local level = top.add({
       type = "label",
@@ -86,7 +90,7 @@ function core_panel_module.new(deps)
     set_style(bar, "bottom_margin", 0)
   end
 
-  local function add_core_panel(parent)
+  local function add_core_panel(parent, mode)
     local core_panel = parent.add({
       type = "frame",
       name = GUI.core,
@@ -95,7 +99,7 @@ function core_panel_module.new(deps)
     })
     set_style(core_panel, "horizontally_stretchable", true)
     set_style(core_panel, "padding", { 8, 8, 8, 8 })
-    set_style(core_panel, "bottom_margin", 6)
+    set_style(core_panel, "bottom_margin", mode == "empty" and 0 or 6)
     return core_panel
   end
 
@@ -123,7 +127,8 @@ function core_panel_module.new(deps)
     local entity = get_remembered_turret(player)
     local platform_core_count = #get_platform_core_options(entity)
     local platform_inventory_present = get_platform_hub_inventory(entity) ~= nil
-    local inventory_core_options = get_player_core_options(player)
+    local sort_mode = get_core_picker_sort(player)
+    local inventory_core_options = get_player_core_options(player, sort_mode)
     if state then
       local color = state.label_color or {}
       return table.concat({
@@ -140,7 +145,12 @@ function core_panel_module.new(deps)
       }, ":")
     end
 
-    return "empty:inventory:" .. core_options_key(inventory_core_options) .. ":platform:" .. tostring(platform_core_count)
+    return "empty:"
+      .. sort_mode
+      .. ":inventory:"
+      .. core_options_key(inventory_core_options)
+      .. ":platform:"
+      .. tostring(platform_core_count)
   end
 
   local function core_display_name(profile, fallback)
@@ -181,8 +191,87 @@ function core_panel_module.new(deps)
     }
   end
 
-  local function add_inventory_core_picker(core_panel, player, entity)
-    local options = get_player_core_options(player)
+  local CORE_SORT_MODES = {
+    { id = "level", caption = { "turret-xp.inventory-core-sort-level" }, tooltip = { "turret-xp.inventory-core-sort-level-tooltip" } },
+    { id = "kills", caption = { "turret-xp.inventory-core-sort-kills" }, tooltip = { "turret-xp.inventory-core-sort-kills-tooltip" } },
+    { id = "damage", caption = { "turret-xp.inventory-core-sort-damage" }, tooltip = { "turret-xp.inventory-core-sort-damage-tooltip" } },
+    { id = "name", caption = { "turret-xp.inventory-core-sort-name" }, tooltip = { "turret-xp.inventory-core-sort-name-tooltip" } },
+  }
+
+  local function add_picker_sort_controls(parent, current_sort)
+    local sort_flow = parent.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(sort_flow, "top_margin", 4)
+    set_style(sort_flow, "horizontal_spacing", 4)
+    set_style(sort_flow, "vertical_align", "center")
+
+    local label = sort_flow.add({
+      type = "label",
+      caption = { "turret-xp.inventory-core-sort" },
+      style = "caption_label",
+    })
+    set_style(label, "font_color", COLOR.caption)
+    set_style(label, "right_margin", 2)
+
+    for _, mode in ipairs(CORE_SORT_MODES) do
+      local active = current_sort == mode.id
+      local button = sort_flow.add({
+        type = "button",
+        caption = mode.caption,
+        tooltip = mode.tooltip,
+        tags = {
+          turret_xp_action = "set-core-sort",
+          sort = mode.id,
+        },
+      })
+      set_style(button, "minimal_width", 56)
+      set_style(button, "height", 28)
+      if active then
+        set_style(button, "font", "default-bold")
+        set_style(button, "font_color", COLOR.bonus)
+      end
+    end
+  end
+
+  local function add_inventory_core_stats(parent, stats, wide)
+    if wide then
+      local details = parent.add({
+        type = "flow",
+        direction = "vertical",
+      })
+      set_style(details, "width", 174)
+      set_style(details, "minimal_width", 174)
+      set_style(details, "maximal_width", 174)
+
+      local values = {
+        rich_metric({ "turret-xp.inventory-core-stat-hp" }, stats.health),
+        rich_metric({ "turret-xp.inventory-core-stat-attack" }, stats.speed, "/s"),
+        rich_metric({ "turret-xp.inventory-core-stat-range" }, stats.range),
+      }
+      for _, caption in ipairs(values) do
+        local label = details.add({
+          type = "label",
+          caption = caption,
+          style = "caption_label",
+        })
+        set_style(label, "single_line", true)
+      end
+      return
+    end
+
+    return nil
+  end
+
+  local function add_inventory_core_picker(core_panel, player, entity, options)
+    options = options or {}
+    local wide = options.wide == true
+    local current_sort = get_core_picker_sort(player)
+    local core_options = get_player_core_options(player, current_sort)
+    local picker_width = wide and LAYOUT.empty_inventory_core_picker_width or LAYOUT.inventory_core_picker_width
+    local picker_height = wide and LAYOUT.empty_inventory_core_picker_height or LAYOUT.inventory_core_picker_height
+    local detail_width = wide and LAYOUT.empty_inventory_core_detail_width or LAYOUT.inventory_core_detail_width
 
     local frame = core_panel.add({
       type = "frame",
@@ -214,21 +303,13 @@ function core_panel_module.new(deps)
 
     local count = header.add({
       type = "label",
-      caption = { "turret-xp.inventory-core-count", #options },
+      caption = { "turret-xp.inventory-core-count", #core_options },
       style = "caption_label",
     })
     set_style(count, "font_color", COLOR.muted)
 
-    if #options == 0 then
-      local label = frame.add({
-        type = "label",
-        caption = { "turret-xp.inventory-core-empty" },
-        style = "caption_label",
-      })
-      set_style(label, "top_margin", 4)
-      set_style(label, "font_color", COLOR.muted)
-      set_style(label, "single_line", false)
-      return
+    if wide then
+      add_picker_sort_controls(frame, current_sort)
     end
 
     local scroll = frame.add({
@@ -239,10 +320,23 @@ function core_panel_module.new(deps)
     scroll.vertical_scroll_policy = "auto-and-reserve-space"
     scroll.horizontal_scroll_policy = "never"
     set_style(scroll, "top_margin", 4)
-    set_style(scroll, "height", LAYOUT.inventory_core_picker_height)
-    set_style(scroll, "width", LAYOUT.inventory_core_picker_width)
-    set_style(scroll, "minimal_width", LAYOUT.inventory_core_picker_width)
-    set_style(scroll, "maximal_width", LAYOUT.inventory_core_picker_width)
+    set_style(scroll, "height", picker_height)
+    set_style(scroll, "width", picker_width)
+    set_style(scroll, "minimal_width", picker_width)
+    set_style(scroll, "maximal_width", picker_width)
+
+    if #core_options == 0 then
+      local label = scroll.add({
+        type = "label",
+        caption = { "turret-xp.inventory-core-empty" },
+        style = "caption_label",
+      })
+      set_style(label, "margin", { 8, 8, 8, 8 })
+      set_style(label, "font_color", COLOR.muted)
+      set_style(label, "single_line", false)
+      set_style(label, "maximal_width", picker_width - 36)
+      return
+    end
 
     local rows = scroll.add({
       type = "flow",
@@ -251,12 +345,12 @@ function core_panel_module.new(deps)
     set_style(rows, "vertical_spacing", 4)
     set_style(rows, "horizontally_stretchable", true)
 
-    for _, option in ipairs(options) do
+    for _, option in ipairs(core_options) do
       local profile = option.profile or create_blank_profile()
       local stats = preview_stats(entity, profile)
       local row = rows.add({
         type = "table",
-        column_count = 3,
+        column_count = wide and 4 or 3,
       })
       set_style(row, "horizontally_stretchable", true)
       set_style(row, "horizontal_spacing", 8)
@@ -265,6 +359,10 @@ function core_panel_module.new(deps)
         row.style.column_alignments[1] = "left"
         row.style.column_alignments[2] = "left"
         row.style.column_alignments[3] = "right"
+        if wide then
+          row.style.column_alignments[3] = "left"
+          row.style.column_alignments[4] = "right"
+        end
       end)
 
       local button_definition = {
@@ -292,27 +390,58 @@ function core_panel_module.new(deps)
         direction = "vertical",
       })
       set_style(details, "horizontally_stretchable", true)
-      set_style(details, "width", LAYOUT.inventory_core_detail_width)
-      set_style(details, "minimal_width", LAYOUT.inventory_core_detail_width)
-      set_style(details, "maximal_width", LAYOUT.inventory_core_detail_width)
+      set_style(details, "width", detail_width)
+      set_style(details, "minimal_width", detail_width)
+      set_style(details, "maximal_width", detail_width)
 
       local name = details.add({
         type = "label",
-        caption = { "turret-xp.inventory-core-name", core_display_name(profile), profile.level or 0 },
+        caption = { "turret-xp.inventory-core-name", core_display_name(profile), rich_value(profile.level or 0) },
         style = "caption_label",
       })
       set_style(name, "font", "default-bold")
       set_style(name, "single_line", false)
-      set_style(name, "maximal_width", LAYOUT.inventory_core_detail_width)
+      set_style(name, "maximal_width", detail_width)
+
+      local specialization = details.add({
+        type = "label",
+        caption = specialization_caption(profile),
+        style = "caption_label",
+      })
+      set_style(specialization, "font_color", COLOR.muted)
+      set_style(specialization, "single_line", false)
+      set_style(specialization, "maximal_width", detail_width)
 
       local summary = details.add({
         type = "label",
-        caption = { "turret-xp.inventory-core-summary", specialization_caption(profile), stats.health, stats.speed, stats.range },
+        caption = {
+          "turret-xp.inventory-core-summary",
+          rich_value(math.floor(profile.kills or 0)),
+          rich_value(format_number(profile.damage or 0, 0)),
+        },
         style = "caption_label",
       })
       set_style(summary, "font_color", COLOR.muted)
       set_style(summary, "single_line", false)
-      set_style(summary, "maximal_width", LAYOUT.inventory_core_detail_width)
+      set_style(summary, "maximal_width", detail_width)
+
+      if wide then
+        add_inventory_core_stats(row, stats, true)
+      else
+        local stat_summary = details.add({
+          type = "label",
+          caption = {
+            "turret-xp.inventory-core-compact-stats",
+            rich_metric({ "turret-xp.inventory-core-stat-hp" }, stats.health),
+            rich_metric({ "turret-xp.inventory-core-stat-attack" }, stats.speed, "/s"),
+            rich_metric({ "turret-xp.inventory-core-stat-range" }, stats.range),
+          },
+          style = "caption_label",
+        })
+        set_style(stat_summary, "font_color", COLOR.muted)
+        set_style(stat_summary, "single_line", false)
+        set_style(stat_summary, "maximal_width", detail_width)
+      end
 
       widgets.add_tool_button(row, {
         sprite = "utility/add",
@@ -469,6 +598,7 @@ function core_panel_module.new(deps)
     })
     set_style(top, "horizontally_stretchable", true)
     set_style(top, "vertical_align", "center")
+    set_style(top, "horizontal_spacing", 6)
 
     local label = top.add({
       type = "label",
@@ -480,7 +610,7 @@ function core_panel_module.new(deps)
 
     local buttons = panel.add({
       type = "table",
-      column_count = 2,
+      column_count = 4,
     })
     set_style(buttons, "horizontally_stretchable", true)
     set_style(buttons, "horizontal_spacing", 4)
@@ -507,6 +637,48 @@ function core_panel_module.new(deps)
       },
     })
     set_style(level_five, "minimal_width", 44)
+
+    local level_hundred = buttons.add({
+      type = "button",
+      caption = { "turret-xp.dev-level-100" },
+      tooltip = { "turret-xp.dev-level-100-tooltip" },
+      tags = {
+        turret_xp_action = "dev-level",
+        levels = 100,
+      },
+    })
+    set_style(level_hundred, "minimal_width", 44)
+
+    widgets.add_tool_button(buttons, {
+      sprite = "utility/add",
+      style = "flib_tool_button_light_green",
+      tooltip = { "turret-xp.dev-create-core-tooltip" },
+      tags = {
+        turret_xp_action = "dev-create-core",
+      },
+    })
+
+    local delevel_one = buttons.add({
+      type = "button",
+      caption = { "turret-xp.dev-level-minus-1" },
+      tooltip = { "turret-xp.dev-level-minus-1-tooltip" },
+      tags = {
+        turret_xp_action = "dev-level",
+        levels = -1,
+      },
+    })
+    set_style(delevel_one, "minimal_width", 44)
+
+    local delevel_five = buttons.add({
+      type = "button",
+      caption = { "turret-xp.dev-level-minus-5" },
+      tooltip = { "turret-xp.dev-level-minus-5-tooltip" },
+      tags = {
+        turret_xp_action = "dev-level",
+        levels = -5,
+      },
+    })
+    set_style(delevel_five, "minimal_width", 44)
 
     widgets.add_tool_button(buttons, {
       sprite = "utility/confirm_slot",
@@ -552,6 +724,7 @@ function core_panel_module.new(deps)
     })
     set_style(top, "horizontally_stretchable", true)
     set_style(top, "vertical_align", "center")
+    set_style(top, "horizontal_spacing", 6)
 
     local slot_definition = {
       type = "sprite-button",
@@ -583,12 +756,19 @@ function core_panel_module.new(deps)
     })
     set_style(label, "font", "default-bold")
     set_style(label, "single_line", false)
-    set_style(label, "maximal_width", 180)
+    set_style(label, "maximal_width", state and 180 or LAYOUT.empty_panel_width - 136)
 
     if state then
       top.add({
         type = "empty-widget",
         style = "flib_horizontal_pusher",
+      })
+      widgets.add_tool_button(top, {
+        sprite = "utility/export_slot",
+        tooltip = { "turret-xp.extract-core-button-tooltip" },
+        tags = {
+          turret_xp_action = "extract-core",
+        },
       })
       local bind_button = top.add({
         type = "button",
@@ -627,9 +807,11 @@ function core_panel_module.new(deps)
         caption = { "turret-xp.no-core-note" },
         style = "caption_label",
       })
+      set_style(note, "top_margin", 6)
       set_style(note, "font_color", COLOR.muted)
       set_style(note, "single_line", false)
-      add_inventory_core_picker(core_panel, player, entity)
+      set_style(note, "maximal_width", LAYOUT.empty_panel_width - 24)
+      add_inventory_core_picker(core_panel, player, entity, { wide = true })
       add_platform_core_list(core_panel, entity, state)
       return
     end

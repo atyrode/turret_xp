@@ -15,7 +15,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 ## Current UX Direction
 
 - Keep the vanilla turret GUI as the main interaction.
-- Attach Turret XP as a bounded two-column panel: Veteran Core identity, XP, dev controls, and stats on the left; Evolution on the right.
+- Attach Turret XP as a bounded panel beside the vanilla turret GUI. Installed cores use a two-column layout: Veteran Core identity, XP, dev controls, and stats on the left; Evolution on the right. Empty turrets use one full-width Veteran Core picker instead of a split dashboard.
 - Treat the 0.11 GUI glowup as an anchored custom interface, not a move away from the vanilla turret GUI unless the relative GUI API blocks a required interaction. The panel should keep living beside the opened turret while adopting the hierarchy, icon language, spacing, and action discoverability shown by mature utility mods such as Factory Planner.
 - Use a Factorio-style header plus shallow content panes as the default frame language: the Turret XP shell owns the anchored frame and top-level columns, while section modules own their local content.
 - Keep the Evolution column stable: a fixed summary header, one scrollable section body, section widths derived from the viewport, and no content rendering under the scrollbar.
@@ -24,11 +24,13 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep stat rows scannable: show final values in the panel, put formulas in the stat-name info hover, and reserve the quality diamond for quality-specific HP/range breakdowns.
 - Keep dev controls hidden by default and toggled through `/turret-xp-dev`.
 - Use the Veteran Core slot as a scripted tag-preserving control. Do not imply native arbitrary inventory-slot support inside the vanilla turret GUI.
-- When no core is installed, use the left-column Veteran Core panel as an exact core picker: list tagged Veteran Cores from the player's inventory, sort highest level first, show name, level, specialization, and compact HP/attack-speed/range preview values, and install the chosen row through a compact `+` action.
+- When no core is installed, use the whole Turret XP body as an exact core picker: keep the scripted Veteran Core slot and short explanation at the top, then dedicate the remaining space to tagged Veteran Cores from the player's inventory. Default sort is highest level first, with sort controls for level, kills, damage, and name. Rows should use rich-value captions for level/history/stat values and install the chosen exact slot through a compact `+` action.
 - Keep platform core selection explicit: when multiple tagged cores are in a platform hub, the player chooses the exact row.
 - Keep Bind/Unbind visually attached to the installed Veteran Core, because bound turret movement is an opt-in quick-move mode for that core/turret pair.
+- Expose installed-core extraction both through the scripted slot interaction and through a clear compact action that moves the core to the player inventory when there is room.
 - Keep floating-label controls top-down and conditional: name field plus `Show`, RGB sliders/preset controls only when the label is shown, then the `Level` option.
 - Keep numeric value coloring precise: unchanged values stay neutral, beneficial deltas use muted green, harmful deltas use muted red, units/prose stay neutral, and element colors are reserved for elemental damage numbers.
+- Prefer `gui_support` rich-value helpers for repeated numeric captions so level, history, stat previews, formulas, and summaries do not hand-roll rich-text color tags.
 - Use optional Bullet Trails and vanilla visual prototypes for readability, but keep fallback visuals lightweight and avoid visual spam.
 - Prefer custom local GUI helpers and focused domain widgets over a generic one-off panel file. `flib` is an accepted foundation for vanilla-like styles and helper patterns, but Turret XP should own the Veteran Core, stats, Evolution, element, and action interaction model directly.
 
@@ -72,3 +74,4 @@ New progression-system scope is frozen while the current playable loop is harden
 - Material progress should be visible as progress toward a goal, not hidden in tooltips.
 - Elemental and critical feedback should be noticeable enough to verify during play, but quiet enough for busy defenses.
 - Open-GUI interactions must not move the whole vanilla turret GUI. Prototype body swaps should stay deferred until the turret GUI closes.
+- Open-GUI refreshes should not destroy and recreate interactive controls unless a relevant state key changed; steady-state polling should update stable content in place or skip work so clicks do not race timer rebuilds.

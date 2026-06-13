@@ -24,6 +24,19 @@ function gui_support.new(deps)
     return service.rich_color(service.color_to_rich_string(color or deps.COLOR.bonus), text)
   end
 
+  function service.rich_value(value, suffix, color)
+    return service.rich_number(tostring(value or "-") .. tostring(suffix or ""), color)
+  end
+
+  function service.rich_metric(label, value, suffix, color)
+    return {
+      "",
+      label,
+      " ",
+      service.rich_value(value, suffix, color),
+    }
+  end
+
   function service.rich_stat_text(text, color)
     if type(text) ~= "string" then
       return text

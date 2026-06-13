@@ -112,6 +112,7 @@ return function(M)
         find_gui_element = find_gui_element,
         get_remembered_turret = get_remembered_turret,
         get_player_core_options = get_player_core_options,
+        get_core_picker_sort = get_core_picker_sort,
         get_platform_core_options = get_platform_core_options,
         get_platform_hub_inventory = get_platform_hub_inventory,
         create_blank_profile = create_blank_profile,
@@ -128,6 +129,12 @@ return function(M)
         get_shooting_speed_formula_values = get_shooting_speed_formula_values,
         get_range_formula_values = get_range_formula_values,
         format_number = format_number,
+        rich_value = function(value, suffix, color)
+          return rich_value(value, suffix, color)
+        end,
+        rich_metric = function(label, value, suffix, color)
+          return rich_metric(label, value, suffix, color)
+        end,
         widgets = get_gui_widgets_service(),
       })
     end
@@ -322,6 +329,14 @@ return function(M)
     return get_gui_support_service().rich_number(text, color)
   end
 
+  function rich_value(value, suffix, color)
+    return get_gui_support_service().rich_value(value, suffix, color)
+  end
+
+  function rich_metric(label, value, suffix, color)
+    return get_gui_support_service().rich_metric(label, value, suffix, color)
+  end
+
   function rich_stat_text(text, color)
     return get_gui_support_service().rich_stat_text(text, color)
   end
@@ -402,12 +417,12 @@ return function(M)
     return get_core_panel_service().add_xp_panel(parent)
   end
 
-  function build_gui_shell(player)
-    return get_shell_service().build(player)
+  function build_gui_shell(player, mode)
+    return get_shell_service().build(player, mode)
   end
 
-  function add_core_panel(parent)
-    return get_core_panel_service().add_core_panel(parent)
+  function add_core_panel(parent, mode)
+    return get_core_panel_service().add_core_panel(parent, mode)
   end
 
   function core_panel_key(player, state)

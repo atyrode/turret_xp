@@ -666,15 +666,25 @@ function actions_module.new(deps)
 
   local function add_dev_levels(player, levels)
     opened_turret_action(player, function(_, state)
-      levels = math.max(1, math.floor(tonumber(levels) or 1))
+      levels = math.floor(tonumber(levels) or 1)
+      if levels == 0 then
+        return
+      end
+
       sync_turret_progression(state)
-      local target_level = (state.level or 0) + levels
+
+      local target_level = math.max(0, (state.level or 0) + levels)
       local needed_total = 0
       for level = 0, target_level - 1 do
         needed_total = needed_total + xp_required(level)
       end
 
-      state.dev_xp = (state.dev_xp or 0) + math.max(0, needed_total - (state.total_xp or 0))
+      if levels > 0 then
+        state.dev_xp = (state.dev_xp or 0) + math.max(0, needed_total - (state.total_xp or 0))
+      else
+        local combat_xp = math.max(0, (state.total_xp or 0) - (state.dev_xp or 0))
+        state.dev_xp = math.max(0, needed_total - combat_xp)
+      end
       sync_turret_progression(state)
     end)
   end

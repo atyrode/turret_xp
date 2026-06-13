@@ -215,33 +215,112 @@ function profile_inventory.new(deps)
     return nil
   end
 
+  local function normalize_sort_mode(sort_mode)
+    local mode = tostring(sort_mode or "")
+    if mode == "kills" or mode == "damage" or mode == "name" then
+      return mode
+    end
+
+    return "level"
+  end
+
   local function core_option_sort_key(profile)
     profile = profile or {}
     return {
       level = math.max(0, math.floor(tonumber(profile.level) or 0)),
       kills = math.max(0, math.floor(tonumber(profile.kills) or 0)),
       damage = math.max(0, math.floor(tonumber(profile.damage) or 0)),
-      name = tostring(profile.custom_name or ""),
+      name = string.lower(tostring(profile.custom_name or "")),
       chip_id = tonumber(profile.chip_id) or 0,
     }
   end
 
-  local function sort_core_options(options)
+  local function compare_desc(left, right, field)
+    if left[field] ~= right[field] then
+      return left[field] > right[field]
+    end
+    return nil
+  end
+
+  local function compare_asc(left, right, field)
+    if left[field] ~= right[field] then
+      return left[field] < right[field]
+    end
+    return nil
+  end
+
+  local function sort_core_options(options, sort_mode)
+    sort_mode = normalize_sort_mode(sort_mode)
     table.sort(options, function(a, b)
       local left = core_option_sort_key(a.profile)
       local right = core_option_sort_key(b.profile)
-      if left.level ~= right.level then
-        return left.level > right.level
+
+      local comparisons = {
+        level = {
+          function()
+            return compare_desc(left, right, "level")
+          end,
+          function()
+            return compare_desc(left, right, "kills")
+          end,
+          function()
+            return compare_desc(left, right, "damage")
+          end,
+          function()
+            return compare_asc(left, right, "name")
+          end,
+        },
+        kills = {
+          function()
+            return compare_desc(left, right, "kills")
+          end,
+          function()
+            return compare_desc(left, right, "level")
+          end,
+          function()
+            return compare_desc(left, right, "damage")
+          end,
+          function()
+            return compare_asc(left, right, "name")
+          end,
+        },
+        damage = {
+          function()
+            return compare_desc(left, right, "damage")
+          end,
+          function()
+            return compare_desc(left, right, "level")
+          end,
+          function()
+            return compare_desc(left, right, "kills")
+          end,
+          function()
+            return compare_asc(left, right, "name")
+          end,
+        },
+        name = {
+          function()
+            return compare_asc(left, right, "name")
+          end,
+          function()
+            return compare_desc(left, right, "level")
+          end,
+          function()
+            return compare_desc(left, right, "kills")
+          end,
+          function()
+            return compare_desc(left, right, "damage")
+          end,
+        },
+      }
+
+      for _, compare in ipairs(comparisons[sort_mode] or comparisons.level) do
+        local result = compare()
+        if result ~= nil then
+          return result
+        end
       end
-      if left.kills ~= right.kills then
-        return left.kills > right.kills
-      end
-      if left.damage ~= right.damage then
-        return left.damage > right.damage
-      end
-      if left.name ~= right.name then
-        return left.name < right.name
-      end
+
       if left.chip_id ~= right.chip_id then
         return left.chip_id < right.chip_id
       end
@@ -249,7 +328,7 @@ function profile_inventory.new(deps)
     end)
   end
 
-  function service.get_core_options_from_inventory(inventory)
+  function service.get_core_options_from_inventory(inventory, sort_mode)
     local options = {}
     if not inventory or not inventory.valid then
       return options
@@ -267,16 +346,16 @@ function profile_inventory.new(deps)
       end
     end
 
-    sort_core_options(options)
+    sort_core_options(options, sort_mode)
     return options
   end
 
-  function service.get_player_core_options(player)
+  function service.get_player_core_options(player, sort_mode)
     if not player or type(player.get_main_inventory) ~= "function" then
       return {}
     end
 
-    return service.get_core_options_from_inventory(player.get_main_inventory())
+    return service.get_core_options_from_inventory(player.get_main_inventory(), sort_mode)
   end
 
   function service.find_best_carried_chip_stack(player)

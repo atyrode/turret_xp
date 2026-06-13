@@ -11,8 +11,10 @@ return function(M)
     end
 
     remember_open_turret(player, entity)
+    local state = get_turret_state(entity)
+    local mode = state and "installed" or "empty"
 
-    local shell = build_gui_shell(player)
+    local shell = build_gui_shell(player, mode)
     if not shell then
       return
     end
@@ -20,13 +22,14 @@ return function(M)
     local body = shell.body or shell.frame
     local columns = shell.columns or shell.frame
 
-    add_core_panel(body)
-    add_xp_panel(body)
-    add_dev_controls_panel(body, player)
+    add_core_panel(body, mode)
+    if state then
+      add_xp_panel(body)
+      add_dev_controls_panel(body, player)
+      add_stats_panel(body)
 
-    add_stats_panel(body)
-
-    add_evolution_panel(columns)
+      add_evolution_panel(columns)
+    end
 
     update_turret_gui(player, entity, evolution_anchor)
   end

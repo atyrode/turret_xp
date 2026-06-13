@@ -19,6 +19,14 @@ function gui_runtime_module.new(deps)
 
   local service = {}
 
+  local function gui_mode_for_state(state)
+    return state and "installed" or "empty"
+  end
+
+  local function panel_mode(panel)
+    return (panel.tags or {}).turret_xp_mode or "installed"
+  end
+
   local function get_turret_gui_context(entity)
     local state = get_turret_state(entity)
     local progression = state and sync_turret_progression(state) or nil
@@ -91,6 +99,10 @@ function gui_runtime_module.new(deps)
     end
 
     local context = get_turret_gui_context(entity)
+    if not context.state then
+      return panel_mode(panel) == "empty"
+    end
+
     update_turret_gui_progress_and_stats(panel, entity, context)
     return true
   end
@@ -102,8 +114,15 @@ function gui_runtime_module.new(deps)
     end
 
     local context = get_turret_gui_context(entity)
+    if panel_mode(panel) ~= gui_mode_for_state(context.state) then
+      return false
+    end
 
     update_core_panel(panel, player, entity, context.state)
+    if not context.state then
+      return true
+    end
+
     update_turret_gui_progress_and_stats(panel, entity, context)
     update_evolution_panel(panel, entity, context.state, context.ammo_name, evolution_anchor)
 

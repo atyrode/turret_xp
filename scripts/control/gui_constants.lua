@@ -78,10 +78,15 @@ local layout = {
 
 layout.panel_width = layout.left_column_width + layout.evolution_column_width + layout.column_spacing
 layout.panel_max_width = layout.panel_width + 24
+layout.empty_panel_width = layout.panel_width
+layout.empty_panel_max_width = layout.panel_max_width
 layout.stats_scroll_width = layout.left_column_width - 16
 layout.stats_content_width = layout.stats_scroll_width - 30
 layout.inventory_core_picker_width = layout.left_column_width - 16
 layout.inventory_core_detail_width = layout.inventory_core_picker_width - 112
+layout.empty_inventory_core_picker_width = layout.empty_panel_width - 16
+layout.empty_inventory_core_picker_height = layout.evolution_outer_height - 190
+layout.empty_inventory_core_detail_width = layout.empty_inventory_core_picker_width - 252
 layout.evolution_scroll_width = layout.evolution_column_width
 layout.evolution_scroll_height = layout.evolution_outer_height - layout.evolution_header_height
 layout.evolution_content_width = layout.evolution_scroll_width - 28

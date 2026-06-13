@@ -989,14 +989,55 @@ function evolution_panel_module.new(deps)
     set_style(combo, "maximal_width", LAYOUT.evolution_inner_width)
   end
 
-  local function update_evolution_panel(panel, entity, state, ammo_name, anchor_name)
-    update_evolution_summary(panel, state)
+  local function evolution_panel_key(state, ammo_name)
+    if not state then
+      return "empty"
+    end
 
+    local evolution = ensure_evolution_state(state)
+    local parts = {
+      "installed",
+      tostring(state.level or 0),
+      tostring(get_available_skill_points(state)),
+      tostring(get_available_augment_points(state)),
+      tostring(ammo_name or ""),
+      tostring(evolution.specialization or ""),
+      tostring(evolution.sub_specialization or ""),
+      tostring(evolution.elements and evolution.elements[1] or ""),
+      tostring(evolution.elements and evolution.elements[2] or ""),
+    }
+
+    for _, upgrade in ipairs(BASE_UPGRADES) do
+      parts[#parts + 1] = tostring(evolution.base and evolution.base[upgrade.id] or 0)
+    end
+    for _, augment in ipairs(AUGMENTS) do
+      parts[#parts + 1] = tostring(evolution.augments and evolution.augments[augment.id] or 0)
+    end
+    for _, element in ipairs(ELEMENTS) do
+      local mastery = evolution.element_mastery and evolution.element_mastery[element.id] or nil
+      parts[#parts + 1] = tostring(mastery and mastery.rank or 0)
+      parts[#parts + 1] = tostring(mastery and math.floor(tonumber(mastery.delivered) or 0) or 0)
+    end
+
+    return table.concat(parts, ":")
+  end
+
+  local function update_evolution_panel(panel, entity, state, ammo_name, anchor_name)
     local evolution_panel = find_gui_element(panel, GUI.evolution)
     if not evolution_panel then
       return
     end
 
+    local key = evolution_panel_key(state, ammo_name)
+    if (evolution_panel.tags or {}).key == key then
+      scroll_evolution_to_anchor(panel, anchor_name)
+      return
+    end
+
+    evolution_panel.tags = {
+      key = key,
+    }
+    update_evolution_summary(panel, state)
     evolution_panel.clear()
 
     if not state then

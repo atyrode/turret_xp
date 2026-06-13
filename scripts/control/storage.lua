@@ -80,6 +80,26 @@ return function(M)
     return player_state
   end
 
+  function normalize_core_picker_sort(sort_mode)
+    local mode = tostring(sort_mode or "")
+    if mode == "kills" or mode == "damage" or mode == "name" then
+      return mode
+    end
+
+    return "level"
+  end
+
+  function get_core_picker_sort(player)
+    local player_state = ensure_player_state(player)
+    return normalize_core_picker_sort(player_state.core_picker_sort)
+  end
+
+  function set_core_picker_sort(player, sort_mode)
+    local player_state = ensure_player_state(player)
+    player_state.core_picker_sort = normalize_core_picker_sort(sort_mode)
+    return player_state.core_picker_sort
+  end
+
   function is_gun_turret(entity)
     return entity and entity.valid and (entity.name == BASE_TURRET_NAME or DOMAIN.is_specialized_turret_name(entity.name))
   end

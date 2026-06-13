@@ -511,6 +511,8 @@ return function(M)
         percent = format_percent(0.125, 1),
         color = color_to_rich_string(COLOR.bonus),
         rich_number = rich_number("+5"),
+        rich_value = rich_value(42, "/s"),
+        rich_metric = rich_metric("HP", 400),
         rich_stat = rich_stat_text("Damage +5 x1.2"),
       }
     end,
@@ -520,16 +522,19 @@ return function(M)
         custom_name = "Low",
         level = 3,
         kills = 2,
+        damage = 50,
       })
       local high = turret_xp_test_set_profile_fields(create_blank_profile(), {
         custom_name = "High",
         level = 14,
         kills = 1,
+        damage = 75,
       })
       local mid = turret_xp_test_set_profile_fields(create_blank_profile(), {
         custom_name = "Mid",
         level = 9,
         kills = 20,
+        damage = 500,
       })
       ensure_evolution_state(high).specialization = "sniper"
       ensure_evolution_state(mid).specialization = "machine_gun"
@@ -539,6 +544,9 @@ return function(M)
       inventory[3].set_stack(make_chip_item_stack(mid))
 
       local options = get_core_options_from_inventory(inventory)
+      local kill_sorted = get_core_options_from_inventory(inventory, "kills")
+      local damage_sorted = get_core_options_from_inventory(inventory, "damage")
+      local name_sorted = get_core_options_from_inventory(inventory, "name")
       local summarized = {}
       for _, option in ipairs(options) do
         summarized[#summarized + 1] = {
@@ -548,6 +556,11 @@ return function(M)
           specialization = option.profile and option.profile.evolution and option.profile.evolution.specialization or nil,
         }
       end
+      local sort_samples = {
+        kills = kill_sorted[1] and kill_sorted[1].profile.custom_name or nil,
+        damage = damage_sorted[1] and damage_sorted[1].profile.custom_name or nil,
+        name = name_sorted[1] and name_sorted[1].profile.custom_name or nil,
+      }
 
       local player = {
         index = -2,
@@ -575,6 +588,7 @@ return function(M)
 
       return {
         options = summarized,
+        sort_samples = sort_samples,
         installed = installed,
         remaining_names = remaining_names,
       }

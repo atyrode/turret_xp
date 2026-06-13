@@ -70,10 +70,21 @@ function shell_module.new(deps)
     return definition
   end
 
-  local function apply_layout(elems, frame)
-    set_style(frame, "maximal_width", LAYOUT.panel_max_width)
+  local function normalize_mode(mode)
+    return mode == "empty" and "empty" or "installed"
+  end
+
+  local function apply_layout(elems, frame, mode)
+    mode = normalize_mode(mode)
+    frame.tags = {
+      turret_xp_mode = mode,
+    }
+    set_style(frame, "maximal_width", mode == "empty" and LAYOUT.empty_panel_max_width or LAYOUT.panel_max_width)
 
     local header = elems[GUI.panel_header]
+    pcall(function()
+      header.drag_target = frame
+    end)
     set_style(header, "horizontally_stretchable", true)
     set_style(header, "vertical_align", "center")
 
@@ -86,6 +97,9 @@ function shell_module.new(deps)
     set_style(title, "right_margin", 8)
 
     local drag_handle = elems[GUI.panel_header_drag_handle]
+    pcall(function()
+      drag_handle.drag_target = frame
+    end)
     set_style(drag_handle, "horizontally_stretchable", true)
 
     local columns = elems[GUI.panel_columns]
@@ -94,9 +108,10 @@ function shell_module.new(deps)
     set_style(columns, "horizontal_spacing", LAYOUT.column_spacing)
 
     local body = elems[GUI.panel_body]
-    set_style(body, "width", LAYOUT.left_column_width)
-    set_style(body, "minimal_width", LAYOUT.left_column_width)
-    set_style(body, "maximal_width", LAYOUT.left_column_width)
+    local body_width = mode == "empty" and LAYOUT.empty_panel_width or LAYOUT.left_column_width
+    set_style(body, "width", body_width)
+    set_style(body, "minimal_width", body_width)
+    set_style(body, "maximal_width", body_width)
   end
 
   local function create_relative(player)
@@ -109,7 +124,7 @@ function shell_module.new(deps)
 
   local service = {}
 
-  function service.build(player)
+  function service.build(player, mode)
     local ok, result = pcall(function()
       local elems, frame = create_relative(player)
       return {
@@ -132,7 +147,7 @@ function shell_module.new(deps)
       return nil
     end
 
-    apply_layout(result.elems, result.frame)
+    apply_layout(result.elems, result.frame, mode)
 
     return {
       frame = result.frame,
