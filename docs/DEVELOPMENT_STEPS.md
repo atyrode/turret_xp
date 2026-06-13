@@ -12,6 +12,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Package build: `scripts/package.sh`.
 - Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
 - CI runs strict Lua tooling and packaging for package-impacting changes, and headless Factorio tests when Mod Portal download credentials are configured.
+- Package-impacting changes are root `README.md`, `changelog.txt`, `thumbnail.png`, package source, package scripts, and validation infrastructure; internal `docs/` and generated public-site files are not mod package payload.
 
 ## Completed Foundations
 
@@ -37,7 +38,8 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 Use the narrowest meaningful checks for each change:
 
-- Documentation-only changes: `scripts/check.sh`, `git diff --check`.
+- Internal documentation-only changes: `scripts/check.sh`, `git diff --check`.
+- Root `README.md`, `changelog.txt`, or `thumbnail.png` changes: `scripts/check.sh`, `scripts/package.sh`, `git diff --check`.
 - Public copy, version, changelog, or homepage changes: `scripts/generate-public-assets.py`, `scripts/generate-public-assets.py --check`, `git diff --check`.
 - Lua/runtime/tooling changes: `scripts/check.sh`, `docker compose run --rm lua-tools`, `scripts/package.sh`.
 - Gameplay, migration, feeder, combat, profile, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
