@@ -61,9 +61,6 @@ M.stats = stats.new({
   game_tick = function()
     return game.tick
   end,
-  get_surface = function(surface_index)
-    return game.get_surface(surface_index)
-  end,
   safe_read = M.safe_read,
   entity_tracking_key = M.entity_tracking_key,
   turret_key = M.turret_key,
@@ -98,8 +95,6 @@ M.stats = stats.new({
   RESISTANCE_MAX = M.RESISTANCE_MAX,
   RESISTANCE_PER_RANK = M.RESISTANCE_PER_RANK,
   BASE_TURRET_NAME = M.BASE_TURRET_NAME,
-  make_bound_turret_item_stack = M.make_bound_turret_item_stack,
-  spill_stack_definition_at = M.spill_stack_definition_at,
 })
 for name, stat in pairs(M.stats) do
   M[name] = stat
