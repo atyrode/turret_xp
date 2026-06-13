@@ -30,7 +30,6 @@ def package_files():
     files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "scripts").glob("*.lua")) if path.is_file())
     files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "scripts" / "control").rglob("*.lua")) if path.is_file())
     files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "prototypes").rglob("*.lua")) if path.is_file())
-    files.extend(str(path.relative_to(ROOT)) for path in sorted((ROOT / "docs").rglob("*.md")) if path.is_file())
     return files
 
 

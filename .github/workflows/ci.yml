@@ -50,7 +50,7 @@ jobs:
         run: scripts/check.sh
 
       - name: Install Lua tooling
-        if: steps.changes.outputs.package_changed == 'true'
+        if: steps.changes.outputs.lua_changed == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y lua-check lua5.2
@@ -67,7 +67,7 @@ jobs:
           echo "${stylua_dir}" >> "${GITHUB_PATH}"
 
       - name: Run strict Lua tooling
-        if: steps.changes.outputs.package_changed == 'true'
+        if: steps.changes.outputs.lua_changed == 'true'
         env:
           REQUIRE_LUA_TOOLS: "1"
         run: scripts/lint-lua.sh

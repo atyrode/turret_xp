@@ -53,7 +53,7 @@
 - Dev buttons must be hidden by default and toggleable with `/turret-xp-dev` for local playtesting.
 - The GUI must refresh while the turret GUI remains open.
 - Selecting a gun turret and running `/turret-xp` must open the same panel as a fallback.
-- The packaged zip must include `info.json`, Lua entrypoints, runtime/data prototype module files, locale, docs, README, changelog, and a root `thumbnail.png` when that file exists.
+- The packaged zip must include `info.json`, Lua entrypoints, runtime/data prototype module files, locale, root `README.md`, `changelog.txt`, and a root `thumbnail.png` when that file exists. Internal `docs/` files and generated public-site assets remain source/public-site material, not mod package payload.
 - Hidden specialization and sub-specialization turret variants must inherit late gun-turret prototype edits from other mods before adding Turret XP-specific stat changes.
 - Gun-turret accepted projectile ammo with an ammo delivery range below the highest generated Turret XP turret range must receive a turret-source compatibility range patch while preserving the original non-turret ammo behavior.
 
