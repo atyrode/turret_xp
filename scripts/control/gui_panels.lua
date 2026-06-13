@@ -5,6 +5,7 @@ local gui_core_panel = require("scripts.control.gui.core_panel")
 local gui_stats_panel = require("scripts.control.gui.stats_panel")
 local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
 local gui_shell = require("scripts.control.gui.shell")
+local gui_runtime = require("scripts.control.gui.runtime")
 
 return function(M)
   setmetatable(M, { __index = _G })
@@ -17,6 +18,7 @@ return function(M)
   local stats_panel_service = nil
   local evolution_panel_service = nil
   local shell_service = nil
+  local runtime_service = nil
 
   local function get_shell_service()
     if not shell_service then
@@ -218,6 +220,36 @@ return function(M)
     end
 
     return evolution_panel_service
+  end
+
+  local function get_gui_runtime_service()
+    if not runtime_service then
+      runtime_service = gui_runtime.new({
+        GUI = GUI,
+        get_gui_panel = get_gui_panel,
+        get_turret_state = get_turret_state,
+        sync_turret_progression = sync_turret_progression,
+        get_loaded_ammo = get_loaded_ammo,
+        get_entity_quality_name = get_entity_quality_name,
+        safe_read = safe_read,
+        get_max_health_for_quality = get_max_health_for_quality,
+        set_gui_caption = set_gui_caption,
+        set_gui_progress = set_gui_progress,
+        format_number = format_number,
+        update_core_panel = function(...)
+          return update_core_panel(...)
+        end,
+        update_stats_panel = function(...)
+          return update_stats_panel(...)
+        end,
+        update_evolution_panel = function(...)
+          return update_evolution_panel(...)
+        end,
+        update_shield_bar_render = update_shield_bar_render,
+      })
+    end
+
+    return runtime_service
   end
 
   function add_stat_row(parent, label, element_name, options)
@@ -575,94 +607,11 @@ return function(M)
     return get_evolution_panel_service().update_evolution_panel(panel, entity, state, ammo_name, anchor_name)
   end
 
-  local function get_turret_gui_context(entity)
-    local state = get_turret_state(entity)
-    local progression = state and sync_turret_progression(state) or nil
-    local required = progression and progression.required or 1
-    local progress = progression and required > 0 and math.min(1, progression.xp / required) or 0
-    local ammo_name, ammo_count, ammo_quality, ammo_in_magazine, ammo_magazine_size = get_loaded_ammo(entity)
-    local quality_name = get_entity_quality_name(entity)
-    local live_max_health = safe_read(entity, "max_health")
-    local live_health = safe_read(entity, "health") or live_max_health
-    local max_health = get_max_health_for_quality(entity, quality_name, state) or live_max_health
-    local health = live_health or max_health
-    if state and live_max_health and live_max_health > 0 and max_health and health then
-      health = math.max(1, math.min(max_health, max_health * (health / live_max_health)))
-    end
-
-    return {
-      state = state,
-      progression = progression,
-      required = required,
-      progress = progress,
-      ammo_name = ammo_name,
-      ammo_count = ammo_count,
-      ammo_quality = ammo_quality,
-      ammo_in_magazine = ammo_in_magazine,
-      ammo_magazine_size = ammo_magazine_size,
-      quality_name = quality_name,
-      max_health = max_health,
-      health = health,
-    }
-  end
-
-  local function update_turret_gui_progress_and_stats(panel, entity, context)
-    local state = context.state
-    if state then
-      set_gui_caption(panel, GUI.level, { "turret-xp.level", context.progression.level })
-      set_gui_caption(
-        panel,
-        GUI.xp,
-        { "turret-xp.xp-progress", format_number(context.progression.xp, 0), format_number(context.required, 0) }
-      )
-    else
-      set_gui_caption(panel, GUI.level, { "turret-xp.no-core-level" })
-      set_gui_caption(panel, GUI.xp, { "turret-xp.no-core-xp" })
-    end
-    set_gui_progress(panel, GUI.xp_bar, context.progress)
-    set_gui_caption(panel, GUI.xp_percent, state and { "turret-xp.level-progress-suffix", format_number(context.progress * 100, 0) } or "")
-
-    update_stats_panel(
-      panel,
-      entity,
-      state,
-      context.ammo_name,
-      context.ammo_count,
-      context.ammo_quality,
-      context.ammo_in_magazine,
-      context.ammo_magazine_size,
-      context.quality_name,
-      context.max_health,
-      context.health
-    )
-    if state then
-      update_shield_bar_render(entity, state, true)
-    end
-  end
-
   function update_turret_gui_stats(player, entity)
-    local panel = get_gui_panel(player)
-    if not panel then
-      return false
-    end
-
-    local context = get_turret_gui_context(entity)
-    update_turret_gui_progress_and_stats(panel, entity, context)
-    return true
+    return get_gui_runtime_service().update_turret_gui_stats(player, entity)
   end
 
   function update_turret_gui(player, entity, evolution_anchor)
-    local panel = get_gui_panel(player)
-    if not panel then
-      return false
-    end
-
-    local context = get_turret_gui_context(entity)
-
-    update_core_panel(panel, player, entity, context.state)
-    update_turret_gui_progress_and_stats(panel, entity, context)
-    update_evolution_panel(panel, entity, context.state, context.ammo_name, evolution_anchor)
-
-    return true
+    return get_gui_runtime_service().update_turret_gui(player, entity, evolution_anchor)
   end
 end
