@@ -19,7 +19,6 @@ function shell_module.new(deps)
           name = GUI.panel_header,
           direction = "horizontal",
           style = "frame_header_flow",
-          drag_target = GUI.panel,
           children = {
             {
               type = "sprite",
@@ -120,6 +119,19 @@ function shell_module.new(deps)
     return flib_gui.add(player.gui.left, panel_definition(false))
   end
 
+  local function destroy_partial(root)
+    local panel = root and root[GUI.panel] or nil
+    if panel and panel.valid then
+      panel.destroy()
+    end
+  end
+
+  local function log_build_error(root_name, err)
+    if log then
+      log("[turret-xp] GUI shell build failed in " .. root_name .. ": " .. tostring(err))
+    end
+  end
+
   local service = {}
 
   function service.build(player, mode)
@@ -132,6 +144,8 @@ function shell_module.new(deps)
     end)
 
     if not ok or not result or not result.frame then
+      log_build_error("player.gui.relative", result)
+      destroy_partial(player.gui.relative)
       ok, result = pcall(function()
         local elems, frame = create_fallback(player)
         return {
@@ -139,9 +153,14 @@ function shell_module.new(deps)
           frame = frame,
         }
       end)
+      if not ok or not result or not result.frame then
+        log_build_error("player.gui.left", result)
+      end
     end
 
     if not ok or not result or not result.frame then
+      destroy_partial(player.gui.relative)
+      destroy_partial(player.gui.left)
       return nil
     end
 
