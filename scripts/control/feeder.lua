@@ -1,4 +1,15 @@
+local feeder_inventory = require("scripts.control.feeder_inventory")
+local feeder_inserters = require("scripts.control.feeder_inserters")
+local feeder_lifecycle = require("scripts.control.feeder_lifecycle")
+local feeder_refresh = require("scripts.control.feeder_refresh")
+
 local feeder_module = {}
+
+local function copy_exports(target, source, names)
+  for _, name in ipairs(names) do
+    target[name] = source[name]
+  end
+end
 
 function feeder_module.new(deps)
   local feeder = {}
@@ -12,901 +23,120 @@ function feeder_module.new(deps)
   local get_element_remaining_requirement = deps.get_element_remaining_requirement
   local is_gun_turret = deps.is_gun_turret
   local item_prototypes = deps.item_prototypes
-  local FEEDER_NAME = deps.feeder_name
-  local FEEDER_INSERTER_RADIUS = deps.feeder_inserter_radius
-  local FEEDER_INPUT_BUFFER_SLOTS = deps.feeder_input_buffer_slots
 
-  function feeder.get_entity_inventory(entity, inventory_id)
-    return compat.get_entity_inventory(entity, inventory_id, "entity inventory")
-  end
-
-  function feeder.get_inventory(entity)
-    return feeder.get_entity_inventory(entity, inventory_defines.chest)
-  end
-
-  function feeder.spill_stack(entity, stack, position)
-    if not entity or not entity.valid or not stack or not stack.valid_for_read then
-      return
-    end
-
-    local item = {
-      name = stack.name,
-      count = stack.count,
-    }
-    item.quality = compat.quality_name(stack, nil, "spill stack quality")
-    pcall(function()
-      entity.surface.spill_item_stack({
-        position = position or entity.position,
-        stack = item,
-        enable_looted = true,
-        allow_belts = false,
-      })
-    end)
-    stack.clear()
-  end
-
-  function feeder.spill_inventory_contents(entity, inventory, position)
-    if not inventory then
-      return
-    end
-    for index = 1, #inventory do
-      local stack = inventory[index]
-      if stack and stack.valid_for_read then
-        feeder.spill_stack(entity, stack, position)
-      end
-    end
-  end
-
-  function feeder.spill_contents(entity, position)
-    feeder.spill_inventory_contents(entity, feeder.get_inventory(entity), position)
-  end
-
-  function feeder.destroy(state, position, spill)
-    if not state then
-      return
-    end
-
-    local entity = state.feeder
-    state.feeder = nil
-    if not entity or not entity.valid then
-      return
-    end
-
-    ensure_storage()
-    if entity.unit_number then
-      storage_root().feeders[entity.unit_number] = nil
-    end
-
-    if spill then
-      feeder.spill_contents(entity, position or entity.position)
-    end
-
-    if is_gun_turret(state.entity) then
-      feeder.restore_managed_inserters_for_state(state, entity, state.entity)
-      feeder.update_nearby_inserters(state.entity, state)
-    end
-
-    pcall(function()
-      entity.destroy({ raise_destroy = false })
-    end)
-  end
-
-  function feeder.find_position(entity)
-    if not is_gun_turret(entity) then
-      return nil
-    end
-
-    return {
-      x = entity.position.x,
-      y = entity.position.y,
-    }
-  end
-
-  function feeder.get_allowed_items(state)
-    local allowed = {}
-    if not state then
-      return allowed
-    end
-
-    ensure_evolution_state(state)
-    for _, element_id in ipairs(get_unique_active_element_ids(state)) do
-      local requirement = get_element_remaining_requirement(state, element_id)
-      if requirement and requirement.remaining > 0 then
-        allowed[requirement.name] = true
-      end
-    end
-
-    return allowed
-  end
-
-  function feeder.allowed_item_names(state)
-    local allowed = feeder.get_allowed_items(state)
-    local names = {}
-    local seen = {}
-    local evolution = state and ensure_evolution_state(state) or nil
-    local entries = {}
-
-    local function add_entry(name, slot, delivered, required)
-      if name and allowed[name] then
-        local ratio = required and required > 0 and ((delivered or 0) / required) or 1
-        local existing = seen[name]
-        if existing then
-          existing.ratio = math.min(existing.ratio, ratio)
-          existing.slot = math.min(existing.slot, slot or 99)
-        else
-          local entry = {
-            name = name,
-            slot = slot or 99,
-            ratio = ratio,
-          }
-          seen[name] = entry
-          entries[#entries + 1] = entry
-        end
-      end
-    end
-
-    if evolution then
-      for slot = 1, 2 do
-        local element_id = evolution.elements and evolution.elements[slot] or nil
-        if element_id then
-          local requirement = get_element_remaining_requirement(state, element_id)
-          if requirement then
-            add_entry(requirement.name, slot, requirement.delivered, requirement.count)
-          end
-        end
-      end
-    end
-
-    for name in pairs(allowed) do
-      add_entry(name, 99, 0, 1)
-    end
-
-    table.sort(entries, function(a, b)
-      if math.abs((a.ratio or 0) - (b.ratio or 0)) > 0.000001 then
-        return (a.ratio or 0) < (b.ratio or 0)
-      end
-      if (a.slot or 99) ~= (b.slot or 99) then
-        return (a.slot or 99) < (b.slot or 99)
-      end
-      return tostring(a.name) < tostring(b.name)
-    end)
-
-    for _, entry in ipairs(entries) do
-      names[#names + 1] = entry.name
-    end
-
-    return names
-  end
-
-  function feeder.filter_name(filter)
-    if not filter then
-      return nil
-    end
-    if type(filter) == "string" then
-      return filter
-    end
-    if type(filter) == "table" then
-      return filter.name
-    end
-    return nil
-  end
-
-  function feeder.get_inserter_filter_slot_count(inserter)
-    if not inserter or not inserter.valid then
-      return 0
-    end
-
-    local count = 0
-    for index = 1, 10 do
-      local ok = pcall(function()
-        return inserter.get_filter(index)
-      end)
-      if not ok then
-        break
-      end
-      count = index
-    end
-    return count
-  end
-
-  function feeder.read_inserter_filters(inserter, count)
-    local filters = {}
-    for index = 1, count do
-      local ok, filter = pcall(function()
-        return inserter.get_filter(index)
-      end)
-      if ok then
-        filters[index] = filter
-      end
-    end
-    return filters
-  end
-
-  function feeder.inserter_filters_match_allowed(inserter, allowed_items, count)
-    local has_filter = false
-    local has_allowed_filter = false
-
-    for index = 1, count do
-      local ok, filter = pcall(function()
-        return inserter.get_filter(index)
-      end)
-      if ok then
-        local name = feeder.filter_name(filter)
-        if name then
-          has_filter = true
-          if allowed_items[name] then
-            has_allowed_filter = true
-          end
-        end
-      end
-    end
-
-    return has_filter, has_allowed_filter
-  end
-
-  function feeder.set_inserter_drop_target(inserter, target)
-    if not inserter or not inserter.valid or not target or not target.valid then
-      return false
-    end
-
-    local ok = pcall(function()
-      inserter.drop_target = target
-    end)
-    return ok
-  end
-
-  function feeder.drop_position_matches_turret(inserter, turret)
-    local position = safe_read(inserter, "drop_position")
-    local turret_position = safe_read(turret, "position")
-    if not position or not turret_position then
-      return false
-    end
-
-    return math.abs((position.x or 0) - (turret_position.x or 0)) <= 1.4 and math.abs((position.y or 0) - (turret_position.y or 0)) <= 1.4
-  end
-
-  function feeder.inserter_points_at_turret(inserter, turret, feeder_entity)
-    if not inserter or not inserter.valid or safe_read(inserter, "type") ~= "inserter" then
-      return false
-    end
-    if not is_gun_turret(turret) then
-      return false
-    end
-
-    local target = safe_read(inserter, "drop_target")
-    if target and target.valid then
-      if target == turret or (feeder_entity and target == feeder_entity) then
-        return true
-      end
-    end
-
-    return feeder.drop_position_matches_turret(inserter, turret)
-  end
-
-  function feeder.transport_line_has_item(entity, item_name)
-    if not entity or not entity.valid or not item_name then
-      return false
-    end
-
-    local ok, max_index = pcall(function()
-      return entity.get_max_transport_line_index()
-    end)
-    if not ok or not max_index then
-      return false
-    end
-
-    for index = 1, max_index do
-      local line_ok, line = pcall(function()
-        return entity.get_transport_line(index)
-      end)
-      if line_ok and line and line.valid then
-        local count_ok, count = pcall(function()
-          return line.get_item_count(item_name)
-        end)
-        if count_ok and (count or 0) > 0 then
-          return true
-        end
-      end
-    end
-
-    return false
-  end
-
-  function feeder.entity_has_item(entity, item_name)
-    if not entity or not entity.valid or not item_name then
-      return false
-    end
-
-    local ok, count = pcall(function()
-      return entity.get_item_count(item_name)
-    end)
-    if ok and (count or 0) > 0 then
-      return true
-    end
-
-    return feeder.transport_line_has_item(entity, item_name)
-  end
-
-  function feeder.ground_has_item(surface, position, item_name)
-    if not surface or not position or not item_name then
-      return false
-    end
-
-    local ok, items = pcall(function()
-      return surface.find_entities_filtered({
-        area = {
-          { (position.x or 0) - 0.35, (position.y or 0) - 0.35 },
-          { (position.x or 0) + 0.35, (position.y or 0) + 0.35 },
-        },
-        type = "item-entity",
-      })
-    end)
-    if not ok or not items then
-      return false
-    end
-
-    for _, item in ipairs(items) do
-      local stack = safe_read(item, "stack")
-      if stack and stack.valid_for_read and stack.name == item_name then
-        return true
-      end
-    end
-
-    return false
-  end
-
-  function feeder.pickup_area_has_item(surface, position, item_name, ignored_entity)
-    if not surface or not position or not item_name then
-      return false
-    end
-
-    local ok, entities = pcall(function()
-      return surface.find_entities_filtered({
-        area = {
-          { (position.x or 0) - 0.35, (position.y or 0) - 0.35 },
-          { (position.x or 0) + 0.35, (position.y or 0) + 0.35 },
-        },
-      })
-    end)
-    if not ok or not entities then
-      return false
-    end
-
-    for _, entity in ipairs(entities) do
-      if entity and entity.valid and entity ~= ignored_entity and entity.type ~= "item-entity" then
-        if feeder.entity_has_item(entity, item_name) then
-          return true
-        end
-      end
-    end
-
-    return false
-  end
-
-  function feeder.inserter_source_has_allowed_item(inserter, allowed_items)
-    for item_name in pairs(allowed_items) do
-      if feeder.inserter_source_has_item(inserter, item_name) then
-        return true
-      end
-    end
-
-    return false
-  end
-
-  function feeder.inserter_source_has_item(inserter, item_name)
-    local source = safe_read(inserter, "pickup_target")
-    if feeder.entity_has_item(source, item_name) then
-      return true
-    end
-
-    local surface = safe_read(inserter, "surface")
-    local pickup_position = safe_read(inserter, "pickup_position")
-    if feeder.pickup_area_has_item(surface, pickup_position, item_name, inserter) then
-      return true
-    end
-
-    return feeder.ground_has_item(surface, pickup_position, item_name)
-  end
-
-  function feeder.prioritize_item_names_for_inserter(inserter, names)
-    if not inserter or not inserter.valid or not names or #names <= 1 then
-      return names or {}
-    end
-
-    local available = {}
-    local unavailable = {}
-    for _, name in ipairs(names) do
-      if feeder.inserter_source_has_item(inserter, name) then
-        available[#available + 1] = name
-      else
-        unavailable[#unavailable + 1] = name
-      end
-    end
-
-    if #available == 0 then
-      return names
-    end
-
-    for _, name in ipairs(unavailable) do
-      available[#available + 1] = name
-    end
-    return available
-  end
-
-  function feeder.capture_managed_inserter(inserter, state, count)
-    return {
-      entity = inserter,
-      filters = feeder.read_inserter_filters(inserter, count),
-      turret_unit_number = state and state.entity and safe_read(state.entity, "unit_number") or nil,
-      feeder_unit_number = state and state.feeder and safe_read(state.feeder, "unit_number") or nil,
-    }
-  end
-
-  function feeder.track_managed_inserter(managed, inserter, state)
-    if not managed then
-      return
-    end
-
-    managed.entity = managed.entity or inserter
-    managed.turret_unit_number = managed.turret_unit_number or (state and state.entity and safe_read(state.entity, "unit_number") or nil)
-    managed.feeder_unit_number = managed.feeder_unit_number or (state and state.feeder and safe_read(state.feeder, "unit_number") or nil)
-  end
-
-  function feeder.managed_inserter_matches_state(managed, state, feeder_entity)
-    if not managed or not state then
-      return false
-    end
-
-    local turret_unit_number = state.entity and safe_read(state.entity, "unit_number") or nil
-    local feeder_unit_number = feeder_entity and safe_read(feeder_entity, "unit_number") or nil
-    feeder_unit_number = feeder_unit_number or (state.feeder and safe_read(state.feeder, "unit_number") or nil)
-
-    if not managed.turret_unit_number and not managed.feeder_unit_number then
-      return true
-    end
-
-    return (turret_unit_number and managed.turret_unit_number == turret_unit_number)
-      or (feeder_unit_number and managed.feeder_unit_number == feeder_unit_number)
-  end
-
-  function feeder.apply_inserter_filters(inserter, state)
-    if not inserter or not inserter.valid or not state then
-      return false
-    end
-
-    local unit_number = safe_read(inserter, "unit_number")
-    if not unit_number then
-      return false
-    end
-
-    ensure_storage()
-    local allowed_items = feeder.get_allowed_items(state)
-    local names = feeder.prioritize_item_names_for_inserter(inserter, feeder.allowed_item_names(state))
-    if #names == 0 then
-      return false
-    end
-
-    local count = feeder.get_inserter_filter_slot_count(inserter)
-    if count <= 0 then
-      return false
-    end
-
-    local managed = storage_root().managed_inserters[unit_number]
-    if not managed then
-      local has_filter, has_allowed_filter = feeder.inserter_filters_match_allowed(inserter, allowed_items, count)
-      if has_filter then
-        if not has_allowed_filter then
-          return false
-        end
-
-        managed = feeder.capture_managed_inserter(inserter, state, count)
-        storage_root().managed_inserters[unit_number] = managed
-      else
-        managed = feeder.capture_managed_inserter(inserter, state, count)
-        storage_root().managed_inserters[unit_number] = managed
-      end
-    else
-      feeder.track_managed_inserter(managed, inserter, state)
-    end
-
-    local applied_any_filter = false
-    for index = 1, count do
-      local filter = names[index] and { name = names[index] } or nil
-      local ok = pcall(function()
-        inserter.set_filter(index, filter)
-      end)
-      if ok and filter then
-        applied_any_filter = true
-      end
-    end
-
-    return applied_any_filter
-  end
-
-  function feeder.restore_inserter_filters(inserter)
-    if not inserter or not inserter.valid then
-      return
-    end
-
-    local unit_number = safe_read(inserter, "unit_number")
-    local root = storage_root()
-    if not unit_number or not root then
-      return
-    end
-
-    local managed = root.managed_inserters and root.managed_inserters[unit_number] or nil
-    if not managed then
-      return
-    end
-
-    local count = math.max(feeder.get_inserter_filter_slot_count(inserter), #(managed.filters or {}))
-    for index = 1, count do
-      local filter = managed.filters and managed.filters[index] or nil
-      pcall(function()
-        inserter.set_filter(index, filter)
-      end)
-    end
-
-    root.managed_inserters[unit_number] = nil
-  end
-
-  function feeder.restore_managed_inserters_for_state(state, feeder_entity, restore_target)
-    local root = storage_root()
-    if not root or not root.managed_inserters then
-      return
-    end
-
-    for unit_number, managed in pairs(root.managed_inserters) do
-      if feeder.managed_inserter_matches_state(managed, state, feeder_entity) then
-        local inserter = managed and managed.entity or nil
-        if inserter and inserter.valid then
-          local should_restore_target = restore_target
-            and restore_target.valid
-            and feeder.inserter_points_at_turret(inserter, restore_target, feeder_entity)
-          feeder.restore_inserter_filters(inserter)
-          if should_restore_target then
-            feeder.set_inserter_drop_target(inserter, restore_target)
-          end
-        else
-          root.managed_inserters[unit_number] = nil
-        end
-      end
-    end
-  end
-
-  function feeder.update_nearby_inserters(turret, state)
-    if not is_gun_turret(turret) or not state then
-      return
-    end
-
-    ensure_storage()
-    local surface = safe_read(turret, "surface")
-    local position = safe_read(turret, "position")
-    if not surface or not position then
-      return
-    end
-
-    local feeder_entity = state.feeder
-    local needs_input = feeder.needs_input(state)
-    local allowed_items = feeder.get_allowed_items(state)
-    local filters = {
-      area = {
-        { position.x - FEEDER_INSERTER_RADIUS, position.y - FEEDER_INSERTER_RADIUS },
-        { position.x + FEEDER_INSERTER_RADIUS, position.y + FEEDER_INSERTER_RADIUS },
-      },
-      type = "inserter",
-    }
-    local force = safe_read(turret, "force")
-    if force then
-      filters.force = force
-    end
-    local inserters = surface.find_entities_filtered(filters)
-
-    for _, inserter in ipairs(inserters) do
-      local unit_number = safe_read(inserter, "unit_number")
-      local managed = unit_number and storage_root().managed_inserters[unit_number] or nil
-      local managed_matches = managed and feeder.managed_inserter_matches_state(managed, state, feeder_entity)
-      if feeder.inserter_points_at_turret(inserter, turret, feeder_entity) then
-        local has_source_item = needs_input and feeder.inserter_source_has_allowed_item(inserter, allowed_items)
-        local filter_count = feeder.get_inserter_filter_slot_count(inserter)
-        local _, has_allowed_filter = feeder.inserter_filters_match_allowed(inserter, allowed_items, filter_count)
-        local should_feed = needs_input
-          and feeder_entity
-          and feeder_entity.valid
-          and (has_source_item or has_allowed_filter or managed_matches)
-
-        if should_feed and feeder.apply_inserter_filters(inserter, state) then
-          feeder.set_inserter_drop_target(inserter, feeder_entity)
-        else
-          feeder.restore_inserter_filters(inserter)
-          feeder.set_inserter_drop_target(inserter, turret)
-        end
-      elseif managed_matches then
-        feeder.restore_inserter_filters(inserter)
-      end
-    end
-  end
-
-  function feeder.needs_input(state)
-    return next(feeder.get_allowed_items(state)) ~= nil
-  end
-
-  function feeder.should_exist(state)
-    if not state then
-      return false
-    end
-
-    return feeder.needs_input(state)
-  end
-
-  function feeder.set_input_open(inventory, open)
-    if not inventory then
-      return
-    end
-
-    local ok, supports_bar = pcall(function()
-      return inventory.supports_bar()
-    end)
-    if not ok or not supports_bar then
-      return
-    end
-
-    local open_slots = 0
-    if type(open) == "number" then
-      open_slots = math.max(0, math.floor(open))
-    elseif open then
-      open_slots = #inventory
-    end
-    open_slots = math.min(#inventory, open_slots)
-
-    local target_bar = open_slots + 1
-    local bar_ok, current_bar = pcall(function()
-      return inventory.get_bar()
-    end)
-    if bar_ok and current_bar == target_bar then
-      return
-    end
-
-    pcall(function()
-      inventory.set_bar(target_bar)
-    end)
-  end
-
-  function feeder.get_total_input_slots(state)
-    if not state then
-      return 0
-    end
-
-    local remaining = 0
-    for _, element_id in ipairs(get_unique_active_element_ids(state)) do
-      local requirement = get_element_remaining_requirement(state, element_id)
-      if requirement then
-        remaining = remaining + math.max(0, requirement.remaining or 0)
-      end
-    end
-    return remaining
-  end
-
-  function feeder.get_input_slot_count(state, inventory)
-    if not state or not inventory then
-      return 0
-    end
-    local slots = feeder.get_total_input_slots(state)
-    return math.min(#inventory, FEEDER_INPUT_BUFFER_SLOTS, math.max(0, slots))
-  end
-
-  function feeder.inventory_is_empty(inventory)
-    if not inventory then
-      return true
-    end
-
-    local ok, empty = pcall(function()
-      return inventory.is_empty()
-    end)
-
-    return ok and empty == true
-  end
-
-  function feeder.ensure(entity, state)
-    if not is_gun_turret(entity) or not state then
-      return nil
-    end
-
-    ensure_storage()
-
-    local needs_input = feeder.needs_input(state)
-    local should_exist = feeder.should_exist(state)
-    local current = state.feeder
-    if current and current.valid and current.name == FEEDER_NAME and current.surface == entity.surface then
-      local dx = math.abs((current.position.x or 0) - (entity.position.x or 0))
-      local dy = math.abs((current.position.y or 0) - (entity.position.y or 0))
-      if dx <= 0.1 and dy <= 0.1 then
-        local inventory = feeder.get_inventory(current)
-        feeder.set_input_open(inventory, feeder.get_input_slot_count(state, inventory))
-        if not should_exist and not needs_input and feeder.inventory_is_empty(inventory) then
-          feeder.destroy(state, current.position, false)
-          return nil
-        end
-        if current.unit_number and state.chip_id then
-          storage_root().feeders[current.unit_number] = state.chip_id
-        end
-        feeder.update_nearby_inserters(entity, state)
-        return current
-      end
-    end
-
-    if current and current.valid then
-      feeder.destroy(state, current.position, true)
-    else
-      state.feeder = nil
-    end
-
-    if not should_exist and not needs_input then
-      return nil
-    end
-
-    local position = feeder.find_position(entity)
-    if not position then
-      return nil
-    end
-
-    local ok, created = pcall(function()
-      return entity.surface.create_entity({
-        name = FEEDER_NAME,
-        position = position,
-        force = entity.force,
-        raise_built = false,
-        create_build_effect_smoke = false,
-      })
-    end)
-
-    if not ok or not created then
-      return nil
-    end
-
-    pcall(function()
-      created.destructible = false
-    end)
-    pcall(function()
-      created.minable_flag = false
-    end)
-
-    state.feeder = created
-    if created.unit_number and state.chip_id then
-      storage_root().feeders[created.unit_number] = state.chip_id
-    end
-    local inventory = feeder.get_inventory(created)
-    feeder.set_input_open(inventory, feeder.get_input_slot_count(state, inventory))
-    feeder.update_nearby_inserters(entity, state)
-
-    return created
-  end
-
-  function feeder.remove_items(state, item_name, count)
-    count = math.max(0, math.floor(tonumber(count) or 0))
-    if count <= 0 or not item_name then
-      return 0
-    end
-
-    local entity = state and state.feeder
-    if state and is_gun_turret(state.entity) then
-      entity = feeder.ensure(state.entity, state) or entity
-    end
-
-    local inventory = feeder.get_inventory(entity)
-    if not inventory then
-      return 0
-    end
-
-    local ok, removed = pcall(function()
-      return inventory.remove({
-        name = item_name,
-        count = count,
-      })
-    end)
-
-    if ok and removed then
-      return removed
-    end
-
-    return 0
-  end
-
-  function feeder.make_item_stack(stack, count)
-    if not stack or not stack.valid_for_read then
-      return nil
-    end
-
-    local item = {
-      name = stack.name,
-      count = count or stack.count,
-    }
-    item.quality = compat.quality_name(stack, nil, "feeder stack quality")
-    return item
-  end
-
-  function feeder.is_ammo_item(item_name)
-    local prototype = item_name and safe_read(item_prototypes(), item_name, nil, "item prototype") or nil
-    if not prototype then
-      return false
-    end
-
-    return safe_read(prototype, "ammo_category", nil, "item ammo_category") ~= nil
-  end
-
-  function feeder.route_contents(state)
-    if not state or not is_gun_turret(state.entity) then
-      return
-    end
-
-    local needs_input = feeder.needs_input(state)
-    local entity = state.feeder
-    if not needs_input and not feeder.should_exist(state) then
-      if not entity or not entity.valid then
-        return
-      end
-    end
-
-    if needs_input or feeder.should_exist(state) then
-      entity = feeder.ensure(state.entity, state) or entity
-    end
-    local inventory = feeder.get_inventory(entity)
-    if not inventory then
-      return
-    end
-    feeder.set_input_open(inventory, feeder.get_input_slot_count(state, inventory))
-
-    local turret_inventory = feeder.get_entity_inventory(state.entity, inventory_defines.turret_ammo)
-
-    local allowed_feed_items = feeder.get_allowed_items(state)
-    for index = 1, #inventory do
-      local stack = inventory[index]
-      if stack and stack.valid_for_read then
-        local item_name = stack.name
-        if turret_inventory and feeder.is_ammo_item(item_name) then
-          local item = feeder.make_item_stack(stack)
-          local inserted = 0
-          if item then
-            local ok, result = pcall(function()
-              return turret_inventory.insert(item)
-            end)
-            if ok and result then
-              inserted = result
-            end
-          end
-          if inserted > 0 then
-            local removed = feeder.make_item_stack(stack, inserted)
-            if removed then
-              pcall(function()
-                inventory.remove(removed)
-              end)
-            end
-          end
-        end
-      end
-    end
-
-    for index = 1, #inventory do
-      local stack = inventory[index]
-      if stack and stack.valid_for_read then
-        local item_name = stack.name
-        if not allowed_feed_items[item_name] and not feeder.is_ammo_item(item_name) then
-          feeder.spill_stack(entity, stack, state.entity.position)
-        end
-      end
-    end
-
-    if not feeder.needs_input(state) then
-      feeder.set_input_open(inventory, false)
-      if not feeder.should_exist(state) and feeder.inventory_is_empty(inventory) then
-        feeder.destroy(state, entity.position, false)
-      end
-    else
-      feeder.set_input_open(inventory, feeder.get_input_slot_count(state, inventory))
-    end
-
-    feeder.update_nearby_inserters(state.entity, state)
-  end
+  local inventory = feeder_inventory.new({
+    compat = compat,
+    inventory_defines = inventory_defines,
+    safe_read = safe_read,
+    ensure_evolution_state = ensure_evolution_state,
+    get_unique_active_element_ids = get_unique_active_element_ids,
+    get_element_remaining_requirement = get_element_remaining_requirement,
+    is_gun_turret = is_gun_turret,
+    item_prototypes = item_prototypes,
+    input_buffer_slots = deps.feeder_input_buffer_slots,
+    ensure_feeder = function(entity, state)
+      return feeder.ensure(entity, state)
+    end,
+    destroy_feeder = function(state, position, spill)
+      return feeder.destroy(state, position, spill)
+    end,
+    update_nearby_inserters = function(turret, state)
+      return feeder.update_nearby_inserters(turret, state)
+    end,
+  })
+  copy_exports(feeder, inventory, {
+    "get_entity_inventory",
+    "get_inventory",
+    "spill_stack",
+    "spill_inventory_contents",
+    "spill_contents",
+    "get_allowed_items",
+    "allowed_item_names",
+    "needs_input",
+    "should_exist",
+    "set_input_open",
+    "get_total_input_slots",
+    "get_input_slot_count",
+    "inventory_is_empty",
+    "remove_items",
+    "make_item_stack",
+    "is_ammo_item",
+    "route_contents",
+  })
+
+  local inserters = feeder_inserters.new({
+    safe_read = safe_read,
+    ensure_storage = ensure_storage,
+    storage_root = storage_root,
+    is_gun_turret = is_gun_turret,
+    get_allowed_items = function(state)
+      return feeder.get_allowed_items(state)
+    end,
+    allowed_item_names = function(state)
+      return feeder.allowed_item_names(state)
+    end,
+  })
+  copy_exports(feeder, inserters, {
+    "filter_name",
+    "get_inserter_filter_slot_count",
+    "read_inserter_filters",
+    "inserter_filters_match_allowed",
+    "set_inserter_drop_target",
+    "drop_position_matches_turret",
+    "inserter_points_at_turret",
+    "transport_line_has_item",
+    "entity_has_item",
+    "ground_has_item",
+    "pickup_area_has_item",
+    "inserter_source_has_allowed_item",
+    "inserter_source_has_item",
+    "prioritize_item_names_for_inserter",
+    "capture_managed_inserter",
+    "track_managed_inserter",
+    "managed_inserter_matches_state",
+    "apply_inserter_filters",
+    "restore_inserter_filters",
+    "restore_managed_inserters_for_state",
+  })
+
+  local refresh = feeder_refresh.new({
+    safe_read = safe_read,
+    ensure_storage = ensure_storage,
+    storage_root = storage_root,
+    is_gun_turret = is_gun_turret,
+    inserter_radius = deps.feeder_inserter_radius,
+    inserters = inserters,
+    get_allowed_items = function(state)
+      return feeder.get_allowed_items(state)
+    end,
+    needs_input = function(state)
+      return feeder.needs_input(state)
+    end,
+    game_tick = function()
+      return game and game.tick or nil
+    end,
+  })
+  feeder.update_nearby_inserters = refresh.update_nearby_inserters
+  feeder.get_last_refresh_stats = refresh.get_last_refresh_stats
+
+  local lifecycle = feeder_lifecycle.new({
+    feeder_name = deps.feeder_name,
+    ensure_storage = ensure_storage,
+    storage_root = storage_root,
+    is_gun_turret = is_gun_turret,
+    get_inventory = feeder.get_inventory,
+    spill_contents = feeder.spill_contents,
+    set_input_open = feeder.set_input_open,
+    get_input_slot_count = feeder.get_input_slot_count,
+    inventory_is_empty = feeder.inventory_is_empty,
+    needs_input = feeder.needs_input,
+    should_exist = feeder.should_exist,
+    restore_managed_inserters_for_state = feeder.restore_managed_inserters_for_state,
+    update_nearby_inserters = feeder.update_nearby_inserters,
+  })
+  feeder.destroy = lifecycle.destroy
+  feeder.find_position = lifecycle.find_position
+  feeder.ensure = lifecycle.ensure
 
   return feeder
 end
