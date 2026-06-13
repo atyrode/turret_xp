@@ -183,9 +183,6 @@ require("scripts.control.events")(M)
 if script.active_mods["turret_xp_headless_tests"] then
   require("scripts.control.remote_test")(M)
 end
-if script.active_mods["turret_xp_gui_screenshotter"] or remote.interfaces["turret_xp_screenshotter"] then
-  require("scripts.control.remote_screenshot")(M)
-end
 
 local command_module = require("scripts.control.commands")
 command_module.register({

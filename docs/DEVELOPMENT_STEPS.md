@@ -11,7 +11,6 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Lua validation file discovery follows Git ignore rules, so tracked files and untracked non-ignored Lua files are checked while ignored local research/build corpora are excluded.
 - Package build: `scripts/package.sh`.
 - Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
-- GUI screenshot artifacts: `scripts/gui-screenshots.sh` when a graphical Factorio binary is available.
 - Externally visible publish scripts: `scripts/release.sh` for GitHub Releases and `scripts/publish-portal.sh` for the stable Mod Portal path; both require release preflight on clean, up-to-date `main`.
 - CI runs strict Lua tooling and packaging for package-impacting changes, and headless Factorio tests when Mod Portal download credentials are configured.
 - Package-impacting changes are root `README.md`, `changelog.txt`, `thumbnail.png`, package source, package scripts, and validation infrastructure; internal `docs/` and generated public-site files are not mod package payload.
@@ -46,7 +45,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 - Harden the current playable loop before adding progression scope. Balance/readability fixes, GUI quality, validation, and bug fixes are in scope; new branches, elements, mastery loops, quality-backed chassis work, range-band rewrites, repeatable HP/Range axes, or other prototype-backed stat axes need separate approved issues.
 - Keep documentation edits ownership-based: move facts to the owning document, replace duplicates with cross-references, and delete stale planning prose once the current decision is represented elsewhere.
-- Continue the 0.11 GUI glowup in focused slices: improve Veteran Core/Evolution interaction density, retire transitional GUI aliases where callers can be migrated cleanly, and use screenshot/playtest checkpoints for visual regressions. Do not mix that work with balance or progression-system expansion.
+- Continue the 0.11 GUI glowup in focused slices: improve Veteran Core/Evolution interaction density, retire transitional GUI aliases where callers can be migrated cleanly, and use manual playtest checkpoints for visual regressions. Do not mix that work with balance or progression-system expansion.
 
 ## Validation Checklist
 
@@ -57,7 +56,7 @@ Use the narrowest meaningful checks for each change:
 - Public copy, version, changelog, or homepage changes: `scripts/generate-public-assets.py`, `scripts/generate-public-assets.py --check`, `git diff --check`.
 - Lua/runtime/tooling changes: `scripts/check.sh`, `docker compose run --rm lua-tools`, `scripts/package.sh`.
 - Gameplay, migration, feeder, combat, profile, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
-- GUI layout changes: all Lua/runtime checks plus `scripts/gui-screenshots.sh` when a graphical Factorio binary is available; otherwise state the remaining manual visual-review risk.
+- GUI layout changes: all Lua/runtime checks plus manual in-game visual review; state the remaining manual visual-review risk when local playtesting is not performed.
 - Runtime bug fixes: add or extend the narrowest deterministic headless or pure Lua regression test in the owning subsystem, or state why the behavior needs manual GUI/playtest validation instead.
 - Release changes: local script smoke checks where practical, CI on the release branch, and the GitHub Release workflow before Mod Portal publication.
 - Release preflight changes: `bash -n scripts/release-preflight.sh scripts/release.sh scripts/publish-portal.sh`, synthetic git-state checks, `scripts/check.sh`, `scripts/package.sh`, and `git diff --check`.

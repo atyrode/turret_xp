@@ -58,11 +58,11 @@ The ignored local `case_study/` research corpus is supporting evidence, not acti
 
 Turret XP should move toward a fully custom, polished, Factorio-native Veteran Core GUI while staying anchored to the vanilla turret GUI where practical. Runtime dependencies are acceptable for this direction when they earn their cost through better GUI quality, deleted local infrastructure, or lower event/layout risk.
 
-Factory Planner is the strongest current reference for this direction. Its Mod Portal page lists Factory Planner 2.0.50 as Factorio 2.0 compatible, MIT licensed, and dependent on `flib >= 0.15.0`; its source keeps a custom GUI architecture on top of that dependency, with separate `ui/base`, `ui/main`, `ui/dialogs`, and `ui/components` modules, a central GUI event dispatcher, tagged GUI actions, modal/dialog ownership, custom sprites, custom GUI styles, responsive sizing, and screenshot automation. The lesson for Turret XP is not to avoid dependencies. The lesson is to use `flib` as a foundation while owning a domain-specific interface that looks and behaves like it belongs in Factorio. Sources: <https://mods.factorio.com/mod/factoryplanner> and <https://github.com/ClaudeMetz/FactoryPlanner>.
+Factory Planner is the strongest current reference for this direction. Its Mod Portal page lists Factory Planner 2.0.50 as Factorio 2.0 compatible, MIT licensed, and dependent on `flib >= 0.15.0`; its source keeps a custom GUI architecture on top of that dependency, with separate `ui/base`, `ui/main`, `ui/dialogs`, and `ui/components` modules, a central GUI event dispatcher, tagged GUI actions, modal/dialog ownership, custom sprites, custom GUI styles, and responsive sizing. The lesson for Turret XP is not to avoid dependencies. The lesson is to use `flib` as a foundation while owning a domain-specific interface that looks and behaves like it belongs in Factorio. Sources: <https://mods.factorio.com/mod/factoryplanner> and <https://github.com/ClaudeMetz/FactoryPlanner>.
 
 Current GUI reference findings:
 
-- Factory Planner uses real Factorio tables, `table_with_selection`-derived styles, central style constants, tagged actions, screen-frame titlebars with `drag_target`, and scenario-driven screenshot automation. Turret XP should keep copying those architectural patterns, not a literal visual skin.
+- Factory Planner uses real Factorio tables, `table_with_selection`-derived styles, central style constants, tagged actions, and screen-frame titlebars with `drag_target`. Turret XP should keep copying those architectural patterns, not a literal visual skin.
 - `Kux-GuiLib` and `Kux-CoreLib` show reusable screen-window/titlebar builders and confirm the same `drag_target` limitation: draggable titlebars belong to top-level `player.gui.screen` elements, not relative GUI anchors.
 - `gvv` defines compact table-header sort arrows from `__core__/graphics/arrows/table-header-sort-arrow-up-white.png` and `table-header-sort-arrow-down-white.png`; Turret XP now exposes its own data-stage sprite names for those core assets instead of using oversized rich-text utility arrows.
 - `FactorySearch`, Space Exploration, Krastorio 2, and Even Distribution references use `auto-and-reserve-space` scroll policies when rows must not shift after a scrollbar appears.
@@ -80,8 +80,7 @@ The next major GUI pass should therefore prefer:
 - `flib` styles/helpers where they match the desired vanilla language, especially slot buttons, drag handles, pushers, and future dictionary/migration utilities;
 - custom sprites and data-stage styles for Turret XP-specific actions only when vanilla utility sprites or `flib` styles are insufficient;
 - tag-based action routing and refresh/build triggers that keep behavior discoverable without burying player actions in ad hoc closures;
-- screenshot/manual playtest checkpoints for GUI-heavy changes, because headless tests can protect helpers and remote summaries but cannot prove visual quality.
-- local screenshot automation through `scripts/gui-screenshots.sh`, which follows Factory Planner's scenario-driven pattern: a private companion mod opens curated GUI states, the main mod exposes only screenshot-gated fixture helpers, and `game.take_screenshot` writes PNG/metadata artifacts for review outside the packaged mod.
+- manual in-game playtest checkpoints for GUI-heavy changes, because headless tests can protect helpers and remote summaries but cannot prove visual quality.
 
 Do not add a second broad GUI framework for the #42 GUI split unless it replaces enough local code to justify another Mod Portal dependency. Kux-GuiLib and entity-GUI-style libraries remain references for specific selector or inventory behavior, not default dependencies.
 
