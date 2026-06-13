@@ -113,6 +113,32 @@ function bound_turret_items.new(deps)
     return deps.spill_stack_definition(entity, stack)
   end
 
+  function service.cleanup_pending_mining()
+    deps.ensure_storage()
+
+    local root = deps.storage_root()
+    local cutoff = deps.game_tick() - (60 * 10)
+    for key, entry in pairs(root.pending_bound_mined or {}) do
+      if not entry or (entry.tick or 0) < cutoff then
+        local entity = entry and entry.entity
+        if entry and (not entity or not entity.valid) and entry.profile and entry.turret then
+          local surface = deps.get_surface(entry.surface_index)
+          if surface and entry.position then
+            deps.spill_stack_definition_at(surface, entry.position, service.make_stack(entry.profile, entry.turret))
+          end
+          local chip_id = entry.profile and entry.profile.chip_id
+          if chip_id then
+            root.chips[chip_id] = nil
+          end
+          if entry.key then
+            root.turrets[entry.key] = nil
+          end
+        end
+        root.pending_bound_mined[key] = nil
+      end
+    end
+  end
+
   return service
 end
 

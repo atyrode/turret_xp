@@ -178,6 +178,17 @@ return function(M)
         is_bound_turret_item_name = is_bound_turret_item_name,
         remove_item_from_inventory = remove_item_from_inventory,
         spill_stack_definition = spill_stack_definition,
+        spill_stack_definition_at = spill_stack_definition_at,
+        ensure_storage = ensure_storage,
+        storage_root = function()
+          return storage and storage.turret_xp or nil
+        end,
+        game_tick = function()
+          return game.tick
+        end,
+        get_surface = function(surface_index)
+          return game.get_surface(surface_index)
+        end,
       })
     end
 
@@ -210,6 +221,10 @@ return function(M)
 
   function insert_bound_turret_item(inventory, entity, profile, turret_snapshot)
     return get_bound_turret_item_service().insert_item(inventory, entity, profile, turret_snapshot)
+  end
+
+  function cleanup_pending_bound_mining()
+    get_bound_turret_item_service().cleanup_pending_mining()
   end
 
   function pending_bound_key(entity)

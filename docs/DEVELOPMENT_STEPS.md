@@ -20,7 +20,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - CI/release automation exists for package validation, cached Factorio headless tests, GitHub Release packaging, and gated Mod Portal publishing.
 - `main` is protected through pull requests and selected required status checks.
 - The private `turret_xp_test` remote interface is gated to the headless companion test mod and checked by a separate production-policy smoke test.
-- Runtime code has been split into focused modules under `scripts/control/`, with explicit helper/service modules for Veteran Core profile schema/tags/inventory/labels/orchestration, hidden feeder lifecycle/inventory/inserter/refresh ownership, bound turret item handling, damage accounting, combat effect descriptors/application/targeting/visuals/scheduler/dispatch/budgets, GUI support/components, Factorio API compatibility, label color matching, stat formatting/math, GUI actions, and command registration.
+- Runtime code has been split into focused modules under `scripts/control/`, with explicit helper/service modules for Veteran Core profile schema/tags/inventory/labels/orchestration, hidden feeder lifecycle/inventory/inserter/refresh ownership, bound turret item handling, damage accounting, combat effect descriptors/application/targeting/visuals/scheduler/dispatch/budgets, GUI support/components, Factorio API compatibility, label color matching, stat math/inspection/formatting, GUI actions, and command registration.
 - Runtime config ownership is split so `config.lua` wires domain aliases plus progression definitions, GUI constants, and runtime constants from explicit returned-table modules instead of carrying all constants directly.
 - Data-stage prototype creation is split under `prototypes/`, with entrypoints kept small.
 - `scripts/domain.lua` owns shared stable gameplay IDs, caps, specialization data, label presets, and generated variant-name helpers across data stage, runtime, and tests.
@@ -34,7 +34,8 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 ## Current Roadmap
 
-- GUI panel ownership is now split under `scripts/control/gui/`: core/platform/dev controls, stats/ammo rendering, Evolution sections, and shared formatter captions each have focused modules, while `gui_panels.lua` remains the compatibility coordinator. The V1 localization boundary is full localization for GUI-facing panel captions/tooltips; newly moved GUI wording should be added to locale files instead of concatenated as English Lua strings.
+- GUI panel ownership is split under `scripts/control/gui/`: core/platform/dev controls, stats/ammo rendering, Evolution sections, and shared formatter captions each have focused modules, while `gui_panels.lua` remains the compatibility coordinator. The V1 localization boundary is full localization for GUI-facing panel captions/tooltips; newly moved GUI wording should be added to locale files instead of concatenated as English Lua strings.
+- Stats ownership is split under `scripts/control/`: pure rank formulas belong in `stats_math.lua`, prototype/ammo/quality reads belong in `stats_inspection.lua`, rich-text formula display belongs in `stats_formatter.lua`, and `stats.lua` remains the compatibility facade for current callers.
 
 ## Validation Checklist
 
