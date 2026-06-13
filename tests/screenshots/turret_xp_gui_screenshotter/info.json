@@ -1,0 +1,12 @@
+{
+  "name": "turret_xp_gui_screenshotter",
+  "version": "0.1.0",
+  "title": "Turret XP GUI Screenshotter",
+  "author": "atyrode",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0.0",
+    "turret_xp >= 0.10.4"
+  ],
+  "description": "Private companion mod that captures curated Turret XP GUI screenshots for local visual review."
+}

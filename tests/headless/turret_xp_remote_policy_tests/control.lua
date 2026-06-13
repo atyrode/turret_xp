@@ -5,5 +5,9 @@ script.on_init(function()
     error(TEST_PREFIX .. "turret_xp_test remote interface is registered without the headless companion suite", 2)
   end
 
+  if remote.interfaces.turret_xp_screenshot ~= nil then
+    error(TEST_PREFIX .. "turret_xp_screenshot remote interface is registered without the screenshot companion suite", 2)
+  end
+
   log(TEST_PREFIX .. "PASS")
 end)

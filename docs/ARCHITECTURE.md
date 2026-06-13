@@ -7,7 +7,7 @@
 - `changelog.txt`: canonical Factorio-compatible release history.
 - `control.lua`: runtime entrypoint and composition root that loads modules from `scripts/control/`, constructs explicit services, and exposes compatibility aliases while legacy modules finish migrating.
 - `scripts/domain.lua`: pure shared gameplay domain definitions and variant-name helpers used by data stage, runtime, and headless tests.
-- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, and explicit helper/service modules such as profile schema/tag/inventory/label/service ownership, Factorio API compatibility, label-color matching, bound turret item handling, migration compatibility, damage accounting, combat effect descriptors/application/targeting/visuals/scheduler/dispatch/budgets, feeder routing, stat math/inspection/formatting, GUI action handlers, command registration, progression definitions, runtime constants, GUI constants, generic GUI support, and reusable GUI components.
+- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, events, commands, headless-test remotes, screenshot-only remotes, and explicit helper/service modules such as profile schema/tag/inventory/label/service ownership, Factorio API compatibility, label-color matching, bound turret item handling, migration compatibility, damage accounting, combat effect descriptors/application/targeting/visuals/scheduler/dispatch/budgets, feeder routing, stat math/inspection/formatting, GUI action handlers, command registration, progression definitions, runtime constants, GUI constants, generic GUI support, and reusable GUI components.
 - `data.lua`: data-stage entrypoint that loads prototype modules from `prototypes/`.
 - `data-final-fixes.lua`: final-fixes entrypoint that loads hidden turret variant generation from `prototypes/`.
 - `prototypes/`: data-stage modules for names, items, bound-turret placeholder and preview variants, feeder, styles, effects, and turret variants.
@@ -18,6 +18,7 @@
 - `.stylua.toml`, `.luacheckrc`, `compose.yaml`, and `tools/lua/Dockerfile`: Lua format/lint configuration and the optional local strict-tooling container.
 - `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`; `control.lua` owns runner lifecycle, `support.lua` owns shared assertions/helpers, `suite.lua` owns orchestration, and subsystem `*_tests.lua` modules own behavior checks.
 - `tests/headless/turret_xp_remote_policy_tests/`: separate headless smoke-test mod used by `scripts/test-headless.sh` to verify private test remotes are absent when the companion suite is not active.
+- `tests/screenshots/turret_xp_gui_screenshotter/`: private Factorio companion mod used by `scripts/gui-screenshots.sh` to create curated GUI screenshot artifacts for visual review.
 - `docs/`: project context, playtest guidance, shared public copy, and the generated GitHub Pages homepage.
 
 ## Runtime State
@@ -229,6 +230,7 @@ storage.turret_xp = {
 - Runtime label render objects: `scripts/control/profile_labels.lua` draws optional chip-carried labels above currently installed turret bodies as `name (lvl N)`. Preset colors and RGB slider colors are stored on the Veteran Core profile and applied directly through `rendering.draw_text`; stale display-panel label entities from older saves are destroyed the next time the label updates.
 - `scripts/control/commands.lua`: explicit command-registration service for `/turret-xp`, the fallback command for opening the selected turret's GUI/panel, and `/turret-xp-dev`, the per-player toggle for dev controls in the attached panel.
 - `remote.interfaces.turret_xp_test`: controlled test-only API used by the headless test mod to install cores, inspect sanitized profile state, drive feeder state, reset individual evolution sections, and create tagged test stacks. `scripts/control/remote_test.lua` keeps these hooks in named registry sections that mirror the headless subsystem tests. `control.lua` registers this interface only when `script.active_mods["turret_xp_headless_tests"]` is present, so gameplay and other mods must not depend on it.
+- `remote.interfaces.turret_xp_screenshot`: controlled screenshot-only API used by the private GUI screenshot companion mod to create a curated turret fixture, open the anchored panel, and report frame metadata. `control.lua` registers it only for `turret_xp_gui_screenshotter` or an explicit screenshotter scenario marker.
 
 ## Invisible Feeder Contract
 

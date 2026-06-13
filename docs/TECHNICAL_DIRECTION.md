@@ -69,6 +69,7 @@ The next major GUI pass should therefore prefer:
 - custom sprites and data-stage styles for Turret XP-specific actions only when vanilla utility sprites or `flib` styles are insufficient;
 - tag-based action routing and refresh/build triggers that keep behavior discoverable without burying player actions in ad hoc closures;
 - screenshot/manual playtest checkpoints for GUI-heavy changes, because headless tests can protect helpers and remote summaries but cannot prove visual quality.
+- local screenshot automation through `scripts/gui-screenshots.sh`, which follows Factory Planner's scenario-driven pattern: a private companion mod opens curated GUI states, the main mod exposes only screenshot-gated fixture helpers, and `game.take_screenshot` writes PNG/metadata artifacts for review outside the packaged mod.
 
 Do not add a second broad GUI framework for the #42 GUI split unless it replaces enough local code to justify another Mod Portal dependency. Kux-GuiLib and entity-GUI-style libraries remain references for specific selector or inventory behavior, not default dependencies.
 
