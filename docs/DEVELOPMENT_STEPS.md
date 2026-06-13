@@ -32,10 +32,11 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Published save/profile compatibility now lives in a named migration compatibility layer with headless coverage for legacy element slots, active element projects, retired element fuel buffers, retired augments, and old skill-tree ranks.
 - GUI dependency direction is decided for the next major GUI pass: `flib` is an accepted runtime foundation, dependencies are allowed when they earn their cost, and the product target is a custom Factorio-native Turret XP interface with focused local helpers rather than a generic inherited framework.
 - Public homepage, GitHub release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and `docs/public-copy.json`, with `scripts/check.sh` detecting stale committed homepage output.
+- High-complexity scope is decided for the current hardening line: keep/harden hidden feeder automation, keep optional bound turret movement, keep prototype-bound native stats limited to specialization/sub-specialization bodies, keep element combos curated and limited, and require separate approval for new progression systems.
 
 ## Current Roadmap
 
-- Finish the high-complexity feature scope review before adding more progression systems. Hidden feeder automation, bound turret movement, prototype-backed HP/range direction, and element-combo growth need explicit keep/simplify/replace/defer/delete decisions in the owning docs.
+- Harden the current playable loop before adding progression scope. Balance/readability fixes, GUI quality, validation, and bug fixes are in scope; new branches, elements, mastery loops, quality-backed chassis work, range-band rewrites, repeatable HP/Range axes, or other prototype-backed stat axes need separate approved issues.
 - Keep documentation edits ownership-based: move facts to the owning document, replace duplicates with cross-references, and delete stale planning prose once the current decision is represented elsewhere.
 - The next major GUI pass should be a dedicated custom Factorio-native interface pass using focused local helpers and `flib` where it earns its cost. Do not mix that work with balance or progression-system expansion.
 
@@ -59,5 +60,4 @@ Use [PLAYTEST.md](PLAYTEST.md) as the owning checklist. It separates quick smoke
 
 ## Open Decisions
 
-- Long-term hidden feeder direction: invisible input, visible proxy, manual/project slot, or hybrid.
 - Destroyed turret policy for installed Veteran Cores.
