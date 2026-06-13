@@ -314,7 +314,16 @@ return function(M)
     return normalize_profile(profile)
   end
 
-  remote.add_interface("turret_xp_test", {
+  local function turret_xp_test_register_methods(target, methods)
+    for name, method in pairs(methods) do
+      target[name] = method
+    end
+  end
+
+  local turret_xp_test_remote_methods = {}
+
+  -- Core/profile fixtures.
+  turret_xp_test_register_methods(turret_xp_test_remote_methods, {
     install_core = function(entity, fields)
       local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields)
       local installed = install_profile_on_turret(entity, profile)
@@ -325,216 +334,9 @@ return function(M)
 
       return nil
     end,
-
     get_state = function(entity)
       return turret_xp_test_state_summary(entity)
     end,
-
-    dispatch_cycle_label_color = function(entity)
-      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
-      if not state then
-        return nil
-      end
-
-      local player = {
-        index = -1,
-        opened = entity,
-        gui = {
-          relative = {},
-          left = {},
-        },
-      }
-      remember_open_turret(player, entity)
-      dispatch_gui_click_action(player, {}, {
-        turret_xp_action = "cycle-label-color",
-      })
-
-      local summary = turret_xp_test_state_summary(entity)
-      forget_open_turret(player)
-
-      return summary
-    end,
-
-    record_damage_contribution = function(target, turret, damage, final_health)
-      record_damage_contribution({
-        entity = target,
-        final_health = final_health,
-      }, turret, damage or 0)
-      ensure_storage()
-      return {
-        target_entry_count = turret_xp_test_table_count(storage.turret_xp.targets),
-      }
-    end,
-
-    award_recorded_kill_credit = function(target, killing_turret)
-      local credited_turret = award_kill_credit(target, killing_turret)
-      award_visible_kill(credited_turret)
-      ensure_storage()
-      return {
-        credited_unit_number = credited_turret and credited_turret.valid and credited_turret.unit_number or nil,
-        target_entry_count = turret_xp_test_table_count(storage.turret_xp.targets),
-      }
-    end,
-
-    layout = function()
-      return copy_serializable(LAYOUT)
-    end,
-
-    gui_support_samples = function()
-      return {
-        percent = format_percent(0.125, 1),
-        color = color_to_rich_string(COLOR.bonus),
-        rich_number = rich_number("+5"),
-        rich_stat = rich_stat_text("Damage +5 x1.2"),
-      }
-    end,
-
-    compat_samples = function(entity)
-      local turret_inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
-      return {
-        nil_read_fallback = safe_read(nil, "missing", "fallback"),
-        entity_quality = quality_name_from_entity(entity, "normal"),
-        inventory_valid = turret_inventory and turret_inventory.valid or false,
-        platform_inventory_present = get_platform_hub_inventory(entity) ~= nil,
-        base_prototype_exists = combat.entity_prototype_exists(BASE_TURRET_NAME),
-        missing_prototype_exists = combat.entity_prototype_exists("turret-xp-missing-prototype") == true,
-        diagnostics_enabled = compat_diagnostics_enabled(),
-      }
-    end,
-
-    combat_budget_samples = function(surface)
-      surface = surface or game.surfaces[1]
-      combat.reset_effect_budget()
-      local limits = combat.get_effect_budget_snapshot().limits
-      local accepted_lines = 0
-      for index = 1, limits.render_lines_per_surface_tick + 2 do
-        if combat.draw_attack_line(surface, { x = -40, y = index * 0.05 }, { x = -39, y = index * 0.05 }, { 1, 1, 1 }, 1, 1) then
-          accepted_lines = accepted_lines + 1
-        end
-      end
-
-      local accepted_status_ticks = 0
-      for _ = 1, limits.status_effect_ticks_per_tick + 2 do
-        if combat.reserve_effect_budget("status_effect_ticks", surface) then
-          accepted_status_ticks = accepted_status_ticks + 1
-        end
-      end
-
-      local snapshot = combat.get_effect_budget_snapshot()
-      combat.reset_effect_budget()
-      return {
-        descriptors = combat.get_effect_descriptor_snapshot(),
-        limits = limits,
-        accepted_lines = accepted_lines,
-        accepted_status_ticks = accepted_status_ticks,
-        skipped = snapshot.skipped or {},
-      }
-    end,
-
-    prototype_budget = function()
-      return turret_xp_test_prototype_budget()
-    end,
-
-    apply_passive = function(ticks)
-      local count = math.max(1, math.floor(tonumber(ticks) or 1))
-      for _ = 1, count do
-        apply_passive_evolution_effects()
-      end
-      return true
-    end,
-
-    apply_shield_recharge = function(ticks)
-      apply_shield_recharge_effects(math.max(1, math.floor(tonumber(ticks) or SHIELD_RECHARGE_TICKS)))
-      return true
-    end,
-
-    remember_loaded_ammo = function(entity)
-      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
-      if not state then
-        return nil
-      end
-
-      combat.remember_loaded_ammo(entity, state)
-      return turret_xp_test_state_summary(entity)
-    end,
-
-    apply_ammo_productivity = function(entity)
-      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
-      if not state then
-        return nil
-      end
-
-      state._ammo_productivity_last_tick = nil
-      combat.apply_ammo_productivity(entity, state)
-      return turret_xp_test_state_summary(entity)
-    end,
-
-    age_shield_damage = function(entity, ticks)
-      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
-      if not state then
-        return nil
-      end
-
-      state._shield_last_damage_tick = (game and game.tick or 0) - math.max(0, math.floor(tonumber(ticks) or 0))
-      return turret_xp_test_state_summary(entity)
-    end,
-
-    placement_prototypes = function()
-      local gun_item = prototypes.item[BASE_TURRET_NAME]
-      local bound_item = prototypes.item[BOUND_TURRET_NAME]
-      local placeholder_entity = prototypes.entity[BOUND_TURRET_PLACEHOLDER_NAME]
-      local preview_name = DOMAIN.bound_turret_item_name(get_bound_turret_variant_id("sniper", 0))
-      local preview_item = prototypes.item[preview_name]
-      local preview_entity = preview_item and preview_item.place_result or nil
-      local base_attack_parameters = placeholder_entity and placeholder_entity.attack_parameters or nil
-      local preview_attack_parameters = preview_entity and preview_entity.attack_parameters or nil
-      local range_3_body_name = get_specialized_turret_name(nil, 3, 0)
-      local health_2_body_name = get_specialized_turret_name(nil, 0, 2)
-      local sniper_deadeye_body_name = get_specialized_turret_name("sniper", 0, 0, "sniper_deadeye")
-      local sniper_overwatch_range_3_body_name = get_specialized_turret_name("sniper", 3, 0, "sniper_overwatch")
-      local invalid_sub_body_name = get_specialized_turret_name("machine_gun", 0, 0, "sniper_deadeye")
-      local sniper_deadeye_bound_item_name = DOMAIN.bound_turret_item_name(get_bound_turret_variant_id("sniper", 0, "sniper_deadeye"))
-      local sniper_deadeye_bound_item = prototypes.item[sniper_deadeye_bound_item_name]
-      return {
-        gun_turret_place_result = gun_item and gun_item.place_result and gun_item.place_result.name or nil,
-        bound_turret_place_result = bound_item and bound_item.place_result and bound_item.place_result.name or nil,
-        placeholder_exists = placeholder_entity ~= nil,
-        base_bound_preview_range = base_attack_parameters and base_attack_parameters.range or nil,
-        sniper_bound_item = preview_item and preview_item.name or nil,
-        sniper_bound_place_result = preview_item and preview_item.place_result and preview_item.place_result.name or nil,
-        sniper_bound_preview_range = preview_attack_parameters and preview_attack_parameters.range or nil,
-        range_3_body_name = range_3_body_name,
-        range_3_body_exists = prototypes.entity[range_3_body_name] ~= nil,
-        health_2_body_name = health_2_body_name,
-        health_2_body_exists = prototypes.entity[health_2_body_name] ~= nil,
-        sniper_deadeye_body_name = sniper_deadeye_body_name,
-        sniper_deadeye_body_exists = prototypes.entity[sniper_deadeye_body_name] ~= nil,
-        sniper_overwatch_range_3_body_name = sniper_overwatch_range_3_body_name,
-        sniper_overwatch_range_3_body_exists = prototypes.entity[sniper_overwatch_range_3_body_name] ~= nil,
-        invalid_sub_body_name = invalid_sub_body_name,
-        sniper_deadeye_bound_item = sniper_deadeye_bound_item and sniper_deadeye_bound_item.name or nil,
-        sniper_deadeye_bound_place_result = sniper_deadeye_bound_item
-            and sniper_deadeye_bound_item.place_result
-            and sniper_deadeye_bound_item.place_result.name
-          or nil,
-      }
-    end,
-
-    ammo_range_compat = function(ammo_name)
-      local ammo = prototypes.item[ammo_name]
-      if not ammo then
-        return nil
-      end
-
-      local player_ammo_type = ammo.get_ammo_type("player")
-      local turret_ammo_type = ammo.get_ammo_type("turret")
-      return {
-        max_turret_xp_range = turret_xp_test_max_generated_turret_range(),
-        player = turret_xp_test_collect_projectile_ranges_from_ammo_type(player_ammo_type),
-        turret = turret_xp_test_collect_projectile_ranges_from_ammo_type(turret_ammo_type),
-      }
-    end,
-
     set_profile = function(entity, fields)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -546,45 +348,15 @@ return function(M)
       local synced = combat.sync_turret_body_when_idle(entity, state)
       return turret_xp_test_state_summary(synced or entity)
     end,
-
-    attach_stale_label_entity = function(entity)
-      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
-      if not state then
-        return nil
-      end
-
-      local ok, label_entity = pcall(function()
-        return entity.surface.create_entity({
-          name = "display-panel",
-          position = entity.position,
-          force = entity.force,
-          raise_built = false,
-          create_build_effect_smoke = false,
-        })
-      end)
-      if not ok or not label_entity then
-        return nil
-      end
-
-      state.label_entity = label_entity
-      update_name_render(entity, state)
-      local summary = turret_xp_test_state_summary(entity)
-      summary.stale_label_entity_valid = label_entity.valid
-      return summary
-    end,
-
     normalize_profile_snapshot = function(fields)
       return turret_xp_test_profile_summary(fields)
     end,
-
     deserialize_profile_snapshot = function(data)
       return turret_xp_test_profile_summary(deserialize_profile(data))
     end,
-
     serialize_profile_snapshot = function(fields)
       return serialize_profile(fields)
     end,
-
     set_evolution = function(entity, fields)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -636,7 +408,6 @@ return function(M)
       feeder.ensure(synced or entity, state)
       return turret_xp_test_state_summary(synced or entity)
     end,
-
     reset_evolution_section = function(entity, section, value)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -663,7 +434,6 @@ return function(M)
       feeder.ensure(synced or entity, state)
       return turret_xp_test_state_summary(synced or entity)
     end,
-
     reset_evolution = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -676,7 +446,252 @@ return function(M)
       feeder.ensure(synced or entity, state)
       return turret_xp_test_state_summary(synced or entity)
     end,
+  })
 
+  -- GUI, compatibility, and prototype inspection fixtures.
+  turret_xp_test_register_methods(turret_xp_test_remote_methods, {
+    dispatch_cycle_label_color = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local player = {
+        index = -1,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+      }
+      remember_open_turret(player, entity)
+      dispatch_gui_click_action(player, {}, {
+        turret_xp_action = "cycle-label-color",
+      })
+
+      local summary = turret_xp_test_state_summary(entity)
+      forget_open_turret(player)
+
+      return summary
+    end,
+    layout = function()
+      return copy_serializable(LAYOUT)
+    end,
+    gui_support_samples = function()
+      return {
+        percent = format_percent(0.125, 1),
+        color = color_to_rich_string(COLOR.bonus),
+        rich_number = rich_number("+5"),
+        rich_stat = rich_stat_text("Damage +5 x1.2"),
+      }
+    end,
+    compat_samples = function(entity)
+      local turret_inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
+      return {
+        nil_read_fallback = safe_read(nil, "missing", "fallback"),
+        entity_quality = quality_name_from_entity(entity, "normal"),
+        inventory_valid = turret_inventory and turret_inventory.valid or false,
+        platform_inventory_present = get_platform_hub_inventory(entity) ~= nil,
+        base_prototype_exists = combat.entity_prototype_exists(BASE_TURRET_NAME),
+        missing_prototype_exists = combat.entity_prototype_exists("turret-xp-missing-prototype") == true,
+        diagnostics_enabled = compat_diagnostics_enabled(),
+      }
+    end,
+    combat_budget_samples = function(surface)
+      surface = surface or game.surfaces[1]
+      combat.reset_effect_budget()
+      local limits = combat.get_effect_budget_snapshot().limits
+      local accepted_lines = 0
+      for index = 1, limits.render_lines_per_surface_tick + 2 do
+        if combat.draw_attack_line(surface, { x = -40, y = index * 0.05 }, { x = -39, y = index * 0.05 }, { 1, 1, 1 }, 1, 1) then
+          accepted_lines = accepted_lines + 1
+        end
+      end
+
+      local accepted_status_ticks = 0
+      for _ = 1, limits.status_effect_ticks_per_tick + 2 do
+        if combat.reserve_effect_budget("status_effect_ticks", surface) then
+          accepted_status_ticks = accepted_status_ticks + 1
+        end
+      end
+
+      local snapshot = combat.get_effect_budget_snapshot()
+      combat.reset_effect_budget()
+      return {
+        descriptors = combat.get_effect_descriptor_snapshot(),
+        limits = limits,
+        accepted_lines = accepted_lines,
+        accepted_status_ticks = accepted_status_ticks,
+        skipped = snapshot.skipped or {},
+      }
+    end,
+    prototype_budget = function()
+      return turret_xp_test_prototype_budget()
+    end,
+    placement_prototypes = function()
+      local gun_item = prototypes.item[BASE_TURRET_NAME]
+      local bound_item = prototypes.item[BOUND_TURRET_NAME]
+      local placeholder_entity = prototypes.entity[BOUND_TURRET_PLACEHOLDER_NAME]
+      local preview_name = DOMAIN.bound_turret_item_name(get_bound_turret_variant_id("sniper", 0))
+      local preview_item = prototypes.item[preview_name]
+      local preview_entity = preview_item and preview_item.place_result or nil
+      local base_attack_parameters = placeholder_entity and placeholder_entity.attack_parameters or nil
+      local preview_attack_parameters = preview_entity and preview_entity.attack_parameters or nil
+      local range_3_body_name = get_specialized_turret_name(nil, 3, 0)
+      local health_2_body_name = get_specialized_turret_name(nil, 0, 2)
+      local sniper_deadeye_body_name = get_specialized_turret_name("sniper", 0, 0, "sniper_deadeye")
+      local sniper_overwatch_range_3_body_name = get_specialized_turret_name("sniper", 3, 0, "sniper_overwatch")
+      local invalid_sub_body_name = get_specialized_turret_name("machine_gun", 0, 0, "sniper_deadeye")
+      local sniper_deadeye_bound_item_name = DOMAIN.bound_turret_item_name(get_bound_turret_variant_id("sniper", 0, "sniper_deadeye"))
+      local sniper_deadeye_bound_item = prototypes.item[sniper_deadeye_bound_item_name]
+      return {
+        gun_turret_place_result = gun_item and gun_item.place_result and gun_item.place_result.name or nil,
+        bound_turret_place_result = bound_item and bound_item.place_result and bound_item.place_result.name or nil,
+        placeholder_exists = placeholder_entity ~= nil,
+        base_bound_preview_range = base_attack_parameters and base_attack_parameters.range or nil,
+        sniper_bound_item = preview_item and preview_item.name or nil,
+        sniper_bound_place_result = preview_item and preview_item.place_result and preview_item.place_result.name or nil,
+        sniper_bound_preview_range = preview_attack_parameters and preview_attack_parameters.range or nil,
+        range_3_body_name = range_3_body_name,
+        range_3_body_exists = prototypes.entity[range_3_body_name] ~= nil,
+        health_2_body_name = health_2_body_name,
+        health_2_body_exists = prototypes.entity[health_2_body_name] ~= nil,
+        sniper_deadeye_body_name = sniper_deadeye_body_name,
+        sniper_deadeye_body_exists = prototypes.entity[sniper_deadeye_body_name] ~= nil,
+        sniper_overwatch_range_3_body_name = sniper_overwatch_range_3_body_name,
+        sniper_overwatch_range_3_body_exists = prototypes.entity[sniper_overwatch_range_3_body_name] ~= nil,
+        invalid_sub_body_name = invalid_sub_body_name,
+        sniper_deadeye_bound_item = sniper_deadeye_bound_item and sniper_deadeye_bound_item.name or nil,
+        sniper_deadeye_bound_place_result = sniper_deadeye_bound_item
+            and sniper_deadeye_bound_item.place_result
+            and sniper_deadeye_bound_item.place_result.name
+          or nil,
+      }
+    end,
+    ammo_range_compat = function(ammo_name)
+      local ammo = prototypes.item[ammo_name]
+      if not ammo then
+        return nil
+      end
+
+      local player_ammo_type = ammo.get_ammo_type("player")
+      local turret_ammo_type = ammo.get_ammo_type("turret")
+      return {
+        max_turret_xp_range = turret_xp_test_max_generated_turret_range(),
+        player = turret_xp_test_collect_projectile_ranges_from_ammo_type(player_ammo_type),
+        turret = turret_xp_test_collect_projectile_ranges_from_ammo_type(turret_ammo_type),
+      }
+    end,
+    attach_stale_label_entity = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local ok, label_entity = pcall(function()
+        return entity.surface.create_entity({
+          name = "display-panel",
+          position = entity.position,
+          force = entity.force,
+          raise_built = false,
+          create_build_effect_smoke = false,
+        })
+      end)
+      if not ok or not label_entity then
+        return nil
+      end
+
+      state.label_entity = label_entity
+      update_name_render(entity, state)
+      local summary = turret_xp_test_state_summary(entity)
+      summary.stale_label_entity_valid = label_entity.valid
+      return summary
+    end,
+  })
+
+  -- Combat and passive-effect fixtures.
+  turret_xp_test_register_methods(turret_xp_test_remote_methods, {
+    record_damage_contribution = function(target, turret, damage, final_health)
+      record_damage_contribution({
+        entity = target,
+        final_health = final_health,
+      }, turret, damage or 0)
+      ensure_storage()
+      return {
+        target_entry_count = turret_xp_test_table_count(storage.turret_xp.targets),
+      }
+    end,
+    award_recorded_kill_credit = function(target, killing_turret)
+      local credited_turret = award_kill_credit(target, killing_turret)
+      award_visible_kill(credited_turret)
+      ensure_storage()
+      return {
+        credited_unit_number = credited_turret and credited_turret.valid and credited_turret.unit_number or nil,
+        target_entry_count = turret_xp_test_table_count(storage.turret_xp.targets),
+      }
+    end,
+    apply_passive = function(ticks)
+      local count = math.max(1, math.floor(tonumber(ticks) or 1))
+      for _ = 1, count do
+        apply_passive_evolution_effects()
+      end
+      return true
+    end,
+    apply_shield_recharge = function(ticks)
+      apply_shield_recharge_effects(math.max(1, math.floor(tonumber(ticks) or SHIELD_RECHARGE_TICKS)))
+      return true
+    end,
+    remember_loaded_ammo = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      combat.remember_loaded_ammo(entity, state)
+      return turret_xp_test_state_summary(entity)
+    end,
+    apply_ammo_productivity = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      state._ammo_productivity_last_tick = nil
+      combat.apply_ammo_productivity(entity, state)
+      return turret_xp_test_state_summary(entity)
+    end,
+    age_shield_damage = function(entity, ticks)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      state._shield_last_damage_tick = (game and game.tick or 0) - math.max(0, math.floor(tonumber(ticks) or 0))
+      return turret_xp_test_state_summary(entity)
+    end,
+    schedule_status_damage = function(entity, target, amount, damage_type, duration_ticks, interval_ticks)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state or not target or not target.valid then
+        return nil
+      end
+
+      combat.schedule_status_damage(
+        entity,
+        state,
+        target,
+        amount,
+        damage_type,
+        duration_ticks,
+        interval_ticks,
+        "virtual-signal/signal-skull",
+        { 0.42, 0.92, 0.28 }
+      )
+      return turret_xp_test_state_summary(entity)
+    end,
+  })
+
+  -- Element feeder fixtures.
+  turret_xp_test_register_methods(turret_xp_test_remote_methods, {
     pick_element = function(entity, slot, element_id)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       local element = ELEMENT_BY_ID[element_id]
@@ -697,7 +712,6 @@ return function(M)
       feeder.ensure(entity, state)
       return turret_xp_test_state_summary(entity)
     end,
-
     insert_feeder = function(entity, stack)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -715,7 +729,6 @@ return function(M)
       summary.inserted = inserted
       return summary
     end,
-
     route_feeder = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -725,27 +738,6 @@ return function(M)
       auto_feed_open_turret(state)
       return turret_xp_test_state_summary(state.entity or entity)
     end,
-
-    schedule_status_damage = function(entity, target, amount, damage_type, duration_ticks, interval_ticks)
-      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
-      if not state or not target or not target.valid then
-        return nil
-      end
-
-      combat.schedule_status_damage(
-        entity,
-        state,
-        target,
-        amount,
-        damage_type,
-        duration_ticks,
-        interval_ticks,
-        "virtual-signal/signal-skull",
-        { 0.42, 0.92, 0.28 }
-      )
-      return turret_xp_test_state_summary(entity)
-    end,
-
     manage_inserter_filters = function(entity, inserter)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state or not inserter or not inserter.valid then
@@ -769,7 +761,6 @@ return function(M)
         filters = filters,
       }
     end,
-
     update_feeder_inserters = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -780,11 +771,9 @@ return function(M)
       feeder.update_nearby_inserters(entity, state)
       return turret_xp_test_state_summary(entity)
     end,
-
     inserter_state = function(inserter)
       return turret_xp_test_inserter_summary(inserter)
     end,
-
     restore_inserter_filters = function(inserter)
       if not inserter or not inserter.valid then
         return nil
@@ -793,7 +782,6 @@ return function(M)
       feeder.restore_inserter_filters(inserter)
       return turret_xp_test_inserter_summary(inserter)
     end,
-
     feeder_inserter_probe = function(entity, inserter)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state or not inserter or not inserter.valid then
@@ -811,17 +799,18 @@ return function(M)
         allowed_items = feeder.allowed_item_names(state),
       }
     end,
-
     feeder_owner = function(unit_number)
       ensure_storage()
       return storage.turret_xp.feeders[unit_number]
     end,
-
     feeder_refresh_stats = function()
       ensure_storage()
       return copy_serializable(feeder.get_last_refresh_stats() or {})
     end,
+  })
 
+  -- Bound turret item fixtures.
+  turret_xp_test_register_methods(turret_xp_test_remote_methods, {
     set_bound = function(entity, bound)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -831,7 +820,6 @@ return function(M)
       state.bound_turret = bound == true
       return turret_xp_test_state_summary(entity)
     end,
-
     mine_bound_turret = function(entity, buffer)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -850,7 +838,6 @@ return function(M)
         counts = turret_xp_test_inventory_counts(buffer),
       }
     end,
-
     mine_bound_turret_with_vanilla_returns = function(entity, buffer, external_inventory)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -890,12 +877,10 @@ return function(M)
         post_pre_mine_ammo = copy_serializable(post_pre_mine_snapshot.ammo or {}),
       }
     end,
-
     make_chip_stack = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       return state and make_chip_item_stack(state) or nil
     end,
-
     make_bound_turret_stack = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -904,7 +889,6 @@ return function(M)
 
       return make_bound_turret_item_stack(state, snapshot_turret_item_state(entity))
     end,
-
     make_legacy_bound_turret_stack = function(fields)
       local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields or {})
       profile.bound_turret = true
@@ -919,7 +903,6 @@ return function(M)
         custom_description = bound_turret_description(serialized),
       }
     end,
-
     read_bound_turret_stack = function(stack)
       local profile, turret_snapshot = read_bound_turret_stack(stack)
       if not profile then
@@ -931,7 +914,6 @@ return function(M)
         turret = copy_serializable(turret_snapshot or {}),
       }
     end,
-
     install_bound_turret_stack = function(entity, stack)
       local profile, turret_snapshot = read_bound_turret_stack(stack)
       if not profile then
@@ -952,7 +934,6 @@ return function(M)
       restore_turret_item_state(synced or entity, turret_snapshot)
       return turret_xp_test_state_summary(synced or entity)
     end,
-
     cleanup_entity = function(entity)
       if is_gun_turret(entity) then
         local state = get_turret_state(entity)
@@ -963,4 +944,6 @@ return function(M)
       end
     end,
   })
+
+  remote.add_interface("turret_xp_test", turret_xp_test_remote_methods)
 end
