@@ -8,6 +8,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Stable branch policy: short-lived issue branches into protected `main`; releases are GitHub Releases/tags named `v<info.json version>`.
 - Required local lightweight check: `scripts/check.sh`.
 - Strict local Lua tooling without host installs: `docker compose run --rm lua-tools`.
+- Lua validation file discovery follows Git ignore rules, so tracked files and untracked non-ignored Lua files are checked while ignored local research/build corpora are excluded.
 - Package build: `scripts/package.sh`.
 - Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
 - CI runs strict Lua tooling and packaging for package-impacting changes, and headless Factorio tests when Mod Portal download credentials are configured.
