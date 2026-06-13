@@ -73,6 +73,7 @@ scripts/package.sh
 
 The package is written to `dist/turret_xp_<version>.zip`.
 The mod zip includes the root `README.md`, `changelog.txt`, and root `thumbnail.png` when present. Internal docs under `docs/` and generated public-site files such as `docs/index.html`, `docs/site.css`, and `docs/public-copy.json` are source/public-site material and are not packaged.
+Local packaging is a development workflow and does not require a clean branch or remote-state preflight.
 
 GitHub Actions keeps the required check names stable for pull requests, pushes to `main`, and manual CI runs. Pull requests first classify changed files with `scripts/ci-change-scope.sh`: Lua changes run strict Lua tooling; root `README.md`, `changelog.txt`, `thumbnail.png`, package source, package scripts, and validation infrastructure run package validation; runtime source, prototypes, locale, headless tests, and validation infrastructure run the headless job when Mod Portal download credentials are available. Internal docs and generated public-site-only changes still run lightweight checks but skip package/headless work. Pushes to `main` and manual runs always run the full validation path. The workflow pins StyLua and the headless runner version, verifies the StyLua release hash, and caches the extracted Factorio directory plus dependency zips; update `STYLUA_VERSION`/`STYLUA_SHA256` or `FACTORIO_HEADLESS_VERSION` in the workflows when intentionally moving tooling or Factorio builds.
 
@@ -111,7 +112,7 @@ Local helper for creating or updating the GitHub release for the current `info.j
 scripts/release.sh
 ```
 
-This script checks the generated homepage and writes GitHub release notes into `dist/` from the same public-copy sources before uploading the package.
+This script is the GitHub Release publishing path. It first runs `scripts/release-preflight.sh`, which fetches the configured release remote and blocks unless the working tree is clean, the current branch is `main`, and local `main` exactly matches `origin/main`. It then checks the generated homepage and writes GitHub release notes into `dist/` from the same public-copy sources before uploading the package.
 
 Local helper for manually publishing or updating the Factorio Mod Portal release:
 
@@ -120,6 +121,7 @@ FACTORIO_MOD_PORTAL_API_KEY=<your-api-key> scripts/publish-portal.sh
 ```
 
 The script checks generated public assets, writes the Mod Portal description and metadata into `dist/`, and runs `scripts/test-headless.sh` before uploading. Set `SKIP_HEADLESS_TESTS=1` only for exceptional machines that cannot run Factorio locally. Mod Portal API failures print the portal response body so CI logs show the rejected field or endpoint. The script also loads an ignored `.env` file and accepts `FACTORIO_API_KEY=<your-api-key>`. The API key must be created on `https://factorio.com/profile` with `ModPortal: Publish Mods`, `ModPortal: Upload Mods`, and `ModPortal: Edit Mods` usages. Do not commit the key or paste it into chat.
+This is the stable Mod Portal publishing path for the current `info.json` version. It uses the same release preflight as `scripts/release.sh`, and it passes Mod Portal authorization plus temporary upload URLs through local curl config files so token-bearing values are not placed in curl process arguments. There is no separate experimental Mod Portal upload path; add an explicit channel/version policy before using this script for experimental releases.
 
 GitHub setup required for the automated release path:
 

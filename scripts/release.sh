@@ -3,6 +3,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+scripts/release-preflight.sh "GitHub release"
+
 python_bin="${PYTHON:-python3}"
 version="$("$python_bin" -c 'import json; print(json.load(open("info.json"))["version"])')"
 tag="v${version}"
