@@ -109,6 +109,8 @@ function stats_module.new(deps)
     "get_sub_specialization",
     "get_specialization_multiplier",
     "get_sub_specialization_flat_bonus",
+    "get_repair_base_per_second_for_health",
+    "get_repair_per_second_for_health",
     "get_ammo_productivity_fraction",
     "get_effective_ammo_productivity_fraction",
     "get_ammo_recovery_per_minute",

@@ -485,6 +485,26 @@ return function(M)
         rich_stat = rich_stat_text("Damage +5 x1.2"),
       }
     end,
+    stats_formula_samples = function(fields, reference_health)
+      local state = copy_serializable(fields or {})
+      ensure_evolution_state(state)
+      reference_health = tonumber(reference_health) or 400
+
+      return {
+        damage_multiplier = get_specialization_multiplier(state, "damage_multiplier"),
+        crit_chance_fraction = get_crit_chance_fraction(state),
+        crit_damage_fraction = get_crit_damage_fraction(state),
+        double_shot_chance = get_double_shot_chance(state),
+        damage_resistance_fraction = get_damage_resistance_fraction(state),
+        shield_on_hit_fraction = get_shield_on_hit_fraction(state),
+        repair_base_per_second = get_repair_base_per_second_for_health(state, reference_health),
+        repair_per_second = get_repair_per_second_for_health(state, reference_health),
+        capped_luck_chance = apply_luck_to_chance(state, 2),
+        ammo_productivity_fraction = get_ammo_productivity_fraction(state),
+        effective_ammo_productivity_fraction = get_effective_ammo_productivity_fraction(state),
+        ammo_recovery_per_minute = get_ammo_recovery_per_minute(state),
+      }
+    end,
     compat_samples = function(entity)
       local turret_inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
       return {
