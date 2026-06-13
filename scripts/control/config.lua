@@ -58,6 +58,5 @@ return function(M)
   FEEDER_CONSUME_LIMIT = runtime_constants.feeder_consume_limit
   COMBAT_CONSTANTS = runtime_constants.combat
 
-  feeder = {}
   combat = {}
 end

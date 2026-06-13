@@ -1,9 +1,15 @@
-return function(M)
-  setmetatable(M, { __index = _G })
-  local _ENV = M
+local commands_module = {}
 
-  commands.add_command("turret-xp", { "turret-xp.command-help" }, function(command)
-    local player = command.player_index and game.get_player(command.player_index)
+function commands_module.register(deps)
+  local command_registry = deps.command_registry
+  local get_player = deps.get_player
+  local is_gun_turret = deps.is_gun_turret
+  local build_turret_gui = deps.build_turret_gui
+  local ensure_player_settings = deps.ensure_player_settings
+  local get_remembered_turret = deps.get_remembered_turret
+
+  command_registry.add_command("turret-xp", { "turret-xp.command-help" }, function(command)
+    local player = command.player_index and get_player(command.player_index)
     if not player then
       return
     end
@@ -17,8 +23,8 @@ return function(M)
     build_turret_gui(player, player.selected)
   end)
 
-  commands.add_command("turret-xp-dev", { "turret-xp.dev-command-help" }, function(command)
-    local player = command.player_index and game.get_player(command.player_index)
+  command_registry.add_command("turret-xp-dev", { "turret-xp.dev-command-help" }, function(command)
+    local player = command.player_index and get_player(command.player_index)
     if not player then
       return
     end
@@ -33,3 +39,5 @@ return function(M)
     end
   end)
 end
+
+return commands_module

@@ -1,22 +1,126 @@
 local damage_accounting = require("scripts.control.damage_accounting")
 
-return function(M)
-  setmetatable(M, { __index = _G })
-  local _ENV = M
+local stats_module = {}
+
+function stats_module.new(deps)
+  local target_damage_ttl = deps.target_damage_ttl
+  local ensure_storage = deps.ensure_storage
+  local storage_root = deps.storage_root
+  local game_tick = deps.game_tick
+  local get_surface = deps.get_surface
+  local safe_read = deps.safe_read
+  local entity_tracking_key = deps.entity_tracking_key
+  local turret_key = deps.turret_key
+  local is_gun_turret = deps.is_gun_turret
+  local get_turret_state = deps.get_turret_state
+  local combat = deps.combat
+  local add_profile_kill_credit = deps.add_profile_kill_credit
+  local sync_turret_progression = deps.sync_turret_progression
+  local update_name_render = deps.update_name_render
+  local ensure_evolution_state = deps.ensure_evolution_state
+  local get_specialized_turret_name = deps.get_specialized_turret_name
+  local feeder = deps.feeder
+  local inventory_defines = deps.inventory_defines
+  local item_prototypes = deps.item_prototypes
+  local entity_prototypes = deps.entity_prototypes
+  local quality_prototypes = deps.quality_prototypes
+  local compat = deps.compat
+  local COLOR = deps.COLOR
+  local SPECIALIZATION_BY_ID = deps.SPECIALIZATION_BY_ID
+  local SUB_SPECIALIZATION_BY_ID = deps.SUB_SPECIALIZATION_BY_ID
+  local get_augment_rank = deps.get_augment_rank
+  local get_base_rank = deps.get_base_rank
+  local REPAIR_MAX_HEALTH_FRACTION_PER_RANK = deps.REPAIR_MAX_HEALTH_FRACTION_PER_RANK
+  local AMMO_PRODUCTIVITY_PER_RANK = deps.AMMO_PRODUCTIVITY_PER_RANK
+  local SHIELD_ON_HIT_FRACTION_PER_RANK = deps.SHIELD_ON_HIT_FRACTION_PER_RANK
+  local RESISTANCE_MAX = deps.RESISTANCE_MAX
+  local RESISTANCE_PER_RANK = deps.RESISTANCE_PER_RANK
+  local BASE_TURRET_NAME = deps.BASE_TURRET_NAME
+  local make_bound_turret_item_stack = deps.make_bound_turret_item_stack
+  local spill_stack_definition_at = deps.spill_stack_definition_at
+
+  local as_array
+  local sum_trigger_items
+  local find_damage_type_in_trigger_items
+  local sum_damage_effects
+  local find_damage_type_in_effects
+  local sum_trigger_deliveries
+  local find_damage_type_in_deliveries
+  local get_effective_turret_prototype
+  local get_attack_parameters
+  local get_loaded_ammo_snapshot
+  local get_loaded_ammo
+  local get_ammo_type
+  local get_ammo_category_name
+  local format_number
+  local format_colored_bonus
+  local format_base_plus_bonus
+  local format_colored_multiplier
+  local append_multiplier
+  local format_stat_formula
+  local get_specialization
+  local get_sub_specialization
+  local get_specialization_multiplier
+  local get_sub_specialization_flat_bonus
+  local get_repair_reference_health
+  local get_repair_base_per_second
+  local get_repair_per_second
+  local get_ammo_productivity_fraction
+  local get_effective_ammo_productivity_fraction
+  local get_ammo_recovery_per_minute
+  local get_shield_on_hit_fraction
+  local get_lifesteal_rate
+  local get_damage_resistance_fraction
+  local get_crit_damage_multiplier
+  local get_crit_damage_fraction
+  local get_crit_chance_fraction
+  local get_double_shot_chance
+  local get_crit_damage_formula_values
+  local get_luck_multiplier
+  local apply_luck_to_chance
+  local get_entity_quality_name
+  local get_quality_prototypes
+  local get_quality_localised_name
+  local get_quality_multiplier
+  local make_quality_tooltip
+  local with_info_marker
+  local with_quality_marker
+  local get_shooting_speed_values
+  local format_shots_per_second
+  local get_damage_values
+  local format_damage_per_shot
+  local get_final_damage_per_shot
+  local get_final_shots_per_second
+  local get_range_for_quality
+  local get_shooting_speed_formula_values
+  local get_damage_formula_values
+  local get_expected_damage_per_shot
+  local get_estimated_dps_values
+  local format_estimated_dps_formula
+  local format_estimated_dps
+  local get_range_formula_values
+  local get_health_formula_values
+  local get_max_health_for_quality
+  local format_range_for_quality
+  local format_range
+  local target_prior_damage
+  local get_or_create_target_damage
+  local record_damage_contribution
+  local resolve_kill_turret
+  local award_kill_credit
+  local award_visible_kill
+  local cleanup_target_damage
+  local cleanup_pending_bound_mining
 
   local damage_accounting_service = nil
 
   local function get_damage_accounting_service()
     if not damage_accounting_service then
       damage_accounting_service = damage_accounting.new({
-        target_damage_ttl = TARGET_DAMAGE_TTL,
+        target_damage_ttl = target_damage_ttl,
         ensure_storage = ensure_storage,
-        storage_root = function()
-          return storage.turret_xp
-        end,
-        game_tick = function()
-          return game.tick
-        end,
+        storage_root = storage_root,
+        game_tick = game_tick,
         safe_read = safe_read,
         entity_tracking_key = entity_tracking_key,
         turret_key = turret_key,
@@ -142,7 +246,7 @@ return function(M)
     if state then
       local evolution = ensure_evolution_state(state)
       local target_name = get_specialized_turret_name(evolution.specialization, 0, 0, evolution.sub_specialization)
-      local target_prototype = target_name and safe_read(prototypes.entity, target_name, nil, "effective turret prototype")
+      local target_prototype = target_name and safe_read(entity_prototypes(), target_name, nil, "effective turret prototype")
       if target_prototype then
         return target_prototype, target_name
       end
@@ -157,7 +261,7 @@ return function(M)
   end
 
   function get_loaded_ammo_snapshot(entity, preferred)
-    local inventory = feeder.get_entity_inventory(entity, defines.inventory.turret_ammo)
+    local inventory = feeder.get_entity_inventory(entity, inventory_defines.turret_ammo)
     if not inventory or not inventory.valid then
       return nil
     end
@@ -226,7 +330,7 @@ return function(M)
       return nil
     end
 
-    local ammo = prototypes.item[ammo_name]
+    local ammo = item_prototypes()[ammo_name]
     if not ammo then
       return nil
     end
@@ -238,7 +342,7 @@ return function(M)
 
   function get_ammo_category_name(entity, ammo_name, state)
     if ammo_name then
-      local ammo = prototypes.item[ammo_name]
+      local ammo = item_prototypes()[ammo_name]
       local ammo_category = safe_read(ammo, "ammo_category")
       local ammo_category_name = safe_read(ammo_category, "name")
       if ammo_category_name then
@@ -513,13 +617,13 @@ return function(M)
 
   function get_quality_prototypes()
     local qualities = {}
-    local quality_prototypes = safe_read(prototypes, "quality")
+    local qualities_by_name = quality_prototypes()
 
-    if not quality_prototypes then
+    if not qualities_by_name then
       return qualities
     end
 
-    for _, quality in pairs(quality_prototypes) do
+    for _, quality in pairs(qualities_by_name) do
       if quality and quality.valid and quality.name ~= "quality-unknown" and not safe_read(quality, "hidden") then
         qualities[#qualities + 1] = quality
       end
@@ -817,10 +921,10 @@ return function(M)
     end
 
     local multiplier = get_specialization_multiplier(state, "range_multiplier")
-    local quality = safe_read(prototypes.quality, quality_name or "normal")
+    local quality = safe_read(quality_prototypes(), quality_name or "normal")
     local quality_multiplier = quality and get_quality_multiplier(quality, "range_multiplier") or 1
     local base_range = nil
-    local base_prototype = prototypes.entity[BASE_TURRET_NAME]
+    local base_prototype = entity_prototypes()[BASE_TURRET_NAME]
     local base_attack_parameters = safe_read(base_prototype, "attack_parameters")
     if base_attack_parameters then
       base_range = (base_attack_parameters.range or 0) * quality_multiplier
@@ -845,7 +949,7 @@ return function(M)
 
     local multiplier = get_specialization_multiplier(state, "health_multiplier")
     local base_health = nil
-    local base_prototype = prototypes.entity[BASE_TURRET_NAME]
+    local base_prototype = entity_prototypes()[BASE_TURRET_NAME]
     if base_prototype then
       base_health = compat.try("base prototype max health", function()
         return base_prototype.get_max_health(quality_name or "normal")
@@ -888,7 +992,7 @@ return function(M)
       return nil
     end
 
-    local quality = safe_read(prototypes.quality, quality_name)
+    local quality = safe_read(quality_prototypes(), quality_name)
     if not quality then
       return attack_parameters.range
     end
@@ -931,25 +1035,103 @@ return function(M)
   function cleanup_pending_bound_mining()
     ensure_storage()
 
-    local cutoff = game.tick - (60 * 10)
-    for key, entry in pairs(storage.turret_xp.pending_bound_mined or {}) do
+    local root = storage_root()
+    local cutoff = game_tick() - (60 * 10)
+    for key, entry in pairs(root.pending_bound_mined or {}) do
       if not entry or (entry.tick or 0) < cutoff then
         local entity = entry and entry.entity
         if entry and (not entity or not entity.valid) and entry.profile and entry.turret then
-          local surface = game.get_surface(entry.surface_index)
+          local surface = get_surface(entry.surface_index)
           if surface and entry.position then
             spill_stack_definition_at(surface, entry.position, make_bound_turret_item_stack(entry.profile, entry.turret))
           end
           local chip_id = entry.profile and entry.profile.chip_id
           if chip_id then
-            storage.turret_xp.chips[chip_id] = nil
+            root.chips[chip_id] = nil
           end
           if entry.key then
-            storage.turret_xp.turrets[entry.key] = nil
+            root.turrets[entry.key] = nil
           end
         end
-        storage.turret_xp.pending_bound_mined[key] = nil
+        root.pending_bound_mined[key] = nil
       end
     end
   end
+
+  return {
+    as_array = as_array,
+    sum_damage_effects = sum_damage_effects,
+    find_damage_type_in_effects = find_damage_type_in_effects,
+    sum_trigger_deliveries = sum_trigger_deliveries,
+    find_damage_type_in_deliveries = find_damage_type_in_deliveries,
+    sum_trigger_items = sum_trigger_items,
+    find_damage_type_in_trigger_items = find_damage_type_in_trigger_items,
+    get_effective_turret_prototype = get_effective_turret_prototype,
+    get_attack_parameters = get_attack_parameters,
+    get_loaded_ammo_snapshot = get_loaded_ammo_snapshot,
+    get_loaded_ammo = get_loaded_ammo,
+    get_ammo_type = get_ammo_type,
+    get_ammo_category_name = get_ammo_category_name,
+    format_number = format_number,
+    format_colored_bonus = format_colored_bonus,
+    format_base_plus_bonus = format_base_plus_bonus,
+    format_colored_multiplier = format_colored_multiplier,
+    append_multiplier = append_multiplier,
+    format_stat_formula = format_stat_formula,
+    get_specialization = get_specialization,
+    get_sub_specialization = get_sub_specialization,
+    get_specialization_multiplier = get_specialization_multiplier,
+    get_sub_specialization_flat_bonus = get_sub_specialization_flat_bonus,
+    get_repair_reference_health = get_repair_reference_health,
+    get_repair_base_per_second = get_repair_base_per_second,
+    get_repair_per_second = get_repair_per_second,
+    get_ammo_productivity_fraction = get_ammo_productivity_fraction,
+    get_effective_ammo_productivity_fraction = get_effective_ammo_productivity_fraction,
+    get_ammo_recovery_per_minute = get_ammo_recovery_per_minute,
+    get_shield_on_hit_fraction = get_shield_on_hit_fraction,
+    get_lifesteal_rate = get_lifesteal_rate,
+    get_damage_resistance_fraction = get_damage_resistance_fraction,
+    get_crit_damage_multiplier = get_crit_damage_multiplier,
+    get_crit_damage_fraction = get_crit_damage_fraction,
+    get_crit_chance_fraction = get_crit_chance_fraction,
+    get_double_shot_chance = get_double_shot_chance,
+    get_crit_damage_formula_values = get_crit_damage_formula_values,
+    get_luck_multiplier = get_luck_multiplier,
+    apply_luck_to_chance = apply_luck_to_chance,
+    get_entity_quality_name = get_entity_quality_name,
+    get_quality_prototypes = get_quality_prototypes,
+    get_quality_localised_name = get_quality_localised_name,
+    get_quality_multiplier = get_quality_multiplier,
+    make_quality_tooltip = make_quality_tooltip,
+    with_info_marker = with_info_marker,
+    with_quality_marker = with_quality_marker,
+    get_shooting_speed_values = get_shooting_speed_values,
+    format_shots_per_second = format_shots_per_second,
+    get_damage_values = get_damage_values,
+    format_damage_per_shot = format_damage_per_shot,
+    get_final_damage_per_shot = get_final_damage_per_shot,
+    get_final_shots_per_second = get_final_shots_per_second,
+    get_shooting_speed_formula_values = get_shooting_speed_formula_values,
+    get_damage_formula_values = get_damage_formula_values,
+    get_expected_damage_per_shot = get_expected_damage_per_shot,
+    get_estimated_dps_values = get_estimated_dps_values,
+    format_estimated_dps_formula = format_estimated_dps_formula,
+    format_estimated_dps = format_estimated_dps,
+    get_range_formula_values = get_range_formula_values,
+    get_health_formula_values = get_health_formula_values,
+    get_max_health_for_quality = get_max_health_for_quality,
+    format_range = format_range,
+    get_range_for_quality = get_range_for_quality,
+    format_range_for_quality = format_range_for_quality,
+    target_prior_damage = target_prior_damage,
+    get_or_create_target_damage = get_or_create_target_damage,
+    record_damage_contribution = record_damage_contribution,
+    resolve_kill_turret = resolve_kill_turret,
+    award_kill_credit = award_kill_credit,
+    award_visible_kill = award_visible_kill,
+    cleanup_target_damage = cleanup_target_damage,
+    cleanup_pending_bound_mining = cleanup_pending_bound_mining,
+  }
 end
+
+return stats_module

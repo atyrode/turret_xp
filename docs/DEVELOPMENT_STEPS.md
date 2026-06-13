@@ -17,7 +17,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - CI/release automation exists for package validation, cached Factorio headless tests, GitHub Release packaging, and gated Mod Portal publishing.
 - `main` is protected through pull requests and selected required status checks.
 - The private `turret_xp_test` remote interface is gated to the headless companion test mod and checked by a separate production-policy smoke test.
-- Runtime code has been split into focused modules under `scripts/control/`, with explicit helper modules for bound turret item handling, damage accounting, combat effect budgets, GUI support/components, Factorio API compatibility, and label color matching.
+- Runtime code has been split into focused modules under `scripts/control/`, with explicit helper/service modules for bound turret item handling, damage accounting, combat effect budgets, GUI support/components, Factorio API compatibility, label color matching, feeder routing, stat formatting/math, GUI actions, and command registration.
 - Runtime config ownership is split so `config.lua` wires domain aliases plus progression definitions, GUI constants, and runtime constants from explicit returned-table modules instead of carrying all constants directly.
 - Data-stage prototype creation is split under `prototypes/`, with entrypoints kept small.
 - `scripts/domain.lua` owns shared stable gameplay IDs, caps, specialization data, label presets, and generated variant-name helpers across data stage, runtime, and tests.

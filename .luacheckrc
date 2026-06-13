@@ -36,18 +36,14 @@ legacy_control_module = {
   ignore = { "111", "112", "113", "122", "211/_ENV" },
 }
 
-files["scripts/control/actions.lua"] = legacy_control_module
 files["scripts/control/combat_effects.lua"] = legacy_control_module
-files["scripts/control/commands.lua"] = legacy_control_module
 files["scripts/control/config.lua"] = legacy_control_module
 files["scripts/control/core_slot.lua"] = legacy_control_module
 files["scripts/control/events.lua"] = legacy_control_module
-files["scripts/control/feeder.lua"] = legacy_control_module
 files["scripts/control/gui_base.lua"] = legacy_control_module
 files["scripts/control/gui_panels.lua"] = legacy_control_module
 files["scripts/control/profiles.lua"] = legacy_control_module
 files["scripts/control/progression.lua"] = legacy_control_module
 files["scripts/control/remote_test.lua"] = legacy_control_module
-files["scripts/control/stats.lua"] = legacy_control_module
 files["scripts/control/storage.lua"] = legacy_control_module
 files["scripts/control/turret_bodies.lua"] = legacy_control_module

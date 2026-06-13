@@ -1,13 +1,27 @@
-return function(M)
-  setmetatable(M, { __index = _G })
-  local _ENV = M
+local feeder_module = {}
+
+function feeder_module.new(deps)
+  local feeder = {}
+  local compat = deps.compat
+  local inventory_defines = deps.inventory_defines
+  local safe_read = deps.safe_read
+  local ensure_storage = deps.ensure_storage
+  local storage_root = deps.storage_root
+  local ensure_evolution_state = deps.ensure_evolution_state
+  local get_unique_active_element_ids = deps.get_unique_active_element_ids
+  local get_element_remaining_requirement = deps.get_element_remaining_requirement
+  local is_gun_turret = deps.is_gun_turret
+  local item_prototypes = deps.item_prototypes
+  local FEEDER_NAME = deps.feeder_name
+  local FEEDER_INSERTER_RADIUS = deps.feeder_inserter_radius
+  local FEEDER_INPUT_BUFFER_SLOTS = deps.feeder_input_buffer_slots
 
   function feeder.get_entity_inventory(entity, inventory_id)
     return compat.get_entity_inventory(entity, inventory_id, "entity inventory")
   end
 
   function feeder.get_inventory(entity)
-    return feeder.get_entity_inventory(entity, defines.inventory.chest)
+    return feeder.get_entity_inventory(entity, inventory_defines.chest)
   end
 
   function feeder.spill_stack(entity, stack, position)
@@ -60,7 +74,7 @@ return function(M)
 
     ensure_storage()
     if entity.unit_number then
-      storage.turret_xp.feeders[entity.unit_number] = nil
+      storage_root().feeders[entity.unit_number] = nil
     end
 
     if spill then
@@ -477,7 +491,7 @@ return function(M)
       return false
     end
 
-    local managed = storage.turret_xp.managed_inserters[unit_number]
+    local managed = storage_root().managed_inserters[unit_number]
     if not managed then
       local has_filter, has_allowed_filter = feeder.inserter_filters_match_allowed(inserter, allowed_items, count)
       if has_filter then
@@ -486,10 +500,10 @@ return function(M)
         end
 
         managed = feeder.capture_managed_inserter(inserter, state, count)
-        storage.turret_xp.managed_inserters[unit_number] = managed
+        storage_root().managed_inserters[unit_number] = managed
       else
         managed = feeder.capture_managed_inserter(inserter, state, count)
-        storage.turret_xp.managed_inserters[unit_number] = managed
+        storage_root().managed_inserters[unit_number] = managed
       end
     else
       feeder.track_managed_inserter(managed, inserter, state)
@@ -515,11 +529,12 @@ return function(M)
     end
 
     local unit_number = safe_read(inserter, "unit_number")
-    if not unit_number or not storage or not storage.turret_xp then
+    local root = storage_root()
+    if not unit_number or not root then
       return
     end
 
-    local managed = storage.turret_xp.managed_inserters and storage.turret_xp.managed_inserters[unit_number] or nil
+    local managed = root.managed_inserters and root.managed_inserters[unit_number] or nil
     if not managed then
       return
     end
@@ -532,15 +547,16 @@ return function(M)
       end)
     end
 
-    storage.turret_xp.managed_inserters[unit_number] = nil
+    root.managed_inserters[unit_number] = nil
   end
 
   function feeder.restore_managed_inserters_for_state(state, feeder_entity, restore_target)
-    if not storage or not storage.turret_xp or not storage.turret_xp.managed_inserters then
+    local root = storage_root()
+    if not root or not root.managed_inserters then
       return
     end
 
-    for unit_number, managed in pairs(storage.turret_xp.managed_inserters) do
+    for unit_number, managed in pairs(root.managed_inserters) do
       if feeder.managed_inserter_matches_state(managed, state, feeder_entity) then
         local inserter = managed and managed.entity or nil
         if inserter and inserter.valid then
@@ -552,7 +568,7 @@ return function(M)
             feeder.set_inserter_drop_target(inserter, restore_target)
           end
         else
-          storage.turret_xp.managed_inserters[unit_number] = nil
+          root.managed_inserters[unit_number] = nil
         end
       end
     end
@@ -588,7 +604,7 @@ return function(M)
 
     for _, inserter in ipairs(inserters) do
       local unit_number = safe_read(inserter, "unit_number")
-      local managed = unit_number and storage.turret_xp.managed_inserters[unit_number] or nil
+      local managed = unit_number and storage_root().managed_inserters[unit_number] or nil
       local managed_matches = managed and feeder.managed_inserter_matches_state(managed, state, feeder_entity)
       if feeder.inserter_points_at_turret(inserter, turret, feeder_entity) then
         local has_source_item = needs_input and feeder.inserter_source_has_allowed_item(inserter, allowed_items)
@@ -712,7 +728,7 @@ return function(M)
           return nil
         end
         if current.unit_number and state.chip_id then
-          storage.turret_xp.feeders[current.unit_number] = state.chip_id
+          storage_root().feeders[current.unit_number] = state.chip_id
         end
         feeder.update_nearby_inserters(entity, state)
         return current
@@ -757,7 +773,7 @@ return function(M)
 
     state.feeder = created
     if created.unit_number and state.chip_id then
-      storage.turret_xp.feeders[created.unit_number] = state.chip_id
+      storage_root().feeders[created.unit_number] = state.chip_id
     end
     local inventory = feeder.get_inventory(created)
     feeder.set_input_open(inventory, feeder.get_input_slot_count(state, inventory))
@@ -810,7 +826,7 @@ return function(M)
   end
 
   function feeder.is_ammo_item(item_name)
-    local prototype = item_name and safe_read(prototypes.item, item_name, nil, "item prototype") or nil
+    local prototype = item_name and safe_read(item_prototypes(), item_name, nil, "item prototype") or nil
     if not prototype then
       return false
     end
@@ -840,7 +856,7 @@ return function(M)
     end
     feeder.set_input_open(inventory, feeder.get_input_slot_count(state, inventory))
 
-    local turret_inventory = feeder.get_entity_inventory(state.entity, defines.inventory.turret_ammo)
+    local turret_inventory = feeder.get_entity_inventory(state.entity, inventory_defines.turret_ammo)
 
     local allowed_feed_items = feeder.get_allowed_items(state)
     for index = 1, #inventory do
@@ -891,4 +907,8 @@ return function(M)
 
     feeder.update_nearby_inserters(state.entity, state)
   end
+
+  return feeder
 end
+
+return feeder_module
