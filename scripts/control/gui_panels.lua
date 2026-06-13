@@ -450,6 +450,10 @@ return function(M)
     return get_core_panel_service().add_inventory_core_picker(core_panel, player, entity)
   end
 
+  function prepare_inventory_core_options_for_display(entity, options, sort_mode)
+    return get_core_panel_service().prepare_core_options_for_display(entity, options, sort_mode)
+  end
+
   function add_dev_controls_panel(parent, player)
     return get_core_panel_service().add_dev_controls_panel(parent, player)
   end

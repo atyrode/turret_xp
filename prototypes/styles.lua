@@ -26,7 +26,12 @@ return function()
     parent = "table_with_selection",
     horizontally_stretchable = "on",
     vertical_spacing = 0,
-    horizontal_spacing = 8,
+    horizontal_spacing = 0,
+    left_cell_padding = 4,
+    right_cell_padding = 4,
+    top_cell_padding = 3,
+    bottom_cell_padding = 3,
+    apply_row_graphical_set_per_column = true,
     odd_row_graphical_set = {
       filename = "__core__/graphics/gui-new.png",
       position = { 472, 25 },

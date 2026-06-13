@@ -56,15 +56,22 @@ function tests.run_layout_constants_test()
   )
   local wide_table_width = layout.empty_inventory_core_icon_width
     + layout.empty_inventory_core_name_width
+    + layout.empty_inventory_core_specialization_width
     + layout.empty_inventory_core_level_width
     + layout.empty_inventory_core_stat_width
     + layout.empty_inventory_core_attack_width
     + layout.empty_inventory_core_stat_width
     + layout.empty_inventory_core_action_width
-    + (6 * layout.inventory_core_table_spacing)
+    + ((layout.inventory_core_table_column_count - 1) * layout.inventory_core_table_spacing)
+    + layout.empty_inventory_core_table_cell_padding_width
   assert_true(
     wide_table_width <= layout.empty_inventory_core_table_width,
-    "wide inventory core table columns must fit inside the reserved table viewport"
+    "wide inventory core table columns plus native cell padding must fit inside the reserved table viewport"
+  )
+  assert_eq(
+    layout.empty_inventory_core_name_width + layout.empty_inventory_core_fixed_width,
+    layout.empty_inventory_core_table_content_width,
+    "wide inventory core table content widths must derive from the padded table content budget"
   )
   assert_true(
     layout.empty_inventory_core_table_width < layout.empty_inventory_core_picker_width,
@@ -162,6 +169,14 @@ function tests.run_inventory_core_picker_test(surface)
   assert_eq(sample.sort_samples.name, "High", "inventory core picker did not sort alphabetically")
   assert_eq(sample.sort_samples.name_desc, "Mid", "inventory core picker did not reverse name sorting")
   assert_eq(sample.sort_samples.name_last, "", "inventory core picker did not keep unnamed cores last under name sorting")
+  assert_eq(sample.sort_samples.display_level_asc, "", "inventory core display sort did not sort level ascending")
+  assert_eq(sample.sort_samples.display_level_desc, "High", "inventory core display sort did not sort level descending")
+  assert_eq(sample.sort_samples.display_name_asc, "High", "inventory core display sort did not sort name ascending")
+  assert_eq(sample.sort_samples.display_name_desc, "Mid", "inventory core display sort did not sort name descending")
+  assert_true(sample.sort_samples.display_hp_asc ~= nil, "inventory core display HP ascending sort crashed")
+  assert_true(sample.sort_samples.display_hp_desc ~= nil, "inventory core display HP descending sort crashed")
+  assert_true(sample.sort_samples.display_attack_asc ~= nil, "inventory core display attack ascending sort crashed")
+  assert_true(sample.sort_samples.display_range_asc ~= nil, "inventory core display range ascending sort crashed")
   assert_eq(sample.filter_samples.all_count, 4, "inventory core picker All filter did not include all cores")
   assert_eq(sample.filter_samples.all_filter_enabled, true, "inventory core picker All filter did not normalize as enabled")
   assert_eq(sample.filter_samples.none_filter_enabled, true, "inventory core picker empty filters did not snap back to All")

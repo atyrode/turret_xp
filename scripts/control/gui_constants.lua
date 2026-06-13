@@ -85,7 +85,9 @@ local layout = {
   core_panel_padding = 16,
   inventory_core_frame_padding = 32,
   inventory_core_scrollbar_width = 20,
-  inventory_core_table_spacing = 8,
+  inventory_core_table_spacing = 0,
+  inventory_core_table_column_count = 8,
+  inventory_core_table_cell_horizontal_padding = 4,
   label_color_picker_min_width = 300,
   evolution_outer_height = 760,
   evolution_header_height = 36,
@@ -107,19 +109,26 @@ layout.inventory_core_detail_width = layout.inventory_core_picker_width - layout
 layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.empty_inventory_core_picker_height = layout.evolution_outer_height - 190
 layout.empty_inventory_core_table_width = layout.empty_inventory_core_picker_width - layout.inventory_core_scrollbar_width
+layout.empty_inventory_core_table_cell_padding_width = layout.inventory_core_table_column_count
+  * layout.inventory_core_table_cell_horizontal_padding
+  * 2
+layout.empty_inventory_core_table_content_width = layout.empty_inventory_core_table_width
+  - layout.empty_inventory_core_table_cell_padding_width
 layout.empty_inventory_core_icon_width = 40
-layout.empty_inventory_core_level_width = 58
-layout.empty_inventory_core_stat_width = 56
-layout.empty_inventory_core_attack_width = 64
+layout.empty_inventory_core_specialization_width = 128
+layout.empty_inventory_core_level_width = 46
+layout.empty_inventory_core_stat_width = 48
+layout.empty_inventory_core_attack_width = 58
 layout.empty_inventory_core_action_width = 32
 layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_icon_width
+  + layout.empty_inventory_core_specialization_width
   + layout.empty_inventory_core_level_width
   + layout.empty_inventory_core_stat_width
   + layout.empty_inventory_core_attack_width
   + layout.empty_inventory_core_stat_width
   + layout.empty_inventory_core_action_width
-  + (6 * layout.inventory_core_table_spacing)
-layout.empty_inventory_core_name_width = layout.empty_inventory_core_table_width - layout.empty_inventory_core_fixed_width
+  + ((layout.inventory_core_table_column_count - 1) * layout.inventory_core_table_spacing)
+layout.empty_inventory_core_name_width = layout.empty_inventory_core_table_content_width - layout.empty_inventory_core_fixed_width
 layout.empty_inventory_core_detail_width = layout.empty_inventory_core_name_width
 layout.evolution_scroll_width = layout.evolution_column_width
 layout.evolution_scroll_height = layout.evolution_outer_height - layout.evolution_header_height

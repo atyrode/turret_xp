@@ -293,7 +293,7 @@ function core_panel_module.new(deps)
     local button = parent.add({
       type = "button",
       caption = sort_caption(mode, current_sort),
-      style = "list_box_item",
+      style = "transparent_button",
       tooltip = mode.tooltip,
       mouse_button_filter = { "left" },
       tags = {
@@ -302,10 +302,11 @@ function core_panel_module.new(deps)
       },
     })
     set_cell_width(button, width)
-    set_style(button, "height", 26)
-    set_style(button, "padding", { 0, 4, 0, 4 })
+    set_style(button, "height", 24)
+    set_style(button, "padding", 0)
     set_style(button, "font", "default-bold")
     set_style(button, "horizontal_align", align or "left")
+    set_style(button, "single_line", true)
     if active then
       set_style(button, "font_color", COLOR.bonus)
     else
@@ -323,8 +324,9 @@ function core_panel_module.new(deps)
     set_cell_width(label, width)
     set_style(label, "font", "default-bold")
     set_style(label, "font_color", COLOR.caption)
-    set_style(label, "height", 26)
+    set_style(label, "height", 24)
     set_style(label, "horizontal_align", align or "right")
+    set_style(label, "single_line", true)
     return label
   end
 
@@ -381,7 +383,7 @@ function core_panel_module.new(deps)
   local function add_inventory_core_table(parent, current_sort)
     local table_element = parent.add({
       type = "table",
-      column_count = 7,
+      column_count = LAYOUT.inventory_core_table_column_count,
       style = "turret_xp_inventory_core_table",
     })
     set_style(table_element, "horizontally_stretchable", true)
@@ -391,13 +393,15 @@ function core_panel_module.new(deps)
     set_style(table_element, "horizontal_spacing", LAYOUT.inventory_core_table_spacing)
     set_style(table_element, "vertical_spacing", 0)
     pcall(function()
-      for index = 1, 7 do
-        table_element.style.column_alignments[index] = index >= 3 and "right" or "left"
+      for index = 1, LAYOUT.inventory_core_table_column_count do
+        table_element.style.column_alignments[index] = index >= 4 and "right" or "left"
       end
+      table_element.style.column_alignments[LAYOUT.inventory_core_table_column_count] = "center"
     end)
 
     add_header_label_cell(table_element, "", LAYOUT.empty_inventory_core_icon_width, "left")
     add_sort_header_cell(table_element, sort_mode_by_id("name"), current_sort, LAYOUT.empty_inventory_core_name_width, "left")
+    add_header_label_cell(table_element, { "stat-specialization" }, LAYOUT.empty_inventory_core_specialization_width, "left")
     add_sort_header_cell(table_element, sort_mode_by_id("level"), current_sort, LAYOUT.empty_inventory_core_level_width, "right")
     add_sort_header_cell(table_element, sort_mode_by_id("hp"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
     add_sort_header_cell(table_element, sort_mode_by_id("attack"), current_sort, LAYOUT.empty_inventory_core_attack_width, "right")
@@ -407,14 +411,14 @@ function core_panel_module.new(deps)
     return table_element
   end
 
-  local function add_inventory_core_value_cell(parent, caption, width)
+  local function add_inventory_core_value_cell(parent, caption, width, align)
     local label = parent.add({
       type = "label",
       caption = caption,
       style = "caption_label",
     })
     set_cell_width(label, width)
-    set_style(label, "horizontal_align", "right")
+    set_style(label, "horizontal_align", align or "right")
     set_style(label, "single_line", true)
     return label
   end
@@ -456,15 +460,9 @@ function core_panel_module.new(deps)
     set_style(name, "single_line", false)
     set_style(name, "maximal_width", LAYOUT.empty_inventory_core_name_width)
 
-    local specialization = details.add({
-      type = "label",
-      caption = specialization_caption(profile),
-      style = "caption_label",
-    })
+    local specialization =
+      add_inventory_core_value_cell(rows, specialization_caption(profile), LAYOUT.empty_inventory_core_specialization_width, "left")
     set_style(specialization, "font_color", COLOR.muted)
-    set_style(specialization, "single_line", false)
-    set_style(specialization, "maximal_width", LAYOUT.empty_inventory_core_name_width)
-
     add_inventory_core_value_cell(rows, rich_value(profile.level or 0), LAYOUT.empty_inventory_core_level_width)
     add_inventory_core_value_cell(rows, rich_value(stats.health), LAYOUT.empty_inventory_core_stat_width)
     add_inventory_core_value_cell(rows, rich_value(stats.speed, "/s"), LAYOUT.empty_inventory_core_attack_width)
@@ -568,6 +566,99 @@ function core_panel_module.new(deps)
     })
   end
 
+  local function core_option_name_key(profile)
+    local raw_name = tostring((profile or {}).custom_name or "")
+    local normalized_name = raw_name:gsub("^%s+", ""):gsub("%s+$", "")
+    return normalized_name ~= "", string.lower(normalized_name)
+  end
+
+  local function compare_number(left, right, field, direction)
+    local left_value = left.sort_key[field]
+    local right_value = right.sort_key[field]
+    if left_value == nil and right_value == nil then
+      return nil
+    end
+    if left_value == nil then
+      return false
+    end
+    if right_value == nil then
+      return true
+    end
+    if left_value == right_value then
+      return nil
+    end
+    if direction == "asc" then
+      return left_value < right_value
+    end
+    return left_value > right_value
+  end
+
+  local function compare_name(left, right, direction)
+    if left.sort_key.has_name ~= right.sort_key.has_name then
+      return left.sort_key.has_name
+    end
+    if left.sort_key.name ~= right.sort_key.name then
+      if direction == "asc" then
+        return left.sort_key.name < right.sort_key.name
+      end
+      return left.sort_key.name > right.sort_key.name
+    end
+    return nil
+  end
+
+  local function compare_default(left, right)
+    local result = compare_number(left, right, "level", "desc")
+    if result ~= nil then
+      return result
+    end
+    result = compare_name(left, right, "asc")
+    if result ~= nil then
+      return result
+    end
+    if left.sort_key.chip_id ~= right.sort_key.chip_id then
+      return left.sort_key.chip_id < right.sort_key.chip_id
+    end
+    return (left.index or 0) < (right.index or 0)
+  end
+
+  local function prepare_core_options_for_display(entity, option_list, current_sort)
+    local field, direction = parse_sort(current_sort)
+    for _, option in ipairs(option_list or {}) do
+      local profile = option.profile or create_blank_profile()
+      local stats = preview_stats(entity, profile)
+      local has_name, name = core_option_name_key(profile)
+      option.preview_stats = stats
+      option.sort_key = {
+        level = math.max(0, math.floor(tonumber(profile.level) or 0)),
+        hp = stats.sort.hp,
+        attack = stats.sort.attack,
+        range = stats.sort.range,
+        has_name = has_name,
+        name = name,
+        chip_id = tonumber(profile.chip_id) or 0,
+      }
+    end
+
+    if not field then
+      return option_list
+    end
+
+    table.sort(option_list, function(left, right)
+      local result
+      if field == "name" then
+        result = compare_name(left, right, direction)
+      else
+        result = compare_number(left, right, field, direction)
+      end
+      if result ~= nil then
+        return result
+      end
+      return compare_default(left, right)
+    end)
+
+    return option_list
+  end
+
   local function add_inventory_core_picker(core_panel, player, entity, options)
     options = options or {}
     local wide = options.wide == true
@@ -632,93 +723,8 @@ function core_panel_module.new(deps)
     set_style(scroll, "minimal_width", picker_width)
     set_style(scroll, "maximal_width", picker_width)
 
-    local function core_option_name_key(profile)
-      local raw_name = tostring((profile or {}).custom_name or "")
-      local normalized_name = raw_name:gsub("^%s+", ""):gsub("%s+$", "")
-      return normalized_name ~= "", string.lower(normalized_name)
-    end
-
-    local function compare_number(left, right, field, direction)
-      local left_value = left.sort_key[field]
-      local right_value = right.sort_key[field]
-      if left_value == nil and right_value == nil then
-        return nil
-      end
-      if left_value == nil then
-        return false
-      end
-      if right_value == nil then
-        return true
-      end
-      if left_value == right_value then
-        return nil
-      end
-      return direction == "asc" and left_value < right_value or left_value > right_value
-    end
-
-    local function compare_name(left, right, direction)
-      if left.sort_key.has_name ~= right.sort_key.has_name then
-        return left.sort_key.has_name
-      end
-      if left.sort_key.name ~= right.sort_key.name then
-        return direction == "asc" and left.sort_key.name < right.sort_key.name or left.sort_key.name > right.sort_key.name
-      end
-      return nil
-    end
-
-    local function compare_default(left, right)
-      local result = compare_number(left, right, "level", "desc")
-      if result ~= nil then
-        return result
-      end
-      result = compare_name(left, right, "asc")
-      if result ~= nil then
-        return result
-      end
-      if left.sort_key.chip_id ~= right.sort_key.chip_id then
-        return left.sort_key.chip_id < right.sort_key.chip_id
-      end
-      return (left.index or 0) < (right.index or 0)
-    end
-
-    local function prepare_core_options_for_display(option_list)
-      local field, direction = parse_sort(current_sort)
-      for _, option in ipairs(option_list or {}) do
-        local profile = option.profile or create_blank_profile()
-        local stats = preview_stats(entity, profile)
-        local has_name, name = core_option_name_key(profile)
-        option.preview_stats = stats
-        option.sort_key = {
-          level = math.max(0, math.floor(tonumber(profile.level) or 0)),
-          hp = stats.sort.hp,
-          attack = stats.sort.attack,
-          range = stats.sort.range,
-          has_name = has_name,
-          name = name,
-          chip_id = tonumber(profile.chip_id) or 0,
-        }
-      end
-
-      if not field then
-        return
-      end
-
-      table.sort(option_list, function(left, right)
-        local result
-        if field == "name" then
-          result = compare_name(left, right, direction)
-        else
-          result = compare_number(left, right, field, direction)
-        end
-        if result ~= nil then
-          return result
-        end
-        return compare_default(left, right)
-      end)
-    end
-
-    prepare_core_options_for_display(all_core_options)
-    prepare_core_options_for_display(core_options)
+    prepare_core_options_for_display(entity, all_core_options, current_sort)
+    prepare_core_options_for_display(entity, core_options, current_sort)
 
     if #core_options == 0 then
       local label = scroll.add({
@@ -738,6 +744,7 @@ function core_panel_module.new(deps)
       pcall(function()
         table_element.draw_horizontal_lines = true
         table_element.draw_horizontal_line_after_headers = true
+        table_element.draw_vertical_lines = true
       end)
 
       for _, option in ipairs(core_options) do
@@ -1246,6 +1253,7 @@ function core_panel_module.new(deps)
     add_platform_core_list = add_platform_core_list,
     add_dev_controls_panel = add_dev_controls_panel,
     update_core_panel = update_core_panel,
+    prepare_core_options_for_display = prepare_core_options_for_display,
   }
 end
 

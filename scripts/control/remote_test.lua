@@ -555,6 +555,12 @@ return function(M)
       local damage_sorted = get_core_options_from_inventory(inventory, "damage:desc")
       local name_sorted = get_core_options_from_inventory(inventory, "name:asc")
       local name_desc_sorted = get_core_options_from_inventory(inventory, "name:desc")
+      local function display_sort_first(sort_mode)
+        local display_options = get_core_options_from_inventory(inventory)
+        prepare_inventory_core_options_for_display(entity, display_options, sort_mode)
+        return display_options[1] and (display_options[1].profile.custom_name or "") or nil
+      end
+
       local only_base = get_core_options_from_inventory(inventory, "level:desc", {
         all = false,
         base = true,
@@ -603,6 +609,14 @@ return function(M)
         name = name_sorted[1] and name_sorted[1].profile.custom_name or nil,
         name_desc = name_desc_sorted[1] and name_desc_sorted[1].profile.custom_name or nil,
         name_last = name_sorted[#name_sorted] and (name_sorted[#name_sorted].profile.custom_name or "") or nil,
+        display_level_asc = display_sort_first("level:asc"),
+        display_level_desc = display_sort_first("level:desc"),
+        display_name_asc = display_sort_first("name:asc"),
+        display_name_desc = display_sort_first("name:desc"),
+        display_hp_asc = display_sort_first("hp:asc"),
+        display_hp_desc = display_sort_first("hp:desc"),
+        display_attack_asc = display_sort_first("attack:asc"),
+        display_range_asc = display_sort_first("range:asc"),
       }
       local filter_samples = {
         all_count = #all_filtered,
