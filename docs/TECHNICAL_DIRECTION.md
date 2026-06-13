@@ -28,8 +28,8 @@ The ignored local `case_study/` research corpus is supporting evidence, not acti
 
 - Treat the Veteran Core/profile as the source of truth. The placed turret entity is compiled output that Factorio can display, select, mine, rebuild, and target.
 - Native turret range and max health are engine-facing facts derived from prototype and quality data. They are not arbitrary per-entity runtime fields.
-- Quality is the strongest future candidate for reducing hidden turret prototype growth while keeping native HP/range presentation truthful, but hidden quality leakage and quality-mod compatibility need a dedicated spike before adoption.
-- If quality does not pass the UX and compatibility test, prefer a small native range-band axis plus scripted survivability over rebuilding a large HP x range x specialization prototype matrix.
+- Turret XP's accepted current answer is not a quality-backed chassis, range-band rewrite, or repeatable native HP/Range progression track. Prototype-bound native stat identity should stay limited to specialization and sub-specialization turret bodies plus their bound preview variants.
+- Shield, Resistance, Regeneration, Ammo Productivity, Shield on Hit, and Lifesteal are script/profile-owned systems. They should not grow new hidden prototype axes.
 - Centralize any future entity-swap/recreate behavior. Install, remove, mine, robot rebuild, ghost replacement, migration, and GUI refresh paths should not each preserve turret state differently.
 - Dependencies should earn their cost by deleting real GUI, migration, data-stage, or validation risk. `flib` is the accepted foundation for a custom Factorio-native GUI direction; do not add a broad framework for a one-off helper.
 - Preserve research conclusions in the owning docs once they affect implementation. Do not rely on ignored local research files as the only explanation for architecture choices.
@@ -102,9 +102,6 @@ Do not add a second broad GUI framework for the #42 GUI split unless it replaces
   - It still composes standard runtime GUI primitives such as frames, tables, scroll panes, and sprite buttons. It does not expose a research-tree canvas or add child-widget drag-panning beyond normal screen-frame dragging.
   - Treat this as the leading candidate if Turret XP moves from a right-side relative panel to a full custom turret GUI that owns inventory/status/preview layout and progression tabs.
   - Do not add it merely for the current two-column Evolution UI; `flib` plus local frame/table composition covers the current attached-panel flow without a lifecycle rewrite.
-- `quality-lib`:
-  - Factorio 2.0 library for modders to interface with Quality and add quality stats to items/entities.
-  - Consider when Turret XP starts adding quality-scaled custom stats such as crit chance, crit damage, XP gain, or evolution effects.
 - `gvv`:
   - Debugging tool, not a production dependency.
   - Consider as a local playtest/dev dependency if inspecting `storage.turret_xp` in game becomes useful.
@@ -177,7 +174,6 @@ Do not add a second broad GUI framework for the #42 GUI split unless it replaces
 - The next custom GUI pass can become large enough to require visual iteration and manual validation. Keep the implementation staged by ownership so it does not mix layout polish, localization decisions, state migrations, and gameplay behavior in one unreviewable change.
 - `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than the current relative-panel polish needs.
 - `entity-gui-lib` may still be useful for non-profile inventories or a full GUI replacement, but do not use its current inventory transfer helper for `item-with-tags` Veteran Cores unless tag preservation is added or wrapped.
-- `quality-lib` may be valuable once Turret XP owns quality-scaled custom stats, but adding it should be an intentional dependency decision because it changes prototype/data-stage behavior.
 - The website can become stale if it stays hand-maintained; keep generation from mod metadata/docs on the roadmap before the site grows.
 
 ## Validation Path

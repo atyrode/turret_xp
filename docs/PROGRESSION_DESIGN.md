@@ -46,11 +46,13 @@ Materials are the industrial commitment layer. They should answer: what did the 
 
 Current V0.10.x element ranks already use passive material progress. Future material gates can be considered for deeper branch caps, hardware transformations, advanced element slots, sustain systems, or mastery sinks, but only when the player-facing goal remains visible and the feeder/input model stays understandable.
 
+The current material-input model is the invisible turret-tile feeder. Future work should harden that model and improve diagnostics before replacing it with a visible, hybrid, or manual delivery model.
+
 ### Elements
 
 Elements are the identity and interaction layer. The implemented set is Fire, Electric, Explosive, and Toxic. Future elements such as Kinetic, Acid, Poison, radiation-like behavior, or laser-like behavior should wait until the current element set is readable and balanced.
 
-Duplicate pure-element builds should specialize. Mixed pairs should create a mechanic that neither element has alone. It is better to ship a few readable, well-balanced combos than a large matrix of shallow effects.
+Duplicate pure-element builds should specialize. Mixed pairs should create a mechanic that neither element has alone. Combo growth should stay curated and limited until the current four elements are playtested. It is better to ship a few readable, well-balanced combos than a large matrix of shallow effects.
 
 ### Infinite Mastery
 
@@ -88,19 +90,20 @@ The UI must make point cost, material cost, prerequisites, current rank, and res
 
 ## Guardrails
 
-- Do not add another prototype-backed stat axis without explicit budget, migration, and validation discussion.
+- Do not add another prototype-backed stat axis during the current hardening direction. Native prototype-bound stat identity belongs to specialization and sub-specialization bodies only.
 - Keep HP, regeneration, mitigation, shield, and lifesteal as distinct survivability models rather than one larger number.
 - Keep script-heavy effects budgeted and readable.
 - Avoid stacking every proc type on one turret.
 - Use material gates to make deep specialization deliberate, not as hidden chores.
+- Defer new branches, elements, broad combo matrices, and infinite mastery until current effects are readable and balanced.
 - Keep respec policy explicit. Free respec is useful for playtesting; final balance may need cost, cooldown, or partial permanence.
 
 ## Open Questions
 
 - Should destroyed turrets always lose the installed core, drop a damaged core, or have a recovery chance?
 - Should material investment stay per turret, or should some late gates become force-wide once discovered?
-- Should the hidden material input remain invisible, become visible, or move to a hybrid model?
-- Should future elements expand beyond Fire, Electric, Explosive, and Toxic?
+- Which diagnostics or UI hints would make the current invisible material input clear enough during play?
+- After the current four elements are balanced, should future elements expand beyond Fire, Electric, Explosive, and Toxic?
 - Should infinite mastery consume only materials, only XP, or both?
 - How much support or aura behavior can exist without hurting performance and readability?
 - Should self-damage overdrive ever exist, and if so should it be manual, conditional, or passive?
