@@ -34,7 +34,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 ## Current Roadmap
 
-- Next likely GUI implementation scope: split `gui_panels.lua` into custom panel/dialog/section modules while preserving behavior and deciding the localization boundary.
+- GUI panel ownership is now split under `scripts/control/gui/`: core/platform/dev controls, stats/ammo rendering, Evolution sections, and shared formatter captions each have focused modules, while `gui_panels.lua` remains the compatibility coordinator. The V1 localization boundary is full localization for GUI-facing panel captions/tooltips; newly moved GUI wording should be added to locale files instead of concatenated as English Lua strings.
 
 ## Validation Checklist
 
