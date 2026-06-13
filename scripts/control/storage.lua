@@ -11,6 +11,7 @@ return function(M)
     storage.turret_xp.player_settings = storage.turret_xp.player_settings or {}
     storage.turret_xp.targets = storage.turret_xp.targets or {}
     storage.turret_xp.feeders = storage.turret_xp.feeders or {}
+    storage.turret_xp.feeder_refresh = storage.turret_xp.feeder_refresh or {}
     storage.turret_xp.managed_inserters = storage.turret_xp.managed_inserters or {}
     storage.turret_xp.pending_bound_mined = storage.turret_xp.pending_bound_mined or {}
     storage.turret_xp.pending_visuals = storage.turret_xp.pending_visuals or {}

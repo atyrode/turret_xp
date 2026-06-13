@@ -90,6 +90,21 @@ storage.turret_xp = {
   feeders = {
     [unit_number] = <chip_id>
   },
+  feeder_refresh = {
+    last = {
+      tick = <uint>,
+      turret_unit_number = <uint>,
+      feeder_unit_number = <uint>,
+      scanned = <uint>,
+      eligible = <uint>,
+      managed = <uint>,
+      restored = <uint>,
+      pointed_to_feeder = <uint>,
+      pointed_to_turret = <uint>,
+      stale_restored = <uint>,
+      needs_input = <boolean>
+    }
+  },
   pending_bound_mined = {
     [entity_tracking_key] = {
       profile = <serialized_core_profile>,
@@ -182,7 +197,7 @@ storage.turret_xp = {
 
 - `on_entity_damaged`: track lifetime damage for gun turrets with installed Veteran Cores, add target- and surface-weighted damage into `xp_damage`, cache per-target damage contribution and target context, and apply runtime evolution damage effects.
 - `on_entity_died`: award proportional kill credit to contributing core profiles, add target- and surface-weighted kill credit into `xp_kill_credit`, track visible kills including scripted element-damage kills, and delete installed core profiles when a turret dies.
-- Feeder lifecycle: `scripts/control/feeder.lua` owns an explicit service for creating a hidden Veteran Core feeder inventory colocated with installed-core turrets while selected elements need next-rank material, pointing/filtering nearby material inserters toward it only while needed, exposing currently needed element resources in available inserter filter slots, restoring normal turret drop targets otherwise, forwarding ammo from that hidden inventory into the turret ammo inventory, consuming materials into `element_mastery[element_id].delivered`, exposing a bounded buffer for smooth inserter throughput, avoiding redundant input-bar writes, clearing unsupported non-ammo items during normal routing, and destroying/spilling leftovers only when the core leaves the turret.
+- Feeder ownership: `scripts/control/feeder.lua` is the compatibility facade for the hidden material-input service. `scripts/control/feeder_lifecycle.lua` owns hidden feeder creation, validation, destruction, ownership mapping, and teardown spill calls. `scripts/control/feeder_inventory.lua` owns allowed material calculation, item priority, input-slot bar management, ammo forwarding, wrong-item spill cleanup, material removal, and routing. `scripts/control/feeder_inserters.lua` owns inserter filter probing/capture/restore, source probing, drop-target helpers, and managed-inserter state matching. `scripts/control/feeder_refresh.lua` owns the bounded nearby-inserter scan and stores the most recent refresh counters in `storage.turret_xp.feeder_refresh.last` for diagnostics and regression tests.
 - Platform core transfer: when the opened turret is on a space platform, list Veteran Cores from the platform hub inventory for exact install selection and allow sending the installed core back to that hub.
 - Bound turret quick move: `on_pre_player_mined_item` and `on_robot_pre_mined` snapshot bound turret profile, health ratio, quality, ammo stack counts, and current magazine ammo before vanilla mining removes the entity, then clear the live turret ammo inventory so vanilla cannot also return that same ammo separately. The live profile stays attached until final conversion. `on_player_mined_entity` and `on_robot_mined_entity` then detach the profile, remove vanilla gun turret/ammo outputs from the mining buffer, and insert or spill one tagged bound veteran turret item. The bound item places a hidden bound-only placeholder entity, so normal `gun-turret` ghosts cannot request it. Newly created bound stacks use hidden item/placeholder preview variants keyed by specialization and sub-specialization so Factorio's native cursor range preview matches the restored turret range where possible. Build events read the item's tags, convert any bound placeholder variant into a real `gun-turret`, refund placement-time ammo, restore the saved ammo snapshot including current magazine ammo, and reinstall the profile.
 - Profile ownership: `scripts/control/profile_schema.lua` owns Veteran Core defaults, normalization, copying, and current serialized schema shape. `scripts/control/profile_tags.lua` owns Veteran Core item tag read/write and tooltip build lines. `scripts/control/profile_inventory.lua` owns core stack insertion/spill, platform-hub core lookup, bound turret health/ammo snapshots, ammo reconciliation, and turret item-state restoration. `scripts/control/profile_labels.lua` owns optional name labels and the Shield render bar lifecycle. `scripts/control/profile_service.lua` owns installed-core allocation, live turret host lookup, install, detach, and state removal. `profiles.lua` wires these explicit services into the legacy shared runtime API while other modules migrate off `_ENV` names.
@@ -227,6 +242,7 @@ The invisible feeder is the accepted material-input architecture for the current
 - When no selected element needs material, the feeder input is closed and the feeder is destroyed once no contents remain.
 - Removing, mining, or resetting the installed core destroys the feeder and spills owned leftover contents according to the calling flow.
 - `storage.turret_xp.feeders` must map live feeder unit numbers to the owning core only while the feeder is valid.
+- `storage.turret_xp.feeder_refresh.last` is diagnostic-only state for the latest bounded nearby-inserter refresh and must not drive gameplay decisions.
 
 Managed inserters are also intentionally narrow:
 
@@ -244,6 +260,7 @@ Managed inserters are also intentionally narrow:
 - Save/profile compatibility for Mod Portal-published versions belongs in named migration helpers or Factorio `migrations/` files when appropriate. Tagged Veteran Core and bound turret items still require runtime normalization because old profile shapes can live in item tags outside live `storage`.
 - New pure helper groups should prefer explicit returned-table modules required directly by their callers. Existing `_ENV`/`M` exports can remain during incremental migration, but new helpers should not add hidden dependencies to the shared runtime environment unless they are part of a deliberately broad subsystem boundary.
 - Veteran Core profile schema, tags, inventory snapshots, label rendering, and install/detach orchestration belong in the focused `profile_*` helper modules. `profiles.lua` should stay a compatibility wiring layer, not regain persistence, inventory, or rendering business logic.
+- Hidden feeder lifecycle, inventory routing, inserter management, and refresh diagnostics belong in the focused `feeder_*` helper modules. `feeder.lua` should stay a compatibility facade for the public feeder service.
 - Bound turret item/tag behavior belongs in `scripts/control/bound_turret_items.lua`; live profile installation, detachment, and entity replacement should call the profile helpers and that module rather than duplicating tag or mining-buffer logic.
 - Combat accounting behavior belongs in `scripts/control/damage_accounting.lua`; stat display, formula formatting, and GUI captions should not mutate target damage buckets or kill-credit counters.
 - Combat effect refactors should be behavior-preserving unless a separate balance issue approves gameplay changes. New combat effects should add or extend descriptors and use the shared budget helper for visual, sound, pending-visual, and status-work paths.

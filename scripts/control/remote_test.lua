@@ -817,6 +817,11 @@ return function(M)
       return storage.turret_xp.feeders[unit_number]
     end,
 
+    feeder_refresh_stats = function()
+      ensure_storage()
+      return copy_serializable(feeder.get_last_refresh_stats() or {})
+    end,
+
     set_bound = function(entity, bound)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
