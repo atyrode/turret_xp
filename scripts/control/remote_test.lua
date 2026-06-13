@@ -514,6 +514,71 @@ return function(M)
         rich_stat = rich_stat_text("Damage +5 x1.2"),
       }
     end,
+    inventory_core_picker_sample = function(entity)
+      local inventory = game.create_inventory(4)
+      local low = turret_xp_test_set_profile_fields(create_blank_profile(), {
+        custom_name = "Low",
+        level = 3,
+        kills = 2,
+      })
+      local high = turret_xp_test_set_profile_fields(create_blank_profile(), {
+        custom_name = "High",
+        level = 14,
+        kills = 1,
+      })
+      local mid = turret_xp_test_set_profile_fields(create_blank_profile(), {
+        custom_name = "Mid",
+        level = 9,
+        kills = 20,
+      })
+      ensure_evolution_state(high).specialization = "sniper"
+      ensure_evolution_state(mid).specialization = "machine_gun"
+
+      inventory[1].set_stack(make_chip_item_stack(low))
+      inventory[2].set_stack(make_chip_item_stack(high))
+      inventory[3].set_stack(make_chip_item_stack(mid))
+
+      local options = get_core_options_from_inventory(inventory)
+      local summarized = {}
+      for _, option in ipairs(options) do
+        summarized[#summarized + 1] = {
+          slot = option.index,
+          name = option.profile and option.profile.custom_name or nil,
+          level = option.profile and option.profile.level or nil,
+          specialization = option.profile and option.profile.evolution and option.profile.evolution.specialization or nil,
+        }
+      end
+
+      local player = {
+        index = -2,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+        get_main_inventory = function()
+          return inventory
+        end,
+        print = function() end,
+        create_local_flying_text = function() end,
+      }
+      remember_open_turret(player, entity)
+      install_core_from_inventory(player, 2)
+      local installed = turret_xp_test_state_summary(entity)
+      local remaining = get_core_options_from_inventory(inventory)
+      local remaining_names = {}
+      for _, option in ipairs(remaining) do
+        remaining_names[#remaining_names + 1] = option.profile and option.profile.custom_name or nil
+      end
+      forget_open_turret(player)
+      inventory.destroy()
+
+      return {
+        options = summarized,
+        installed = installed,
+        remaining_names = remaining_names,
+      }
+    end,
     stats_formula_samples = function(fields, reference_health)
       local state = copy_serializable(fields or {})
       ensure_evolution_state(state)

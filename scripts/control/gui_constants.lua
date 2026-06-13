@@ -25,6 +25,7 @@ local gui = {
   core_color_r_value = prefix .. "core-color-r-value",
   core_color_g_value = prefix .. "core-color-g-value",
   core_color_b_value = prefix .. "core-color-b-value",
+  inventory_cores = prefix .. "inventory-cores",
   platform_cores = prefix .. "platform-cores",
   level = prefix .. "level",
   xp = prefix .. "xp",
@@ -72,12 +73,15 @@ local layout = {
   stats_header_height = 34,
   stats_height = 360,
   stats_value_width = 190,
+  inventory_core_picker_height = 230,
 }
 
 layout.panel_width = layout.left_column_width + layout.evolution_column_width + layout.column_spacing
 layout.panel_max_width = layout.panel_width + 24
 layout.stats_scroll_width = layout.left_column_width - 16
 layout.stats_content_width = layout.stats_scroll_width - 30
+layout.inventory_core_picker_width = layout.left_column_width - 16
+layout.inventory_core_detail_width = layout.inventory_core_picker_width - 112
 layout.evolution_scroll_width = layout.evolution_column_width
 layout.evolution_scroll_height = layout.evolution_outer_height - layout.evolution_header_height
 layout.evolution_content_width = layout.evolution_scroll_width - 28

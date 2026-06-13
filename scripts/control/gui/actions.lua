@@ -6,6 +6,7 @@ function gui_actions_module.new(deps)
   local handle_core_slot_click = deps.handle_core_slot_click
   local install_core = deps.install_core
   local extract_core = deps.extract_core
+  local install_core_from_inventory = deps.install_core_from_inventory
   local install_core_from_platform = deps.install_core_from_platform
   local send_core_to_platform = deps.send_core_to_platform
   local set_bound_turret = deps.set_bound_turret
@@ -20,6 +21,9 @@ function gui_actions_module.new(deps)
     end,
     ["extract-core"] = function(player)
       extract_core(player)
+    end,
+    ["inventory-install-core"] = function(player, event, tags)
+      install_core_from_inventory(player, tags.slot)
     end,
     ["platform-install-core"] = function(player, event, tags)
       install_core_from_platform(player, tags.slot)

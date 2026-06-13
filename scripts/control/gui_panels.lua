@@ -105,18 +105,29 @@ return function(M)
       core_panel_service = gui_core_panel.new({
         GUI = GUI,
         COLOR = COLOR,
+        LAYOUT = LAYOUT,
         CHIP_NAME = CHIP_NAME,
         set_style = set_style,
         set_element_style = set_element_style,
         find_gui_element = find_gui_element,
         get_remembered_turret = get_remembered_turret,
+        get_player_core_options = get_player_core_options,
         get_platform_core_options = get_platform_core_options,
         get_platform_hub_inventory = get_platform_hub_inventory,
-        find_carried_chip_stack = find_carried_chip_stack,
         create_blank_profile = create_blank_profile,
         dev_controls_enabled = dev_controls_enabled,
         update_name_render = update_name_render,
         find_matching_label_color_preset = find_matching_label_color_preset,
+        ensure_evolution_state = ensure_evolution_state,
+        get_specialization = get_specialization,
+        get_sub_specialization = get_sub_specialization,
+        get_loaded_ammo = get_loaded_ammo,
+        get_entity_quality_name = get_entity_quality_name,
+        get_max_health_for_quality = get_max_health_for_quality,
+        get_health_formula_values = get_health_formula_values,
+        get_shooting_speed_formula_values = get_shooting_speed_formula_values,
+        get_range_formula_values = get_range_formula_values,
+        format_number = format_number,
         widgets = get_gui_widgets_service(),
       })
     end
@@ -405,6 +416,10 @@ return function(M)
 
   function add_platform_core_list(core_panel, entity, state)
     return get_core_panel_service().add_platform_core_list(core_panel, entity, state)
+  end
+
+  function add_inventory_core_picker(core_panel, player, entity)
+    return get_core_panel_service().add_inventory_core_picker(core_panel, player, entity)
   end
 
   function add_dev_controls_panel(parent, player)

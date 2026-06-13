@@ -215,6 +215,82 @@ function profile_inventory.new(deps)
     return nil
   end
 
+  local function core_option_sort_key(profile)
+    profile = profile or {}
+    return {
+      level = math.max(0, math.floor(tonumber(profile.level) or 0)),
+      kills = math.max(0, math.floor(tonumber(profile.kills) or 0)),
+      damage = math.max(0, math.floor(tonumber(profile.damage) or 0)),
+      name = tostring(profile.custom_name or ""),
+      chip_id = tonumber(profile.chip_id) or 0,
+    }
+  end
+
+  local function sort_core_options(options)
+    table.sort(options, function(a, b)
+      local left = core_option_sort_key(a.profile)
+      local right = core_option_sort_key(b.profile)
+      if left.level ~= right.level then
+        return left.level > right.level
+      end
+      if left.kills ~= right.kills then
+        return left.kills > right.kills
+      end
+      if left.damage ~= right.damage then
+        return left.damage > right.damage
+      end
+      if left.name ~= right.name then
+        return left.name < right.name
+      end
+      if left.chip_id ~= right.chip_id then
+        return left.chip_id < right.chip_id
+      end
+      return (a.index or 0) < (b.index or 0)
+    end)
+  end
+
+  function service.get_core_options_from_inventory(inventory)
+    local options = {}
+    if not inventory or not inventory.valid then
+      return options
+    end
+
+    for index = 1, #inventory do
+      local stack = inventory[index]
+      if stack and stack.valid_for_read and stack.name == deps.chip_name then
+        local profile = deps.read_profile_from_chip_stack(stack)
+        options[#options + 1] = {
+          index = index,
+          quality = service.quality_name_from_stack(stack, "normal"),
+          profile = profile,
+        }
+      end
+    end
+
+    sort_core_options(options)
+    return options
+  end
+
+  function service.get_player_core_options(player)
+    if not player or type(player.get_main_inventory) ~= "function" then
+      return {}
+    end
+
+    return service.get_core_options_from_inventory(player.get_main_inventory())
+  end
+
+  function service.find_best_carried_chip_stack(player)
+    local cursor_stack = player.cursor_stack
+    if cursor_stack and cursor_stack.valid_for_read and cursor_stack.name == deps.chip_name then
+      return cursor_stack
+    end
+
+    local inventory = player and type(player.get_main_inventory) == "function" and player.get_main_inventory() or nil
+    local options = service.get_core_options_from_inventory(inventory)
+    local option = options[1]
+    return option and inventory[option.index] or nil
+  end
+
   function service.remove_one_chip_stack(stack)
     if not stack or not stack.valid_for_read or stack.name ~= deps.chip_name then
       return false

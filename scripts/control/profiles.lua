@@ -107,6 +107,9 @@ return function(M)
   reconcile_preloaded_turret_ammo = inventory_service.reconcile_preloaded_turret_ammo
   restore_turret_item_state = inventory_service.restore_turret_item_state
   find_carried_chip_stack = inventory_service.find_carried_chip_stack
+  find_best_carried_chip_stack = inventory_service.find_best_carried_chip_stack
+  get_core_options_from_inventory = inventory_service.get_core_options_from_inventory
+  get_player_core_options = inventory_service.get_player_core_options
   remove_one_chip_stack = inventory_service.remove_one_chip_stack
   insert_chip_item = inventory_service.insert_chip_item
   can_insert_chip_inventory = inventory_service.can_insert_chip_inventory

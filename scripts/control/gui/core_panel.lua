@@ -3,18 +3,29 @@ local core_panel_module = {}
 function core_panel_module.new(deps)
   local GUI = deps.GUI
   local COLOR = deps.COLOR
+  local LAYOUT = deps.LAYOUT
   local CHIP_NAME = deps.CHIP_NAME
   local set_style = deps.set_style
   local set_element_style = deps.set_element_style
   local find_gui_element = deps.find_gui_element
   local get_remembered_turret = deps.get_remembered_turret
+  local get_player_core_options = deps.get_player_core_options
   local get_platform_core_options = deps.get_platform_core_options
   local get_platform_hub_inventory = deps.get_platform_hub_inventory
-  local find_carried_chip_stack = deps.find_carried_chip_stack
   local create_blank_profile = deps.create_blank_profile
   local dev_controls_enabled = deps.dev_controls_enabled
   local update_name_render = deps.update_name_render
   local find_matching_label_color_preset = deps.find_matching_label_color_preset
+  local ensure_evolution_state = deps.ensure_evolution_state
+  local get_specialization = deps.get_specialization
+  local get_sub_specialization = deps.get_sub_specialization
+  local get_loaded_ammo = deps.get_loaded_ammo
+  local get_entity_quality_name = deps.get_entity_quality_name
+  local get_max_health_for_quality = deps.get_max_health_for_quality
+  local get_health_formula_values = deps.get_health_formula_values
+  local get_shooting_speed_formula_values = deps.get_shooting_speed_formula_values
+  local get_range_formula_values = deps.get_range_formula_values
+  local format_number = deps.format_number
   local widgets = deps.widgets
 
   local function add_xp_panel(parent)
@@ -88,10 +99,31 @@ function core_panel_module.new(deps)
     return core_panel
   end
 
+  local function core_options_key(options)
+    local parts = {}
+    for _, option in ipairs(options or {}) do
+      local profile = option.profile or {}
+      local evolution = ensure_evolution_state(profile)
+      parts[#parts + 1] = table.concat({
+        tostring(option.index or ""),
+        tostring(profile.chip_id or ""),
+        tostring(profile.level or 0),
+        tostring(profile.kills or 0),
+        tostring(math.floor(tonumber(profile.damage) or 0)),
+        tostring(profile.custom_name or ""),
+        tostring(profile.chip_quality or option.quality or "normal"),
+        tostring(evolution.specialization or ""),
+        tostring(evolution.sub_specialization or ""),
+      }, "/")
+    end
+    return table.concat(parts, "|")
+  end
+
   local function core_panel_key(player, state)
     local entity = get_remembered_turret(player)
     local platform_core_count = #get_platform_core_options(entity)
     local platform_inventory_present = get_platform_hub_inventory(entity) ~= nil
+    local inventory_core_options = get_player_core_options(player)
     if state then
       local color = state.label_color or {}
       return table.concat({
@@ -108,7 +140,190 @@ function core_panel_module.new(deps)
       }, ":")
     end
 
-    return "empty:" .. (find_carried_chip_stack(player) and "ready" or "none") .. ":platform:" .. tostring(platform_core_count)
+    return "empty:inventory:" .. core_options_key(inventory_core_options) .. ":platform:" .. tostring(platform_core_count)
+  end
+
+  local function core_display_name(profile, fallback)
+    local name = profile and profile.custom_name or nil
+    if name and name ~= "" then
+      return name
+    end
+
+    return fallback or { "turret-xp.inventory-core-unnamed" }
+  end
+
+  local function specialization_caption(profile)
+    local specialization = get_specialization(profile)
+    if not specialization then
+      return { "turret-xp.inventory-core-no-specialization" }
+    end
+
+    local sub_specialization = get_sub_specialization(profile)
+    if sub_specialization then
+      return { "turret-xp.inventory-core-specialization-sub", specialization.name, sub_specialization.name }
+    end
+
+    return specialization.name
+  end
+
+  local function preview_stats(entity, profile)
+    local quality_name = get_entity_quality_name(entity)
+    local max_health = get_max_health_for_quality(entity, quality_name, profile)
+    local health_values = get_health_formula_values(entity, profile, quality_name, max_health)
+    local ammo_name = get_loaded_ammo(entity)
+    local speed_values = get_shooting_speed_formula_values(entity, profile, ammo_name)
+    local range_values = get_range_formula_values(entity, profile, quality_name)
+
+    return {
+      health = format_number(health_values and health_values.total or max_health, 0),
+      speed = format_number(speed_values and speed_values.total or nil, 2),
+      range = format_number(range_values and range_values.total or nil, 1),
+    }
+  end
+
+  local function add_inventory_core_picker(core_panel, player, entity)
+    local options = get_player_core_options(player)
+
+    local frame = core_panel.add({
+      type = "frame",
+      name = GUI.inventory_cores,
+      direction = "vertical",
+      style = "inside_shallow_frame_with_padding",
+    })
+    set_style(frame, "top_margin", 6)
+    set_style(frame, "horizontally_stretchable", true)
+
+    local header = frame.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(header, "horizontally_stretchable", true)
+    set_style(header, "vertical_align", "center")
+
+    local title = header.add({
+      type = "label",
+      caption = { "turret-xp.inventory-core-title" },
+      style = "caption_label",
+    })
+    set_style(title, "font", "default-bold")
+
+    header.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
+    })
+
+    local count = header.add({
+      type = "label",
+      caption = { "turret-xp.inventory-core-count", #options },
+      style = "caption_label",
+    })
+    set_style(count, "font_color", COLOR.muted)
+
+    if #options == 0 then
+      local label = frame.add({
+        type = "label",
+        caption = { "turret-xp.inventory-core-empty" },
+        style = "caption_label",
+      })
+      set_style(label, "top_margin", 4)
+      set_style(label, "font_color", COLOR.muted)
+      set_style(label, "single_line", false)
+      return
+    end
+
+    local scroll = frame.add({
+      type = "scroll-pane",
+      direction = "vertical",
+      style = "flib_naked_scroll_pane",
+    })
+    scroll.vertical_scroll_policy = "auto-and-reserve-space"
+    scroll.horizontal_scroll_policy = "never"
+    set_style(scroll, "top_margin", 4)
+    set_style(scroll, "height", LAYOUT.inventory_core_picker_height)
+    set_style(scroll, "width", LAYOUT.inventory_core_picker_width)
+    set_style(scroll, "minimal_width", LAYOUT.inventory_core_picker_width)
+    set_style(scroll, "maximal_width", LAYOUT.inventory_core_picker_width)
+
+    local rows = scroll.add({
+      type = "flow",
+      direction = "vertical",
+    })
+    set_style(rows, "vertical_spacing", 4)
+    set_style(rows, "horizontally_stretchable", true)
+
+    for _, option in ipairs(options) do
+      local profile = option.profile or create_blank_profile()
+      local stats = preview_stats(entity, profile)
+      local row = rows.add({
+        type = "table",
+        column_count = 3,
+      })
+      set_style(row, "horizontally_stretchable", true)
+      set_style(row, "horizontal_spacing", 8)
+      set_style(row, "vertical_spacing", 0)
+      pcall(function()
+        row.style.column_alignments[1] = "left"
+        row.style.column_alignments[2] = "left"
+        row.style.column_alignments[3] = "right"
+      end)
+
+      local button_definition = {
+        type = "sprite-button",
+        sprite = "item/" .. CHIP_NAME,
+        quality = option.quality or profile.chip_quality or "normal",
+        number = (profile.level or 0) > 0 and profile.level or nil,
+        tooltip = { "turret-xp.inventory-core-install-tooltip" },
+        elem_tooltip = {
+          type = "item-with-quality",
+          name = CHIP_NAME,
+          quality = option.quality or profile.chip_quality or "normal",
+        },
+        tags = {
+          turret_xp_action = "inventory-install-core",
+          slot = option.index,
+        },
+      }
+      local icon = row.add(button_definition)
+      set_element_style(icon, "slot_button")
+      set_style(icon, "size", 36)
+
+      local details = row.add({
+        type = "flow",
+        direction = "vertical",
+      })
+      set_style(details, "horizontally_stretchable", true)
+      set_style(details, "width", LAYOUT.inventory_core_detail_width)
+      set_style(details, "minimal_width", LAYOUT.inventory_core_detail_width)
+      set_style(details, "maximal_width", LAYOUT.inventory_core_detail_width)
+
+      local name = details.add({
+        type = "label",
+        caption = { "turret-xp.inventory-core-name", core_display_name(profile), profile.level or 0 },
+        style = "caption_label",
+      })
+      set_style(name, "font", "default-bold")
+      set_style(name, "single_line", false)
+      set_style(name, "maximal_width", LAYOUT.inventory_core_detail_width)
+
+      local summary = details.add({
+        type = "label",
+        caption = { "turret-xp.inventory-core-summary", specialization_caption(profile), stats.health, stats.speed, stats.range },
+        style = "caption_label",
+      })
+      set_style(summary, "font_color", COLOR.muted)
+      set_style(summary, "single_line", false)
+      set_style(summary, "maximal_width", LAYOUT.inventory_core_detail_width)
+
+      widgets.add_tool_button(row, {
+        sprite = "utility/add",
+        style = "flib_tool_button_light_green",
+        tooltip = { "turret-xp.inventory-core-install-tooltip" },
+        tags = {
+          turret_xp_action = "inventory-install-core",
+          slot = option.index,
+        },
+      })
+    end
   end
 
   local function add_platform_core_list(core_panel, entity, state)
@@ -414,6 +629,7 @@ function core_panel_module.new(deps)
       })
       set_style(note, "font_color", COLOR.muted)
       set_style(note, "single_line", false)
+      add_inventory_core_picker(core_panel, player, entity)
       add_platform_core_list(core_panel, entity, state)
       return
     end
@@ -546,6 +762,7 @@ function core_panel_module.new(deps)
     add_xp_panel = add_xp_panel,
     add_core_panel = add_core_panel,
     core_panel_key = core_panel_key,
+    add_inventory_core_picker = add_inventory_core_picker,
     add_platform_core_list = add_platform_core_list,
     add_dev_controls_panel = add_dev_controls_panel,
     update_core_panel = update_core_panel,

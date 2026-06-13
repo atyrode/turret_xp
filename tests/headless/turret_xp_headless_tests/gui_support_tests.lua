@@ -31,6 +31,11 @@ function tests.run_layout_constants_test()
   assert_true(layout.evolution_detail_width < layout.evolution_inner_width, "Evolution text details must stay capped inside inner rows")
   assert_true(layout.stats_header_height > 0, "Stats pane must reserve a visible subheader")
   assert_true(layout.stats_scroll_width < layout.left_column_width, "Stats pane must stay inside the left column")
+  assert_true(layout.inventory_core_picker_width < layout.left_column_width, "inventory core picker must stay inside the left column")
+  assert_true(
+    layout.inventory_core_detail_width < layout.inventory_core_picker_width,
+    "inventory core row details must reserve icon/action space"
+  )
 end
 
 function tests.run_gui_support_samples_test()
@@ -100,6 +105,23 @@ function tests.run_gui_action_dispatch_test(surface)
   summary = call("dispatch_toggle_label_level", turret, true)
   assert_true(summary ~= nil, "GUI checked-state dispatch did not return a turret summary after re-enable")
   assert_eq(summary.show_label_level, true, "GUI checked-state dispatch did not restore the level suffix")
+end
+
+function tests.run_inventory_core_picker_test(surface)
+  local turret = create_turret(surface, { 8, 0 }, 10)
+  local sample = call("inventory_core_picker_sample", turret)
+
+  assert_true(sample ~= nil, "inventory core picker sample returned nothing")
+  assert_eq(#sample.options, 3, "inventory core picker did not discover all tagged cores")
+  assert_eq(sample.options[1].name, "High", "inventory core picker did not sort highest level first")
+  assert_eq(sample.options[1].slot, 2, "inventory core picker lost the source slot for the highest-level core")
+  assert_eq(sample.options[2].name, "Mid", "inventory core picker did not sort the middle-level core second")
+  assert_eq(sample.options[3].name, "Low", "inventory core picker did not sort the lowest-level core last")
+  assert_eq(sample.installed.custom_name, "High", "inventory core picker action did not install the selected slot")
+  assert_eq(sample.installed.level, 14, "inventory core picker action lost the selected core level")
+  assert_eq(sample.installed.evolution.specialization, "sniper", "inventory core picker action lost the selected specialization")
+  assert_eq(#sample.remaining_names, 2, "inventory core picker action did not remove one selected inventory core")
+  assert_eq(sample.remaining_names[1], "Mid", "remaining inventory cores were not still sorted after install")
 end
 
 return tests

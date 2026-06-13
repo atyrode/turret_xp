@@ -158,6 +158,7 @@ M.gui_actions = gui_actions.new({
   handle_core_slot_click = M.handle_core_slot_click,
   install_core = M.install_core,
   extract_core = M.extract_core,
+  install_core_from_inventory = M.install_core_from_inventory,
   install_core_from_platform = M.install_core_from_platform,
   send_core_to_platform = M.send_core_to_platform,
   set_bound_turret = M.set_bound_turret,

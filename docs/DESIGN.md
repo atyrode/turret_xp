@@ -24,6 +24,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep stat rows scannable: show final values in the panel, put formulas in the stat-name info hover, and reserve the quality diamond for quality-specific HP/range breakdowns.
 - Keep dev controls hidden by default and toggled through `/turret-xp-dev`.
 - Use the Veteran Core slot as a scripted tag-preserving control. Do not imply native arbitrary inventory-slot support inside the vanilla turret GUI.
+- When no core is installed, use the left-column Veteran Core panel as an exact core picker: list tagged Veteran Cores from the player's inventory, sort highest level first, show name, level, specialization, and compact HP/attack-speed/range preview values, and install the chosen row through a compact `+` action.
 - Keep platform core selection explicit: when multiple tagged cores are in a platform hub, the player chooses the exact row.
 - Keep Bind/Unbind visually attached to the installed Veteran Core, because bound turret movement is an opt-in quick-move mode for that core/turret pair.
 - Keep floating-label controls top-down and conditional: name field plus `Show`, RGB sliders/preset controls only when the label is shown, then the `Level` option.

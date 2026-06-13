@@ -36,6 +36,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - GUI widget action routing now lives in `scripts/control/gui/actions.lua`, keeping Factorio event registration thinner while preserving the existing `scripts/control/actions.lua` gameplay mutation service.
 - Opened-turret GUI context assembly and refresh orchestration now live in `scripts/control/gui/runtime.lua`, keeping `gui_panels.lua` closer to a compatibility wiring layer for legacy callers.
 - Compact icon-led action buttons are now built through `scripts/control/gui/widgets.lua` and used in the Veteran Core platform/dev controls as the first reusable widget helper.
+- Empty-turret Veteran Core selection now uses a sorted player-inventory picker in the left column. Rows preview name, level, specialization, HP, attack speed, and range, and install the exact tagged inventory slot through a compact `+` action.
 - Public homepage, GitHub release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and `docs/public-copy.json`, with `scripts/check.sh` detecting stale committed homepage output.
 - High-complexity scope is decided for the current hardening line: keep/harden hidden feeder automation, keep optional bound turret movement, keep prototype-bound native stats limited to specialization/sub-specialization bodies, keep element combos curated and limited, and require separate approval for new progression systems.
 
