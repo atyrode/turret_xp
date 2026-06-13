@@ -34,13 +34,30 @@
 
 - Before implementing a feature with substantial custom GUI plumbing, migration machinery, data structures, scheduling, debugging UI, or workaround-style code, check the Factorio Mod Portal for maintained libraries that already solve that class of problem.
 - Prefer documented, Factorio 2.0 compatible, well-adopted libraries over local reimplementation when they reduce risk and maintenance cost.
-- Keep `flib` as the default first choice for richer GUI, migration, and shared utility work.
+- Keep `flib` as the default first choice for richer GUI, migration, and shared utility work; it is already a required runtime dependency and should be used where it supports a custom Turret XP interface cleanly.
 - If a feature remains custom after the check, document why the local implementation is small enough or more appropriate than adding a dependency.
 - Before redesigning the Veteran Core slot or replacing the turret panel with a full custom GUI, inspect source from large/popular GUI-heavy mods such as Factory Planner and any maintained inventory-slot/entity-GUI libraries. Reuse their proven patterns or dependencies when they solve tag-preserving slot transfer, player-inventory integration, or vanilla-like GUI ownership better than local code.
 
 ## Libraries
 
 `flib` is the current production library dependency. Revisit other libraries only when a feature needs enough shared machinery to justify adding another dependency.
+
+### GUI Dependency Decision
+
+Turret XP should move toward a fully custom, polished, Factorio-native Veteran Core GUI rather than staying constrained by the current attached-panel implementation. Runtime dependencies are acceptable for this direction when they earn their cost through better GUI quality, deleted local infrastructure, or lower event/layout risk.
+
+Factory Planner is the strongest current reference for this direction. Its Mod Portal page lists Factory Planner 2.0.50 as Factorio 2.0 compatible, MIT licensed, and dependent on `flib >= 0.15.0`; its source keeps a custom GUI architecture on top of that dependency, with separate `ui/base`, `ui/main`, `ui/dialogs`, and `ui/components` modules, a central GUI event dispatcher, tagged GUI actions, modal/dialog ownership, custom sprites, custom GUI styles, responsive sizing, and screenshot automation. The lesson for Turret XP is not to avoid dependencies. The lesson is to use `flib` as a foundation while owning a domain-specific interface that looks and behaves like it belongs in Factorio. Sources: <https://mods.factorio.com/mod/factoryplanner> and <https://github.com/ClaudeMetz/FactoryPlanner>.
+
+The next major GUI pass should therefore prefer:
+
+- a dedicated Turret XP GUI module tree with panel/dialog/section ownership instead of a larger `gui_panels.lua`;
+- a small local GUI builder/helper layer for repeated domain widgets such as Veteran Core slots, stat rows, Evolution cards, element progress, and action toolbars;
+- `flib` styles/helpers where they match the desired vanilla language, especially slot buttons, drag handles, pushers, and future dictionary/migration utilities;
+- custom sprites and data-stage styles for Turret XP-specific actions only when vanilla utility sprites or `flib` styles are insufficient;
+- tag-based action routing and refresh/build triggers that keep behavior discoverable without burying player actions in ad hoc closures;
+- screenshot/manual playtest checkpoints for GUI-heavy changes, because headless tests can protect helpers and remote summaries but cannot prove visual quality.
+
+Do not add a second broad GUI framework for the #42 GUI split unless it replaces enough local code to justify another Mod Portal dependency. Kux-GuiLib and entity-GUI-style libraries remain references for specific selector or inventory behavior, not default dependencies.
 
 ### Current Dependencies
 
@@ -144,7 +161,8 @@
 - Specialization and sub-specialization stats are prototype-backed, but variants are generated after other mods' data updates and research damage bonuses are runtime-synced so hidden variants do not clutter technology effects. The current measured tracked hidden prototype budget is 36 generated prototypes: 12 hidden turret bodies, 12 bound preview items, and 12 bound preview placeholders. Range and Max HP augments are retired; `migrations/turret_xp_0.10.4.json` collapses old hidden body and range-preview prototypes onto the new specialization-only prototypes, while runtime normalization removes old saved ranks from Veteran Core profiles and bound turret tags. Any added prototype-backed axis or cap increase should be treated as a design decision with budget data, not as a routine implementation detail. Shield and Resistance are scripted rather than prototype-backed, so they are per-core without variant growth but only mitigate non-lethal hits after the engine has resolved damage. Ammo Productivity observes loaded-magazine `LuaItemStack.ammo` deltas when the turret deals damage, converts uncapped raw productivity into effective refill progress with `raw / (raw + 1)`, fills a purple custom progress bar, and restores +1 ammo inside the current loaded magazine when progress reaches 100%; refills are capped by the ammo prototype's normal magazine size and do not create full ammo items, but the event-derived accounting remains approximate because Factorio does not expose a direct turret-fired event. Open-GUI body swaps are deferred until the turret GUI closes to avoid resetting the vanilla window location, while the stats panel reads the intended specialization prototype so formulas update immediately after specialization/sub-specialization choices. Feeder placement is an invisible colocated input with ammo forwarding, material request priority, and managed inserter targeting/filtering. Bound turret mining relies on pre-mine plus mined-entity event pairing to replace vanilla outputs with one tagged item. Edge cases around full turret ammo inventories, unsupported ammo, mixed-material belts, unusual inserter layouts, platform hub inventory fullness, platform mining buffers, asteroid XP pacing, bound turret mining buffers, optional VFX density, Shield readability/lethal-hit edge cases, Ammo Productivity accounting, and the scripted Veteran Core slot UX still need playtesting.
 - Core upgrades, augments, elements, combos, passive repair, Shield on Hit, and Brawler Lifesteal still need playtest balance and clearer feedback.
 - The panel updates named elements in place every 60 ticks; new GUI work should preserve stable hover/read behavior.
-- `flib` adds a dependency, but it is common and handled by the in-game dependency manager.
+- `flib` adds a dependency, but it is common, already required, and handled by the in-game dependency manager.
+- The next custom GUI pass can become large enough to require visual iteration and manual validation. Keep the implementation staged by ownership so it does not mix layout polish, localization decisions, state migrations, and gameplay behavior in one unreviewable change.
 - `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than the current relative-panel polish needs.
 - `entity-gui-lib` may still be useful for non-profile inventories or a full GUI replacement, but do not use its current inventory transfer helper for `item-with-tags` Veteran Cores unless tag preservation is added or wrapped.
 - `quality-lib` may be valuable once Turret XP owns quality-scaled custom stats, but adding it should be an intentional dependency decision because it changes prototype/data-stage behavior.
