@@ -111,6 +111,10 @@ function actions_module.new(deps)
       preview.caption = preset and preset.name or "Custom"
       set_style(preview, "font_color", color)
     end
+    local swatch = find_gui_element(panel, GUI.core_color_swatch)
+    if swatch then
+      set_style(swatch, "color", color)
+    end
 
     local values = {
       { name = GUI.core_color_r_value, slider = GUI.core_color_r, value = color[1] or 0 },

@@ -14,6 +14,7 @@ function stats_panel.new(deps)
   local rich_number = deps.rich_number
   local rich_color = deps.rich_color
   local color_to_rich_string = deps.color_to_rich_string
+  local rich_specialization_caption = deps.rich_specialization_caption
   local format_colored_multiplier = deps.format_colored_multiplier
   local format_stat_formula = deps.format_stat_formula
   local get_base_rank = deps.get_base_rank
@@ -519,9 +520,14 @@ function stats_panel.new(deps)
     if state then
       local specialization = get_specialization(state)
       local sub_specialization = get_sub_specialization(state)
-      local specialization_caption = specialization and specialization.name or "-"
+      local specialization_caption = specialization and rich_specialization_caption(specialization.id, specialization.name) or "-"
       if specialization and sub_specialization then
-        specialization_caption = specialization.name .. "/" .. sub_specialization.name
+        specialization_caption = {
+          "",
+          rich_specialization_caption(specialization.id, specialization.name),
+          " / ",
+          rich_specialization_caption(specialization.id, sub_specialization.name),
+        }
       end
       add_custom_stat(stats, { "turret-xp.stat-specialization" }, specialization_caption)
     end

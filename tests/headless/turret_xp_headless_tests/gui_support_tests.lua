@@ -49,6 +49,25 @@ function tests.run_layout_constants_test()
     layout.empty_inventory_core_detail_width < layout.empty_inventory_core_picker_width,
     "wide inventory core row details must reserve stats/action space"
   )
+  assert_eq(
+    layout.stats_label_width + layout.stats_value_width + 12,
+    layout.stats_content_width,
+    "stats label/value widths must derive from the scroll content width"
+  )
+  local wide_table_width = layout.empty_inventory_core_icon_width
+    + layout.empty_inventory_core_name_width
+    + layout.empty_inventory_core_level_width
+    + layout.empty_inventory_core_kills_width
+    + layout.empty_inventory_core_damage_width
+    + layout.empty_inventory_core_stat_width
+    + layout.empty_inventory_core_attack_width
+    + layout.empty_inventory_core_stat_width
+    + layout.empty_inventory_core_action_width
+    + (8 * 8)
+  assert_true(
+    wide_table_width <= layout.empty_inventory_core_picker_width,
+    "wide inventory core table columns must fit inside the empty-core picker viewport"
+  )
 end
 
 function tests.run_gui_support_samples_test()
@@ -59,6 +78,8 @@ function tests.run_gui_support_samples_test()
   assert_eq(samples.rich_value, "[color=0.55,0.82,0.55]42/s[/color]", "GUI rich value formatting changed")
   assert_eq(samples.rich_metric[2], "HP", "GUI rich metric label changed")
   assert_eq(samples.rich_metric[4], "[color=0.55,0.82,0.55]400[/color]", "GUI rich metric value changed")
+  assert_eq(samples.rich_specialization[2], "[color=0.45,0.78,1]", "GUI specialization color prefix changed")
+  assert_eq(samples.rich_specialization[3], "Sniper", "GUI specialization caption changed")
   assert_eq(
     samples.rich_stat,
     "Damage [color=0.55,0.82,0.55]+5[/color] [color=0.55,0.82,0.55]x1.2[/color]",
@@ -128,19 +149,27 @@ function tests.run_inventory_core_picker_test(surface)
   local sample = call("inventory_core_picker_sample", turret)
 
   assert_true(sample ~= nil, "inventory core picker sample returned nothing")
-  assert_eq(#sample.options, 3, "inventory core picker did not discover all tagged cores")
+  assert_eq(#sample.options, 4, "inventory core picker did not discover all tagged cores")
   assert_eq(sample.options[1].name, "High", "inventory core picker did not sort highest level first")
   assert_eq(sample.options[1].slot, 2, "inventory core picker lost the source slot for the highest-level core")
   assert_eq(sample.options[2].name, "Mid", "inventory core picker did not sort the middle-level core second")
-  assert_eq(sample.options[3].name, "Low", "inventory core picker did not sort the lowest-level core last")
+  assert_eq(sample.options[3].name, "Low", "inventory core picker did not sort the lower-level named core third")
+  assert_eq(sample.options[4].name, "", "inventory core picker did not keep the unnamed core last")
   assert_eq(sample.sort_samples.kills, "Mid", "inventory core picker did not sort highest kills first")
   assert_eq(sample.sort_samples.damage, "Mid", "inventory core picker did not sort highest damage first")
   assert_eq(sample.sort_samples.name, "High", "inventory core picker did not sort alphabetically")
+  assert_eq(sample.sort_samples.name_desc, "Mid", "inventory core picker did not reverse name sorting")
+  assert_eq(sample.sort_samples.name_last, "", "inventory core picker did not keep unnamed cores last under name sorting")
+  assert_eq(sample.filter_samples.base_count, 2, "inventory core picker base filter did not include only unspecialized cores")
+  assert_eq(sample.filter_samples.base_first, "Low", "inventory core picker base filter did not keep sorted visible rows")
+  assert_eq(sample.filter_samples.sniper_count, 1, "inventory core picker specialization filter did not isolate sniper cores")
+  assert_eq(sample.filter_samples.sniper_first, "High", "inventory core picker specialization filter returned the wrong core")
   assert_eq(sample.installed.custom_name, "High", "inventory core picker action did not install the selected slot")
   assert_eq(sample.installed.level, 14, "inventory core picker action lost the selected core level")
   assert_eq(sample.installed.evolution.specialization, "sniper", "inventory core picker action lost the selected specialization")
-  assert_eq(#sample.remaining_names, 2, "inventory core picker action did not remove one selected inventory core")
+  assert_eq(#sample.remaining_names, 3, "inventory core picker action did not remove one selected inventory core")
   assert_eq(sample.remaining_names[1], "Mid", "remaining inventory cores were not still sorted after install")
+  assert_eq(sample.remaining_names[3], "", "remaining inventory cores lost the unnamed core")
 end
 
 return tests

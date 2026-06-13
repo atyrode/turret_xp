@@ -113,6 +113,8 @@ return function(M)
         get_remembered_turret = get_remembered_turret,
         get_player_core_options = get_player_core_options,
         get_core_picker_sort = get_core_picker_sort,
+        get_core_picker_filters = get_core_picker_filters,
+        core_picker_filters_key = core_picker_filters_key,
         get_platform_core_options = get_platform_core_options,
         get_platform_hub_inventory = get_platform_hub_inventory,
         create_blank_profile = create_blank_profile,
@@ -129,11 +131,15 @@ return function(M)
         get_shooting_speed_formula_values = get_shooting_speed_formula_values,
         get_range_formula_values = get_range_formula_values,
         format_number = format_number,
+        SPECIALIZATIONS = SPECIALIZATIONS,
         rich_value = function(value, suffix, color)
           return rich_value(value, suffix, color)
         end,
         rich_metric = function(label, value, suffix, color)
           return rich_metric(label, value, suffix, color)
+        end,
+        rich_specialization_caption = function(specialization_id, caption)
+          return get_gui_support_service().rich_specialization_caption(specialization_id, caption)
         end,
         widgets = get_gui_widgets_service(),
       })
@@ -159,6 +165,9 @@ return function(M)
         rich_stat_text = rich_stat_text,
         rich_color = rich_color,
         color_to_rich_string = color_to_rich_string,
+        rich_specialization_caption = function(specialization_id, caption)
+          return get_gui_support_service().rich_specialization_caption(specialization_id, caption)
+        end,
         format_colored_multiplier = format_colored_multiplier,
         format_stat_formula = format_stat_formula,
         get_base_rank = get_base_rank,
@@ -343,6 +352,10 @@ return function(M)
 
   function rich_color(color, text)
     return get_gui_support_service().rich_color(color, text)
+  end
+
+  function rich_specialization_caption(specialization_id, caption)
+    return get_gui_support_service().rich_specialization_caption(specialization_id, caption)
   end
 
   function set_evolution_content_width(element, inner)

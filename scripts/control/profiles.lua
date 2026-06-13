@@ -94,6 +94,8 @@ return function(M)
     get_entity_inventory = feeder_get_entity_inventory,
     make_chip_item_stack = make_chip_item_stack,
     read_profile_from_chip_stack = read_profile_from_chip_stack,
+    ensure_evolution_state = ensure_evolution_state,
+    specialization_by_id = SPECIALIZATION_BY_ID,
   })
   quality_name_from_stack = inventory_service.quality_name_from_stack
   quality_name_from_entity = inventory_service.quality_name_from_entity

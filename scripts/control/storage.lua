@@ -82,22 +82,116 @@ return function(M)
 
   function normalize_core_picker_sort(sort_mode)
     local mode = tostring(sort_mode or "")
-    if mode == "kills" or mode == "damage" or mode == "name" then
-      return mode
+    if mode == "none" or mode == "" then
+      return "none"
     end
 
-    return "level"
+    local field, direction = string.match(mode, "^([^:]+):([^:]+)$")
+    field = field or mode
+    if field ~= "level" and field ~= "kills" and field ~= "damage" and field ~= "name" then
+      return "none"
+    end
+
+    if direction ~= "asc" and direction ~= "desc" then
+      direction = field == "name" and "asc" or "desc"
+    end
+
+    return field .. ":" .. direction
+  end
+
+  function default_core_picker_sort_direction(field)
+    return field == "name" and "asc" or "desc"
+  end
+
+  function next_core_picker_sort(current_sort, field)
+    field = tostring(field or "")
+    if field ~= "level" and field ~= "kills" and field ~= "damage" and field ~= "name" then
+      return "none"
+    end
+
+    local current = normalize_core_picker_sort(current_sort)
+    local current_field, current_direction = string.match(current, "^([^:]+):([^:]+)$")
+    local default_direction = default_core_picker_sort_direction(field)
+    if current_field ~= field then
+      return field .. ":" .. default_direction
+    end
+
+    if current_direction == default_direction then
+      return field .. ":" .. (default_direction == "asc" and "desc" or "asc")
+    end
+
+    return "none"
   end
 
   function get_core_picker_sort(player)
     local player_state = ensure_player_state(player)
-    return normalize_core_picker_sort(player_state.core_picker_sort)
+    return normalize_core_picker_sort(player_state.core_picker_sort or "none")
   end
 
-  function set_core_picker_sort(player, sort_mode)
+  function set_core_picker_sort(player, sort_field)
     local player_state = ensure_player_state(player)
-    player_state.core_picker_sort = normalize_core_picker_sort(sort_mode)
+    player_state.core_picker_sort = next_core_picker_sort(player_state.core_picker_sort, sort_field)
     return player_state.core_picker_sort
+  end
+
+  local function core_picker_filter_is_known(filter_id)
+    if filter_id == "base" then
+      return true
+    end
+
+    return SPECIALIZATION_BY_ID[filter_id] ~= nil
+  end
+
+  local function core_picker_default_filters()
+    local filters = {
+      base = true,
+    }
+    for _, specialization in ipairs(SPECIALIZATIONS) do
+      filters[specialization.id] = true
+    end
+    return filters
+  end
+
+  function normalize_core_picker_filters(filters)
+    if type(filters) ~= "table" then
+      return core_picker_default_filters()
+    end
+
+    local normalized = {
+      base = filters.base ~= false,
+    }
+    for _, specialization in ipairs(SPECIALIZATIONS) do
+      local enabled = filters[specialization.id] ~= false
+      normalized[specialization.id] = enabled
+    end
+
+    return normalized
+  end
+
+  function core_picker_filters_key(filters)
+    local normalized = normalize_core_picker_filters(filters)
+    local parts = {
+      "base=" .. tostring(normalized.base == true),
+    }
+    for _, specialization in ipairs(SPECIALIZATIONS) do
+      parts[#parts + 1] = specialization.id .. "=" .. tostring(normalized[specialization.id] == true)
+    end
+    return table.concat(parts, ";")
+  end
+
+  function get_core_picker_filters(player)
+    local player_state = ensure_player_state(player)
+    return normalize_core_picker_filters(player_state.core_picker_filters)
+  end
+
+  function set_core_picker_filter(player, filter_id, enabled)
+    local player_state = ensure_player_state(player)
+    local filters = normalize_core_picker_filters(player_state.core_picker_filters)
+    if core_picker_filter_is_known(filter_id) then
+      filters[filter_id] = enabled == true
+    end
+    player_state.core_picker_filters = normalize_core_picker_filters(filters)
+    return player_state.core_picker_filters
   end
 
   function is_gun_turret(entity)

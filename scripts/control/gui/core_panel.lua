@@ -11,6 +11,8 @@ function core_panel_module.new(deps)
   local get_remembered_turret = deps.get_remembered_turret
   local get_player_core_options = deps.get_player_core_options
   local get_core_picker_sort = deps.get_core_picker_sort
+  local get_core_picker_filters = deps.get_core_picker_filters
+  local core_picker_filters_key = deps.core_picker_filters_key
   local get_platform_core_options = deps.get_platform_core_options
   local get_platform_hub_inventory = deps.get_platform_hub_inventory
   local create_blank_profile = deps.create_blank_profile
@@ -27,8 +29,10 @@ function core_panel_module.new(deps)
   local get_shooting_speed_formula_values = deps.get_shooting_speed_formula_values
   local get_range_formula_values = deps.get_range_formula_values
   local format_number = deps.format_number
+  local SPECIALIZATIONS = deps.SPECIALIZATIONS
   local rich_value = deps.rich_value
   local rich_metric = deps.rich_metric
+  local rich_specialization_caption = deps.rich_specialization_caption
   local widgets = deps.widgets
 
   local function add_xp_panel(parent)
@@ -128,7 +132,9 @@ function core_panel_module.new(deps)
     local platform_core_count = #get_platform_core_options(entity)
     local platform_inventory_present = get_platform_hub_inventory(entity) ~= nil
     local sort_mode = get_core_picker_sort(player)
-    local inventory_core_options = get_player_core_options(player, sort_mode)
+    local core_filters = get_core_picker_filters(player)
+    local all_inventory_core_options = get_player_core_options(player, sort_mode)
+    local inventory_core_options = get_player_core_options(player, sort_mode, core_filters)
     if state then
       local color = state.label_color or {}
       return table.concat({
@@ -147,6 +153,10 @@ function core_panel_module.new(deps)
 
     return "empty:"
       .. sort_mode
+      .. ":filters:"
+      .. core_picker_filters_key(core_filters)
+      .. ":all:"
+      .. core_options_key(all_inventory_core_options)
       .. ":inventory:"
       .. core_options_key(inventory_core_options)
       .. ":platform:"
@@ -165,15 +175,20 @@ function core_panel_module.new(deps)
   local function specialization_caption(profile)
     local specialization = get_specialization(profile)
     if not specialization then
-      return { "turret-xp.inventory-core-no-specialization" }
+      return rich_specialization_caption("base", { "turret-xp.inventory-core-no-specialization" })
     end
 
     local sub_specialization = get_sub_specialization(profile)
     if sub_specialization then
-      return { "turret-xp.inventory-core-specialization-sub", specialization.name, sub_specialization.name }
+      return {
+        "",
+        rich_specialization_caption(specialization.id, specialization.name),
+        " / ",
+        rich_specialization_caption(specialization.id, sub_specialization.name),
+      }
     end
 
-    return specialization.name
+    return rich_specialization_caption(specialization.id, specialization.name)
   end
 
   local function preview_stats(entity, profile)
@@ -198,77 +213,372 @@ function core_panel_module.new(deps)
     { id = "name", caption = { "turret-xp.inventory-core-sort-name" }, tooltip = { "turret-xp.inventory-core-sort-name-tooltip" } },
   }
 
-  local function add_picker_sort_controls(parent, current_sort)
-    local sort_flow = parent.add({
+  local function core_filter_modes()
+    local modes = {
+      {
+        id = "base",
+        caption = { "turret-xp.inventory-core-filter-base" },
+        tooltip = { "turret-xp.inventory-core-filter-base-tooltip" },
+      },
+    }
+    for _, specialization in ipairs(SPECIALIZATIONS or {}) do
+      modes[#modes + 1] = {
+        id = specialization.id,
+        caption = specialization.name,
+        tooltip = { "turret-xp.inventory-core-filter-specialization-tooltip", specialization.name },
+      }
+    end
+    return modes
+  end
+
+  local function parse_sort(sort_mode)
+    local field, direction = string.match(tostring(sort_mode or ""), "^([^:]+):([^:]+)$")
+    if field ~= "level" and field ~= "kills" and field ~= "damage" and field ~= "name" then
+      return nil, nil
+    end
+    if direction ~= "asc" and direction ~= "desc" then
+      return nil, nil
+    end
+
+    return field, direction
+  end
+
+  local function set_cell_width(element, width)
+    set_style(element, "width", width)
+    set_style(element, "minimal_width", width)
+    set_style(element, "maximal_width", width)
+  end
+
+  local function sort_caption(mode, current_sort)
+    local field, direction = parse_sort(current_sort)
+    if field ~= mode.id then
+      return mode.caption
+    end
+
+    return { "", mode.caption, " ", direction == "asc" and "[img=utility/hint_arrow_up]" or "[img=utility/hint_arrow_down]" }
+  end
+
+  local function add_sort_header_cell(parent, mode, current_sort, width)
+    local field = parse_sort(current_sort)
+    local active = field == mode.id
+    local button = parent.add({
+      type = "button",
+      caption = sort_caption(mode, current_sort),
+      tooltip = mode.tooltip,
+      tags = {
+        turret_xp_action = "set-core-sort",
+        sort = mode.id,
+      },
+    })
+    set_cell_width(button, width)
+    set_style(button, "height", 28)
+    if active then
+      set_style(button, "font", "default-bold")
+      set_style(button, "font_color", COLOR.bonus)
+    end
+    return button
+  end
+
+  local function add_header_label_cell(parent, caption, width)
+    local label = parent.add({
+      type = "label",
+      caption = caption,
+      style = "caption_label",
+    })
+    set_cell_width(label, width)
+    set_style(label, "font", "default-bold")
+    set_style(label, "font_color", COLOR.caption)
+    set_style(label, "horizontal_align", "right")
+    return label
+  end
+
+  local function add_inventory_core_filter_controls(parent, current_filters)
+    local filter_flow = parent.add({
       type = "flow",
+      name = GUI.inventory_core_filters,
       direction = "horizontal",
     })
-    set_style(sort_flow, "top_margin", 4)
-    set_style(sort_flow, "horizontal_spacing", 4)
-    set_style(sort_flow, "vertical_align", "center")
+    set_style(filter_flow, "top_margin", 4)
+    set_style(filter_flow, "horizontal_spacing", 8)
+    set_style(filter_flow, "vertical_align", "center")
+    set_style(filter_flow, "horizontally_stretchable", true)
 
-    local label = sort_flow.add({
+    local label = filter_flow.add({
       type = "label",
-      caption = { "turret-xp.inventory-core-sort" },
+      caption = { "turret-xp.inventory-core-filter" },
       style = "caption_label",
     })
     set_style(label, "font_color", COLOR.caption)
     set_style(label, "right_margin", 2)
 
-    for _, mode in ipairs(CORE_SORT_MODES) do
-      local active = current_sort == mode.id
-      local button = sort_flow.add({
-        type = "button",
-        caption = mode.caption,
+    for _, mode in ipairs(core_filter_modes()) do
+      local checkbox = filter_flow.add({
+        type = "checkbox",
+        caption = rich_specialization_caption(mode.id, mode.caption),
         tooltip = mode.tooltip,
+        state = current_filters[mode.id] ~= false,
         tags = {
-          turret_xp_action = "set-core-sort",
-          sort = mode.id,
+          turret_xp_action = "set-core-filter",
+          filter = mode.id,
         },
       })
-      set_style(button, "minimal_width", 56)
-      set_style(button, "height", 28)
-      if active then
-        set_style(button, "font", "default-bold")
-        set_style(button, "font_color", COLOR.bonus)
-      end
+      set_style(checkbox, "font", "default")
     end
   end
 
-  local function add_inventory_core_stats(parent, stats, wide)
-    if wide then
-      local details = parent.add({
-        type = "flow",
-        direction = "vertical",
-      })
-      set_style(details, "width", 174)
-      set_style(details, "minimal_width", 174)
-      set_style(details, "maximal_width", 174)
+  local function add_inventory_core_table_header(parent, current_sort)
+    local header = parent.add({
+      type = "table",
+      column_count = 9,
+    })
+    set_style(header, "top_margin", 4)
+    set_style(header, "horizontally_stretchable", true)
+    set_style(header, "horizontal_spacing", 8)
+    set_style(header, "vertical_spacing", 0)
+    pcall(function()
+      for index = 1, 9 do
+        header.style.column_alignments[index] = index >= 3 and "right" or "left"
+      end
+    end)
 
-      local values = {
+    local spacer = header.add({
+      type = "label",
+      caption = "",
+      style = "caption_label",
+    })
+    set_cell_width(spacer, LAYOUT.empty_inventory_core_icon_width)
+
+    for _, mode in ipairs(CORE_SORT_MODES) do
+      if mode.id == "name" then
+        add_sort_header_cell(header, mode, current_sort, LAYOUT.empty_inventory_core_name_width)
+      end
+    end
+    for _, mode in ipairs(CORE_SORT_MODES) do
+      if mode.id == "level" then
+        add_sort_header_cell(header, mode, current_sort, LAYOUT.empty_inventory_core_level_width)
+      end
+    end
+    for _, mode in ipairs(CORE_SORT_MODES) do
+      if mode.id == "kills" then
+        add_sort_header_cell(header, mode, current_sort, LAYOUT.empty_inventory_core_kills_width)
+      end
+    end
+    for _, mode in ipairs(CORE_SORT_MODES) do
+      if mode.id == "damage" then
+        add_sort_header_cell(header, mode, current_sort, LAYOUT.empty_inventory_core_damage_width)
+      end
+    end
+
+    add_header_label_cell(header, { "turret-xp.inventory-core-stat-hp" }, LAYOUT.empty_inventory_core_stat_width)
+    add_header_label_cell(header, { "turret-xp.inventory-core-stat-attack" }, LAYOUT.empty_inventory_core_attack_width)
+    add_header_label_cell(header, { "turret-xp.inventory-core-stat-range" }, LAYOUT.empty_inventory_core_stat_width)
+
+    local action_spacer = header.add({
+      type = "label",
+      caption = "",
+      style = "caption_label",
+    })
+    set_cell_width(action_spacer, LAYOUT.empty_inventory_core_action_width)
+  end
+
+  local function add_inventory_core_value_cell(parent, caption, width)
+    local label = parent.add({
+      type = "label",
+      caption = caption,
+      style = "caption_label",
+    })
+    set_cell_width(label, width)
+    set_style(label, "horizontal_align", "right")
+    set_style(label, "single_line", true)
+    return label
+  end
+
+  local function add_wide_inventory_core_row(rows, option, profile, stats)
+    local row = rows.add({
+      type = "table",
+      column_count = 9,
+    })
+    set_style(row, "horizontally_stretchable", true)
+    set_style(row, "horizontal_spacing", 8)
+    set_style(row, "vertical_spacing", 0)
+    pcall(function()
+      row.style.column_alignments[1] = "left"
+      row.style.column_alignments[2] = "left"
+      for index = 3, 9 do
+        row.style.column_alignments[index] = "right"
+      end
+    end)
+
+    local button_definition = {
+      type = "sprite-button",
+      sprite = "item/" .. CHIP_NAME,
+      quality = option.quality or profile.chip_quality or "normal",
+      number = (profile.level or 0) > 0 and profile.level or nil,
+      tooltip = { "turret-xp.inventory-core-install-tooltip" },
+      elem_tooltip = {
+        type = "item-with-quality",
+        name = CHIP_NAME,
+        quality = option.quality or profile.chip_quality or "normal",
+      },
+      tags = {
+        turret_xp_action = "inventory-install-core",
+        slot = option.index,
+      },
+    }
+    local icon = row.add(button_definition)
+    set_element_style(icon, "slot_button")
+    set_cell_width(icon, LAYOUT.empty_inventory_core_icon_width)
+    set_style(icon, "height", 36)
+
+    local details = row.add({
+      type = "flow",
+      direction = "vertical",
+    })
+    set_cell_width(details, LAYOUT.empty_inventory_core_name_width)
+
+    local name = details.add({
+      type = "label",
+      caption = core_display_name(profile),
+      style = "caption_label",
+    })
+    set_style(name, "font", "default-bold")
+    set_style(name, "single_line", false)
+    set_style(name, "maximal_width", LAYOUT.empty_inventory_core_name_width)
+
+    local specialization = details.add({
+      type = "label",
+      caption = specialization_caption(profile),
+      style = "caption_label",
+    })
+    set_style(specialization, "font_color", COLOR.muted)
+    set_style(specialization, "single_line", false)
+    set_style(specialization, "maximal_width", LAYOUT.empty_inventory_core_name_width)
+
+    add_inventory_core_value_cell(row, rich_value(profile.level or 0), LAYOUT.empty_inventory_core_level_width)
+    add_inventory_core_value_cell(row, rich_value(math.floor(profile.kills or 0)), LAYOUT.empty_inventory_core_kills_width)
+    add_inventory_core_value_cell(row, rich_value(format_number(profile.damage or 0, 0)), LAYOUT.empty_inventory_core_damage_width)
+    add_inventory_core_value_cell(row, rich_value(stats.health), LAYOUT.empty_inventory_core_stat_width)
+    add_inventory_core_value_cell(row, rich_value(stats.speed, "/s"), LAYOUT.empty_inventory_core_attack_width)
+    add_inventory_core_value_cell(row, rich_value(stats.range), LAYOUT.empty_inventory_core_stat_width)
+
+    widgets.add_tool_button(row, {
+      sprite = "utility/add",
+      style = "flib_tool_button_light_green",
+      tooltip = { "turret-xp.inventory-core-install-tooltip" },
+      size = LAYOUT.empty_inventory_core_action_width,
+      tags = {
+        turret_xp_action = "inventory-install-core",
+        slot = option.index,
+      },
+    })
+  end
+
+  local function add_narrow_inventory_core_row(rows, option, profile, stats, detail_width)
+    local row = rows.add({
+      type = "table",
+      column_count = 3,
+    })
+    set_style(row, "horizontally_stretchable", true)
+    set_style(row, "horizontal_spacing", 8)
+    set_style(row, "vertical_spacing", 0)
+    pcall(function()
+      row.style.column_alignments[1] = "left"
+      row.style.column_alignments[2] = "left"
+      row.style.column_alignments[3] = "right"
+    end)
+
+    local button_definition = {
+      type = "sprite-button",
+      sprite = "item/" .. CHIP_NAME,
+      quality = option.quality or profile.chip_quality or "normal",
+      number = (profile.level or 0) > 0 and profile.level or nil,
+      tooltip = { "turret-xp.inventory-core-install-tooltip" },
+      elem_tooltip = {
+        type = "item-with-quality",
+        name = CHIP_NAME,
+        quality = option.quality or profile.chip_quality or "normal",
+      },
+      tags = {
+        turret_xp_action = "inventory-install-core",
+        slot = option.index,
+      },
+    }
+    local icon = row.add(button_definition)
+    set_element_style(icon, "slot_button")
+    set_style(icon, "size", 36)
+
+    local details = row.add({
+      type = "flow",
+      direction = "vertical",
+    })
+    set_style(details, "horizontally_stretchable", true)
+    set_style(details, "width", detail_width)
+    set_style(details, "minimal_width", detail_width)
+    set_style(details, "maximal_width", detail_width)
+
+    local name = details.add({
+      type = "label",
+      caption = { "turret-xp.inventory-core-name", core_display_name(profile), rich_value(profile.level or 0) },
+      style = "caption_label",
+    })
+    set_style(name, "font", "default-bold")
+    set_style(name, "single_line", false)
+    set_style(name, "maximal_width", detail_width)
+
+    local specialization = details.add({
+      type = "label",
+      caption = specialization_caption(profile),
+      style = "caption_label",
+    })
+    set_style(specialization, "font_color", COLOR.muted)
+    set_style(specialization, "single_line", false)
+    set_style(specialization, "maximal_width", detail_width)
+
+    local summary = details.add({
+      type = "label",
+      caption = {
+        "turret-xp.inventory-core-summary",
+        rich_value(math.floor(profile.kills or 0)),
+        rich_value(format_number(profile.damage or 0, 0)),
+      },
+      style = "caption_label",
+    })
+    set_style(summary, "font_color", COLOR.muted)
+    set_style(summary, "single_line", false)
+    set_style(summary, "maximal_width", detail_width)
+
+    local stat_summary = details.add({
+      type = "label",
+      caption = {
+        "turret-xp.inventory-core-compact-stats",
         rich_metric({ "turret-xp.inventory-core-stat-hp" }, stats.health),
         rich_metric({ "turret-xp.inventory-core-stat-attack" }, stats.speed, "/s"),
         rich_metric({ "turret-xp.inventory-core-stat-range" }, stats.range),
-      }
-      for _, caption in ipairs(values) do
-        local label = details.add({
-          type = "label",
-          caption = caption,
-          style = "caption_label",
-        })
-        set_style(label, "single_line", true)
-      end
-      return
-    end
+      },
+      style = "caption_label",
+    })
+    set_style(stat_summary, "font_color", COLOR.muted)
+    set_style(stat_summary, "single_line", false)
+    set_style(stat_summary, "maximal_width", detail_width)
 
-    return nil
+    widgets.add_tool_button(row, {
+      sprite = "utility/add",
+      style = "flib_tool_button_light_green",
+      tooltip = { "turret-xp.inventory-core-install-tooltip" },
+      tags = {
+        turret_xp_action = "inventory-install-core",
+        slot = option.index,
+      },
+    })
   end
 
   local function add_inventory_core_picker(core_panel, player, entity, options)
     options = options or {}
     local wide = options.wide == true
     local current_sort = get_core_picker_sort(player)
-    local core_options = get_player_core_options(player, current_sort)
+    local current_filters = get_core_picker_filters(player)
+    local all_core_options = get_player_core_options(player, current_sort)
+    local core_options = get_player_core_options(player, current_sort, current_filters)
     local picker_width = wide and LAYOUT.empty_inventory_core_picker_width or LAYOUT.inventory_core_picker_width
     local picker_height = wide and LAYOUT.empty_inventory_core_picker_height or LAYOUT.inventory_core_picker_height
     local detail_width = wide and LAYOUT.empty_inventory_core_detail_width or LAYOUT.inventory_core_detail_width
@@ -303,13 +613,15 @@ function core_panel_module.new(deps)
 
     local count = header.add({
       type = "label",
-      caption = { "turret-xp.inventory-core-count", #core_options },
+      caption = #core_options == #all_core_options and { "turret-xp.inventory-core-count", #core_options }
+        or { "turret-xp.inventory-core-count-filtered", #core_options, #all_core_options },
       style = "caption_label",
     })
     set_style(count, "font_color", COLOR.muted)
 
     if wide then
-      add_picker_sort_controls(frame, current_sort)
+      add_inventory_core_filter_controls(frame, current_filters)
+      add_inventory_core_table_header(frame, current_sort)
     end
 
     local scroll = frame.add({
@@ -328,7 +640,7 @@ function core_panel_module.new(deps)
     if #core_options == 0 then
       local label = scroll.add({
         type = "label",
-        caption = { "turret-xp.inventory-core-empty" },
+        caption = #all_core_options == 0 and { "turret-xp.inventory-core-empty" } or { "turret-xp.inventory-core-filter-empty" },
         style = "caption_label",
       })
       set_style(label, "margin", { 8, 8, 8, 8 })
@@ -345,113 +657,24 @@ function core_panel_module.new(deps)
     set_style(rows, "vertical_spacing", 4)
     set_style(rows, "horizontally_stretchable", true)
 
-    for _, option in ipairs(core_options) do
-      local profile = option.profile or create_blank_profile()
-      local stats = preview_stats(entity, profile)
-      local row = rows.add({
-        type = "table",
-        column_count = wide and 4 or 3,
-      })
-      set_style(row, "horizontally_stretchable", true)
-      set_style(row, "horizontal_spacing", 8)
-      set_style(row, "vertical_spacing", 0)
-      pcall(function()
-        row.style.column_alignments[1] = "left"
-        row.style.column_alignments[2] = "left"
-        row.style.column_alignments[3] = "right"
-        if wide then
-          row.style.column_alignments[3] = "left"
-          row.style.column_alignments[4] = "right"
-        end
-      end)
-
-      local button_definition = {
-        type = "sprite-button",
-        sprite = "item/" .. CHIP_NAME,
-        quality = option.quality or profile.chip_quality or "normal",
-        number = (profile.level or 0) > 0 and profile.level or nil,
-        tooltip = { "turret-xp.inventory-core-install-tooltip" },
-        elem_tooltip = {
-          type = "item-with-quality",
-          name = CHIP_NAME,
-          quality = option.quality or profile.chip_quality or "normal",
-        },
-        tags = {
-          turret_xp_action = "inventory-install-core",
-          slot = option.index,
-        },
-      }
-      local icon = row.add(button_definition)
-      set_element_style(icon, "slot_button")
-      set_style(icon, "size", 36)
-
-      local details = row.add({
-        type = "flow",
-        direction = "vertical",
-      })
-      set_style(details, "horizontally_stretchable", true)
-      set_style(details, "width", detail_width)
-      set_style(details, "minimal_width", detail_width)
-      set_style(details, "maximal_width", detail_width)
-
-      local name = details.add({
-        type = "label",
-        caption = { "turret-xp.inventory-core-name", core_display_name(profile), rich_value(profile.level or 0) },
-        style = "caption_label",
-      })
-      set_style(name, "font", "default-bold")
-      set_style(name, "single_line", false)
-      set_style(name, "maximal_width", detail_width)
-
-      local specialization = details.add({
-        type = "label",
-        caption = specialization_caption(profile),
-        style = "caption_label",
-      })
-      set_style(specialization, "font_color", COLOR.muted)
-      set_style(specialization, "single_line", false)
-      set_style(specialization, "maximal_width", detail_width)
-
-      local summary = details.add({
-        type = "label",
-        caption = {
-          "turret-xp.inventory-core-summary",
-          rich_value(math.floor(profile.kills or 0)),
-          rich_value(format_number(profile.damage or 0, 0)),
-        },
-        style = "caption_label",
-      })
-      set_style(summary, "font_color", COLOR.muted)
-      set_style(summary, "single_line", false)
-      set_style(summary, "maximal_width", detail_width)
-
-      if wide then
-        add_inventory_core_stats(row, stats, true)
-      else
-        local stat_summary = details.add({
-          type = "label",
-          caption = {
-            "turret-xp.inventory-core-compact-stats",
-            rich_metric({ "turret-xp.inventory-core-stat-hp" }, stats.health),
-            rich_metric({ "turret-xp.inventory-core-stat-attack" }, stats.speed, "/s"),
-            rich_metric({ "turret-xp.inventory-core-stat-range" }, stats.range),
-          },
-          style = "caption_label",
+    for index, option in ipairs(core_options) do
+      if index > 1 then
+        local delimiter = rows.add({
+          type = "line",
+          direction = "horizontal",
         })
-        set_style(stat_summary, "font_color", COLOR.muted)
-        set_style(stat_summary, "single_line", false)
-        set_style(stat_summary, "maximal_width", detail_width)
+        set_style(delimiter, "horizontally_stretchable", true)
+        set_style(delimiter, "top_margin", 2)
+        set_style(delimiter, "bottom_margin", 2)
       end
 
-      widgets.add_tool_button(row, {
-        sprite = "utility/add",
-        style = "flib_tool_button_light_green",
-        tooltip = { "turret-xp.inventory-core-install-tooltip" },
-        tags = {
-          turret_xp_action = "inventory-install-core",
-          slot = option.index,
-        },
-      })
+      local profile = option.profile or create_blank_profile()
+      local stats = preview_stats(entity, profile)
+      if wide then
+        add_wide_inventory_core_row(rows, option, profile, stats)
+      else
+        add_narrow_inventory_core_row(rows, option, profile, stats, detail_width)
+      end
     end
   end
 
@@ -907,6 +1130,21 @@ function core_panel_module.new(deps)
       })
       set_style(preset_flow, "top_margin", 4)
       set_style(preset_flow, "horizontally_stretchable", true)
+      set_style(preset_flow, "horizontal_spacing", 6)
+      set_style(preset_flow, "vertical_align", "center")
+      local swatch = preset_flow.add({
+        type = "progressbar",
+        name = GUI.core_color_swatch,
+        value = 1,
+        tooltip = { "turret-xp.label-color-tooltip" },
+      })
+      set_style(swatch, "width", 22)
+      set_style(swatch, "height", 22)
+      set_style(swatch, "minimal_width", 22)
+      set_style(swatch, "maximal_width", 22)
+      set_style(swatch, "bar_width", 22)
+      set_style(swatch, "color", label_color)
+
       local color_button = preset_flow.add({
         type = "button",
         name = GUI.core_color_preview,

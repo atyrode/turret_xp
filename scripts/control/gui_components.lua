@@ -6,14 +6,39 @@ function gui_components.new(deps)
   function service.add_stat_row(parent, label, element_name, options)
     options = options or {}
 
-    local label_element = parent.add({
+    if #(parent.children or {}) > 0 then
+      local delimiter = parent.add({
+        type = "line",
+        direction = "horizontal",
+      })
+      deps.set_style(delimiter, "horizontally_stretchable", true)
+    end
+
+    local row = parent.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    deps.set_style(row, "horizontally_stretchable", true)
+    deps.set_style(row, "width", deps.LAYOUT.stats_content_width)
+    deps.set_style(row, "minimal_width", deps.LAYOUT.stats_content_width)
+    deps.set_style(row, "maximal_width", deps.LAYOUT.stats_content_width)
+    deps.set_style(row, "horizontal_spacing", 8)
+    deps.set_style(row, "vertical_align", "center")
+
+    local label_element = row.add({
       type = "label",
       caption = deps.with_info_marker(label, options.info_tooltip),
       tooltip = options.info_tooltip,
       style = "caption_label",
     })
     deps.set_style(label_element, "font_color", deps.COLOR.caption)
-    deps.set_style(label_element, "single_line", true)
+    deps.set_style(label_element, "single_line", false)
+    deps.set_style(label_element, "maximal_width", deps.LAYOUT.stats_label_width)
+
+    row.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
+    })
 
     local value_flow_definition = {
       type = "flow",
@@ -22,9 +47,11 @@ function gui_components.new(deps)
     if options.flow_name then
       value_flow_definition.name = options.flow_name
     end
-    local value_flow = parent.add(value_flow_definition)
+    local value_flow = row.add(value_flow_definition)
     deps.set_style(value_flow, "horizontal_align", "right")
-    deps.set_style(value_flow, "horizontally_stretchable", true)
+    deps.set_style(value_flow, "width", deps.LAYOUT.stats_value_width)
+    deps.set_style(value_flow, "minimal_width", deps.LAYOUT.stats_value_width)
+    deps.set_style(value_flow, "maximal_width", deps.LAYOUT.stats_value_width)
     if options.flow_only then
       return label_element, value_flow
     end
@@ -37,6 +64,7 @@ function gui_components.new(deps)
     })
     deps.set_style(value_element, "horizontal_align", "right")
     deps.set_style(value_element, "single_line", false)
+    deps.set_style(value_element, "width", options.maximal_width or deps.LAYOUT.stats_value_width)
     deps.set_style(value_element, "maximal_width", options.maximal_width or deps.LAYOUT.stats_value_width)
 
     return label_element, value_element
@@ -44,20 +72,15 @@ function gui_components.new(deps)
 
   function service.make_stats_table(parent, name)
     local stat_table = parent.add({
-      type = "table",
+      type = "flow",
       name = name,
-      column_count = 2,
-      draw_horizontal_lines = true,
+      direction = "vertical",
     })
     deps.set_style(stat_table, "horizontally_stretchable", true)
     deps.set_style(stat_table, "width", deps.LAYOUT.stats_content_width)
     deps.set_style(stat_table, "minimal_width", deps.LAYOUT.stats_content_width)
     deps.set_style(stat_table, "maximal_width", deps.LAYOUT.stats_content_width)
-    deps.set_style(stat_table, "horizontal_spacing", 12)
-    pcall(function()
-      stat_table.style.column_alignments[1] = "left"
-      stat_table.style.column_alignments[2] = "right"
-    end)
+    deps.set_style(stat_table, "vertical_spacing", 2)
     return stat_table
   end
 

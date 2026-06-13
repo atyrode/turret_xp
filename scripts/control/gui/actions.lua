@@ -11,6 +11,7 @@ function gui_actions_module.new(deps)
   local send_core_to_platform = deps.send_core_to_platform
   local set_bound_turret = deps.set_bound_turret
   local set_core_picker_sort = deps.set_core_picker_sort
+  local set_core_picker_filter = deps.set_core_picker_filter
   local get_remembered_turret = deps.get_remembered_turret
   local refresh_open_turret = deps.refresh_open_turret
   local update_name_render = deps.update_name_render
@@ -150,6 +151,12 @@ function gui_actions_module.new(deps)
         state.show_label_level = element and element.state == true
         update_name_render(entity, state)
       end)
+      return true
+    end
+
+    if action == "set-core-filter" then
+      set_core_picker_filter(player, tags.filter, element and element.state == true)
+      refresh_open_turret(player, get_remembered_turret(player))
       return true
     end
 

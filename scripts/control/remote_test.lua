@@ -514,6 +514,7 @@ return function(M)
         rich_value = rich_value(42, "/s"),
         rich_metric = rich_metric("HP", 400),
         rich_stat = rich_stat_text("Damage +5 x1.2"),
+        rich_specialization = rich_specialization_caption("sniper", "Sniper"),
       }
     end,
     inventory_core_picker_sample = function(entity)
@@ -536,22 +537,43 @@ return function(M)
         kills = 20,
         damage = 500,
       })
+      local unnamed = turret_xp_test_set_profile_fields(create_blank_profile(), {
+        level = 1,
+        kills = 0,
+        damage = 0,
+      })
       ensure_evolution_state(high).specialization = "sniper"
       ensure_evolution_state(mid).specialization = "machine_gun"
 
       inventory[1].set_stack(make_chip_item_stack(low))
       inventory[2].set_stack(make_chip_item_stack(high))
       inventory[3].set_stack(make_chip_item_stack(mid))
+      inventory[4].set_stack(make_chip_item_stack(unnamed))
 
       local options = get_core_options_from_inventory(inventory)
-      local kill_sorted = get_core_options_from_inventory(inventory, "kills")
-      local damage_sorted = get_core_options_from_inventory(inventory, "damage")
-      local name_sorted = get_core_options_from_inventory(inventory, "name")
+      local kill_sorted = get_core_options_from_inventory(inventory, "kills:desc")
+      local damage_sorted = get_core_options_from_inventory(inventory, "damage:desc")
+      local name_sorted = get_core_options_from_inventory(inventory, "name:asc")
+      local name_desc_sorted = get_core_options_from_inventory(inventory, "name:desc")
+      local only_base = get_core_options_from_inventory(inventory, "level:desc", {
+        base = true,
+        sniper = false,
+        machine_gun = false,
+        bulwark = false,
+        brawler = false,
+      })
+      local only_sniper = get_core_options_from_inventory(inventory, "level:desc", {
+        base = false,
+        sniper = true,
+        machine_gun = false,
+        bulwark = false,
+        brawler = false,
+      })
       local summarized = {}
       for _, option in ipairs(options) do
         summarized[#summarized + 1] = {
           slot = option.index,
-          name = option.profile and option.profile.custom_name or nil,
+          name = option.profile and (option.profile.custom_name or "") or "",
           level = option.profile and option.profile.level or nil,
           specialization = option.profile and option.profile.evolution and option.profile.evolution.specialization or nil,
         }
@@ -560,6 +582,14 @@ return function(M)
         kills = kill_sorted[1] and kill_sorted[1].profile.custom_name or nil,
         damage = damage_sorted[1] and damage_sorted[1].profile.custom_name or nil,
         name = name_sorted[1] and name_sorted[1].profile.custom_name or nil,
+        name_desc = name_desc_sorted[1] and name_desc_sorted[1].profile.custom_name or nil,
+        name_last = name_sorted[#name_sorted] and (name_sorted[#name_sorted].profile.custom_name or "") or nil,
+      }
+      local filter_samples = {
+        base_count = #only_base,
+        base_first = only_base[1] and (only_base[1].profile.custom_name or "") or nil,
+        sniper_count = #only_sniper,
+        sniper_first = only_sniper[1] and (only_sniper[1].profile.custom_name or "") or nil,
       }
 
       local player = {
@@ -581,7 +611,7 @@ return function(M)
       local remaining = get_core_options_from_inventory(inventory)
       local remaining_names = {}
       for _, option in ipairs(remaining) do
-        remaining_names[#remaining_names + 1] = option.profile and option.profile.custom_name or nil
+        remaining_names[#remaining_names + 1] = option.profile and (option.profile.custom_name or "") or ""
       end
       forget_open_turret(player)
       inventory.destroy()
@@ -589,6 +619,7 @@ return function(M)
       return {
         options = summarized,
         sort_samples = sort_samples,
+        filter_samples = filter_samples,
         installed = installed,
         remaining_names = remaining_names,
       }
