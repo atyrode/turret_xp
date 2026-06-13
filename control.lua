@@ -107,6 +107,7 @@ local actions = require("scripts.control.actions")
 M.actions = actions.new({
   GUI = M.GUI,
   COLOR = M.COLOR,
+  LAYOUT = M.LAYOUT,
   GATES = M.GATES,
   BASE_UPGRADE_BY_ID = M.BASE_UPGRADE_BY_ID,
   ELEMENT_BY_ID = M.ELEMENT_BY_ID,

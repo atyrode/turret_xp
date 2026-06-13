@@ -88,7 +88,7 @@ return function(M)
 
     local field, direction = string.match(mode, "^([^:]+):([^:]+)$")
     field = field or mode
-    if field ~= "level" and field ~= "kills" and field ~= "damage" and field ~= "name" then
+    if field ~= "level" and field ~= "name" and field ~= "hp" and field ~= "attack" and field ~= "range" then
       return "none"
     end
 
@@ -105,7 +105,7 @@ return function(M)
 
   function next_core_picker_sort(current_sort, field)
     field = tostring(field or "")
-    if field ~= "level" and field ~= "kills" and field ~= "damage" and field ~= "name" then
+    if field ~= "level" and field ~= "name" and field ~= "hp" and field ~= "attack" and field ~= "range" then
       return "none"
     end
 
@@ -135,6 +135,10 @@ return function(M)
   end
 
   local function core_picker_filter_is_known(filter_id)
+    if filter_id == "all" then
+      return true
+    end
+
     if filter_id == "base" then
       return true
     end
@@ -144,12 +148,21 @@ return function(M)
 
   local function core_picker_default_filters()
     local filters = {
-      base = true,
+      all = true,
+      base = false,
     }
     for _, specialization in ipairs(SPECIALIZATIONS) do
-      filters[specialization.id] = true
+      filters[specialization.id] = false
     end
     return filters
+  end
+
+  local function core_picker_filter_categories()
+    local categories = { "base" }
+    for _, specialization in ipairs(SPECIALIZATIONS) do
+      categories[#categories + 1] = specialization.id
+    end
+    return categories
   end
 
   function normalize_core_picker_filters(filters)
@@ -158,11 +171,20 @@ return function(M)
     end
 
     local normalized = {
-      base = filters.base ~= false,
+      all = filters.all == true,
+      base = filters.base == true,
     }
+    local any_enabled = normalized.base
+    local legacy_all_enabled = filters.base ~= false
     for _, specialization in ipairs(SPECIALIZATIONS) do
-      local enabled = filters[specialization.id] ~= false
+      local enabled = filters[specialization.id] == true
       normalized[specialization.id] = enabled
+      any_enabled = any_enabled or enabled
+      legacy_all_enabled = legacy_all_enabled and filters[specialization.id] ~= false
+    end
+
+    if filters.all == true or (filters.all == nil and legacy_all_enabled) or not any_enabled then
+      return core_picker_default_filters()
     end
 
     return normalized
@@ -171,6 +193,7 @@ return function(M)
   function core_picker_filters_key(filters)
     local normalized = normalize_core_picker_filters(filters)
     local parts = {
+      "all=" .. tostring(normalized.all == true),
       "base=" .. tostring(normalized.base == true),
     }
     for _, specialization in ipairs(SPECIALIZATIONS) do
@@ -187,7 +210,22 @@ return function(M)
   function set_core_picker_filter(player, filter_id, enabled)
     local player_state = ensure_player_state(player)
     local filters = normalize_core_picker_filters(player_state.core_picker_filters)
+
+    if filter_id == "all" then
+      player_state.core_picker_filters = core_picker_default_filters()
+      return player_state.core_picker_filters
+    end
+
     if core_picker_filter_is_known(filter_id) then
+      if filters.all == true then
+        filters = {
+          all = false,
+        }
+        for _, category in ipairs(core_picker_filter_categories()) do
+          filters[category] = false
+        end
+      end
+      filters.all = false
       filters[filter_id] = enabled == true
     end
     player_state.core_picker_filters = normalize_core_picker_filters(filters)

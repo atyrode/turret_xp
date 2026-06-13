@@ -20,4 +20,17 @@ return function()
     bar_width = 8,
     embed_text_in_bar = false,
   }
+
+  styles.turret_xp_inventory_core_table = {
+    type = "table_style",
+    parent = "table_with_selection",
+    horizontally_stretchable = "on",
+    vertical_spacing = 0,
+    horizontal_spacing = 8,
+    odd_row_graphical_set = {
+      filename = "__core__/graphics/gui-new.png",
+      position = { 472, 25 },
+      size = 1,
+    },
+  }
 end

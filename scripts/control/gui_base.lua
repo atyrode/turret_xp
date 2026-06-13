@@ -3,6 +3,11 @@ return function(M)
   local _ENV = M
 
   function destroy_gui(player)
+    local color_picker = player.gui.screen and player.gui.screen[GUI.core_color_picker] or nil
+    if color_picker and color_picker.valid then
+      color_picker.destroy()
+    end
+
     local roots = {
       player.gui.relative,
       player.gui.left,

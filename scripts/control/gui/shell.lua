@@ -19,28 +19,26 @@ function shell_module.new(deps)
           name = GUI.panel_header,
           direction = "horizontal",
           style = "frame_header_flow",
+          drag_target = GUI.panel,
           children = {
             {
               type = "sprite",
               name = GUI.panel_header_icon,
               sprite = "item/" .. CHIP_NAME,
+              ignored_by_interaction = true,
             },
             {
               type = "label",
               name = GUI.panel_title,
               caption = { "turret-xp.panel-title" },
-              style = "heading_2_label",
-              elem_mods = {
-                ignored_by_interaction = true,
-              },
+              style = "frame_title",
+              ignored_by_interaction = true,
             },
             {
               type = "empty-widget",
               name = GUI.panel_header_drag_handle,
               style = "flib_titlebar_drag_handle",
-              elem_mods = {
-                ignored_by_interaction = true,
-              },
+              ignored_by_interaction = true,
             },
           },
         },

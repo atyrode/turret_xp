@@ -259,9 +259,13 @@ function profile_inventory.new(deps)
       return true
     end
 
+    if filters.all == true then
+      return true
+    end
+
     local group = profile_filter_group(profile)
     if filters[group] == nil then
-      return true
+      return false
     end
 
     return filters[group] == true

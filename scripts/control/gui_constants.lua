@@ -11,6 +11,8 @@ local gui = {
   panel_title = prefix .. "panel-title",
   panel_columns = prefix .. "panel-columns",
   panel_body = prefix .. "panel-body",
+  sort_arrow_up = domain.names.sort_arrow_up,
+  sort_arrow_down = domain.names.sort_arrow_down,
   core = prefix .. "core",
   core_slot = prefix .. "core-slot",
   core_status = prefix .. "core-status",
@@ -20,6 +22,9 @@ local gui = {
   core_name_level_visible = prefix .. "core-name-level-visible",
   core_color_preview = prefix .. "core-color-preview",
   core_color_swatch = prefix .. "core-color-swatch",
+  core_color_picker = prefix .. "core-color-picker",
+  core_color_picker_header = prefix .. "core-color-picker-header",
+  core_color_picker_title = prefix .. "core-color-picker-title",
   core_color_r = prefix .. "core-color-r",
   core_color_g = prefix .. "core-color-g",
   core_color_b = prefix .. "core-color-b",
@@ -77,6 +82,11 @@ local layout = {
   column_spacing = 8,
   left_column_width = 380,
   evolution_column_width = 430,
+  core_panel_padding = 16,
+  inventory_core_frame_padding = 32,
+  inventory_core_scrollbar_width = 20,
+  inventory_core_table_spacing = 8,
+  label_color_picker_min_width = 300,
   evolution_outer_height = 760,
   evolution_header_height = 36,
   stats_header_height = 34,
@@ -92,19 +102,25 @@ layout.empty_panel_max_width = layout.panel_max_width
 layout.stats_scroll_width = layout.left_column_width - 16
 layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12
-layout.inventory_core_picker_width = layout.left_column_width - 16
-layout.inventory_core_detail_width = layout.inventory_core_picker_width - 112
-layout.empty_inventory_core_picker_width = layout.empty_panel_width - 16
+layout.inventory_core_picker_width = layout.left_column_width - layout.core_panel_padding - layout.inventory_core_frame_padding
+layout.inventory_core_detail_width = layout.inventory_core_picker_width - layout.inventory_core_scrollbar_width - 112
+layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.empty_inventory_core_picker_height = layout.evolution_outer_height - 190
-layout.empty_inventory_core_detail_width = layout.empty_inventory_core_picker_width - 252
+layout.empty_inventory_core_table_width = layout.empty_inventory_core_picker_width - layout.inventory_core_scrollbar_width
 layout.empty_inventory_core_icon_width = 40
-layout.empty_inventory_core_name_width = 204
-layout.empty_inventory_core_level_width = 70
-layout.empty_inventory_core_kills_width = 70
-layout.empty_inventory_core_damage_width = 98
-layout.empty_inventory_core_stat_width = 60
-layout.empty_inventory_core_attack_width = 70
+layout.empty_inventory_core_level_width = 58
+layout.empty_inventory_core_stat_width = 56
+layout.empty_inventory_core_attack_width = 64
 layout.empty_inventory_core_action_width = 32
+layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_icon_width
+  + layout.empty_inventory_core_level_width
+  + layout.empty_inventory_core_stat_width
+  + layout.empty_inventory_core_attack_width
+  + layout.empty_inventory_core_stat_width
+  + layout.empty_inventory_core_action_width
+  + (6 * layout.inventory_core_table_spacing)
+layout.empty_inventory_core_name_width = layout.empty_inventory_core_table_width - layout.empty_inventory_core_fixed_width
+layout.empty_inventory_core_detail_width = layout.empty_inventory_core_name_width
 layout.evolution_scroll_width = layout.evolution_column_width
 layout.evolution_scroll_height = layout.evolution_outer_height - layout.evolution_header_height
 layout.evolution_content_width = layout.evolution_scroll_width - 28

@@ -45,6 +45,15 @@ function gui_actions_module.new(deps)
     ["unbind-turret"] = function(player)
       set_bound_turret(player, false)
     end,
+    ["open-label-color-picker"] = function(player)
+      actions.open_label_color_picker(player)
+    end,
+    ["close-label-color-picker"] = function(player)
+      actions.close_label_color_picker(player)
+    end,
+    ["set-label-color-preset"] = function(player, event, tags)
+      actions.set_label_color_preset(player, tags.preset)
+    end,
     ["cycle-label-color"] = function(player)
       actions.cycle_label_color(player)
     end,

@@ -57,16 +57,18 @@ function tests.run_layout_constants_test()
   local wide_table_width = layout.empty_inventory_core_icon_width
     + layout.empty_inventory_core_name_width
     + layout.empty_inventory_core_level_width
-    + layout.empty_inventory_core_kills_width
-    + layout.empty_inventory_core_damage_width
     + layout.empty_inventory_core_stat_width
     + layout.empty_inventory_core_attack_width
     + layout.empty_inventory_core_stat_width
     + layout.empty_inventory_core_action_width
-    + (8 * 8)
+    + (6 * layout.inventory_core_table_spacing)
   assert_true(
-    wide_table_width <= layout.empty_inventory_core_picker_width,
-    "wide inventory core table columns must fit inside the empty-core picker viewport"
+    wide_table_width <= layout.empty_inventory_core_table_width,
+    "wide inventory core table columns must fit inside the reserved table viewport"
+  )
+  assert_true(
+    layout.empty_inventory_core_table_width < layout.empty_inventory_core_picker_width,
+    "wide inventory core table must reserve the scroll-pane scrollbar lane"
   )
 end
 
@@ -160,6 +162,14 @@ function tests.run_inventory_core_picker_test(surface)
   assert_eq(sample.sort_samples.name, "High", "inventory core picker did not sort alphabetically")
   assert_eq(sample.sort_samples.name_desc, "Mid", "inventory core picker did not reverse name sorting")
   assert_eq(sample.sort_samples.name_last, "", "inventory core picker did not keep unnamed cores last under name sorting")
+  assert_eq(sample.filter_samples.all_count, 4, "inventory core picker All filter did not include all cores")
+  assert_eq(sample.filter_samples.all_filter_enabled, true, "inventory core picker All filter did not normalize as enabled")
+  assert_eq(sample.filter_samples.none_filter_enabled, true, "inventory core picker empty filters did not snap back to All")
+  assert_eq(
+    sample.filter_samples.legacy_all_filter_enabled,
+    true,
+    "inventory core picker legacy all-selected filters did not normalize to All"
+  )
   assert_eq(sample.filter_samples.base_count, 2, "inventory core picker base filter did not include only unspecialized cores")
   assert_eq(sample.filter_samples.base_first, "Low", "inventory core picker base filter did not keep sorted visible rows")
   assert_eq(sample.filter_samples.sniper_count, 1, "inventory core picker specialization filter did not isolate sniper cores")

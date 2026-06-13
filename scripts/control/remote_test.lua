@@ -556,6 +556,7 @@ return function(M)
       local name_sorted = get_core_options_from_inventory(inventory, "name:asc")
       local name_desc_sorted = get_core_options_from_inventory(inventory, "name:desc")
       local only_base = get_core_options_from_inventory(inventory, "level:desc", {
+        all = false,
         base = true,
         sniper = false,
         machine_gun = false,
@@ -563,12 +564,30 @@ return function(M)
         brawler = false,
       })
       local only_sniper = get_core_options_from_inventory(inventory, "level:desc", {
+        all = false,
         base = false,
         sniper = true,
         machine_gun = false,
         bulwark = false,
         brawler = false,
       })
+      local all_filter = normalize_core_picker_filters({ all = true })
+      local none_filter = normalize_core_picker_filters({
+        all = false,
+        base = false,
+        sniper = false,
+        machine_gun = false,
+        bulwark = false,
+        brawler = false,
+      })
+      local legacy_all_filter = normalize_core_picker_filters({
+        base = true,
+        sniper = true,
+        machine_gun = true,
+        bulwark = true,
+        brawler = true,
+      })
+      local all_filtered = get_core_options_from_inventory(inventory, "level:desc", all_filter)
       local summarized = {}
       for _, option in ipairs(options) do
         summarized[#summarized + 1] = {
@@ -586,6 +605,10 @@ return function(M)
         name_last = name_sorted[#name_sorted] and (name_sorted[#name_sorted].profile.custom_name or "") or nil,
       }
       local filter_samples = {
+        all_count = #all_filtered,
+        all_filter_enabled = all_filter.all == true,
+        none_filter_enabled = none_filter.all == true,
+        legacy_all_filter_enabled = legacy_all_filter.all == true,
         base_count = #only_base,
         base_first = only_base[1] and (only_base[1].profile.custom_name or "") or nil,
         sniper_count = #only_sniper,

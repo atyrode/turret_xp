@@ -61,9 +61,9 @@
 
 - Show current level and XP progress to the next level.
 - Show whether a Veteran Core is installed and provide install/extract controls, including an explicit action that moves an installed core to the player inventory when there is room.
-- When no core is installed, show a single full-width Veteran Core picker with exact-slot install actions, rich readable core summaries, specialization/base filters, and clickable table headers for level, kills, damage, and name. Sort headers must cycle ascending, descending, and clear/no explicit sort, with an in-GUI sprite cue for the active direction.
+- When no core is installed, show a single full-width Veteran Core picker with exact-slot install actions, rich readable core summaries, an `All` filter plus specialization/base filters, and clickable table headers for name, level, HP, attack speed, and range. Sort headers must cycle ascending, descending, and clear/no explicit sort, with a compact table-header sprite cue for the active direction.
 - Show Bind/Unbind controls for installed cores.
-- On space-platform turrets, show platform hub Veteran Core options when cores are available there.
+- On space-platform turrets, show platform hub Veteran Core options when cores are available there, using install-focused summaries instead of lifetime history counters.
 - Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.
 - Show a nine-pip blue in-world Shield bar under Factorio's native turret HP bar when Shield is ranked and the shield is depleted, recharging, or the turret GUI is open. The Shield row should use Factorio's exposed native shield and gray pip sprites, deplete one whole pip at a time, and stay centered under the native HP row.
 - Show Specialization first, then HP and HP Regeneration, then Shield and Shield Regeneration when ranked.
@@ -87,7 +87,7 @@
 - Apply and show specialization and sub-specialization multipliers, including Sniper Deadeye/Overwatch, Machine Gun Shredder/Sustained Fire, Bulwark Bastion/Guardian, and Brawler Executioner/Vampire.
 - Reserve stats-scrollbar space before scrolling is needed so stat values do not shift or render underneath the scrollbar when additional rows make the panel scrollable.
 - Color numeric fragments only in stat, upgrade, augment, specialization, sub-specialization, element, and material-count values. Units and descriptive text must remain neutral, and elemental damage amounts should color the number with the corresponding element color.
-- Show a core naming field and a `Show` floating-label checkbox when a core is installed; show preset/RGB color controls only when the floating label is enabled, with the `Level` checkbox under the RGB picker.
+- Show a core naming field and a `Show` floating-label checkbox when a core is installed; show a square color swatch plus a color-picker trigger only when the floating label is enabled. The trigger opens Turret XP's draggable runtime color popup with presets, RGB sliders, and the `Level` suffix checkbox.
 - Custom RGB floating-label colors should apply directly to the in-world rendered label without requiring generated label-color prototypes or palette quantization.
 - Preserve Evolution list context after point allocation so the panel does not jump back to the top, prevent GUI refreshes from resizing the attached panel in ways that move the vanilla turret GUI, and avoid timer refreshes that destroy unchanged interactive controls.
 - Keep the attached two-column panel narrow enough for normal play, and ensure Evolution content wraps or shrinks inside the scroll pane instead of rendering under the scrollbar.
