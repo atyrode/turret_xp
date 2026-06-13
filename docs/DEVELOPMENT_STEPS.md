@@ -33,6 +33,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Published save/profile compatibility now lives in a named migration compatibility layer with headless coverage for legacy element slots, active element projects, retired element fuel buffers, retired augments, and old skill-tree ranks.
 - GUI dependency direction is decided for the next major GUI pass: `flib` is an accepted runtime foundation, dependencies are allowed when they earn their cost, and the product target is a custom Factorio-native Turret XP interface with focused local helpers rather than a generic inherited framework.
 - The 0.11 GUI glowup has started with an anchored `flib.gui` shell service. The panel should remain attached to the vanilla turret GUI when possible while adopting Factory Planner-style hierarchy, shallow content panes, reusable local builders, and explicit GUI service ownership.
+- GUI widget action routing now lives in `scripts/control/gui/actions.lua`, keeping Factorio event registration thinner while preserving the existing `scripts/control/actions.lua` gameplay mutation service.
 - Public homepage, GitHub release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and `docs/public-copy.json`, with `scripts/check.sh` detecting stale committed homepage output.
 - High-complexity scope is decided for the current hardening line: keep/harden hidden feeder automation, keep optional bound turret movement, keep prototype-bound native stats limited to specialization/sub-specialization bodies, keep element combos curated and limited, and require separate approval for new progression systems.
 
@@ -40,7 +41,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 - Harden the current playable loop before adding progression scope. Balance/readability fixes, GUI quality, validation, and bug fixes are in scope; new branches, elements, mastery loops, quality-backed chassis work, range-band rewrites, repeatable HP/Range axes, or other prototype-backed stat axes need separate approved issues.
 - Keep documentation edits ownership-based: move facts to the owning document, replace duplicates with cross-references, and delete stale planning prose once the current decision is represented elsewhere.
-- Continue the 0.11 GUI glowup in focused slices: migrate section-local builders and action routing into explicit GUI services, improve Veteran Core/Evolution interaction density, and use screenshot/playtest checkpoints for visual regressions. Do not mix that work with balance or progression-system expansion.
+- Continue the 0.11 GUI glowup in focused slices: migrate section-local builders into explicit GUI services, improve Veteran Core/Evolution interaction density, and use screenshot/playtest checkpoints for visual regressions. Do not mix that work with balance or progression-system expansion.
 
 ## Validation Checklist
 

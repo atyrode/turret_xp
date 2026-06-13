@@ -121,164 +121,20 @@ return function(M)
     end
   end
 
-  local gui_click_dispatch = {
-    ["core-slot"] = function(player, event)
-      handle_core_slot_click(player, event)
-    end,
-    ["install-core"] = function(player)
-      install_core(player)
-    end,
-    ["extract-core"] = function(player)
-      extract_core(player)
-    end,
-    ["platform-install-core"] = function(player, event, tags)
-      install_core_from_platform(player, tags.slot)
-    end,
-    ["platform-send-core"] = function(player)
-      send_core_to_platform(player)
-    end,
-    ["bind-turret"] = function(player)
-      set_bound_turret(player, true)
-    end,
-    ["unbind-turret"] = function(player)
-      set_bound_turret(player, false)
-    end,
-    ["cycle-label-color"] = function(player)
-      cycle_label_color(player)
-    end,
-    ["dev-create-core"] = function(player)
-      dev_create_core(player)
-    end,
-    ["allocate-base"] = function(player, event, tags)
-      allocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
-    end,
-    ["deallocate-base"] = function(player, event, tags)
-      deallocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
-    end,
-    ["reset-base-upgrades"] = function(player)
-      reset_base_upgrades(player)
-    end,
-    ["choose-specialization"] = function(player, event, tags)
-      choose_specialization(player, tags.specialization)
-    end,
-    ["reset-specialization"] = function(player)
-      reset_specialization(player)
-    end,
-    ["choose-sub-specialization"] = function(player, event, tags)
-      choose_sub_specialization(player, tags.sub_specialization)
-    end,
-    ["reset-sub-specialization"] = function(player)
-      reset_sub_specialization(player)
-    end,
-    ["allocate-augment"] = function(player, event, tags)
-      allocate_augment(player, tags.augment, event.shift and 10 or 1)
-    end,
-    ["deallocate-augment"] = function(player, event, tags)
-      deallocate_augment(player, tags.augment, event.shift and 10 or 1)
-    end,
-    ["reset-augments"] = function(player)
-      reset_augments(player)
-    end,
-    ["reset-evolution"] = function(player)
-      reset_evolution(player)
-    end,
-    ["reset-element-slot"] = function(player, event, tags)
-      reset_element_slot(player, tags.slot)
-    end,
-    ["start-element"] = function(player, event, tags)
-      pick_element(player, tags.slot, tags.element)
-    end,
-    ["dev-complete-element-rank"] = function(player)
-      dev_complete_next_element_rank(player)
-    end,
-    ["dev-level"] = function(player, event, tags)
-      add_dev_levels(player, tags.levels)
-    end,
-    ["dev-reset-core"] = function(player)
-      dev_reset_core(player)
-    end,
-  }
-
-  function dispatch_gui_click_action(player, event, tags)
-    tags = tags or {}
-    local action = tags.turret_xp_action
-    local handler = action and gui_click_dispatch[action] or nil
-    if not handler then
-      return false
-    end
-
-    handler(player, event or {}, tags)
-    return true
-  end
-
   function handlers.on_gui_click(event)
-    local element = event.element
-    if not element or not element.valid then
-      return
-    end
-
-    local player = game.get_player(event.player_index)
-    if not player then
-      return
-    end
-
-    local tags = element.tags or {}
-    dispatch_gui_click_action(player, event, tags)
+    handle_gui_click_event(event)
   end
 
   function handlers.on_gui_checked_state_changed(event)
-    local element = event.element
-    if not element or not element.valid then
-      return
-    end
-
-    local tags = element.tags or {}
-    local player = game.get_player(event.player_index)
-    if not player then
-      return
-    end
-
-    if tags.turret_xp_action == "toggle-core-label" then
-      set_core_label_visibility(player, element.state == true)
-    elseif tags.turret_xp_action == "toggle-label-level" then
-      local entity, state = get_open_turret_state(player)
-      if state then
-        state.show_label_level = element.state == true
-        update_name_render(entity, state)
-        refresh_open_turret(player, entity)
-      end
-    end
+    handle_gui_checked_state_changed_event(event)
   end
 
   function handlers.on_gui_value_changed(event)
-    local element = event.element
-    if not element or not element.valid then
-      return
-    end
-
-    local tags = element.tags or {}
-    if tags.turret_xp_action ~= "set-label-color" then
-      return
-    end
-
-    local player = game.get_player(event.player_index)
-    if not player then
-      return
-    end
-
-    set_label_color_channel(player, tags.channel, element.slider_value or element.value)
+    handle_gui_value_changed_event(event)
   end
 
   function handlers.on_gui_text_changed(event)
-    local element = event.element
-    if not element or not element.valid then
-      return
-    end
-
-    local player = game.get_player(event.player_index)
-    if player then
-      update_core_name_from_textfield(player, element)
-    end
+    handle_gui_text_changed_event(event)
   end
 
   function handlers.on_runtime_mod_setting_changed(event)

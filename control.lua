@@ -149,6 +149,29 @@ for name, handler in pairs(M.actions) do
   M[name] = handler
 end
 
+local gui_actions = require("scripts.control.gui.actions")
+M.gui_actions = gui_actions.new({
+  actions = M.actions,
+  get_player = function(player_index)
+    return game.get_player(player_index)
+  end,
+  handle_core_slot_click = M.handle_core_slot_click,
+  install_core = M.install_core,
+  extract_core = M.extract_core,
+  install_core_from_platform = M.install_core_from_platform,
+  send_core_to_platform = M.send_core_to_platform,
+  set_bound_turret = M.set_bound_turret,
+  update_name_render = M.update_name_render,
+})
+M.dispatch_gui_click_action = M.gui_actions.dispatch_click_action
+M.dispatch_gui_checked_state_action = M.gui_actions.dispatch_checked_state_action
+M.dispatch_gui_value_changed_action = M.gui_actions.dispatch_value_changed_action
+M.dispatch_gui_text_changed_action = M.gui_actions.dispatch_text_changed_action
+M.handle_gui_click_event = M.gui_actions.on_gui_click
+M.handle_gui_checked_state_changed_event = M.gui_actions.on_gui_checked_state_changed
+M.handle_gui_value_changed_event = M.gui_actions.on_gui_value_changed
+M.handle_gui_text_changed_event = M.gui_actions.on_gui_text_changed
+
 require("scripts.control.combat_effects")(M)
 require("scripts.control.events")(M)
 if script.active_mods["turret_xp_headless_tests"] then

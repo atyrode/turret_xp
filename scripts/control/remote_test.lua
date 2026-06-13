@@ -474,6 +474,35 @@ return function(M)
 
       return summary
     end,
+    dispatch_toggle_label_level = function(entity, visible)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local player = {
+        index = -1,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+      }
+      remember_open_turret(player, entity)
+      dispatch_gui_checked_state_action(player, {
+        element = {
+          valid = true,
+          state = visible == true,
+        },
+      }, {
+        turret_xp_action = "toggle-label-level",
+      })
+
+      local summary = turret_xp_test_state_summary(entity)
+      forget_open_turret(player)
+
+      return summary
+    end,
     layout = function()
       return copy_serializable(LAYOUT)
     end,

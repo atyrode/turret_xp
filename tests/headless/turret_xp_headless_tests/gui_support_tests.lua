@@ -92,6 +92,14 @@ function tests.run_gui_action_dispatch_test(surface)
   assert_eq(summary.label_color[1], 1, "GUI action dispatch changed the red label channel unexpectedly")
   assert_eq(summary.label_color[2], 1, "GUI action dispatch did not update the green label channel")
   assert_eq(summary.label_color[3], 1, "GUI action dispatch did not update the blue label channel")
+
+  summary = call("dispatch_toggle_label_level", turret, false)
+  assert_true(summary ~= nil, "GUI checked-state dispatch did not return a turret summary")
+  assert_eq(summary.show_label_level, false, "GUI checked-state dispatch did not hide the level suffix")
+
+  summary = call("dispatch_toggle_label_level", turret, true)
+  assert_true(summary ~= nil, "GUI checked-state dispatch did not return a turret summary after re-enable")
+  assert_eq(summary.show_label_level, true, "GUI checked-state dispatch did not restore the level suffix")
 end
 
 return tests

@@ -64,6 +64,7 @@ The next major GUI pass should therefore prefer:
 
 - the dedicated Turret XP GUI module tree under `scripts/control/gui/` should keep panel/dialog/section ownership out of `gui_panels.lua`;
 - `scripts/control/gui/shell.lua` should own the anchored top-level frame and column slots, using `flib.gui` for declarative construction while `gui_panels.lua` remains a temporary compatibility coordinator;
+- `scripts/control/gui/actions.lua` should own widget event routing and keep Factorio event registration in `events.lua` thin;
 - a small local GUI builder/helper layer for repeated domain widgets such as Veteran Core slots, stat rows, Evolution cards, element progress, and action toolbars;
 - `flib` styles/helpers where they match the desired vanilla language, especially slot buttons, drag handles, pushers, and future dictionary/migration utilities;
 - custom sprites and data-stage styles for Turret XP-specific actions only when vanilla utility sprites or `flib` styles are insufficient;
