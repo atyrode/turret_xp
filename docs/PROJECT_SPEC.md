@@ -123,6 +123,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
 - Point allocation refreshes rebuild the Evolution column in place; prototype body swaps remain deferred while the turret GUI is open so the whole vanilla window does not jump back to its default position.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, and panel styles.
+- Future GUI replacement work should keep `flib` as an accepted foundation and move toward custom Turret XP panel/dialog/section modules rather than growing one generic panel file. The target is a polished Factorio-native interface with domain widgets for Veteran Cores, stats, Evolution choices, element progress, and action toolbars.
 - The XP bar uses a custom solid progressbar style defined by the data-stage style prototype module.
 - Magazine and Ammo are separate stat rows: Magazine shows the loaded magazine stack, Ammo shows current rounds in the active magazine, and the Ammo Productivity bar uses a purple custom style on Factorio's native horizontal progressbar widget in a separate stat row immediately after Ammo.
 - While a turret GUI is open, the XP/stat area refreshes on the shield recharge cadence so Shield and Ammo Productivity progress can visibly move more smoothly than the slower full Evolution-column refresh.

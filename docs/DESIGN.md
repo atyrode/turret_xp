@@ -16,6 +16,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 
 - Keep the vanilla turret GUI as the main interaction.
 - Attach Turret XP as a bounded two-column panel: Veteran Core identity, XP, dev controls, and stats on the left; Evolution on the right.
+- Treat this as the transitional implementation, not the ceiling. The next major GUI pass should be a fully custom, Factorio-native Turret XP interface with the same care for hierarchy, icon language, spacing, and action discoverability shown by mature utility mods such as Factory Planner.
 - Keep the Evolution column stable: a fixed summary header, one scrollable section body, section widths derived from the viewport, and no content rendering under the scrollbar.
 - Use direct labels, compact controls, restrained rich text markers, and vanilla-like layout rhythm.
 - Keep stat rows scannable: show final values in the panel, put formulas in the stat-name info hover, and reserve the quality diamond for quality-specific HP/range breakdowns.
@@ -26,6 +27,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep floating-label controls top-down and conditional: name field plus `Show`, RGB sliders/preset controls only when the label is shown, then the `Level` option.
 - Keep numeric value coloring precise: unchanged values stay neutral, beneficial deltas use muted green, harmful deltas use muted red, units/prose stay neutral, and element colors are reserved for elemental damage numbers.
 - Use optional Bullet Trails and vanilla visual prototypes for readability, but keep fallback visuals lightweight and avoid visual spam.
+- Prefer custom local GUI helpers and focused domain widgets over a generic one-off panel file. `flib` is an accepted foundation for vanilla-like styles and helper patterns, but Turret XP should own the Veteran Core, stats, Evolution, element, and action interaction model directly.
 
 ## Progression Direction
 

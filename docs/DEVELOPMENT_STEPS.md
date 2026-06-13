@@ -29,11 +29,12 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - The headless suite is split by subsystem and covers the current hidden prototype budget, bound turret movement and ammo conservation, modded base turret range inheritance, turret-source projectile ammo range compatibility, damage accounting, combat effect descriptor/budget samples, GUI helper samples, compatibility helper samples, feeder routing, passive element progress, Shield, Resistance, Ammo Productivity, status damage, and gated remote policy.
 - The invisible feeder remains the accepted material-input model and is documented as a narrow contract with headless coverage for lifecycle, ownership cleanup, source-aware filter priority, no-source non-management, restoration, ammo forwarding, wrong-item cleanup, mixed-element requests, and passive material progress.
 - Published save/profile compatibility now lives in a named migration compatibility layer with headless coverage for legacy element slots, active element projects, retired element fuel buffers, retired augments, and old skill-tree ranks.
+- GUI dependency direction is decided for the next major GUI pass: `flib` is an accepted runtime foundation, dependencies are allowed when they earn their cost, and the product target is a custom Factorio-native Turret XP interface with focused local helpers rather than a generic inherited framework.
 - Public homepage, GitHub release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and `docs/public-copy.json`, with `scripts/check.sh` detecting stale committed homepage output.
 
 ## Current Roadmap
 
-- No active audit refactor item is queued. Add the next item here when the next scope is selected.
+- Next likely GUI implementation scope: split `gui_panels.lua` into custom panel/dialog/section modules while preserving behavior and deciding the localization boundary.
 
 ## Validation Checklist
 
