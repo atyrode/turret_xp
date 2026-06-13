@@ -1,10 +1,10 @@
 # Playtest
 
+This guide is split by depth. Run the smoke path for ordinary feedback, the regression path before handing off gameplay changes, and the deep path when validating a release candidate or a high-risk subsystem change.
+
 ## Install
 
-Current development playtest:
-
-0.10.4 is the current package target for the next Mod Portal playtest release.
+Current development package target: `0.10.4`.
 
 Preferred once published:
 
@@ -20,108 +20,114 @@ Manual local fallback:
 scripts/install-local.sh
 ```
 
-## Test Path
+## Smoke Path
+
+Use this when you only need to confirm the mod loads and the main loop works.
 
 1. Start or load a Factorio 2.0 save with `turret_xp` enabled.
-2. Place a vanilla gun turret.
-3. Add firearm, piercing, or uranium ammo.
-4. Open the turret and confirm the `Turret XP` panel appears to the right of the vanilla GUI.
-5. Confirm the panel says no Veteran Core is installed and XP/evolution are inactive.
-6. Craft or dev-create a Veteran Core and install it.
-7. Check that the panel shows level, XP progress, HP, shooting speed, range, separate Magazine and Ammo rows, damage, estimated DPS, kills, lifetime damage, and a second main Evolution column with a fixed summary header plus bounded scrolling sections.
-8. Name the core and confirm the `Show` checkbox sits beside the name field, with label color controls hidden while `Show` is off.
-9. Enable `Show label` and confirm the floating text appears as `name (lvl N)` above the turret.
-10. Change label color with RGB sliders and the preset/custom color button below them, then confirm presets keep their preset names, RGB slider edits show `Custom`, `Level` appears below the color button, and the floating label updates to the selected color above the turret.
-11. Click the Veteran Core slot to move the installed tagged core to the cursor, put it in inventory, reinstall it, and confirm XP, upgrades, name, and label settings move with the core.
-12. Swap two Veteran Cores through the slot and confirm the outgoing core keeps its stored profile.
-13. Shift/Ctrl-click the installed core slot and confirm it returns to inventory when there is room.
-14. Pick an element, then use the section `Change` action and confirm a different element can be selected.
-15. Move/resize the vanilla turret GUI if needed, click Evolution actions, and confirm the Turret XP panel stays narrow and Evolution content does not render under the scrollbar.
-16. Mine a turret with an unbound core installed and confirm the gun turret item and Veteran Core are returned separately.
-17. Bind the installed core from the Veteran Core slot row, mine the turret, and confirm inventory receives one bound veteran turret item rather than separate turret/core items.
-18. Place the bound veteran turret item and confirm the turret, installed core profile, name/label settings, quality, health ratio, and loaded ammo restore. Unbind it and confirm mining returns to the separate item behavior.
-18a. Bind a turret with Sniper or a sub-specialization that changes range, hold the bound turret item in hand, and confirm Factorio's native placement range preview matches the restored turret range. Old generic or retired range-preview bound stacks may need to be placed and mined once before they become a specialization-specific preview item.
-18b. Mine a bound turret with ammo loaded, place the bound item again, and confirm the ammo is restored only in the turret: the player inventory must not also receive a duplicate copy.
-18c. With Fill4Me or another placement helper enabled, place a bound turret that already stores ammo and confirm all placement-time ammo is refunded before the saved bound ammo snapshot is restored.
-18d. Mine a bound turret with no free inventory slot and confirm a tagged bound turret item spills on the ground instead of returning only a Veteran Core or losing the profile.
-19. Destroy a regular gun turret with no Veteran Core and confirm the replacement ghost displays and requests the normal gun turret item, not the bound veteran turret item.
-20. Confirm the Evolution header shows `Core:`, `Aug:`, and `Spec:` summary text once, with white labels and colored values, and that the scrollable body has six sections: core upgrades, specialization, first element, powerful augments, sub-specialization, and second element/combo.
-21. Confirm level-gated sections show their unlock levels before using dev tools.
-22. Run `/turret-xp-dev` and use `+1` and `+5` dev buttons to reach levels 10, 20, 30, 40, and 50 quickly.
-23. Run `/turret-xp-dev` again and confirm dev controls hide/show without breaking the panel layout.
-24. Spend core upgrade points and confirm ranks and remaining points refresh immediately without moving the whole vanilla turret GUI.
-24a. Spend Shield core ranks, damage the turret, and confirm shield absorbs damage before HP, shows current/capacity in the stats panel, displays Factorio's native HP bar above a nine-pip blue Shield bar, does not recharge while the turret is still being hit, and recharges in small increments only after the no-damage delay. Add or remove Shield ranks while damaged and confirm current shield does not refill for free.
-24b. Spend Ammo Productivity ranks, let the turret fire loaded ammo, and confirm the purple bar appears in its own row after Ammo, advances as ammo is spent, restores +1 ammo inside the current magazine when it fills, uses diminishing returns so 100% raw productivity is not free ammo, does not overfill the magazine above its normal capacity, and does not create full ammo items.
-24d. Hover stat-name info markers and confirm formulas appear there instead of inline in the stats panel. For HP and Range, confirm the info marker explains the stat/formula while the quality diamond lists quality-specific values.
-24c. Spend Resistance ranks, damage the turret with enemies, and confirm the stats panel shows reduced damage taken while the turret still dies normally to overwhelming lethal hits.
-25. Confirm unlocked Evolution choices have category headers, right-side status text, horizontal delimiters, and are easier to scan.
-25a. Confirm Evolution section frames have balanced left/right padding, visible right margin, and spacing between adjacent sections.
-26. Hover allocation buttons and confirm the tooltip describes the specific upgrade and next rank.
-27. Use the always-visible Evolution-header Reset. Confirm it clears core upgrades, augments, specialization, sub-specialization, elements, and mastery ranks while keeping XP, level, kills, damage, name, and binding.
-28. Use dev `Reset` and confirm the installed core returns to a fresh zero-XP state.
-29. At level 10, pick Sniper, Machine Gun, Bulwark, or Brawler and confirm the choice is locked in without moving the whole vanilla turret GUI back to its default position. Close the turret GUI, reopen it, and confirm real turret stats changed.
-30. Pick an element and confirm its current rank, technical effect, next material requirement, and progress bar are always visible without clicking an Upgrade button.
-31. Confirm no visible feeder chest appears near the turret and the Evolution column does not show feeder status text.
-32. Feed ammo into the turret with inserters and confirm the turret still receives ammo with a Veteran Core installed.
-33. Feed the required material into the turret area with an inserter and confirm passive element progress advances without a deposit or upgrade-start button.
-34. Repeat material feeding with normal and bulk inserters; confirm only resources for selected elements are accepted and no item pile forms around the turret. If a stale inserter hand drops the wrong material once, confirm the hidden input clears it and the correct material can still advance the progress bar.
-35. Confirm ammo inserters keep feeding ammo while element material feeding is available.
-36. Use `Materials` and confirm it completes the next passive material rank for an unlocked element.
-37. Confirm specialization choices use the updated card rhythm: icon/title row, full-width description with the Pick button justified right, then a full-width vertical technical stat table.
-37a. Confirm the role-specific secondary multiplier is visible and functional: Sniper boosts Crit Damage, Machine Gun boosts Ammo Productivity, and Bulwark boosts Regeneration.
-37b. Confirm Brawler feels like a slower close-range heavy role rather than a pure burst upgrade: +200% damage, -50% attack speed, short range, and innate 10% Lifesteal.
-38. At level 30, buy a powerful augment and confirm augment points are earned every ten levels.
-39. Pick Sniper or a range-changing sub-specialization and confirm the displayed range changes and the turret can actually fire farther.
-39a. Level a turret through combat and confirm a short `Level up!` popup appears above the turret when the core gains a level.
-40. With a mod that changes vanilla gun turret range during data updates, such as K2 Spaced Out, confirm specialization range multipliers apply to the modded base range instead of reducing it.
-40a. With K2/K2SO realistic weapons enabled, test a long-range Turret XP build with rifle ammo and confirm the turret no longer shoots endlessly at targets beyond the physical bullet delivery range.
-41. At level 40, pick one of the two sub-specializations for the active role and confirm the stats summary shows the branch identity and combined multipliers.
-42. Confirm an unlocked element card stays inside the Evolution column, keeps its `Change` action visible, and keeps next-rank material progress visible.
-43. At level 50, pick a second element for free and confirm the combo text appears.
-44. Test a mixed pair such as Fire + Explosive from one chest containing sulfur and grenades. Confirm managed inserters can expose and feed both needed resources for passive rank progress.
-45. Test a duplicate pair such as Explosive + Explosive and confirm the stats summary shows one Explosive line plus the combo identity, not two Explosive stat rows.
-46. Extract or mine the core and confirm leftover feeder contents spill instead of disappearing.
-47. Let the turret shoot enemies and confirm XP, damage dealt, kills, active custom stat rows, and upgrade/element visual feedback feel visible enough to judge. Electric arc visuals should disappear quickly instead of staying on the map. Crits, double shots, bounce, Fire burn, and Toxic poison should be readable enough to notice when they happen.
-47a. Confirm the stats panel reserves scrollbar space even before the scrollbar appears, does not shift when extra rows make it scrollable, and that Crit Chance and Crit Damage appear under Damage Dealt as regular baseline stats with compact percentage values such as `0%`, not inline unit text like `0% / shot`. Confirm Est. DPS also shows only a compact final value and keeps its formula in the info hover.
-47b. Confirm stat, upgrade, augment, and element value text colors only the numeric parts, with units and descriptive words staying neutral; elemental damage numbers should use their element color.
-48. Damage turrets with Shield and Regeneration augment ranks and confirm Shield protects HP first, then passive repair scales with current max HP, especially after Bulwark/Guardian choices.
-49. Try Brawler Lifesteal and Shield on Hit in combat and check whether HP healing versus shield generation is understandable.
-50. Change the Turret XP runtime-global settings and confirm the open panel refreshes with the new XP pacing.
-51. Spend points, toggle label settings, unlock elements, use Change actions, and reset Evolution while the vanilla turret GUI is moved. Confirm the whole vanilla turret GUI does not jump back to its default position.
-52. Select the turret and run `/turret-xp` as a fallback path.
-53. On a space platform, place one or more Veteran Cores in the platform hub inventory, open a platform turret, and confirm the panel lists the exact available cores.
-54. Install a specific listed platform core, then send it back to the hub and confirm the same profile returns when hub inventory space is available.
-55. Let a platform turret fight and confirm XP rises much more slowly than comparable surface combat while damage/kills still show raw totals.
-56. Park a space platform above an asteroid-heavy route or planet orbit and confirm asteroid kills no longer level a Veteran Core too quickly.
-57. If Bullet Trails is installed, confirm bounce, double-shot, and element tracers are more readable without becoming visually noisy. Double Shot should fire at a second nearby enemy when one exists, otherwise into the original target. If Bullet Trails is not installed, confirm the mod still loads and fallback visuals still appear.
+2. Place a vanilla gun turret and add ammo.
+3. Open the turret and confirm the `Turret XP` panel appears beside the vanilla GUI.
+4. Install or dev-create a Veteran Core.
+5. Confirm level, XP, HP, shooting speed, range, Magazine, Ammo, damage, estimated DPS, kills, and Evolution sections appear.
+6. Let the turret shoot enemies and confirm XP, damage, kill credit, and level progress update.
+7. Spend one core upgrade and confirm ranks, points, and stats refresh without moving the vanilla turret GUI.
+8. Name the core, toggle `Show`, and confirm the floating label appears above the turret.
+9. Extract and reinstall the core, then confirm XP, upgrades, name, and label settings move with it.
+10. Select the turret and run `/turret-xp` to confirm the fallback open command.
+
+## Regression Path
+
+Use this path before merging gameplay, GUI, persistence, feeder, combat, or release-sensitive changes.
+
+### Core And Movement
+
+1. Move an installed core to the cursor, put it in inventory, reinstall it, and confirm profile state is preserved.
+2. Swap two Veteran Cores through the scripted slot and confirm the outgoing core keeps its stored profile.
+3. Mine an unbound veteran turret and confirm the normal turret item and Veteran Core return separately.
+4. Bind the installed core, mine the turret, and confirm one tagged bound veteran turret item returns instead of separate turret/core items.
+5. Place the bound item and confirm the turret, installed profile, name/label settings, quality, health ratio, and loaded ammo restore.
+6. Unbind it and confirm mining returns to the separate item behavior again.
+7. Mine a bound turret with no free inventory slot and confirm a tagged bound item spills instead of losing the core profile.
+
+### GUI And Evolution
+
+1. Move or resize the vanilla turret GUI, then spend points, change sections, and reset Evolution. The whole vanilla GUI should not jump back to its default position.
+2. Confirm the Evolution header shows `Core:`, `Aug:`, and `Spec:` once, with six bounded sections below it.
+3. Use `/turret-xp-dev` to reach levels 10, 20, 30, 40, and 50.
+4. Pick specialization, first element, augment, sub-specialization, and second element/combo at their gates.
+5. Use section `Change` actions and the full Evolution `Reset`; XP, level, kills, damage, name, and binding should remain.
+6. Hover stat-name info markers and confirm formulas live there. HP and Range quality breakdowns should live on the quality diamond.
+7. Confirm stats reserve scrollbar space and values do not render under the scrollbar.
+8. Confirm numeric rich text colors only numbers; units and prose stay neutral.
+
+### Combat And Stats
+
+1. Spend Shield ranks, damage the turret, and confirm Shield absorbs damage before HP, uses the nine-pip in-world bar, does not recharge while taking damage, and does not refill for free when capacity changes.
+2. Spend Resistance ranks and confirm non-lethal damage is mitigated while overwhelming lethal hits can still kill the turret.
+3. Spend Ammo Productivity ranks and confirm the purple bar appears after Ammo, advances as ammo is spent, restores +1 ammo inside the current magazine, does not overfill, and does not create full ammo items.
+4. Test Regeneration, Shield on Hit, and Brawler Lifesteal in combat and check whether HP healing versus shield generation is understandable.
+5. Confirm Crit Chance and Crit Damage appear under Damage Dealt as regular baseline stats.
+6. Confirm Fire and Toxic damage-over-time ticks count for XP, kill credit, and lifesteal.
+7. Confirm Electric arc visuals expire quickly and do not leave map entities behind.
+8. If Bullet Trails is installed, confirm bounce, double-shot, and element tracers are more readable without becoming noisy. If it is absent, confirm fallback visuals still appear and the mod still loads.
+
+### Feeder And Materials
+
+1. Pick an element and confirm its current rank, technical effect, next material requirement, and progress bar are always visible.
+2. Feed ammo with inserters and confirm normal turret ammo logistics still work.
+3. Feed the selected element material with normal, fast, stack, and bulk inserters; passive progress should advance without a deposit button or visible feeder chest.
+4. Confirm only selected element resources are accepted and no item pile forms around the turret.
+5. Drop or stale-hand insert one wrong item, then confirm hidden input cleanup clears it and correct material progress can continue.
+6. Test a mixed pair such as Fire + Explosive from one chest containing sulfur and grenades. Managed inserters should expose and feed both needed resources.
+7. Test a duplicate pair such as Explosive + Explosive and confirm the stats summary shows one Explosive row plus the combo identity.
+8. Extract or mine the core and confirm leftover feeder contents spill instead of disappearing.
+
+## Deep Manual Path
+
+Run this when validating release candidates, compatibility claims, or high-risk persistence changes.
+
+### Bound Item Edge Cases
+
+- Bind a Sniper or range-changing sub-specialization, hold the bound item, and confirm Factorio's native placement range preview matches the restored turret range. Old generic or retired preview stacks may need to be placed and mined once.
+- Mine a bound turret with ammo loaded, place it again, and confirm ammo is restored only in the turret, not duplicated in player inventory.
+- With Fill4Me or another placement helper enabled, place a bound turret that stores ammo and confirm placement-time ammo is refunded before the saved snapshot is restored.
+- Destroy a regular gun turret with no Veteran Core and confirm the replacement ghost requests the normal gun turret item, not a bound veteran item.
+
+### Specialization And Compatibility
+
+- Test Sniper, Machine Gun, Bulwark, Brawler, and every sub-specialization. Confirm the stats summary shows branch identity and combined multipliers.
+- Confirm Brawler feels like a slower close-range heavy role: high damage, lower attack speed, short range, and innate Lifesteal.
+- Pick Sniper or a range-changing sub-specialization and confirm displayed range changes and the turret can actually fire farther.
+- With a mod that changes vanilla gun turret range during data updates, confirm specialization range multipliers apply to the modded base range.
+- With K2/K2SO-style realistic rifle ammo, confirm long-range Turret XP builds do not shoot endlessly at targets beyond physical bullet delivery range.
+
+### Platform Behavior
+
+- On a space platform, place one or more Veteran Cores in the hub inventory, open a platform turret, and confirm the panel lists exact available cores.
+- Install a specific listed core, then send it back to the hub and confirm the same profile returns when hub inventory has room.
+- Let a platform turret fight and confirm XP rises much more slowly than comparable surface combat while raw damage and kills still display.
+- Park a space platform above asteroid-heavy traffic and confirm asteroid kills do not overlevel a core.
+
+### Long-Fight Balance
+
+- Let several turret builds survive real waves and compare XP pace, level gates, material rank progress, and ammo demand.
+- Check whether Shield, Regeneration, Ammo Productivity, Shield on Hit, Lifesteal, Luck, Double Shot, Bounce, and element procs are readable without dominating the screen.
+- Confirm specialization tradeoffs are understandable: range for fire rate, fire rate for damage per shot, survivability for peak damage, and XP gain for immediate power.
+- Change runtime-global XP settings and confirm open panels refresh with the new pacing.
 
 ## Report Back
 
-Useful feedback:
+Most useful feedback:
 
-- Did the panel appear in the right place?
-- Did the Veteran Core install/extract flow feel like a natural way to choose which turret becomes unique?
-- Did moving a core between turrets preserve the right information?
-- Did Bind/Unbind make quick turret moves clearer, or does it need a different label or placement in the panel?
+- Did the panel appear in the right place and stay stable while actions refreshed?
+- Did the Veteran Core install/extract/swap flow feel natural?
+- Did Bind/Unbind make quick turret moves clearer, or does it need different wording or placement?
 - Did the core slot feel close enough to an inventory slot, especially cursor transfer and swap?
-- Did label color and level visibility cover the customization you need now that label size is fixed?
-- Did the RGB sliders feel good enough compared with the vanilla train color picker, given that mods do not get that exact picker widget?
-- Did the hidden turret-tile input accept element materials from normal and bulk inserters while still forwarding ammo reliably enough, or did it feel too invisible/unclear?
-- Did passive element rank progress feel like a clear material goal, including no wrong-item stalls or ground overflow?
-- Did the optional floating label feel useful, and should it be visible only in alt mode or always visible?
-- Did the wider two-column layout give Evolution and stats enough room without making the whole attached panel too wide?
-- Did the static Evolution header plus scrollable section body feel cleaner than the previous all-in-one scrolling column?
-- Did the six-section Evolution column feel clearer than the skill tree?
-- Did the delimiters make the Evolution choices easier to parse?
-- Did the full Evolution Reset and focused `Change`/deallocation controls behave as expected?
-- Did level gates 10, 20, 30, 40, and 50 feel like the right first draft?
-- Were passive material rank requirements understandable?
-- Which element, specialization, or augment felt confusing or too weak?
+- Did label color and level visibility cover the customization needed for now?
+- Did the hidden turret-tile input feel reliable and readable enough?
+- Did passive material progress feel like a clear material goal?
+- Which specialization, element, combo, augment, or stat felt confusing, too weak, or too strong?
 - Did Shield feel like a satisfying survivability replacement for Max HP?
-- Did specialization, Change actions, and full Evolution Reset avoid moving the whole vanilla turret GUI?
-- If using K2 Spaced Out or another turret-range mod, did specialization range multipliers preserve the modded base range?
-- Did XP, kills, evolution points, and ranks update at the pace you expected?
-- Did the platform hub core selector make it clear which Veteran Core was being installed?
-- Did target-aware XP pacing feel closer to the intended progression speed, especially for passive asteroid defense?
-- Did optional Bullet Trails feedback make scripted bullets and elements easier to understand?
+- Did target-aware XP pacing feel closer to intended progression speed, especially for passive asteroid defense?
+- Did optional Bullet Trails improve scripted feedback without adding noise?
 - Did the mod fail to load, desync, or throw a runtime error?

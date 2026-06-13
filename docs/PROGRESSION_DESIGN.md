@@ -1,417 +1,106 @@
 # Progression Design
 
-This document captures the intended long-term gameplay direction for turret XP, evolution, perks, material investment, elemental specialization, and infinite scaling. It is design direction only; it should not be read as a committed implementation spec.
+Status: future-only design direction. This document is not a committed implementation spec. Current implemented behavior belongs in [PROJECT_SPEC.md](PROJECT_SPEC.md), and user-visible obligations belong in [REQUIREMENTS.md](REQUIREMENTS.md).
 
-The current playable draft uses a simple level-gated Evolution list instead of a navigable skill tree. The V0.10.x line has six sections: core upgrades, specialization, first element, augments, sub-specialization, and second element/combo.
+## Current Playable Baseline
+
+The V0.10.x line uses a level-gated Evolution list:
+
+- Core upgrades are available once a Veteran Core is installed.
+- Specialization unlocks at level 10.
+- First element unlocks at level 20.
+- Augments unlock at level 30.
+- Sub-specialization unlocks at level 40.
+- Second element and combo identity unlock at level 50.
+
+The previous embedded skill-tree spike was removed. A future tree can return only if it proves better than the current list for readability, validation, and player control.
 
 ## Core Fantasy
 
-A turret should be able to become a veteran with an identity.
+A turret should become a veteran with a readable identity. Two gun turrets that started from the same vanilla prototype should be able to diverge into clear roles such as long-range precision defender, high-volume swarm shredder, durable anchor, or elemental specialist.
 
-The player should look at two gun turrets that started from the same vanilla prototype and understand that one has become a long-range precision defender, another has become a high-volume swarm shredder, and another has become a short-range armored anchor. The mod should preserve Factorio's industrial logic: combat experience matters, but major upgrades should also require deliberate material investment.
+The mod should preserve Factorio's industrial logic: combat experience matters, but major growth should also require deliberate material investment.
 
 ## Design Pillars
 
-- **Specialization over universal upgrades.** A high-level turret should not simply be better at everything. Strong choices should usually close or weaken other paths.
-- **Combat earns direction.** XP and levels should grant skill points, and skill points should express what the turret learned by fighting.
-- **Materials express commitment.** One-time or milestone material costs should unlock major hardware changes, branch caps, elemental slots, sustain systems, risky overdrives, and infinite sinks.
-- **Element growth should be intentional.** Material delivery should feel like a construction project or research-style goal: picking an element creates identity immediately, while later ranks require progressively larger deliveries.
-- **Visible identity.** The GUI should show the turret's archetype, elements, spent points, material gates, and next meaningful goal without burying the player in raw numbers.
-- **Infinite scaling stays narrow.** Repeatable investment should exist, but it should be slow, focused, and subject to diminishing returns.
+- Specialization over universal upgrades: high-level turrets should not simply become better at everything.
+- Combat earns direction: XP and levels grant choices that express what the turret learned by fighting.
+- Materials express commitment: the factory should build deeper capabilities into the turret.
+- Element growth should be intentional: selecting an element creates identity immediately, while later ranks need visible material progress.
+- Visible identity: the GUI should show archetype, elements, spent points, material goals, and next useful action.
+- Infinite scaling stays narrow: repeatable investment should be slow, focused, and subject to caps, diminishing returns, or escalating costs.
 
-## Progression Layers
+## Future Layers
 
-Turret progression should combine four layers that serve different purposes.
+These are future design lanes, not all current features.
 
-### 1. XP And Skill Points
+### XP And Points
 
-XP is the combat-earned layer.
+XP is the combat-earned layer. It should come from damage contribution and kill credit, with target-aware and surface-aware pacing so passive asteroid defense or trivial targets do not overlevel a core.
 
-- Turrets earn XP from damage contribution and kill credit.
-- Levels grant skill points.
-- Evolution points buy perks in the current list UI. A future version may return to a navigable tree if the interaction model is worth it.
-- Perks shape behavior: range, fire rate, damage profile, crits, piercing, bouncing, healing, luck, XP gain, status chance, and archetype-specific mechanics.
+Points should answer: what has this turret learned to do?
 
-Skill points should mostly answer: **what has this turret learned to do?**
+### Materials
 
-Early levels should arrive quickly enough to let the player make a first identity choice. Later levels should become increasingly meaningful goals. A good target is that a turret reaches its first real specialization after a modest number of defended attacks, then takes sustained frontier combat to reach deeper branches.
+Materials are the industrial commitment layer. They should answer: what did the factory build into this turret?
 
-### 2. Material Investment
+Current V0.10.x element ranks already use passive material progress. Future material gates can be considered for deeper branch caps, hardware transformations, advanced element slots, sustain systems, or mastery sinks, but only when the player-facing goal remains visible and the feeder/input model stays understandable.
 
-Materials are the industrial commitment layer.
+### Elements
 
-Some upgrades should require both a skill point and a material unlock. Other upgrades should be pure material milestones that open new branch depth, new hardware, or new element slots.
+Elements are the identity and interaction layer. The implemented set is Fire, Electric, Explosive, and Toxic. Future elements such as Kinetic, Acid, Poison, radiation-like behavior, or laser-like behavior should wait until the current element set is readable and balanced.
 
-Examples:
+Duplicate pure-element builds should specialize. Mixed pairs should create a mechanic that neither element has alone. It is better to ship a few readable, well-balanced combos than a large matrix of shallow effects.
 
-- A sniper branch node might require a skill point plus steel, advanced circuits, and radar.
-- A machine-gun branch node might require gears, engines, copper, and circuits.
-- A heavy short-range branch node might require steel, concrete, explosives, and repair packs.
-- An elemental branch gate might require sulfur, batteries, flamethrower ammo ingredients, uranium, or processing units depending on the element.
-- A sustain or overdrive branch might require repair packs, walls, steel, engines, batteries, or modules depending on whether it focuses on armor, regeneration, vampirism, or self-damaging burst power.
+### Infinite Mastery
 
-Material investment should answer: **what did the factory build into this turret?**
+Infinite mastery is the late-game sink. It should absorb excess XP and large material quantities without letting one turret replace base defense planning.
 
-The intended feel for major unlocks is closer to localized research or a construction contract than fuel. A turret might need `1k` iron plate to unlock a branch, then much later `1m` iron plate as part of an infinite mastery sink. In the current V0.10.x draft, the first rank of an element is free at its level gate, and future element ranks are earned through passive material progress using the element's matching resource. The next requirement is always visible on the selected element panel, and inserters can keep feeding it without clicking a separate project button. The exact numbers should scale with game stage and must be playtested.
+Possible mastery lanes include precision, fire rate, durability, regeneration, ammo economy, element chance, and support reliability. Any repeatable lane should include diminishing returns, soft caps, escalating costs, or narrow tradeoffs.
 
-### 3. Element Slots
+## Archetype Anchors
 
-Elements are the identity and interaction layer.
+These anchors keep future branches distinct:
 
-Each turret can eventually gain two element slots. The first element gives a broad identity. The second element creates a combo archetype. Picking the same element twice should be valid and should create a focused pure-element build.
+- Sniper: long range, slow fire, high damage per shot, crit value, and piercing or overkill conversion.
+- Machine Gun: high fire rate, lower damage per bullet, swarm control, ammo-flow mastery, and proc frequency.
+- Brawler or Short-Range Heavy: reduced range, heavy damage, splash or close-range punishment, and durable front-line identity.
+- Bulwark: survivability, self-healing, resistance, shield/recovery behavior, and holding power.
+- Elementalist: status effects, duo-element combos, luck scaling, and tactical damage conversion.
+- Veteran Support: XP gain, luck, ammo economy, reliability, and possible low-intensity support effects.
 
-The element system should answer: **what kind of damage logic does this turret bend toward?**
-
-Potential initial element set:
-
-- **Kinetic:** physical damage, piercing, ricochet, armor breaking, crit reliability.
-- **Fire:** burning damage, area denial, lingering effects, panic against swarms.
-- **Electric:** arcing shots, stun or slow windows, chain targeting, shield disruption if relevant.
-- **Acid:** resistance shred, armor corrosion, damage-over-time, debuff setup.
-- **Explosive:** splash, shrapnel, knockback, clustered-target punishment.
-- **Poison:** clouds, lingering area control, biological-target pressure.
-
-Laser-like or radiation-like elements can be considered later, but they may fit better once non-ammo turrets or advanced ammo are supported.
-
-### 4. Infinite Mastery
-
-Infinite mastery is the late-game sink.
-
-After a turret has an archetype and major branch unlocks, it should have repeatable goals that absorb excess XP and large material quantities. These should be small and focused, not broad multipliers that make one turret solve every defense problem.
-
-Examples:
-
-- `Precision Mastery`: repeatable small crit damage increase for sniper builds.
-- `Servo Mastery`: repeatable small fire-rate increase for machine-gun builds, with ammo usage tradeoffs.
-- `Hardened Core`: repeatable small max HP or resistance increase for bulwark builds.
-- `Regenerative Plating`: repeatable small life regeneration or repair efficiency increase.
-- `Bloodless Engine`: repeatable small lifesteal-style healing from damage dealt, capped by combat context.
-- `Elemental Mastery`: repeatable small status chance or elemental damage increase for a chosen element pair.
-- `Logistics Mastery`: repeatable small ammo efficiency or reload benefit.
-
-Infinite upgrades should use diminishing returns, soft caps, or escalating material costs. They should be exciting as long-term goals without becoming mandatory busywork for every turret.
+Do not let these anchors collapse into one universal best turret. Strong roles should carry tradeoffs.
 
 ## Future Tree Shape
 
-If the mod returns to a tree later, it should be a navigable map, not a flat list. This remains deferred while the current list-based Evolution model is playtested.
-
-Recommended structure:
-
-- The center node is the turret itself.
-- Early branches radiate into archetypes.
-- Deeper paths require prior branch commitment.
-- Major gates can require materials.
-- Element slots live as major nodes or socket-like unlocks.
-- Combo nodes appear after the second element is chosen.
-- Infinite nodes sit at the outer edge of committed paths.
-
-Node types:
-
-- **Perk:** costs skill points and grants a rankable effect.
-- **Gate:** costs materials and unlocks nearby nodes or branch depth.
-- **Choice:** mutually exclusive or branch-defining node.
-- **Socket:** assigns or changes an element.
-- **Combo:** requires two elements and grants a unique mechanic.
-- **Mastery:** repeatable late-game sink with escalating costs.
-
-The UI should make requirements obvious: point cost, material cost, prerequisites, current rank, and resulting effect. Material progress should be visible as progress toward a goal, not hidden in a tooltip.
-
-## Archetypes
-
-These archetypes are not fixed classes. They are design anchors that help keep branches distinct.
-
-### Sniper
-
-Long range, slow fire, high damage per shot, high crit value, strong piercing.
-
-Possible strengths:
-
-- Range.
-- First-shot damage.
-- Crit damage.
-- Crit chance against high-health targets.
-- Piercing shots.
-- Overkill conversion into secondary damage.
-
-Possible tradeoffs:
-
-- Lower fire rate.
-- Less effective against dense swarms unless built into piercing or ricochet.
-- Expensive material gates using steel, circuits, radar, processing units.
-
-### Machine Gun
-
-Very high fire rate, lower damage per bullet, swarm control, ammo-flow mastery.
-
-Possible strengths:
-
-- Shooting speed.
-- Ammo efficiency.
-- Ricochet or bounce chance.
-- Suppression effects.
-- Proc frequency for low-damage elemental effects.
-
-Possible tradeoffs:
-
-- Lower damage per shot.
-- Higher ammo demand unless invested into logistics perks.
-- Worse armor penetration without kinetic or acid investment.
-
-### Short-Range Heavy
-
-Reduced range, heavy damage, splash or cone-like behavior, durable front-line identity.
-
-Possible strengths:
-
-- Close-range damage multiplier.
-- Explosion or shrapnel effects.
-- Knockback, slow, or stun.
-- Bonus armor and HP.
-- Strong self-repair while fighting.
-
-Possible tradeoffs:
-
-- Lower range.
-- High material cost.
-- Positioning matters more.
-
-### Bulwark
-
-Survivability, self-healing, resistance, and reliable holding power.
-
-Possible strengths:
-
-- Max HP.
-- Resistance against acid, fire, or physical damage.
-- Life regeneration.
-- Self-healing after kills or while loaded.
-- Vampirism-style healing from damage dealt.
-- Emergency shield-like thresholds.
-- Nearby wall repair support as a later feature.
-
-Possible tradeoffs:
-
-- Lower peak damage.
-- Fewer offensive combo nodes.
-- Risky sustain nodes may require the turret to keep fighting to remain healthy.
-
-### Overdrive
-
-Risk-reward upgrades that spend turret HP for temporary combat bonuses.
-
-Possible strengths:
-
-- Fire-rate bursts that drain HP while active.
-- Extra damage or crit chance while below a health threshold.
-- Self-damage to trigger shockwaves, shrapnel, or emergency burn effects.
-- Converting regeneration into temporary offensive power.
-- Vampirism loops where damage output can recover overdrive costs if enemies keep coming.
-
-Possible tradeoffs:
-
-- Can leave the turret vulnerable after a wave.
-- Needs clear safeguards so the turret does not casually destroy itself.
-- Should pair naturally with max HP, regeneration, vampirism, repair packs, and defensive material gates.
-
-Design guardrails:
-
-- Self-damage effects should have a minimum HP threshold or automatic shutoff.
-- The GUI should clearly show active risk, current drain, and whether the turret can survive the next activation.
-- Overdrive should feel like an aggressive build choice, not a hidden tax on normal damage perks.
-
-### Elementalist
-
-Status effects, duo-element combos, luck scaling, and tactical damage conversion.
-
-Possible strengths:
-
-- Elemental status chance.
-- Combo mechanics.
-- Damage-over-time.
-- Chain effects.
-- Debuffs that help nearby turrets.
-
-Possible tradeoffs:
-
-- Needs material gates and element slots before it comes online.
-- Should not out-DPS every physical build by default.
-- Performance must be watched carefully if effects spawn many projectiles, render objects, or area checks.
-
-### Veteran Support
-
-XP gain, luck, ammo economy, and reliability.
-
-Possible strengths:
-
-- XP boost.
-- Luck scaling.
-- Ammo conservation.
-- Better kill-credit conversion.
-- Small aura-like support later, if performance and readability allow it.
-
-Possible tradeoffs:
-
-- Lower immediate combat power.
-- Should be a valid support identity, not the mandatory optimal route for every turret.
-
-## Duo-Element Combos
-
-The second element should transform the turret's identity. Pure pairs should specialize. Mixed pairs should create a mechanic that neither element has alone.
-
-Example combo directions:
-
-- **Fire + Fire:** stronger burns, longer burn duration, fire-focused area denial.
-- **Fire + Electric:** arcing shots can ignite secondary targets.
-- **Fire + Acid:** burning corrosion that weakens resistance while damage-over-time runs.
-- **Fire + Explosive:** incendiary shrapnel or small burning bursts.
-- **Electric + Electric:** stronger chain arcs, brief stuns, better target jumping.
-- **Electric + Kinetic:** railgun-style piercing shots with crit synergy.
-- **Electric + Acid:** conductive corrosion that increases chain chance on debuffed targets.
-- **Acid + Acid:** deep armor shred and stacking vulnerability.
-- **Acid + Kinetic:** armor-piercing corrosion rounds.
-- **Explosive + Kinetic:** shrapnel bursts, ricochet fragments, overkill splash.
-- **Poison + Fire:** toxic combustion clouds or burn-triggered poison bursts.
-- **Poison + Acid:** long-duration biological denial and resistance pressure.
-
-The exact list can start small. It is better to ship a few readable, well-balanced combos than a large matrix of shallow effects.
-
-## Luck
-
-Luck should be a real stat, but it needs guardrails.
-
-Luck can affect:
-
-- Crit chance.
-- Ricochet chance.
-- Pierce continuation chance.
-- Elemental proc chance.
-- Chance to refund ammo.
-- Chance to gain bonus XP or kill credit.
-- Chance for vampiric heals, emergency repairs, or overdrive refunds when those perks are present.
-
-Luck should not simply multiply every random effect without limit. A good model is:
-
-- Base chance comes from the perk or element.
-- Luck adds a smaller secondary modifier.
-- Effective chance has a cap or diminishing returns.
-- Some builds convert excess luck into reliability or small secondary benefits.
-
-This lets "lucky" turrets feel different without making randomness explode into balance problems.
-
-## Materials And Delivery Model
-
-The preferred design is a **turret investment ledger**.
-
-The player opens the turret and sees material goals attached to locked nodes or branch gates. Supplying materials fills those goals. Once a goal is complete, the unlock stays permanently on that turret.
-
-Current and possible delivery approaches:
-
-- Current: a hidden turret-tile input with managed inserter targets and filters.
-- Possible fallback or complement: clearer visible machine-style input if the hidden proxy is not readable enough.
-- Later: logistic request integration or construction-bot delivery for large upgrade projects.
-- Later: blueprint or copy-paste support for desired upgrade plans.
-
-Material gates should be used for:
-
-- Unlocking archetype depth.
-- Unlocking the first and second element slots.
-- Unlocking rank caps for major perks.
-- Unlocking infinite mastery nodes.
-- Paying for major hardware transformations.
-- Unlocking sustain and overdrive systems such as reinforced chassis, repair cores, vampiric siphons, or unstable high-output firing modes.
-
-Skill points and materials should both matter. A turret with XP but no materials has learned but not been rebuilt. A turret with materials but no XP has hardware potential but no combat identity.
-
-## Portable Veteran Core
-
-Turret progression should be movable, but not for free. The chosen model is a craftable non-stackable Veteran Core that carries a turret's progression profile and can move between turret bodies. Specialization and real stat changes follow the core by swapping the current turret body to the correct hidden variant. Element material progress uses the hidden turret-tile input, and optional bound turret quick moves let the player mine/place one tagged turret/core item when that convenience is worth the inventory uniqueness.
-
-The chosen design is a craftable non-stackable **Veteran Core**. Installing it in a turret marks that turret as a committed progression turret. By default, when the turret is picked up, its XP and evolution state are stored on the core item, making it a distinct inventory item that can later be installed into another turret. If the player explicitly binds the installed core to the turret body, mining instead returns one tagged bound turret item for faster world movement. Unbinding returns to the default separate core/turret behavior.
-
-Bound turret moves must be lossless. When a bound turret is mined, loaded ammo moves into the tagged bound item snapshot and the live turret ammo inventory is cleared before vanilla mining can return the same ammo separately. When a bound turret is mined with a full inventory, the tagged bound item should spill on the ground with the Veteran Core profile, chosen build, health ratio, quality, and saved ammo intact. When a bound turret is placed, the saved ammo snapshot is authoritative: ammo inserted by placement-helper mods is refunded first, then the stored ammo is restored, preventing both duplication and silent ammo loss.
-
-Design goals:
-
-- Make mobility a conscious player choice, not the default for every cheap turret.
-- Preserve the fantasy that the turret's combat memory lives in a physical component.
-- Keep ordinary early-game turrets stackable and disposable.
-- Let important veteran turrets be moved to new front lines without losing identity.
-- Create a natural place for item metadata, custom labels, quality, and tooltip summaries.
-
-Suggested availability:
-
-- Mid-early game, after the player has automated green circuits and steel.
-- Expensive enough that the player does not install one in every turret immediately.
-- Cheap enough that moving a beloved early frontier turret feels achievable before late game.
-
-First implemented recipe:
-
-- Electronic circuit x20.
-- Steel plate x10.
-- Copper cable x40.
-- Repair pack x2.
-
-Possible upgraded recipe later:
-
-- Advanced circuit.
-- Processing unit.
-- Battery.
-- Low density structure or electric engine for late-game stronger cores.
-
-The first implemented icon is a vanilla layered placeholder using the electronic circuit and gun turret icons. A generated Factorio-style 64x64 icon is still desirable later: a compact brass/steel circuit core, with a small turret silhouette or targeting reticle and a glowing memory crystal. It should read as industrial and functional rather than magical.
-
-Implemented first pass:
-
-- Adds an `item-with-tags` prototype for the portable core.
-- Sets stack size to 1 so each veteran core is unique.
-- Stores serialized turret XP/evolution state in item tags.
-- Adds install/extract controls in the Turret XP panel.
-- On turret pickup, if an unbound core is installed, returns the normal turret item through vanilla mining and separately returns or spills the tagged core.
-- If the installed core is bound, mining returns a placeable tagged bound turret item carrying the core profile plus turret quality, health ratio, and loaded ammo snapshot.
-- On installation, reads the core tags and restores the profile to the new turret host.
-- Does not allow two active turrets to share the same core ID.
-- Lets the player name the core profile and optionally draw a floating `name (lvl N)` label above the current turret body.
-- Creates a hidden Veteran Core feeder on the turret tile for selected element rank materials.
-- Consumes matching materials into passive element rank progress from the hidden feeder inventory and forwards ammo stacks into the turret ammo inventory.
-- Destroys the feeder and spills leftover contents when the core is removed or the turret is mined.
-
-Open Veteran Core questions:
-
-- Should a core bind to one force or remain tradable between players/forces?
-- Does the hidden turret-tile input feel reliable and readable enough, or should a future design expose a clearer visible machine input?
-- Should quality on the core affect XP gain, memory capacity, element slots, or respec cost?
-- Should destroyed turrets always destroy the installed core, drop a damaged core, or have a recovery chance?
-
-## Example Player Loop
-
-1. The player builds a defensive line.
-2. Turrets that survive real attacks earn XP and levels.
-3. A turret levels up and gains a skill point.
-4. The player opens the turret, reviews the Evolution list, and chooses an early direction.
-5. A deeper branch shows a material gate, such as steel and circuits for sniper optics.
-6. The player delivers materials to that turret as a localized factory goal.
-7. The gate unlocks, enabling stronger perks or an element slot.
-8. The player chooses a first element, then later a second element.
-9. The second element unlocks combo nodes, making the turret's identity more distinct.
-10. Late-game repeatable mastery nodes absorb excess XP and very large material investments.
-
-## Balance Guardrails
-
-- Do not let every branch stack cleanly into one universal best turret.
-- Prefer tradeoffs: range for fire rate, fire rate for damage per shot, survivability for peak damage, XP gain for immediate power.
-- Treat HP as an active design axis, not only a bigger buffer: max HP, regeneration, vampirism, and self-damaging overdrive should each carry different risks and costs.
-- Keep effects readable in combat. If a turret causes bouncing, piercing, burning, acid, electric, and explosions all at once, the identity becomes noise.
-- Keep script-heavy effects limited. Chain arcs, bounces, area damage, and status tracking need performance budgets.
-- Use material gates to make deep specialization deliberate.
-- Use infinite scaling for prestige and long-term ownership, not for replacing base defense design.
-- Make respec a deliberate question. Free respec makes choices feel cheap; no respec can punish experimentation during playtesting.
+If a tree returns later, it should be a real navigable map with obvious prerequisites and costs, not a flat list with hidden structure.
+
+Possible node types:
+
+- Perk: costs points and grants a rankable effect.
+- Gate: costs materials and unlocks branch depth.
+- Choice: defines or changes a role.
+- Socket: assigns or changes an element.
+- Combo: requires two elements and grants a unique mechanic.
+- Mastery: repeatable late-game sink with escalating cost.
+
+The UI must make point cost, material cost, prerequisites, current rank, and resulting effect obvious. Material progress should be visible as progress toward a goal, not hidden in a tooltip.
+
+## Guardrails
+
+- Do not add another prototype-backed stat axis without explicit budget, migration, and validation discussion.
+- Keep HP, regeneration, mitigation, shield, and lifesteal as distinct survivability models rather than one larger number.
+- Keep script-heavy effects budgeted and readable.
+- Avoid stacking every proc type on one turret.
+- Use material gates to make deep specialization deliberate, not as hidden chores.
+- Keep respec policy explicit. Free respec is useful for playtesting; final balance may need cost, cooldown, or partial permanence.
 
 ## Open Questions
 
-- Should material investment stay per turret only, or should some late gates become force-wide once discovered?
-- Should Acid, Kinetic, or other elements join the implemented Fire/Electric/Explosive/Toxic set?
-- How much should modded ammo influence available elemental paths?
+- Should destroyed turrets always lose the installed core, drop a damaged core, or have a recovery chance?
+- Should material investment stay per turret, or should some late gates become force-wide once discovered?
+- Should the hidden material input remain invisible, become visible, or move to a hybrid model?
+- Should future elements expand beyond Fire, Electric, Explosive, and Toxic?
 - Should infinite mastery consume only materials, only XP, or both?
-- How much nearby support or aura behavior can exist without hurting performance and readability?
-- Should self-damage overdrive be manually toggled, automatically triggered by conditions, or represented as passive always-on risk?
-- Should respec remain free during playtesting, gain a cost, or become partly permanent once balance stabilizes?
+- How much support or aura behavior can exist without hurting performance and readability?
+- Should self-damage overdrive ever exist, and if so should it be manual, conditional, or passive?

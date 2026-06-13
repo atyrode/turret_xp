@@ -22,6 +22,18 @@
 - `scripts/generate-public-assets.py` generates the committed GitHub Pages homepage plus `dist/` release-note and Mod Portal text from `info.json`, `changelog.txt`, and `docs/public-copy.json`.
 - Static GitHub Pages homepage served from generated `docs/index.html`.
 
+## Case Study Memory
+
+The ignored local `case_study/` research corpus is supporting evidence, not active project documentation. Its durable conclusions are captured here so contributors do not need the local corpus to understand the current direction:
+
+- Treat the Veteran Core/profile as the source of truth. The placed turret entity is compiled output that Factorio can display, select, mine, rebuild, and target.
+- Native turret range and max health are engine-facing facts derived from prototype and quality data. They are not arbitrary per-entity runtime fields.
+- Quality is the strongest future candidate for reducing hidden turret prototype growth while keeping native HP/range presentation truthful, but hidden quality leakage and quality-mod compatibility need a dedicated spike before adoption.
+- If quality does not pass the UX and compatibility test, prefer a small native range-band axis plus scripted survivability over rebuilding a large HP x range x specialization prototype matrix.
+- Centralize any future entity-swap/recreate behavior. Install, remove, mine, robot rebuild, ghost replacement, migration, and GUI refresh paths should not each preserve turret state differently.
+- Dependencies should earn their cost by deleting real GUI, migration, data-stage, or validation risk. `flib` is the accepted foundation for a custom Factorio-native GUI direction; do not add a broad framework for a one-off helper.
+- Preserve research conclusions in the owning docs once they affect implementation. Do not rely on ignored local research files as the only explanation for architecture choices.
+
 ## Website Direction
 
 - Keep the public website current whenever the mod version, user-visible behavior, documentation, or release status changes.

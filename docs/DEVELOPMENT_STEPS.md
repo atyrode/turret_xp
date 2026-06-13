@@ -20,6 +20,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - CI/release automation exists for package validation, cached Factorio headless tests, GitHub Release packaging, and gated Mod Portal publishing.
 - `main` is protected through pull requests and selected required status checks.
 - The private `turret_xp_test` remote interface is gated to the headless companion test mod and checked by a separate production-policy smoke test.
+- Documentation ownership is split by durable truth: product intent, requirements, current spec, architecture, technical direction, design direction, future-only progression notes, development workflow, and playtest paths each have one owning document.
 - Runtime code has been split into focused modules under `scripts/control/`, with explicit helper/service modules for Veteran Core profile schema/tags/inventory/labels/orchestration, hidden feeder lifecycle/inventory/inserter/refresh ownership, bound turret item handling, damage accounting, combat effect descriptors/application/targeting/visuals/scheduler/dispatch/budgets, GUI support/components, Factorio API compatibility, label color matching, stat math/inspection/formatting, GUI actions, and command registration.
 - Runtime config ownership is split so `config.lua` wires domain aliases plus progression definitions, GUI constants, and runtime constants from explicit returned-table modules instead of carrying all constants directly.
 - Data-stage prototype creation is split under `prototypes/`, with entrypoints kept small.
@@ -34,8 +35,9 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 ## Current Roadmap
 
-- GUI panel ownership is split under `scripts/control/gui/`: core/platform/dev controls, stats/ammo rendering, Evolution sections, and shared formatter captions each have focused modules, while `gui_panels.lua` remains the compatibility coordinator. The V1 localization boundary is full localization for GUI-facing panel captions/tooltips; newly moved GUI wording should be added to locale files instead of concatenated as English Lua strings.
-- Stats ownership is split under `scripts/control/`: pure rank formulas belong in `stats_math.lua`, prototype/ammo/quality reads belong in `stats_inspection.lua`, rich-text formula display belongs in `stats_formatter.lua`, and `stats.lua` remains the compatibility facade for current callers.
+- Finish the high-complexity feature scope review before adding more progression systems. Hidden feeder automation, bound turret movement, prototype-backed HP/range direction, and element-combo growth need explicit keep/simplify/replace/defer/delete decisions in the owning docs.
+- Keep documentation edits ownership-based: move facts to the owning document, replace duplicates with cross-references, and delete stale planning prose once the current decision is represented elsewhere.
+- The next major GUI pass should be a dedicated custom Factorio-native interface pass using focused local helpers and `flib` where it earns its cost. Do not mix that work with balance or progression-system expansion.
 
 ## Validation Checklist
 
@@ -53,17 +55,7 @@ Use the narrowest meaningful checks for each change:
 
 ## Playtest Focus
 
-- Bound turret ammo conservation, including full inventories and placement-helper mods.
-- Hidden material input readability with normal, fast, stack, and bulk inserter layouts.
-- Passive element rank progress visibility and wrong-item recovery.
-- Fire burn and Toxic poison readability in real combat.
-- Resistance feel against common enemy attacks and lethal-hit edge cases.
-- Shield, Regeneration, Ammo Productivity, Shield on Hit, and Brawler Lifesteal balance in long fights.
-- Level gates at 10, 20, 30, 40, and 50.
-- Sniper, Machine Gun, Bulwark, Brawler, and sub-specialization identity clarity.
-- Space-platform core selection and asteroid XP pacing.
-- Optional Bullet Trails density and readability.
-- K2/K2SO-style projectile ammo range compatibility.
+Use [PLAYTEST.md](PLAYTEST.md) as the owning checklist. It separates quick smoke coverage from regression, deep manual, compatibility, platform, and long-fight balance paths.
 
 ## Open Decisions
 

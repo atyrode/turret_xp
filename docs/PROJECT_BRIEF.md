@@ -29,7 +29,7 @@ The player installs a Veteran Core into a normal gun turret, lets that turret ea
 ## Current Non-Goals
 
 - Do not support laser, flamethrower, artillery, electric, or broad modded turret families until vanilla gun-turret progression is stable.
-- Do not replace the attached vanilla turret panel with a full custom GUI without a separate design spike and dependency review.
+- Do not replace the attached vanilla turret panel as an incidental refactor. The approved next major GUI direction is a custom Factorio-native Turret XP interface, but it should arrive as a dedicated GUI pass with focused helpers, dependency justification, visual validation, and no bundled gameplay balance changes.
 - Do not add new prototype-backed stat axes or raise prototype-generating caps without explicit budget discussion.
 - Do not turn `turret_xp_test` into a public remote interface; it is private headless-test surface only.
 - Do not duplicate release history in active planning docs. `changelog.txt` is the canonical release-history file and must stay compatible with the Factorio Mod Portal changelog format.
