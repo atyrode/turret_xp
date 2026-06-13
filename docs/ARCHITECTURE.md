@@ -16,7 +16,7 @@
 - `locale/en/turret-xp.cfg`: English GUI strings.
 - `scripts/`: validation, public-asset generation, packaging, dependency download, install, release, and portal publishing.
 - `.stylua.toml`, `.luacheckrc`, `compose.yaml`, and `tools/lua/Dockerfile`: Lua format/lint configuration and the optional local strict-tooling container.
-- `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`; `control.lua` owns runner lifecycle, `support.lua` owns shared assertions/helpers, and `suite.lua` owns behavior checks.
+- `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`; `control.lua` owns runner lifecycle, `support.lua` owns shared assertions/helpers, `suite.lua` owns orchestration, and subsystem `*_tests.lua` modules own behavior checks.
 - `tests/headless/turret_xp_remote_policy_tests/`: separate headless smoke-test mod used by `scripts/test-headless.sh` to verify private test remotes are absent when the companion suite is not active.
 - `docs/`: project context, playtest guidance, shared public copy, and the generated GitHub Pages homepage.
 
@@ -228,7 +228,7 @@ storage.turret_xp = {
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open.
 - Runtime label render objects: `scripts/control/profile_labels.lua` draws optional chip-carried labels above currently installed turret bodies as `name (lvl N)`. Preset colors and RGB slider colors are stored on the Veteran Core profile and applied directly through `rendering.draw_text`; stale display-panel label entities from older saves are destroyed the next time the label updates.
 - `scripts/control/commands.lua`: explicit command-registration service for `/turret-xp`, the fallback command for opening the selected turret's GUI/panel, and `/turret-xp-dev`, the per-player toggle for dev controls in the attached panel.
-- `remote.interfaces.turret_xp_test`: controlled test-only API used by the headless test mod to install cores, inspect sanitized profile state, drive feeder state, reset individual evolution sections, and create tagged test stacks. `control.lua` registers this interface only when `script.active_mods["turret_xp_headless_tests"]` is present, so gameplay and other mods must not depend on it.
+- `remote.interfaces.turret_xp_test`: controlled test-only API used by the headless test mod to install cores, inspect sanitized profile state, drive feeder state, reset individual evolution sections, and create tagged test stacks. `scripts/control/remote_test.lua` keeps these hooks in named registry sections that mirror the headless subsystem tests. `control.lua` registers this interface only when `script.active_mods["turret_xp_headless_tests"]` is present, so gameplay and other mods must not depend on it.
 
 ## Invisible Feeder Contract
 
@@ -252,6 +252,7 @@ Managed inserters are also intentionally narrow:
 - Original inserter filters must be restored and the inserter must be pointed back at the turret when material input is no longer needed.
 - Managed inserter tracking must be scoped to the owning turret/feeder and stale or invalid managed entries must be restored or forgotten during feeder update and teardown paths.
 - Headless tests must cover lifecycle, ownership cleanup, source-aware filter priority, no-source non-management, filter restoration, ammo forwarding, wrong-item cleanup, mixed-element requests, and passive material progress before feeder behavior is expanded.
+- Runtime regressions should land with the narrowest deterministic headless or pure Lua test in the owning subsystem module; document the residual manual-playtest risk only when the engine behavior cannot be automated.
 
 ## Boundaries
 
