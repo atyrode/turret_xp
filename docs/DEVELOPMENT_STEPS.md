@@ -35,6 +35,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - The 0.11 GUI glowup has started with an anchored `flib.gui` shell service. The panel should remain attached to the vanilla turret GUI when possible while adopting Factory Planner-style hierarchy, shallow content panes, reusable local builders, and explicit GUI service ownership.
 - GUI widget action routing now lives in `scripts/control/gui/actions.lua`, keeping Factorio event registration thinner while preserving the existing `scripts/control/actions.lua` gameplay mutation service.
 - Opened-turret GUI context assembly and refresh orchestration now live in `scripts/control/gui/runtime.lua`, keeping `gui_panels.lua` closer to a compatibility wiring layer for legacy callers.
+- Compact icon-led action buttons are now built through `scripts/control/gui/widgets.lua` and used in the Veteran Core platform/dev controls as the first reusable widget helper.
 - Public homepage, GitHub release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and `docs/public-copy.json`, with `scripts/check.sh` detecting stale committed homepage output.
 - High-complexity scope is decided for the current hardening line: keep/harden hidden feeder automation, keep optional bound turret movement, keep prototype-bound native stats limited to specialization/sub-specialization bodies, keep element combos curated and limited, and require separate approval for new progression systems.
 

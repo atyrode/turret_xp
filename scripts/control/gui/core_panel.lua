@@ -15,6 +15,7 @@ function core_panel_module.new(deps)
   local dev_controls_enabled = deps.dev_controls_enabled
   local update_name_render = deps.update_name_render
   local find_matching_label_color_preset = deps.find_matching_label_color_preset
+  local widgets = deps.widgets
 
   local function add_xp_panel(parent)
     local xp_panel = parent.add({
@@ -142,9 +143,8 @@ function core_panel_module.new(deps)
         type = "empty-widget",
         style = "flib_horizontal_pusher",
       })
-      flow.add({
-        type = "button",
-        caption = { "turret-xp.platform-core-send" },
+      widgets.add_tool_button(flow, {
+        sprite = "utility/export_slot",
         tooltip = { "turret-xp.platform-core-send-tooltip" },
         tags = {
           turret_xp_action = "platform-send-core",
@@ -220,9 +220,9 @@ function core_panel_module.new(deps)
       })
       set_style(summary, "font_color", COLOR.muted)
 
-      row.add({
-        type = "button",
-        caption = { "turret-xp.platform-core-install" },
+      widgets.add_tool_button(row, {
+        sprite = "utility/import_slot",
+        style = "flib_tool_button_light_green",
         tooltip = { "turret-xp.platform-core-install-tooltip" },
         tags = {
           turret_xp_action = "platform-install-core",
@@ -271,7 +271,7 @@ function core_panel_module.new(deps)
     set_style(buttons, "horizontal_spacing", 4)
     set_style(buttons, "vertical_spacing", 4)
 
-    buttons.add({
+    local level_one = buttons.add({
       type = "button",
       caption = { "turret-xp.dev-level-1" },
       tooltip = { "turret-xp.dev-level-1-tooltip" },
@@ -280,7 +280,9 @@ function core_panel_module.new(deps)
         levels = 1,
       },
     })
-    buttons.add({
+    set_style(level_one, "minimal_width", 44)
+
+    local level_five = buttons.add({
       type = "button",
       caption = { "turret-xp.dev-level-5" },
       tooltip = { "turret-xp.dev-level-5-tooltip" },
@@ -289,17 +291,19 @@ function core_panel_module.new(deps)
         levels = 5,
       },
     })
-    buttons.add({
-      type = "button",
-      caption = { "turret-xp.dev-materials" },
+    set_style(level_five, "minimal_width", 44)
+
+    widgets.add_tool_button(buttons, {
+      sprite = "utility/confirm_slot",
+      style = "flib_tool_button_light_green",
       tooltip = { "turret-xp.dev-materials-tooltip" },
       tags = {
         turret_xp_action = "dev-complete-element-rank",
       },
     })
-    buttons.add({
-      type = "button",
-      caption = { "turret-xp.dev-reset" },
+    widgets.add_tool_button(buttons, {
+      sprite = "utility/reset",
+      style = "flib_tool_button_dark_red",
       tooltip = { "turret-xp.dev-reset-core-tooltip" },
       tags = {
         turret_xp_action = "dev-reset-core",
@@ -392,9 +396,10 @@ function core_panel_module.new(deps)
       set_style(actions, "horizontally_stretchable", true)
       set_style(actions, "horizontal_align", "right")
       set_style(actions, "horizontal_spacing", 4)
-      actions.add({
-        type = "button",
-        caption = { "turret-xp.dev-create-core" },
+      widgets.add_tool_button(actions, {
+        sprite = "utility/add",
+        style = "flib_tool_button_light_green",
+        tooltip = { "turret-xp.dev-create-core-tooltip" },
         tags = {
           turret_xp_action = "dev-create-core",
         },

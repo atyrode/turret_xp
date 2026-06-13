@@ -6,6 +6,7 @@ local gui_stats_panel = require("scripts.control.gui.stats_panel")
 local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
 local gui_shell = require("scripts.control.gui.shell")
 local gui_runtime = require("scripts.control.gui.runtime")
+local gui_widgets = require("scripts.control.gui.widgets")
 
 return function(M)
   setmetatable(M, { __index = _G })
@@ -19,6 +20,7 @@ return function(M)
   local evolution_panel_service = nil
   local shell_service = nil
   local runtime_service = nil
+  local widgets_service = nil
 
   local function get_shell_service()
     if not shell_service then
@@ -65,6 +67,16 @@ return function(M)
     return gui_components_service
   end
 
+  local function get_gui_widgets_service()
+    if not widgets_service then
+      widgets_service = gui_widgets.new({
+        set_style = set_style,
+      })
+    end
+
+    return widgets_service
+  end
+
   local function get_gui_formatters_service()
     if not gui_formatters_service then
       gui_formatters_service = gui_formatters.new({
@@ -105,6 +117,7 @@ return function(M)
         dev_controls_enabled = dev_controls_enabled,
         update_name_render = update_name_render,
         find_matching_label_color_preset = find_matching_label_color_preset,
+        widgets = get_gui_widgets_service(),
       })
     end
 
