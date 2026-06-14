@@ -49,7 +49,7 @@ function evolution_panel_module.new(deps)
     set_style(table_element, "minimal_width", LAYOUT.evolution_card_inner_width)
     set_style(table_element, "maximal_width", LAYOUT.evolution_card_inner_width)
     set_style(table_element, "horizontally_stretchable", true)
-    set_style(table_element, "horizontal_spacing", 8)
+    set_style(table_element, "horizontal_spacing", LAYOUT.evolution_effect_table_spacing)
     set_style(table_element, "vertical_spacing", 1)
     pcall(function()
       table_element.style.column_alignments[1] = "left"
@@ -65,7 +65,7 @@ function evolution_panel_module.new(deps)
       })
       set_style(label, "font_color", entry.lifesteal and { 0.95, 0.22, 0.42 } or COLOR.muted)
       set_style(label, "single_line", true)
-      set_style(label, "maximal_width", 180)
+      set_style(label, "maximal_width", LAYOUT.evolution_effect_column_width)
 
       local value = table_element.add({
         type = "label",
@@ -74,7 +74,7 @@ function evolution_panel_module.new(deps)
       })
       set_style(value, "single_line", false)
       set_style(value, "horizontal_align", "right")
-      set_style(value, "maximal_width", 180)
+      set_style(value, "maximal_width", LAYOUT.evolution_effect_column_width)
     end
 
     if #entries == 0 then
@@ -87,6 +87,65 @@ function evolution_panel_module.new(deps)
     end
 
     return table_element
+  end
+
+  local function add_choice_card(parent, anchor_name, top_margin)
+    local row = parent.add({
+      type = "frame",
+      name = anchor_name,
+      direction = "vertical",
+      style = "inside_shallow_frame_with_padding",
+    })
+    set_evolution_content_width(row, true)
+    set_style(row, "top_margin", top_margin or 6)
+    return row
+  end
+
+  local function add_card_pick_button(parent, tags)
+    local button = parent.add({
+      type = "button",
+      caption = { "turret-xp.evolution-action-pick" },
+      tags = tags,
+    })
+    set_style(button, "width", LAYOUT.evolution_card_action_width)
+    set_style(button, "minimal_width", LAYOUT.evolution_card_action_width)
+    set_style(button, "maximal_width", LAYOUT.evolution_card_action_width)
+    return button
+  end
+
+  local function add_card_title_row(parent, sprite, name, action_tags)
+    local title_row = parent.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_evolution_card_child_width(title_row)
+    set_style(title_row, "horizontal_spacing", 8)
+    set_style(title_row, "vertical_align", "center")
+
+    local icon = title_row.add({
+      type = "sprite",
+      sprite = sprite,
+    })
+    set_style(icon, "size", LAYOUT.evolution_card_icon_size)
+
+    local title = title_row.add({
+      type = "label",
+      caption = name,
+      style = "caption_label",
+    })
+    set_style(title, "font", "default-bold")
+    set_style(title, "single_line", true)
+    set_style(title, "maximal_width", action_tags and LAYOUT.evolution_card_title_width or LAYOUT.evolution_card_title_full_width)
+
+    if action_tags then
+      title_row.add({
+        type = "empty-widget",
+        style = "flib_horizontal_pusher",
+      })
+      add_card_pick_button(title_row, action_tags)
+    end
+
+    return title_row
   end
 
   local function add_evolution_panel(parent)
@@ -196,37 +255,12 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_element_choice_card(parent, element, state, slot)
-    local row = parent.add({
-      type = "frame",
-      name = evolution_anchor_name("element", element.id, slot),
-      direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
+    local row = add_choice_card(parent, evolution_anchor_name("element", element.id, slot), 4)
+    add_card_title_row(row, element.sprite, element.name, {
+      turret_xp_action = "start-element",
+      element = element.id,
+      slot = slot,
     })
-    set_evolution_content_width(row, true)
-    set_style(row, "top_margin", 4)
-
-    local top = row.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_evolution_card_child_width(top)
-    set_style(top, "vertical_align", "center")
-    set_style(top, "horizontal_spacing", 8)
-
-    local icon = top.add({
-      type = "sprite",
-      sprite = element.sprite,
-    })
-    set_style(icon, "size", 28)
-
-    local title = top.add({
-      type = "label",
-      caption = element.name,
-      style = "caption_label",
-    })
-    set_style(title, "font", "default-bold")
-    set_style(title, "single_line", true)
-    set_style(title, "maximal_width", LAYOUT.evolution_card_inner_width - 44)
 
     local description = row.add({
       type = "label",
@@ -251,36 +285,13 @@ function evolution_panel_module.new(deps)
     set_style(technical_separator, "top_margin", 2)
     set_style(technical_separator, "bottom_margin", 2)
 
-    local cost_row = row.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_evolution_card_child_width(cost_row)
-    set_style(cost_row, "vertical_align", "center")
-    set_style(cost_row, "horizontal_spacing", 8)
-    set_style(cost_row, "horizontal_align", "right")
-
-    local cost = cost_row.add({
+    local cost = row.add({
       type = "label",
       caption = { "turret-xp.element-card-unlock", { "turret-xp.element-unlock-free" } },
       style = "caption_label",
     })
+    set_card_text_width(cost)
     set_style(cost, "single_line", false)
-    set_style(cost, "horizontally_stretchable", true)
-    set_style(cost, "maximal_width", LAYOUT.evolution_card_inner_width - 80)
-
-    local start = cost_row.add({
-      type = "button",
-      caption = { "turret-xp.evolution-action-pick" },
-      tags = {
-        turret_xp_action = "start-element",
-        element = element.id,
-        slot = slot,
-      },
-    })
-    set_style(start, "width", 64)
-    set_style(start, "minimal_width", 64)
-    set_style(start, "maximal_width", 64)
 
     local evolution = ensure_evolution_state(state)
     if slot == 2 and evolution.elements[1] then
@@ -578,71 +589,18 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_specialization_choice_card(parent, anchor_name, sprite, name, description, effects, selected, action_tags)
-    local row = parent.add({
-      type = "frame",
-      name = anchor_name,
-      direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
-    })
-    set_evolution_content_width(row, true)
-    set_style(row, "top_margin", 6)
+    local row = add_choice_card(parent, anchor_name, 6)
+    add_card_title_row(row, sprite, name, (not selected) and action_tags or nil)
 
-    local title_row = row.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_evolution_card_child_width(title_row)
-    set_style(title_row, "horizontal_spacing", 8)
-    set_style(title_row, "vertical_align", "center")
-
-    local icon = title_row.add({
-      type = "sprite",
-      sprite = sprite,
-    })
-    set_style(icon, "size", 28)
-
-    local title = title_row.add({
-      type = "label",
-      caption = name,
-      style = "caption_label",
-    })
-    set_style(title, "font", "default-bold")
-    set_style(title, "single_line", true)
-    set_style(title, "maximal_width", LAYOUT.evolution_card_inner_width - 36)
-
-    local description_row = row.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_evolution_card_child_width(description_row)
-    set_style(description_row, "horizontal_spacing", 8)
-    set_style(description_row, "vertical_align", "center")
-    set_style(description_row, "top_margin", 2)
-
-    local description_label = description_row.add({
+    local description_label = row.add({
       type = "label",
       caption = description,
       style = "caption_label",
     })
     set_style(description_label, "font_color", COLOR.muted)
     set_style(description_label, "single_line", false)
-    set_style(description_label, "horizontally_stretchable", true)
-    set_style(
-      description_label,
-      "maximal_width",
-      selected and LAYOUT.evolution_card_inner_width or (LAYOUT.evolution_card_inner_width - 72)
-    )
-
-    if not selected then
-      local button = description_row.add({
-        type = "button",
-        caption = { "turret-xp.evolution-action-pick" },
-        tags = action_tags,
-      })
-      set_style(button, "width", 56)
-      set_style(button, "minimal_width", 56)
-      set_style(button, "maximal_width", 56)
-    end
+    set_style(description_label, "top_margin", 2)
+    set_card_text_width(description_label)
 
     local effects_table = add_specialization_effect_table(row, effects)
     set_style(effects_table, "top_margin", 4)

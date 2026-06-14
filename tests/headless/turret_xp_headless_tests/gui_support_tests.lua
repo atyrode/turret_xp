@@ -27,6 +27,16 @@ function tests.run_layout_constants_test()
   )
   assert_eq(layout.evolution_inner_width, layout.evolution_section_width - 16, "Evolution inner rows must derive from section width")
   assert_eq(layout.evolution_card_inner_width, layout.evolution_inner_width - 28, "Element-card child rows must account for card padding")
+  assert_true(layout.evolution_card_title_width > 0, "Evolution card titles must retain a positive action-row width")
+  assert_true(
+    layout.evolution_card_title_full_width > layout.evolution_card_title_width,
+    "Evolution card titles should expand when no action button is present"
+  )
+  assert_eq(
+    (layout.evolution_effect_column_width * 2) + layout.evolution_effect_table_spacing,
+    layout.evolution_card_inner_width,
+    "Evolution effect table columns must derive from the card content width"
+  )
   assert_true(layout.evolution_inner_width < layout.evolution_scroll_width, "Evolution rows must stay inside the scroll viewport")
   assert_true(layout.evolution_detail_width < layout.evolution_inner_width, "Evolution text details must stay capped inside inner rows")
   assert_true(layout.stats_header_height > 0, "Stats pane must reserve a visible subheader")

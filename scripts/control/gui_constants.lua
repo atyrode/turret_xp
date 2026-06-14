@@ -103,6 +103,9 @@ local layout = {
   stats_section_header_height = 24,
   stats_section_header_top_margin = 8,
   stats_section_header_bottom_margin = 3,
+  evolution_card_icon_size = 28,
+  evolution_card_action_width = 64,
+  evolution_effect_table_spacing = 8,
   rank_stepper_button_size = 32,
   rank_stepper_label_width = 28,
   rank_stepper_spacing = 4,
@@ -169,6 +172,14 @@ layout.evolution_section_margin = 6
 layout.evolution_section_width = layout.evolution_content_width - (layout.evolution_section_margin * 2)
 layout.evolution_inner_width = layout.evolution_section_width - 16
 layout.evolution_card_inner_width = layout.evolution_inner_width - 28
+layout.evolution_card_title_width = layout.evolution_card_inner_width
+  - layout.evolution_card_icon_size
+  - layout.evolution_card_action_width
+  - 24
+layout.evolution_card_title_full_width = layout.evolution_card_inner_width - layout.evolution_card_icon_size - 12
+layout.evolution_effect_column_width = math.floor(
+  (layout.evolution_card_inner_width - layout.evolution_effect_table_spacing) / 2
+)
 layout.evolution_detail_width = layout.evolution_inner_width - 96
 layout.evolution_effect_width = layout.evolution_inner_width - 64
 layout.rank_stepper_width = (layout.rank_stepper_button_size * 2)
