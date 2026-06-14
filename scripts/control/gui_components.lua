@@ -205,31 +205,31 @@ function gui_components.new(deps)
   end
 
   function service.add_stats_section_header(parent, caption)
-    if #(parent.children or {}) > 0 then
-      local delimiter = parent.add({
-        type = "line",
-        direction = "horizontal",
-      })
-      deps.set_style(delimiter, "horizontally_stretchable", true)
-      deps.set_style(delimiter, "top_margin", 6)
-      deps.set_style(delimiter, "bottom_margin", 2)
-    end
+    local has_previous_content = #(parent.children or {}) > 0
 
     local header = parent.add({
-      type = "flow",
+      type = "frame",
       direction = "horizontal",
+      style = "subheader_frame",
     })
     deps.set_style(header, "horizontally_stretchable", true)
     deps.set_style(header, "vertical_align", "center")
-    deps.set_style(header, "height", 22)
+    deps.set_style(header, "width", deps.LAYOUT.stats_content_width)
+    deps.set_style(header, "minimal_width", deps.LAYOUT.stats_content_width)
+    deps.set_style(header, "maximal_width", deps.LAYOUT.stats_content_width)
+    deps.set_style(header, "height", deps.LAYOUT.stats_section_header_height)
+    deps.set_style(header, "bottom_margin", deps.LAYOUT.stats_section_header_bottom_margin)
+    if has_previous_content then
+      deps.set_style(header, "top_margin", deps.LAYOUT.stats_section_header_top_margin)
+    end
 
     local label = header.add({
       type = "label",
       caption = caption,
-      style = "caption_label",
+      style = "heading_2_label",
     })
     deps.set_style(label, "font", "default-bold")
-    deps.set_style(label, "font_color", deps.COLOR.caption)
+    deps.set_style(label, "font_color", deps.COLOR.section_header)
     deps.set_style(label, "single_line", true)
 
     header.add({
