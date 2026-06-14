@@ -1,0 +1,169 @@
+local core_platform_controls_module = {}
+
+function core_platform_controls_module.new(deps)
+  local GUI = deps.GUI
+  local COLOR = deps.COLOR
+  local CHIP_NAME = deps.CHIP_NAME
+  local set_style = deps.set_style
+  local set_element_style = deps.set_element_style
+  local get_platform_hub_inventory = deps.get_platform_hub_inventory
+  local get_platform_core_options = deps.get_platform_core_options
+  local create_blank_profile = deps.create_blank_profile
+  local preview_stats = deps.preview_stats
+  local specialization_caption = deps.specialization_caption
+  local rich_value = deps.rich_value
+  local rich_metric = deps.rich_metric
+  local widgets = deps.widgets
+
+  local service = {}
+
+  local function add_installed_core_row(frame)
+    local flow = frame.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(flow, "horizontally_stretchable", true)
+    set_style(flow, "vertical_align", "center")
+    local label = flow.add({
+      type = "label",
+      caption = { "turret-xp.platform-core-installed" },
+      style = "caption_label",
+    })
+    set_style(label, "font_color", COLOR.muted)
+    flow.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
+    })
+    widgets.add_tool_button(flow, {
+      sprite = "utility/export_slot",
+      tooltip = { "turret-xp.platform-core-send-tooltip" },
+      tags = {
+        turret_xp_action = "platform-send-core",
+      },
+    })
+  end
+
+  local function add_empty_label(frame)
+    local label = frame.add({
+      type = "label",
+      caption = { "turret-xp.platform-core-empty" },
+      style = "caption_label",
+    })
+    set_style(label, "font_color", COLOR.muted)
+    set_style(label, "single_line", false)
+  end
+
+  local function add_core_option_row(frame, entity, option)
+    local profile = option.profile or create_blank_profile()
+    local row = frame.add({
+      type = "table",
+      column_count = 3,
+    })
+    set_style(row, "horizontally_stretchable", true)
+    set_style(row, "horizontal_spacing", 8)
+    set_style(row, "vertical_spacing", 2)
+    pcall(function()
+      row.style.column_alignments[1] = "left"
+      row.style.column_alignments[2] = "left"
+      row.style.column_alignments[3] = "right"
+    end)
+
+    local button_definition = {
+      type = "sprite-button",
+      sprite = "item/" .. CHIP_NAME,
+      quality = option.quality or profile.chip_quality or "normal",
+      elem_tooltip = {
+        type = "item-with-quality",
+        name = CHIP_NAME,
+        quality = option.quality or profile.chip_quality or "normal",
+      },
+    }
+    local icon = row.add(button_definition)
+    set_element_style(icon, "slot_button")
+    set_style(icon, "size", 34)
+
+    local details = row.add({
+      type = "flow",
+      direction = "vertical",
+    })
+    set_style(details, "horizontally_stretchable", true)
+    local core_name = profile.custom_name and profile.custom_name ~= "" and profile.custom_name or { "turret-xp.platform-core-unnamed" }
+    local name = details.add({
+      type = "label",
+      caption = core_name,
+      style = "caption_label",
+    })
+    set_style(name, "font", "default-bold")
+    local stats = preview_stats(entity, profile)
+    local summary = details.add({
+      type = "label",
+      caption = { "turret-xp.platform-core-summary", rich_value(profile.level or 0), specialization_caption(profile) },
+      style = "caption_label",
+    })
+    set_style(summary, "font_color", COLOR.muted)
+    local stat_summary = details.add({
+      type = "label",
+      caption = {
+        "turret-xp.inventory-core-compact-stats",
+        rich_metric({ "turret-xp.inventory-core-stat-hp" }, stats.health),
+        rich_metric({ "turret-xp.inventory-core-stat-attack" }, stats.speed, "/s"),
+        rich_metric({ "turret-xp.inventory-core-stat-range" }, stats.range),
+      },
+      style = "caption_label",
+    })
+    set_style(stat_summary, "font_color", COLOR.muted)
+    set_style(stat_summary, "single_line", false)
+
+    widgets.add_tool_button(row, {
+      sprite = "utility/import_slot",
+      style = "flib_tool_button_light_green",
+      tooltip = { "turret-xp.platform-core-install-tooltip" },
+      tags = {
+        turret_xp_action = "platform-install-core",
+        slot = option.index,
+      },
+    })
+  end
+
+  function service.add_list(parent, entity, state)
+    local hub_inventory = get_platform_hub_inventory(entity)
+    if not hub_inventory then
+      return
+    end
+
+    local frame = parent.add({
+      type = "frame",
+      name = GUI.platform_cores,
+      direction = "vertical",
+      style = "inside_shallow_frame_with_padding",
+    })
+    set_style(frame, "top_margin", 6)
+    set_style(frame, "horizontally_stretchable", true)
+
+    if state then
+      add_installed_core_row(frame)
+      return
+    end
+
+    local options = get_platform_core_options(entity)
+    if #options == 0 then
+      add_empty_label(frame)
+      return
+    end
+
+    local title = frame.add({
+      type = "label",
+      caption = { "turret-xp.platform-core-title" },
+      style = "caption_label",
+    })
+    set_style(title, "font", "default-bold")
+
+    for _, option in ipairs(options) do
+      add_core_option_row(frame, entity, option)
+    end
+  end
+
+  return service
+end
+
+return core_platform_controls_module

@@ -4,6 +4,7 @@ local gui_formatters = require("scripts.control.gui.formatters")
 local gui_core_panel = require("scripts.control.gui.core_panel")
 local gui_core_identity = require("scripts.control.gui.core_identity")
 local gui_core_label_controls = require("scripts.control.gui.core_label_controls")
+local gui_core_platform_controls = require("scripts.control.gui.core_platform_controls")
 local gui_stats_panel = require("scripts.control.gui.stats_panel")
 local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
 local gui_shell = require("scripts.control.gui.shell")
@@ -192,6 +193,7 @@ return function(M)
         core_picker_table = get_core_picker_table_service(),
         core_identity = get_core_identity_service(),
         core_label_controls = get_core_label_controls_service(),
+        core_platform_controls = gui_core_platform_controls,
       })
     end
 

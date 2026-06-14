@@ -37,6 +37,8 @@ function core_panel_module.new(deps)
   local core_picker_table = deps.core_picker_table
   local core_identity = deps.core_identity
   local core_label_controls = deps.core_label_controls
+  local core_platform_controls_module = deps.core_platform_controls
+  local core_platform_controls_service = nil
 
   local function add_xp_panel(parent)
     local xp_panel = parent.add({
@@ -247,6 +249,28 @@ function core_panel_module.new(deps)
         range = tonumber(range_total),
       },
     }
+  end
+
+  local function get_core_platform_controls()
+    if not core_platform_controls_service then
+      core_platform_controls_service = core_platform_controls_module.new({
+        GUI = GUI,
+        COLOR = COLOR,
+        CHIP_NAME = CHIP_NAME,
+        set_style = set_style,
+        set_element_style = set_element_style,
+        get_platform_hub_inventory = get_platform_hub_inventory,
+        get_platform_core_options = get_platform_core_options,
+        create_blank_profile = create_blank_profile,
+        preview_stats = preview_stats,
+        specialization_caption = specialization_caption,
+        rich_value = rich_value,
+        rich_metric = rich_metric,
+        widgets = widgets,
+      })
+    end
+
+    return core_platform_controls_service
   end
 
   local function core_filter_modes()
@@ -717,137 +741,7 @@ function core_panel_module.new(deps)
   end
 
   local function add_platform_core_list(core_panel, entity, state)
-    local hub_inventory = get_platform_hub_inventory(entity)
-    if not hub_inventory then
-      return
-    end
-
-    local frame = core_panel.add({
-      type = "frame",
-      name = GUI.platform_cores,
-      direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
-    })
-    set_style(frame, "top_margin", 6)
-    set_style(frame, "horizontally_stretchable", true)
-
-    if state then
-      local flow = frame.add({
-        type = "flow",
-        direction = "horizontal",
-      })
-      set_style(flow, "horizontally_stretchable", true)
-      set_style(flow, "vertical_align", "center")
-      local label = flow.add({
-        type = "label",
-        caption = { "turret-xp.platform-core-installed" },
-        style = "caption_label",
-      })
-      set_style(label, "font_color", COLOR.muted)
-      flow.add({
-        type = "empty-widget",
-        style = "flib_horizontal_pusher",
-      })
-      widgets.add_tool_button(flow, {
-        sprite = "utility/export_slot",
-        tooltip = { "turret-xp.platform-core-send-tooltip" },
-        tags = {
-          turret_xp_action = "platform-send-core",
-        },
-      })
-      return
-    end
-
-    local options = get_platform_core_options(entity)
-    if #options == 0 then
-      local label = frame.add({
-        type = "label",
-        caption = { "turret-xp.platform-core-empty" },
-        style = "caption_label",
-      })
-      set_style(label, "font_color", COLOR.muted)
-      set_style(label, "single_line", false)
-      return
-    end
-
-    local title = frame.add({
-      type = "label",
-      caption = { "turret-xp.platform-core-title" },
-      style = "caption_label",
-    })
-    set_style(title, "font", "default-bold")
-
-    for _, option in ipairs(options) do
-      local profile = option.profile or create_blank_profile()
-      local row = frame.add({
-        type = "table",
-        column_count = 3,
-      })
-      set_style(row, "horizontally_stretchable", true)
-      set_style(row, "horizontal_spacing", 8)
-      set_style(row, "vertical_spacing", 2)
-      pcall(function()
-        row.style.column_alignments[1] = "left"
-        row.style.column_alignments[2] = "left"
-        row.style.column_alignments[3] = "right"
-      end)
-
-      local button_definition = {
-        type = "sprite-button",
-        sprite = "item/" .. CHIP_NAME,
-        quality = option.quality or profile.chip_quality or "normal",
-        elem_tooltip = {
-          type = "item-with-quality",
-          name = CHIP_NAME,
-          quality = option.quality or profile.chip_quality or "normal",
-        },
-      }
-      local icon = row.add(button_definition)
-      set_element_style(icon, "slot_button")
-      set_style(icon, "size", 34)
-
-      local details = row.add({
-        type = "flow",
-        direction = "vertical",
-      })
-      set_style(details, "horizontally_stretchable", true)
-      local core_name = profile.custom_name and profile.custom_name ~= "" and profile.custom_name or { "turret-xp.platform-core-unnamed" }
-      local name = details.add({
-        type = "label",
-        caption = core_name,
-        style = "caption_label",
-      })
-      set_style(name, "font", "default-bold")
-      local stats = preview_stats(entity, profile)
-      local summary = details.add({
-        type = "label",
-        caption = { "turret-xp.platform-core-summary", rich_value(profile.level or 0), specialization_caption(profile) },
-        style = "caption_label",
-      })
-      set_style(summary, "font_color", COLOR.muted)
-      local stat_summary = details.add({
-        type = "label",
-        caption = {
-          "turret-xp.inventory-core-compact-stats",
-          rich_metric({ "turret-xp.inventory-core-stat-hp" }, stats.health),
-          rich_metric({ "turret-xp.inventory-core-stat-attack" }, stats.speed, "/s"),
-          rich_metric({ "turret-xp.inventory-core-stat-range" }, stats.range),
-        },
-        style = "caption_label",
-      })
-      set_style(stat_summary, "font_color", COLOR.muted)
-      set_style(stat_summary, "single_line", false)
-
-      widgets.add_tool_button(row, {
-        sprite = "utility/import_slot",
-        style = "flib_tool_button_light_green",
-        tooltip = { "turret-xp.platform-core-install-tooltip" },
-        tags = {
-          turret_xp_action = "platform-install-core",
-          slot = option.index,
-        },
-      })
-    end
+    return get_core_platform_controls().add_list(core_panel, entity, state)
   end
 
   local function add_dev_controls_panel(parent, player)
