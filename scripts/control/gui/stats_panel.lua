@@ -195,7 +195,6 @@ function stats_panel.new(deps)
 
   local function add_stats_panel(parent)
     local _, _, scroll = add_content_pane(parent, {
-      top_margin = 8,
       width = LAYOUT.stats_scroll_width,
       header_name = GUI.stats_header,
       header_height = LAYOUT.stats_header_height,

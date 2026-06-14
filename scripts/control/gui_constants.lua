@@ -51,6 +51,7 @@ local gui = {
   stats_scroll = prefix .. "stats-scroll",
   dev = prefix .. "dev",
   evolution_summary = prefix .. "evolution-summary",
+  evolution_tabs = prefix .. "evolution-tabs",
   evolution = prefix .. "evolution",
   active_elements = prefix .. "active-elements",
   active_specialization = prefix .. "active-specialization",
@@ -95,8 +96,9 @@ local layout = {
   core_identity_action_spacing = 4,
   platform_core_icon_size = 34,
   label_color_picker_min_width = 300,
-  evolution_outer_height = 760,
+  evolution_outer_height = 430,
   evolution_header_height = 36,
+  evolution_tab_button_width = 124,
   stats_header_height = 34,
   stats_height = 360,
   stats_value_width = 190,
@@ -140,7 +142,7 @@ layout.platform_core_row_detail_width = layout.left_column_width
   - layout.platform_core_icon_size
   - layout.core_identity_tool_button_size
   - 24
-layout.stats_scroll_width = layout.left_column_width - 16
+layout.stats_scroll_width = layout.evolution_column_width
 layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12
 layout.inventory_core_picker_width = layout.left_column_width - layout.core_panel_padding - layout.inventory_core_frame_padding
@@ -170,7 +172,7 @@ layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_level_widt
   + ((layout.inventory_core_table_column_count - 1) * layout.inventory_core_table_spacing)
 layout.empty_inventory_core_name_width = layout.empty_inventory_core_table_content_width - layout.empty_inventory_core_fixed_width
 layout.empty_inventory_core_detail_width = layout.empty_inventory_core_name_width
-layout.evolution_scroll_width = layout.evolution_column_width
+layout.evolution_scroll_width = layout.panel_width
 layout.evolution_scroll_height = layout.evolution_outer_height - layout.evolution_header_height
 layout.evolution_content_width = layout.evolution_scroll_width - 28
 layout.evolution_section_margin = 6

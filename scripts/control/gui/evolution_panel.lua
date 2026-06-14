@@ -39,6 +39,14 @@ function evolution_panel_module.new(deps)
   local specialization_effect_entries = deps.specialization_effect_entries
   local sub_specialization_effect_entries = deps.sub_specialization_effect_entries
   local specialization_effect_value_caption = deps.specialization_effect_value_caption
+  local get_evolution_tab = deps.get_evolution_tab
+
+  local EVOLUTION_TABS = {
+    { id = "core", caption = { "turret-xp.evolution-tab-core" } },
+    { id = "specialization", caption = { "turret-xp.evolution-tab-specialization" } },
+    { id = "elements", caption = { "turret-xp.evolution-tab-elements" } },
+    { id = "augments", caption = { "turret-xp.evolution-tab-augments" } },
+  }
 
   local function add_specialization_effect_table(parent, entries)
     local table_element = parent.add({
@@ -150,7 +158,8 @@ function evolution_panel_module.new(deps)
 
   local function add_evolution_panel(parent)
     local _, _, panel = get_gui_components_service().add_content_pane(parent, {
-      width = LAYOUT.evolution_column_width,
+      top_margin = 8,
+      width = LAYOUT.evolution_scroll_width,
       height = LAYOUT.evolution_outer_height,
       header_name = GUI.evolution_summary,
       header_height = LAYOUT.evolution_header_height,
@@ -160,6 +169,33 @@ function evolution_panel_module.new(deps)
       vertically_stretchable = true,
     })
     return panel
+  end
+
+  local function add_tab_bar(parent, selected_tab)
+    local tabs = parent.add({
+      type = "flow",
+      name = GUI.evolution_tabs,
+      direction = "horizontal",
+    })
+    set_style(tabs, "horizontally_stretchable", true)
+    set_style(tabs, "horizontal_spacing", 4)
+    set_style(tabs, "vertical_align", "center")
+    set_style(tabs, "bottom_margin", 6)
+
+    for _, tab in ipairs(EVOLUTION_TABS) do
+      local active = selected_tab == tab.id
+      local button = tabs.add({
+        type = "button",
+        caption = tab.caption,
+        tags = {
+          turret_xp_action = "set-evolution-tab",
+          tab = tab.id,
+        },
+      })
+      set_style(button, "minimal_width", LAYOUT.evolution_tab_button_width)
+      set_style(button, "font", active and "default-bold" or "default")
+      set_style(button, "font_color", active and COLOR.section_header or COLOR.muted)
+    end
   end
 
   local function has_level(state, level)
@@ -580,23 +616,6 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_specialization_option(parent, specialization, selected, entity, state, ammo_name)
-    if not selected then
-      add_row(
-        parent,
-        specialization.sprite,
-        specialization.name,
-        specialization.description,
-        { "turret-xp.evolution-action-pick" },
-        {
-          turret_xp_action = "choose-specialization",
-          specialization = specialization.id,
-        },
-        true,
-        evolution_anchor_name("specialization", specialization.id)
-      )
-      return
-    end
-
     add_specialization_choice_card(
       parent,
       evolution_anchor_name("specialization", specialization.id),
@@ -646,23 +665,6 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_sub_specialization_option(parent, sub_specialization, selected, entity, state, ammo_name)
-    if not selected then
-      add_row(
-        parent,
-        sub_specialization.sprite,
-        sub_specialization.name,
-        sub_specialization.description,
-        { "turret-xp.evolution-action-pick" },
-        {
-          turret_xp_action = "choose-sub-specialization",
-          sub_specialization = sub_specialization.id,
-        },
-        true,
-        evolution_anchor_name("sub-specialization", sub_specialization.id)
-      )
-      return
-    end
-
     add_specialization_choice_card(
       parent,
       evolution_anchor_name("sub-specialization", sub_specialization.id),
@@ -784,14 +786,15 @@ function evolution_panel_module.new(deps)
     set_style(combo, "maximal_width", LAYOUT.evolution_inner_width)
   end
 
-  local function evolution_panel_key(state, ammo_name)
+  local function evolution_panel_key(state, ammo_name, selected_tab)
     if not state then
-      return "empty"
+      return "empty:" .. tostring(selected_tab or "")
     end
 
     local evolution = ensure_evolution_state(state)
     local parts = {
       "installed",
+      tostring(selected_tab or ""),
       tostring(state.level or 0),
       tostring(get_available_skill_points(state)),
       tostring(get_available_augment_points(state)),
@@ -817,13 +820,14 @@ function evolution_panel_module.new(deps)
     return table.concat(parts, ":")
   end
 
-  local function update_evolution_panel(panel, entity, state, ammo_name, anchor_name)
+  local function update_evolution_panel(panel, player, entity, state, ammo_name, anchor_name)
     local evolution_panel = find_gui_element(panel, GUI.evolution)
     if not evolution_panel then
       return
     end
 
-    local key = evolution_panel_key(state, ammo_name)
+    local selected_tab = get_evolution_tab(player)
+    local key = evolution_panel_key(state, ammo_name, selected_tab)
     if (evolution_panel.tags or {}).key == key then
       scroll_evolution_to_anchor(panel, anchor_name)
       return
@@ -834,6 +838,7 @@ function evolution_panel_module.new(deps)
     }
     update_evolution_summary(panel, state)
     evolution_panel.clear()
+    add_tab_bar(evolution_panel, selected_tab)
 
     if not state then
       local label = evolution_panel.add({
@@ -848,12 +853,17 @@ function evolution_panel_module.new(deps)
 
     ensure_evolution_state(state)
 
-    add_base_section(evolution_panel, state)
-    add_specialization_section(evolution_panel, state, entity, ammo_name)
-    add_first_element_section(evolution_panel, state)
-    add_augments_section(evolution_panel, state)
-    add_sub_specialization_section(evolution_panel, state, entity, ammo_name)
-    add_second_element_section(evolution_panel, state)
+    if selected_tab == "specialization" then
+      add_specialization_section(evolution_panel, state, entity, ammo_name)
+      add_sub_specialization_section(evolution_panel, state, entity, ammo_name)
+    elseif selected_tab == "elements" then
+      add_first_element_section(evolution_panel, state)
+      add_second_element_section(evolution_panel, state)
+    elseif selected_tab == "augments" then
+      add_augments_section(evolution_panel, state)
+    else
+      add_base_section(evolution_panel, state)
+    end
     scroll_evolution_to_anchor(panel, anchor_name)
   end
 

@@ -124,7 +124,7 @@ function gui_runtime_module.new(deps)
     end
 
     update_turret_gui_progress_and_stats(panel, entity, context)
-    update_evolution_panel(panel, entity, context.state, context.ammo_name, evolution_anchor)
+    update_evolution_panel(panel, player, entity, context.state, context.ammo_name, evolution_anchor)
 
     return true
   end

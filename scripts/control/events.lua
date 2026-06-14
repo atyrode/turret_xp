@@ -26,9 +26,9 @@ return function(M)
     if state then
       add_xp_panel(body)
       add_dev_controls_panel(body, player)
-      add_stats_panel(body)
+      add_stats_panel(columns)
 
-      add_evolution_panel(columns)
+      add_evolution_panel(shell.frame)
     end
 
     update_turret_gui(player, entity, evolution_anchor)

@@ -15,6 +15,20 @@ local SCENES = {
   {
     id = "installed-basic",
     description = "Installed named core with label and bound action state.",
+    variants = {
+      {
+        id = "top",
+        description = "Top of the installed-core summary and stats.",
+      },
+      {
+        id = "stats-bottom",
+        description = "Stats pane scrolled to the bottom.",
+        scroll = {
+          target = "stats",
+          position = "bottom",
+        },
+      },
+    },
     profile = {
       custom_name = "Rampart",
       level = 12,
@@ -37,6 +51,46 @@ local SCENES = {
   {
     id = "evolution-choices",
     description = "High-level unspent core showing available Evolution choices.",
+    variants = {
+      {
+        id = "core",
+        description = "Core upgrade tab with unspent points.",
+        tab = "core",
+      },
+      {
+        id = "specialization",
+        description = "Specialization tab with pickable stat effects.",
+        tab = "specialization",
+      },
+      {
+        id = "specialization-bottom",
+        description = "Specialization tab scrolled to the lower choices.",
+        tab = "specialization",
+        scroll = {
+          target = "evolution",
+          position = "bottom",
+        },
+      },
+      {
+        id = "elements",
+        description = "Element tab with unpicked element choices.",
+        tab = "elements",
+      },
+      {
+        id = "elements-bottom",
+        description = "Element tab scrolled to the lower choices.",
+        tab = "elements",
+        scroll = {
+          target = "evolution",
+          position = "bottom",
+        },
+      },
+      {
+        id = "augments",
+        description = "Augment tab with unspent augment points.",
+        tab = "augments",
+      },
+    },
     profile = {
       custom_name = "Unassigned Veteran",
       level = 55,
@@ -47,6 +101,37 @@ local SCENES = {
   {
     id = "evolution-progress",
     description = "Specialized core with elements, augments, and material progress.",
+    variants = {
+      {
+        id = "core",
+        description = "Core upgrade tab after progression choices.",
+        tab = "core",
+      },
+      {
+        id = "specialization",
+        description = "Specialization tab with chosen branches.",
+        tab = "specialization",
+      },
+      {
+        id = "elements",
+        description = "Element tab with active element mastery progress.",
+        tab = "elements",
+      },
+      {
+        id = "elements-bottom",
+        description = "Element tab scrolled to the lower mastery details.",
+        tab = "elements",
+        scroll = {
+          target = "evolution",
+          position = "bottom",
+        },
+      },
+      {
+        id = "augments",
+        description = "Augment tab after progression choices.",
+        tab = "augments",
+      },
+    },
     profile = {
       custom_name = "Stormline",
       level = 55,
@@ -166,6 +251,43 @@ local function selected_scenes(parameter)
 
   local scene = scene_by_id(raw)
   return scene and { scene } or nil
+end
+
+local function capture_id(scene, variant)
+  if variant and variant.id and variant.id ~= "" then
+    return scene.id .. "-" .. variant.id
+  end
+  return scene.id
+end
+
+local function capture_description(scene, variant)
+  if variant and variant.description then
+    return scene.description .. " " .. variant.description
+  end
+  return scene.description
+end
+
+local function capture_plan(scenes)
+  local captures = {}
+  for _, scene in ipairs(scenes or {}) do
+    if scene.variants then
+      for _, variant in ipairs(scene.variants) do
+        captures[#captures + 1] = {
+          scene = scene,
+          variant = variant,
+          id = capture_id(scene, variant),
+          description = capture_description(scene, variant),
+        }
+      end
+    else
+      captures[#captures + 1] = {
+        scene = scene,
+        id = scene.id,
+        description = scene.description,
+      }
+    end
+  end
+  return captures
 end
 
 local function snapshot_surface()
@@ -436,12 +558,13 @@ local function setup_next_scene(session)
     return
   end
 
-  session.scene_index = (session.scene_index or 0) + 1
-  local scene = session.scenes[session.scene_index]
-  if not scene then
+  session.capture_index = (session.capture_index or 0) + 1
+  local capture = session.captures[session.capture_index]
+  if not capture then
     finish_session(session, "Captured " .. tostring(#(session.manifest_scenes or {})) .. " GUI snapshots. Run scripts/gui-snapshots.sh collect from the repo.")
     return
   end
+  local scene = capture.scene
 
   cleanup_entities(session)
   local surface = snapshot_surface()
@@ -464,10 +587,27 @@ local function setup_next_scene(session)
     return
   end
 
-  session.current_scene = scene
+  session.current_capture = capture
   session.current_frame = nil
-  session.step = "center"
+  session.step = "variant"
   session.wait = 20
+end
+
+local function apply_current_variant(session)
+  local player = game.get_player(session.player_index)
+  if not player or not player.valid then
+    storage.turret_xp_gui_snapshots.session = nil
+    return
+  end
+
+  local capture = session.current_capture
+  local variant = capture and capture.variant or nil
+  if variant and variant.tab and remote.interfaces[IFACE] and remote.interfaces[IFACE].set_gui_snapshot_evolution_tab then
+    pcall(remote.call, IFACE, "set_gui_snapshot_evolution_tab", player, variant.tab)
+  end
+
+  session.step = "center"
+  session.wait = 6
 end
 
 local function center_current_scene(session)
@@ -478,6 +618,31 @@ local function center_current_scene(session)
   end
 
   session.current_frame = center_snapshot_frame(player)
+  session.step = "scroll"
+  session.wait = 2
+end
+
+local function scroll_current_scene(session)
+  local player = game.get_player(session.player_index)
+  if not player or not player.valid then
+    storage.turret_xp_gui_snapshots.session = nil
+    return
+  end
+
+  local capture = session.current_capture
+  local variant = capture and capture.variant or nil
+  if variant and variant.scroll and remote.interfaces[IFACE] and remote.interfaces[IFACE].set_gui_snapshot_scroll then
+    pcall(
+      remote.call,
+      IFACE,
+      "set_gui_snapshot_scroll",
+      player,
+      variant.scroll.target or "evolution",
+      variant.scroll.position or "bottom"
+    )
+    session.current_frame = snapshot_frame(player) or session.current_frame
+  end
+
   session.step = "capture"
   session.wait = 2
 end
@@ -489,8 +654,10 @@ local function capture_current_scene(session)
     return
   end
 
-  local scene = session.current_scene
-  local file_name = string.format("%02d-%s.png", session.scene_index, scene.id)
+  local capture = session.current_capture
+  local scene = capture.scene
+  local variant = capture.variant
+  local file_name = string.format("%02d-%s.png", session.capture_index, capture.id)
   local path = OUTPUT_ROOT .. "/" .. file_name
   local resolution = session.capture_resolution or capture_resolution(player)
   local frame = session.current_frame or snapshot_frame(player)
@@ -512,13 +679,16 @@ local function capture_current_scene(session)
 
   session.manifest_scenes[#session.manifest_scenes + 1] = {
     id = scene.id,
+    variant = variant and variant.id or nil,
     file = file_name,
-    description = scene.description,
+    description = capture.description,
+    tab = variant and variant.tab or nil,
+    scroll = variant and variant.scroll or nil,
     frame = frame,
   }
   print_player(player, "Captured " .. file_name)
 
-  session.current_scene = nil
+  session.current_capture = nil
   session.current_frame = nil
   session.step = "setup"
   session.wait = 20
@@ -536,8 +706,12 @@ script.on_event(defines.events.on_tick, function()
     return
   end
 
-  if session.step == "center" then
+  if session.step == "variant" then
+    apply_current_variant(session)
+  elseif session.step == "center" then
     center_current_scene(session)
+  elseif session.step == "scroll" then
+    scroll_current_scene(session)
   elseif session.step == "capture" then
     capture_current_scene(session)
   else
@@ -568,8 +742,8 @@ commands.add_command("turret-xp-snapshots", "Capture Turret XP GUI screenshots f
 
   storage.turret_xp_gui_snapshots.session = {
     player_index = player.index,
-    scenes = scenes,
-    scene_index = 0,
+    captures = capture_plan(scenes),
+    capture_index = 0,
     step = "setup",
     wait = 1,
     inserted_slots = {},
@@ -593,5 +767,12 @@ commands.add_command("turret-xp-snapshots", "Capture Turret XP GUI screenshots f
     display_density_scale = player.display_density_scale,
   }
 
-  print_player(player, "Capturing " .. tostring(#scenes) .. " GUI snapshot scene(s). Please do not move inventory items until it finishes.")
+  print_player(
+    player,
+    "Capturing "
+      .. tostring(#session.captures)
+      .. " GUI snapshot view(s) from "
+      .. tostring(#scenes)
+      .. " scene(s). Please do not move inventory items until it finishes."
+  )
 end)

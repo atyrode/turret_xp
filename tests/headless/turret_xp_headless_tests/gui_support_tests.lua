@@ -14,7 +14,7 @@ function tests.run_layout_constants_test()
     layout.panel_width,
     "panel width must derive from the column model"
   )
-  assert_eq(layout.evolution_scroll_width, layout.evolution_column_width, "Evolution scroll pane should own the full right-column viewport")
+  assert_eq(layout.evolution_scroll_width, layout.panel_width, "Evolution scroll pane should own the full lower-row viewport")
   assert_eq(
     layout.evolution_content_width,
     layout.evolution_scroll_width - 28,
@@ -60,7 +60,7 @@ function tests.run_layout_constants_test()
     layout.platform_core_row_detail_width < layout.left_column_width,
     "platform core row details must stay inside the left-column panel"
   )
-  assert_true(layout.stats_scroll_width < layout.left_column_width, "Stats pane must stay inside the left column")
+  assert_eq(layout.stats_scroll_width, layout.evolution_column_width, "Stats pane must use the right side of the top row")
   assert_true(layout.inventory_core_picker_width < layout.left_column_width, "inventory core picker must stay inside the left column")
   assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full two-column shell width")
   assert_true(

@@ -506,6 +506,73 @@ return function(M)
     }
   end
 
+  local function last_gui_descendant(element)
+    local children = element and element.children or nil
+    if not children or #children == 0 then
+      return element
+    end
+
+    return last_gui_descendant(children[#children])
+  end
+
+  local function first_gui_descendant(element)
+    local children = element and element.children or nil
+    if not children or #children == 0 then
+      return element
+    end
+
+    return first_gui_descendant(children[1])
+  end
+
+  local function find_first_gui_type(parent, gui_type)
+    if not parent or not parent.valid then
+      return nil
+    end
+
+    if parent.type == gui_type then
+      return parent
+    end
+
+    for _, child in pairs(parent.children or {}) do
+      local found = find_first_gui_type(child, gui_type)
+      if found then
+        return found
+      end
+    end
+
+    return nil
+  end
+
+  local function gui_snapshot_scroll_target(panel, target)
+    if target == "stats" then
+      return find_gui_element(panel, GUI.stats_scroll)
+    end
+    if target == "inventory" then
+      local inventory = find_gui_element(panel, GUI.inventory_cores)
+      return find_first_gui_type(inventory, "scroll-pane")
+    end
+
+    return find_gui_element(panel, GUI.evolution)
+  end
+
+  local function scroll_gui_snapshot(player, target, position)
+    local panel = get_gui_panel(player)
+    local scroll = panel and gui_snapshot_scroll_target(panel, target or "evolution") or nil
+    if not scroll or not scroll.valid then
+      return false
+    end
+
+    local anchor = position == "top" and first_gui_descendant(scroll) or last_gui_descendant(scroll)
+    if not anchor or not anchor.valid or anchor == scroll then
+      return false
+    end
+
+    local ok = pcall(function()
+      scroll.scroll_to_element(anchor)
+    end)
+    return ok == true
+  end
+
   -- GUI, compatibility, and prototype inspection fixtures.
   turret_xp_test_register_methods(turret_xp_test_remote_methods, {
     open_gui = function(player, entity)
@@ -540,12 +607,27 @@ return function(M)
     center_gui_snapshot_frame = function(player)
       return gui_snapshot_frame_for_player(player, true)
     end,
+    set_gui_snapshot_evolution_tab = function(player, tab)
+      if not player or not player.valid then
+        return false
+      end
+
+      set_evolution_tab(player, tab)
+      local entity = get_remembered_turret(player)
+      if entity and entity.valid then
+        refresh_open_turret(player, entity)
+      end
+      return true
+    end,
+    set_gui_snapshot_scroll = function(player, target, position)
+      return scroll_gui_snapshot(player, target, position)
+    end,
     gui_snapshot_layout = function()
       return {
         panel_width = LAYOUT.panel_max_width,
         panel_body_width = LAYOUT.left_column_width,
         evolution_column_width = LAYOUT.evolution_column_width,
-        panel_height = LAYOUT.evolution_outer_height + 72,
+        panel_height = LAYOUT.evolution_outer_height + LAYOUT.stats_height + LAYOUT.stats_header_height + 120,
         fallback_crop = "center",
       }
     end,

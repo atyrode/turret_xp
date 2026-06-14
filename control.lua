@@ -165,6 +165,7 @@ M.gui_actions = gui_actions.new({
   set_bound_turret = M.set_bound_turret,
   set_core_picker_sort = M.set_core_picker_sort,
   set_core_picker_filter = M.set_core_picker_filter,
+  set_evolution_tab = M.set_evolution_tab,
   get_remembered_turret = M.get_remembered_turret,
   refresh_open_turret = M.refresh_open_turret,
   update_name_render = M.update_name_render,
