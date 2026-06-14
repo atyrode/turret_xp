@@ -108,6 +108,7 @@ function gui_components.new(deps)
       deps.set_style(header, "horizontally_stretchable", true)
       deps.set_style(header, "vertical_align", "center")
       deps.set_style(header, "horizontal_spacing", 6)
+      deps.set_style(header, "bottom_margin", options.header_bottom_margin or 4)
 
       if options.title then
         local title = header.add({
