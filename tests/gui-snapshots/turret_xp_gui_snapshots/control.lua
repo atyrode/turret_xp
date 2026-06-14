@@ -332,6 +332,13 @@ local function json_manifest(session)
   return serpent.block(manifest)
 end
 
+local function write_manifest(session)
+  local ok, err = pcall(function()
+    helpers.write_file(OUTPUT_ROOT .. "/manifest.json", json_manifest(session), false)
+  end)
+  return ok, err
+end
+
 local function finish_session(session, message)
   local player = game.get_player(session.player_index)
   if player and player.valid then
@@ -345,7 +352,10 @@ local function finish_session(session, message)
     player.teleport(session.original_position, session.original_surface_name)
   end
 
-  game.write_file(OUTPUT_ROOT .. "/manifest.json", json_manifest(session), false)
+  local manifest_ok, manifest_error = write_manifest(session)
+  if not manifest_ok then
+    print_player(player, "Could not write snapshot manifest: " .. tostring(manifest_error))
+  end
   game.set_wait_for_screenshots_to_finish()
   storage.turret_xp_gui_snapshots.session = nil
 
