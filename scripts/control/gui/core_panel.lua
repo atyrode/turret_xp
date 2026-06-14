@@ -19,7 +19,6 @@ function core_panel_module.new(deps)
   local create_blank_profile = deps.create_blank_profile
   local dev_controls_enabled = deps.dev_controls_enabled
   local update_name_render = deps.update_name_render
-  local find_matching_label_color_preset = deps.find_matching_label_color_preset
   local ensure_evolution_state = deps.ensure_evolution_state
   local get_specialization = deps.get_specialization
   local get_sub_specialization = deps.get_sub_specialization
@@ -37,6 +36,7 @@ function core_panel_module.new(deps)
   local widgets = deps.widgets
   local core_picker_table = deps.core_picker_table
   local core_identity = deps.core_identity
+  local core_label_controls = deps.core_label_controls
 
   local function add_xp_panel(parent)
     local xp_panel = parent.add({
@@ -1027,94 +1027,7 @@ function core_panel_module.new(deps)
       return
     end
 
-    local name_flow = core_panel.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(name_flow, "top_margin", 4)
-    set_style(name_flow, "vertical_align", "center")
-    set_style(name_flow, "horizontally_stretchable", true)
-    set_style(name_flow, "horizontal_spacing", 8)
-
-    name_flow.add({
-      type = "label",
-      caption = { "turret-xp.core-name" },
-      style = "caption_label",
-    })
-
-    local textfield = name_flow.add({
-      type = "textfield",
-      name = GUI.core_name,
-      text = state.custom_name or "",
-      clear_and_focus_on_right_click = true,
-      lose_focus_on_confirm = true,
-    })
-    set_style(textfield, "minimal_width", 220)
-    set_style(textfield, "horizontally_stretchable", true)
-
-    name_flow.add({
-      type = "checkbox",
-      name = GUI.core_name_visible,
-      caption = { "turret-xp.core-name-show" },
-      state = state.show_name_label == true,
-      tags = {
-        turret_xp_action = "toggle-core-label",
-      },
-    })
-
-    if state.show_name_label == true then
-      local preset = find_matching_label_color_preset(state)
-      local label_color = state.label_color or { 1, 0.86, 0.46 }
-
-      local preset_flow = core_panel.add({
-        type = "flow",
-        direction = "horizontal",
-      })
-      set_style(preset_flow, "top_margin", 4)
-      set_style(preset_flow, "horizontally_stretchable", true)
-      set_style(preset_flow, "horizontal_spacing", 6)
-      set_style(preset_flow, "vertical_align", "center")
-      local swatch = preset_flow.add({
-        type = "progressbar",
-        name = GUI.core_color_swatch,
-        value = 1,
-        tooltip = { "turret-xp.label-color-tooltip" },
-      })
-      set_style(swatch, "width", 22)
-      set_style(swatch, "height", 22)
-      set_style(swatch, "minimal_width", 22)
-      set_style(swatch, "maximal_width", 22)
-      set_style(swatch, "bar_width", 22)
-      set_style(swatch, "color", label_color)
-
-      local color_button = preset_flow.add({
-        type = "button",
-        name = GUI.core_color_preview,
-        caption = preset and preset.name or { "turret-xp.label-custom-color" },
-        tooltip = { "turret-xp.label-color-tooltip" },
-        tags = {
-          turret_xp_action = "open-label-color-picker",
-        },
-      })
-      set_style(color_button, "font_color", label_color)
-      set_style(color_button, "minimal_width", 112)
-
-      local label_options = core_panel.add({
-        type = "flow",
-        direction = "horizontal",
-      })
-      set_style(label_options, "top_margin", 4)
-      set_style(label_options, "horizontally_stretchable", true)
-      label_options.add({
-        type = "checkbox",
-        name = GUI.core_name_level_visible,
-        caption = { "turret-xp.label-level" },
-        state = state.show_label_level ~= false,
-        tags = {
-          turret_xp_action = "toggle-label-level",
-        },
-      })
-    end
+    core_label_controls.add(core_panel, state)
 
     update_name_render(entity, state)
     add_platform_core_list(core_panel, entity, state)

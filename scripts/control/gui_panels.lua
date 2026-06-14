@@ -3,6 +3,7 @@ local gui_components = require("scripts.control.gui_components")
 local gui_formatters = require("scripts.control.gui.formatters")
 local gui_core_panel = require("scripts.control.gui.core_panel")
 local gui_core_identity = require("scripts.control.gui.core_identity")
+local gui_core_label_controls = require("scripts.control.gui.core_label_controls")
 local gui_stats_panel = require("scripts.control.gui.stats_panel")
 local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
 local gui_shell = require("scripts.control.gui.shell")
@@ -19,6 +20,7 @@ return function(M)
   local gui_formatters_service = nil
   local core_panel_service = nil
   local core_identity_service = nil
+  local core_label_controls_service = nil
   local stats_panel_service = nil
   local evolution_panel_service = nil
   local shell_service = nil
@@ -110,6 +112,18 @@ return function(M)
     return core_identity_service
   end
 
+  local function get_core_label_controls_service()
+    if not core_label_controls_service then
+      core_label_controls_service = gui_core_label_controls.new({
+        GUI = GUI,
+        set_style = set_style,
+        find_matching_label_color_preset = find_matching_label_color_preset,
+      })
+    end
+
+    return core_label_controls_service
+  end
+
   local function get_gui_formatters_service()
     if not gui_formatters_service then
       gui_formatters_service = gui_formatters.new({
@@ -154,7 +168,6 @@ return function(M)
         create_blank_profile = create_blank_profile,
         dev_controls_enabled = dev_controls_enabled,
         update_name_render = update_name_render,
-        find_matching_label_color_preset = find_matching_label_color_preset,
         ensure_evolution_state = ensure_evolution_state,
         get_specialization = get_specialization,
         get_sub_specialization = get_sub_specialization,
@@ -178,6 +191,7 @@ return function(M)
         widgets = get_gui_widgets_service(),
         core_picker_table = get_core_picker_table_service(),
         core_identity = get_core_identity_service(),
+        core_label_controls = get_core_label_controls_service(),
       })
     end
 
