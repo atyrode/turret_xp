@@ -459,6 +459,67 @@ return function(M)
       build_turret_gui(player, entity)
       return true
     end,
+    open_gui_standalone = function(player, entity)
+      if not player or not player.valid or not is_gun_turret(entity) then
+        return false
+      end
+
+      build_turret_gui_screen(player, entity)
+      return true
+    end,
+    close_gui = function(player)
+      if not player or not player.valid then
+        return false
+      end
+
+      destroy_gui(player)
+      forget_open_turret(player)
+      return true
+    end,
+    gui_snapshot_frame = function(player)
+      if not player or not player.valid then
+        return nil
+      end
+
+      local panel = get_gui_panel(player)
+      if not panel or not panel.valid then
+        return nil
+      end
+
+      local location = panel.location
+      local actual_size = panel.actual_size
+      if not location or not actual_size then
+        return nil
+      end
+
+      return {
+        location = {
+          x = location.x,
+          y = location.y,
+        },
+        actual_size = {
+          width = actual_size.width,
+          height = actual_size.height,
+        },
+        top_left = {
+          x = location.x,
+          y = location.y,
+        },
+        bottom_right = {
+          x = location.x + actual_size.width,
+          y = location.y + actual_size.height,
+        },
+      }
+    end,
+    gui_snapshot_layout = function()
+      return {
+        panel_width = LAYOUT.panel_max_width,
+        panel_body_width = LAYOUT.left_column_width,
+        evolution_column_width = LAYOUT.evolution_column_width,
+        panel_height = LAYOUT.evolution_outer_height + 72,
+        default_crop_left = 895,
+      }
+    end,
     dispatch_cycle_label_color = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then

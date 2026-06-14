@@ -71,6 +71,10 @@ function shell_module.new(deps)
     return flib_gui.add(player.gui.left, panel_definition(false))
   end
 
+  local function create_screen(player)
+    return flib_gui.add(player.gui.screen, panel_definition(false))
+  end
+
   local function destroy_partial(root)
     local panel = root and root[GUI.panel] or nil
     if panel and panel.valid then
@@ -117,6 +121,38 @@ function shell_module.new(deps)
     end
 
     apply_layout(result.elems, result.frame, mode)
+
+    return {
+      frame = result.frame,
+      columns = result.elems[GUI.panel_columns],
+      body = result.elems[GUI.panel_body],
+    }
+  end
+
+  function service.build_screen(player, mode)
+    destroy_partial(player.gui.screen)
+    local ok, result = pcall(function()
+      local elems, frame = create_screen(player)
+      return {
+        elems = elems,
+        frame = frame,
+      }
+    end)
+
+    if not ok or not result or not result.frame then
+      log_build_error("player.gui.screen", result)
+      destroy_partial(player.gui.screen)
+      return nil
+    end
+
+    apply_layout(result.elems, result.frame, mode)
+    result.frame.tags = {
+      turret_xp_mode = normalize_mode(mode),
+      turret_xp_snapshot = true,
+    }
+    pcall(function()
+      result.frame.force_auto_center()
+    end)
 
     return {
       frame = result.frame,

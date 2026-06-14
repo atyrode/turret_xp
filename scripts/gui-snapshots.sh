@@ -35,8 +35,9 @@ install
   mods folder, and enables turret_xp_gui_snapshots in mod-list.json.
 
 collect [name]
-  Copies the latest screenshots from Factorio script-output into
-  tests/gui-snapshots/<name>. Defaults to tests/gui-snapshots/current.
+  Copies the latest screenshots from Factorio script-output into full/ and
+  writes cropped Turret XP-only review images into ui/. Defaults to
+  tests/gui-snapshots/current.
 
 Environment:
   FACTORIO_MODS_DIR            Override the Factorio mods directory.
@@ -94,6 +95,8 @@ collect_snapshots() {
   local script_output="${FACTORIO_SCRIPT_OUTPUT_DIR:-$(default_script_output_dir)}"
   local source_dir="$script_output/turret_xp/gui-snapshots/latest"
   local destination="tests/gui-snapshots/$snapshot_name"
+  local full_destination="$destination/full"
+  local ui_destination="$destination/ui"
   local png_files=()
 
   if [ ! -d "$source_dir" ]; then
@@ -111,29 +114,40 @@ collect_snapshots() {
     exit 2
   fi
 
-  mkdir -p "$destination"
+  mkdir -p "$full_destination" "$ui_destination"
   find "$destination" -maxdepth 1 -type f \( -name '*.png' -o -name 'manifest.json' -o -name 'index.md' \) -delete
-  cp "${png_files[@]}" "$destination/"
+  find "$full_destination" -maxdepth 1 -type f -name '*.png' -delete
+  find "$ui_destination" -maxdepth 1 -type f -name '*.png' -delete
+  cp "${png_files[@]}" "$full_destination/"
   if [ -f "$source_dir/manifest.json" ]; then
     cp "$source_dir/manifest.json" "$destination/"
   fi
+
+  "$python_bin" scripts/crop-gui-snapshots.py \
+    --manifest "$destination/manifest.json" \
+    --output "$ui_destination" \
+    "$full_destination"/*.png
 
   {
     echo "# Turret XP GUI Snapshots"
     echo
     echo "Generated from the latest graphical-client snapshot run."
     echo
-    for image in "$destination"/*.png; do
+    echo 'The `ui/` images are cropped from the recorded Turret XP frame bounds. The `full/` images preserve the complete graphical-client screenshot for context.'
+    echo
+    for image in "$ui_destination"/*.png; do
       local base
       base="$(basename "$image")"
       echo "## ${base%.png}"
       echo
-      echo "![${base%.png}](./$base)"
+      echo "![${base%.png}](./ui/$base)"
+      echo
+      echo "[Full screenshot](./full/$base)"
       echo
     done
   } >"$destination/index.md"
 
-  echo "Copied ${#png_files[@]} screenshot(s) into $destination"
+  echo "Copied ${#png_files[@]} full screenshot(s) and cropped UI review image(s) into $destination"
 }
 
 status_snapshots() {
@@ -147,7 +161,7 @@ status_snapshots() {
   fi
   echo
   echo "Repo snapshots:"
-  find tests/gui-snapshots -maxdepth 2 -type f \( -name '*.png' -o -name 'manifest.json' -o -name 'index.md' \) | sort
+  find tests/gui-snapshots -maxdepth 3 -type f \( -name '*.png' -o -name 'manifest.json' -o -name 'index.md' \) | sort
 }
 
 case "$command" in

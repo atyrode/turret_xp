@@ -78,7 +78,7 @@ Use this when iterating on GUI layout and you want shareable images for debuggin
    scripts/gui-snapshots.sh collect
    ```
 
-5. Review `tests/gui-snapshots/current/index.md` and the PNGs for wrapping, alignment, missing sprites, and section hierarchy.
+5. Review `tests/gui-snapshots/current/index.md` and the cropped PNGs in `tests/gui-snapshots/current/ui/` for wrapping, alignment, missing sprites, and section hierarchy. Use `tests/gui-snapshots/current/full/` only when the full game-window context matters.
 
 ### Combat And Stats
 

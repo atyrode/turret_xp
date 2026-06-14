@@ -18,7 +18,7 @@ This folder holds graphical-client screenshots used to review the Turret XP GUI 
    /turret-xp-snapshots
    ```
 
-   The command briefly moves the player to a temporary fixture surface, opens the real Turret XP GUI for each scene, captures screenshots with `game.take_screenshot(show_gui=true)`, then restores the player position and removes the temporary scene entities and sample Veteran Cores.
+   The command briefly moves the player to a temporary fixture surface, opens the real Turret XP GUI as a centered standalone screen frame for each scene, records that frame's bounds, captures screenshots with `game.take_screenshot(show_gui=true)`, then restores the player position and removes the temporary scene entities and sample Veteran Cores.
 
 4. Copy the images from Factorio `script-output` into the repo:
 
@@ -26,7 +26,7 @@ This folder holds graphical-client screenshots used to review the Turret XP GUI 
    scripts/gui-snapshots.sh collect
    ```
 
-The copied files land in `tests/gui-snapshots/current/`. They are regular repo files so they can be inspected by Codex, compared manually, or promoted later for documentation.
+The collected files land in `tests/gui-snapshots/current/`. The `ui/` directory contains cropped Turret XP-only review images derived from the recorded frame bounds, while `full/` keeps the raw graphical-client screenshots for context. They are regular repo files so they can be inspected by Codex, compared manually, or promoted later for documentation.
 
 ## Scenes
 

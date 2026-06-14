@@ -3,6 +3,8 @@ local PREFIX = "[turret_xp_gui_snapshots] "
 local SURFACE_NAME = "turret-xp-gui-snapshots"
 local OUTPUT_ROOT = "turret_xp/gui-snapshots/latest"
 local CHIP_NAME = "turret-xp-veteran-core"
+local DEFAULT_CAPTURE_RESOLUTION = { x = 1600, y = 1000 }
+local MAX_CAPTURE_RESOLUTION = 8192
 
 local SCENES = {
   {
@@ -196,6 +198,56 @@ local function current_turret(surface, position)
   return nil
 end
 
+local function clamp_resolution(value, fallback)
+  value = math.floor(tonumber(value) or fallback)
+  if value < 1 then
+    return fallback
+  end
+  return math.min(value, MAX_CAPTURE_RESOLUTION)
+end
+
+local function player_display_resolution(player)
+  local display = player.display_resolution or {}
+  return {
+    width = clamp_resolution(display.width or display.x, DEFAULT_CAPTURE_RESOLUTION.x),
+    height = clamp_resolution(display.height or display.y, DEFAULT_CAPTURE_RESOLUTION.y),
+  }
+end
+
+local function capture_resolution(player)
+  local display = player_display_resolution(player)
+  return {
+    x = display.width,
+    y = display.height,
+  }
+end
+
+local function snapshot_layout()
+  if remote.interfaces[IFACE] and remote.interfaces[IFACE].gui_snapshot_layout then
+    local ok, result = pcall(remote.call, IFACE, "gui_snapshot_layout")
+    if ok and type(result) == "table" then
+      return result
+    end
+  end
+  return {}
+end
+
+local function close_turret_xp_gui(player)
+  if player and player.valid and remote.interfaces[IFACE] and remote.interfaces[IFACE].close_gui then
+    pcall(remote.call, IFACE, "close_gui", player)
+  end
+end
+
+local function snapshot_frame(player)
+  if remote.interfaces[IFACE] and remote.interfaces[IFACE].gui_snapshot_frame then
+    local ok, result = pcall(remote.call, IFACE, "gui_snapshot_frame", player)
+    if ok and type(result) == "table" then
+      return result
+    end
+  end
+  return nil
+end
+
 local function cleanup_entities(session)
   if not session or not session.surface_name then
     return
@@ -324,6 +376,8 @@ local function json_manifest(session)
   local manifest = {
     generated_tick = game.tick,
     output_root = OUTPUT_ROOT,
+    screenshot = session.screenshot or {},
+    layout = session.layout or {},
     scenes = session.manifest_scenes or {},
   }
   if helpers and helpers.table_to_json then
@@ -343,6 +397,7 @@ local function finish_session(session, message)
   local player = game.get_player(session.player_index)
   if player and player.valid then
     player.opened = nil
+    close_turret_xp_gui(player)
   end
 
   cleanup_entities(session)
@@ -394,7 +449,7 @@ local function setup_next_scene(session)
     return
   end
 
-  if not remote.call(IFACE, "open_gui", player, turret) then
+  if not remote.call(IFACE, "open_gui_standalone", player, turret) then
     finish_session(session, "Snapshot capture aborted: could not open Turret XP GUI.")
     return
   end
@@ -414,12 +469,14 @@ local function capture_current_scene(session)
   local scene = session.current_scene
   local file_name = string.format("%02d-%s.png", session.scene_index, scene.id)
   local path = OUTPUT_ROOT .. "/" .. file_name
+  local resolution = session.capture_resolution or capture_resolution(player)
+  local frame = snapshot_frame(player)
   game.take_screenshot({
     player = player.index,
     by_player = player.index,
     surface = player.surface,
     position = { x = 0, y = 0 },
-    resolution = { x = 1600, y = 1000 },
+    resolution = resolution,
     zoom = 1,
     path = path,
     show_gui = true,
@@ -434,6 +491,7 @@ local function capture_current_scene(session)
     id = scene.id,
     file = file_name,
     description = scene.description,
+    frame = frame,
   }
   print_player(player, "Captured " .. file_name)
 
@@ -495,6 +553,18 @@ commands.add_command("turret-xp-snapshots", "Capture Turret XP GUI screenshots f
       x = player.position.x,
       y = player.position.y,
     },
+  }
+  local session = storage.turret_xp_gui_snapshots.session
+  session.capture_resolution = capture_resolution(player)
+  session.layout = snapshot_layout()
+  session.screenshot = {
+    resolution = {
+      x = session.capture_resolution.x,
+      y = session.capture_resolution.y,
+    },
+    display_resolution = player_display_resolution(player),
+    display_scale = player.display_scale,
+    display_density_scale = player.display_density_scale,
   }
 
   print_player(player, "Capturing " .. tostring(#scenes) .. " GUI snapshot scene(s). Please do not move inventory items until it finishes.")

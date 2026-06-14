@@ -72,7 +72,7 @@ Then start Factorio, load a disposable development save, run `/turret-xp-snapsho
 scripts/gui-snapshots.sh collect
 ```
 
-The captured PNGs and generated index are copied into `tests/gui-snapshots/current/` for visual review and future documentation reuse.
+The generated index lands in `tests/gui-snapshots/current/`. Cropped Turret XP-only review images are written to `tests/gui-snapshots/current/ui/`, and the raw full-client screenshots stay under `tests/gui-snapshots/current/full/` for context.
 
 Public website, release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and [docs/public-copy.json](docs/public-copy.json):
 

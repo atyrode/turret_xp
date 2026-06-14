@@ -2,21 +2,21 @@ return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
 
-  build_turret_gui = function(player, entity, evolution_anchor)
+  local function build_turret_gui_with_shell(player, entity, shell_builder, evolution_anchor)
     destroy_gui(player)
 
     if not is_gun_turret(entity) then
       forget_open_turret(player)
-      return
+      return nil
     end
 
     remember_open_turret(player, entity)
     local state = get_turret_state(entity)
     local mode = state and "installed" or "empty"
 
-    local shell = build_gui_shell(player, mode)
+    local shell = shell_builder(player, mode)
     if not shell then
-      return
+      return nil
     end
 
     local body = shell.body or shell.frame
@@ -32,6 +32,15 @@ return function(M)
     end
 
     update_turret_gui(player, entity, evolution_anchor)
+    return shell
+  end
+
+  build_turret_gui = function(player, entity, evolution_anchor)
+    return build_turret_gui_with_shell(player, entity, build_gui_shell, evolution_anchor)
+  end
+
+  build_turret_gui_screen = function(player, entity, evolution_anchor)
+    return build_turret_gui_with_shell(player, entity, build_gui_shell_screen, evolution_anchor)
   end
 
   function refresh_player_gui(player)
@@ -42,7 +51,9 @@ return function(M)
       return
     end
 
-    if player.opened ~= entity then
+    local panel = get_gui_panel(player)
+    local snapshot_panel = panel and panel.valid and panel.tags and panel.tags.turret_xp_snapshot == true
+    if not snapshot_panel and player.opened ~= entity then
       destroy_gui(player)
       forget_open_turret(player)
       return

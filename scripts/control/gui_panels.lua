@@ -496,6 +496,10 @@ return function(M)
     return get_shell_service().build(player, mode)
   end
 
+  function build_gui_shell_screen(player, mode)
+    return get_shell_service().build_screen(player, mode)
+  end
+
   function add_core_panel(parent, mode)
     return get_core_panel_service().add_core_panel(parent, mode)
   end
