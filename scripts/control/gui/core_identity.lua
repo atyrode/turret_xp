@@ -57,17 +57,6 @@ function core_identity_module.new(deps)
     return details
   end
 
-  local function add_action_toolbar(parent)
-    local actions = parent.add({
-      type = "flow",
-      name = GUI.core_actions,
-      direction = "horizontal",
-    })
-    set_style(actions, "horizontal_spacing", LAYOUT.core_identity_action_spacing)
-    set_style(actions, "vertical_align", "center")
-    return actions
-  end
-
   local function add_empty_dev_actions(parent, player)
     if not dev_controls_enabled(player) then
       return
@@ -78,7 +67,10 @@ function core_identity_module.new(deps)
       style = "flib_horizontal_pusher",
     })
 
-    local actions = add_action_toolbar(parent)
+    local actions = widgets.add_action_toolbar(parent, {
+      name = GUI.core_actions,
+      spacing = LAYOUT.core_identity_action_spacing,
+    })
     widgets.add_tool_button(actions, {
       sprite = "utility/add",
       style = "flib_tool_button_light_green",
@@ -128,7 +120,10 @@ function core_identity_module.new(deps)
         style = "flib_horizontal_pusher",
       })
 
-      local actions = add_action_toolbar(top)
+      local actions = widgets.add_action_toolbar(top, {
+        name = GUI.core_actions,
+        spacing = LAYOUT.core_identity_action_spacing,
+      })
       widgets.add_tool_button(actions, {
         sprite = "utility/export_slot",
         tooltip = { "turret-xp.extract-core-button-tooltip" },

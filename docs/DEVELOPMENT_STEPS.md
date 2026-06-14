@@ -34,7 +34,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - The 0.11 GUI glowup has started with an anchored `flib.gui` shell service. The panel should remain attached to the vanilla turret GUI when possible while adopting Factory Planner-style hierarchy, shallow content panes, reusable local builders, and explicit GUI service ownership.
 - GUI widget action routing now lives in `scripts/control/gui/actions.lua`, keeping Factorio event registration thinner while preserving the existing `scripts/control/actions.lua` gameplay mutation service.
 - Opened-turret GUI context assembly and refresh orchestration now live in `scripts/control/gui/runtime.lua`, keeping `gui_panels.lua` closer to a compatibility wiring layer for legacy callers.
-- Compact icon-led action buttons are now built through `scripts/control/gui/widgets.lua` and used in the Veteran Core platform/dev controls as the first reusable widget helper.
+- Compact icon-led action buttons and action toolbars are now built through `scripts/control/gui/widgets.lua` and used in the Veteran Core identity/platform/dev controls as reusable widget helpers.
 - The Veteran Core slot/status header now lives in `scripts/control/gui/core_identity.lua`, including installed-core extract/bind actions and the empty-core dev-create shortcut, so `core_panel.lua` can keep moving toward orchestration.
 - Installed-core naming and floating-label controls now live in `scripts/control/gui/core_label_controls.lua` as a compact shallow form, including the label-color swatch/trigger row and level-suffix checkbox.
 - Space-platform core rows and installed-core send-to-hub controls now live in `scripts/control/gui/core_platform_controls.lua`.

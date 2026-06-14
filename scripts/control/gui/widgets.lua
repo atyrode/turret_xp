@@ -5,6 +5,24 @@ function widgets_module.new(deps)
 
   local service = {}
 
+  function service.add_action_toolbar(parent, options)
+    options = options or {}
+    local toolbar = parent.add({
+      type = "flow",
+      name = options.name,
+      direction = "horizontal",
+    })
+    set_style(toolbar, "horizontal_spacing", options.spacing or 4)
+    set_style(toolbar, "vertical_align", options.vertical_align or "center")
+    if options.horizontal_align then
+      set_style(toolbar, "horizontal_align", options.horizontal_align)
+    end
+    if options.horizontally_stretchable ~= nil then
+      set_style(toolbar, "horizontally_stretchable", options.horizontally_stretchable)
+    end
+    return toolbar
+  end
+
   function service.add_tool_button(parent, options)
     local definition = {
       type = "sprite-button",
