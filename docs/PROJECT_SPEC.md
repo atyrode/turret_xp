@@ -121,7 +121,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - Stats always show baseline Crit Chance and Crit Damage in the Offense group for context, then use base-plus-bonus formatting when those core upgrades are ranked.
 - Stat, upgrade, augment, specialization, sub-specialization, element, and material-count values color numeric fragments only. Unchanged values remain neutral, beneficial deltas use a muted green, harmful deltas use a muted red, and units/descriptive words remain neutral; elemental damage amounts use fire, electric, explosive, or toxic colors for the numeric amount.
 - Duplicate pure-element builds show one active element stat row plus the combo identity instead of duplicate stat rows.
-- Evolution choices inside the unlocked list sections use horizontal delimiters and section headers with right-side point/status text to improve readability without adding extra explanatory text.
+- Evolution choices inside the unlocked list sections use horizontal delimiters and section headers with right-side point/status text to improve readability without adding extra explanatory text. Locked Evolution sections keep the same section title/header rhythm and show their level gate as right-side status.
 - Embedded Evolution rank steppers use one consistent `- value +` control shape and tooltips that describe normal, Shift-click, and Ctrl-click rank amounts without adding extra panel text.
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
 - Point allocation refreshes rebuild the Evolution column in place; prototype body swaps remain deferred while the turret GUI is open so the whole vanilla window does not jump back to its default position.

@@ -412,21 +412,17 @@ function gui_components.new(deps)
     deps.set_style(section, "right_margin", deps.LAYOUT.evolution_section_margin)
     deps.set_style(section, "padding", { 6, 6, 6, 6 })
 
-    if not options.unlocked then
-      deps.set_style(section, "height", 70)
-      deps.set_style(section, "vertical_align", "center")
-      local locked = section.add({
-        type = "label",
-        caption = options.locked_caption,
-        style = "caption_label",
-      })
-      deps.set_style(locked, "font", "default-bold")
-      deps.set_style(locked, "horizontally_stretchable", true)
-      deps.set_style(locked, "horizontal_align", "center")
-      return section
-    end
-
     if not options.title or options.title == "" then
+      if not options.unlocked then
+        local locked = section.add({
+          type = "label",
+          caption = options.locked_caption,
+          style = "caption_label",
+        })
+        deps.set_style(locked, "font", "default-bold")
+        deps.set_style(locked, "horizontally_stretchable", true)
+        deps.set_style(locked, "horizontal_align", "center")
+      end
       return section
     end
 
@@ -451,17 +447,18 @@ function gui_components.new(deps)
       style = "flib_horizontal_pusher",
     })
 
-    if options.right_caption and options.right_caption ~= "" and not options.action_caption then
+    local header_right_caption = not options.unlocked and options.locked_caption or options.right_caption
+    if header_right_caption and header_right_caption ~= "" and not options.action_caption then
       local right = header.add({
         type = "label",
-        caption = options.right_caption,
+        caption = header_right_caption,
         style = "caption_label",
       })
       deps.set_style(right, "font_color", deps.COLOR.muted)
       deps.set_style(right, "right_margin", options.action_caption and 6 or 0)
     end
 
-    if options.action_caption and options.action_tags then
+    if options.unlocked and options.action_caption and options.action_tags then
       local button = header.add({
         type = "button",
         caption = options.action_caption,
@@ -470,6 +467,10 @@ function gui_components.new(deps)
         tags = options.action_tags,
       })
       deps.set_style(button, "minimal_width", 56)
+    end
+
+    if not options.unlocked then
+      return section
     end
 
     if options.right_caption and options.right_caption ~= "" and options.action_caption then

@@ -374,11 +374,14 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_base_allocation_row(parent, upgrade, rank, can_increase)
+    local rank_caption = upgrade.max_rank and { "turret-xp.rank-caption-with-max", rank, upgrade.max_rank }
+      or { "turret-xp.rank-caption", rank }
     add_rank_allocation_row(parent, {
       row_name = evolution_anchor_name("base", upgrade.id),
       sprite = upgrade.sprite,
       name = upgrade.name,
       rank = rank,
+      rank_caption = rank_caption,
       value_caption = rich_stat_text(upgrade.value),
       can_decrease = rank > 0,
       can_increase = can_increase,

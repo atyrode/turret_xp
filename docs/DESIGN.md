@@ -19,6 +19,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Treat the 0.11 GUI glowup as an anchored custom interface, not a move away from the vanilla turret GUI unless the relative GUI API blocks a required interaction. The panel should keep living beside the opened turret while adopting the hierarchy, icon language, spacing, and action discoverability shown by mature utility mods such as Factory Planner.
 - Use a Factorio-style header plus shallow content panes as the default frame language: the Turret XP shell owns the anchored frame and top-level columns, while section modules own their local content.
 - Keep the Evolution column stable: a fixed summary header, one scrollable section body, section widths derived from the viewport, and no content rendering under the scrollbar.
+- Keep locked Evolution sections scannable by showing the section name and level gate in the same header rhythm as unlocked sections.
 - Keep the Stats pane visually parallel to Evolution: a fixed header and a bounded scroll body with compact section headers for identity, defense, offense, ammo, history, and active effects.
 - Use direct labels, compact controls, restrained rich text markers, and vanilla-like layout rhythm.
 - Keep Evolution rank allocation controls as consistent compact steppers: normal click changes one rank, Shift-click changes up to ten, and Ctrl-click spends or refunds the whole applicable amount.
