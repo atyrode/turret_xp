@@ -33,6 +33,17 @@ function tests.run_layout_constants_test()
   assert_true(layout.stats_section_header_height > 0, "Stats groups must reserve visible section headers")
   assert_true(layout.stats_section_header_top_margin > 0, "Stats group headers after the first must have separation")
   assert_true(layout.stats_section_header_bottom_margin > 0, "Stats group headers must separate from their rows")
+  assert_true(layout.core_identity_slot_size > 0, "core identity slot must have an explicit size")
+  assert_true(layout.core_identity_detail_width > 0, "installed core identity text must retain a positive width")
+  assert_true(
+    layout.core_identity_empty_detail_width > layout.core_identity_detail_width,
+    "empty core identity text should expand in the full-width empty panel"
+  )
+  assert_eq(
+    layout.core_identity_actions_width,
+    layout.core_identity_tool_button_size + layout.core_identity_action_button_width + layout.core_identity_action_spacing,
+    "core identity action width must derive from button and spacing budgets"
+  )
   assert_true(layout.stats_scroll_width < layout.left_column_width, "Stats pane must stay inside the left column")
   assert_true(layout.inventory_core_picker_width < layout.left_column_width, "inventory core picker must stay inside the left column")
   assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full two-column shell width")

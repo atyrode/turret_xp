@@ -101,6 +101,7 @@ return function(M)
     if not core_identity_service then
       core_identity_service = gui_core_identity.new({
         GUI = GUI,
+        COLOR = COLOR,
         LAYOUT = LAYOUT,
         CHIP_NAME = CHIP_NAME,
         set_style = set_style,

@@ -89,6 +89,11 @@ local layout = {
   inventory_core_sort_arrow_slot_width = 12,
   inventory_core_table_header_height = 24,
   inventory_core_table_row_height = 30,
+  core_identity_slot_size = 40,
+  core_identity_tool_button_size = 28,
+  core_identity_action_button_width = 64,
+  core_identity_action_spacing = 4,
+  platform_core_icon_size = 34,
   label_color_picker_min_width = 300,
   evolution_outer_height = 760,
   evolution_header_height = 36,
@@ -111,6 +116,24 @@ layout.panel_width = layout.left_column_width + layout.evolution_column_width + 
 layout.panel_max_width = layout.panel_width + 24
 layout.empty_panel_width = layout.panel_width
 layout.empty_panel_max_width = layout.panel_max_width
+layout.core_identity_actions_width = layout.core_identity_tool_button_size
+  + layout.core_identity_action_button_width
+  + layout.core_identity_action_spacing
+layout.core_identity_detail_width = layout.left_column_width
+  - layout.core_panel_padding
+  - layout.core_identity_slot_size
+  - layout.core_identity_actions_width
+  - 24
+layout.core_identity_empty_detail_width = layout.empty_panel_width
+  - layout.core_panel_padding
+  - layout.core_identity_slot_size
+  - layout.core_identity_tool_button_size
+  - 32
+layout.platform_core_row_detail_width = layout.left_column_width
+  - layout.core_panel_padding
+  - layout.platform_core_icon_size
+  - layout.core_identity_tool_button_size
+  - 24
 layout.stats_scroll_width = layout.left_column_width - 16
 layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12

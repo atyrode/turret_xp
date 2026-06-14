@@ -168,6 +168,9 @@ function core_panel_module.new(deps)
       return table.concat({
         "installed",
         tostring(state.chip_id or ""),
+        tostring(state.level or 0),
+        tostring(state.custom_name or ""),
+        tostring(state.chip_quality or "normal"),
         tostring(state.bound_turret == true),
         tostring(state.show_name_label == true),
         tostring(state.show_label_level ~= false),
@@ -257,6 +260,7 @@ function core_panel_module.new(deps)
       core_platform_controls_service = core_platform_controls_module.new({
         GUI = GUI,
         COLOR = COLOR,
+        LAYOUT = LAYOUT,
         CHIP_NAME = CHIP_NAME,
         set_style = set_style,
         set_element_style = set_element_style,
