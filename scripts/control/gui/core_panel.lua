@@ -34,6 +34,7 @@ function core_panel_module.new(deps)
   local rich_metric = deps.rich_metric
   local rich_specialization_caption = deps.rich_specialization_caption
   local widgets = deps.widgets
+  local components = deps.components
   local core_picker_table = deps.core_picker_table
   local core_identity = deps.core_identity
   local core_label_controls = deps.core_label_controls
@@ -264,8 +265,7 @@ function core_panel_module.new(deps)
         create_blank_profile = create_blank_profile,
         preview_stats = preview_stats,
         specialization_caption = specialization_caption,
-        rich_value = rich_value,
-        rich_metric = rich_metric,
+        components = components,
         widgets = widgets,
       })
     end
@@ -749,32 +749,14 @@ function core_panel_module.new(deps)
       return nil
     end
 
-    local panel = parent.add({
-      type = "frame",
+    local panel = components.add_section_frame(parent, {
       name = GUI.dev,
-      direction = "vertical",
       style = "deep_frame_in_shallow_frame",
+      padding = { 6, 6, 6, 6 },
+      bottom_margin = 6,
+      title = { "turret-xp.dev-title" },
     })
-    set_style(panel, "horizontally_stretchable", true)
-    set_style(panel, "padding", { 6, 6, 6, 6 })
-    set_style(panel, "bottom_margin", 6)
     set_style(panel, "vertical_align", "center")
-
-    local top = panel.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(top, "horizontally_stretchable", true)
-    set_style(top, "vertical_align", "center")
-    set_style(top, "horizontal_spacing", 6)
-
-    local label = top.add({
-      type = "label",
-      caption = { "turret-xp.dev-title" },
-      style = "caption_label",
-    })
-    set_style(label, "font", "default-bold")
-    set_style(label, "right_margin", 4)
 
     local buttons = panel.add({
       type = "table",

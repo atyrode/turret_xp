@@ -91,9 +91,23 @@ function tests.run_layout_constants_test()
   )
   assert_true(layout.rank_stepper_button_size > 0, "rank stepper buttons must have an explicit layout size")
   assert_true(layout.rank_stepper_label_width > 0, "rank stepper label must have an explicit layout width")
+  assert_eq(
+    layout.rank_stepper_width,
+    (layout.rank_stepper_button_size * 2) + layout.rank_stepper_label_width + (layout.rank_stepper_spacing * 2),
+    "rank stepper total width must derive from button, label, and spacing budgets"
+  )
+  assert_eq(
+    layout.rank_allocation_detail_width
+      + layout.rank_allocation_icon_size
+      + layout.rank_allocation_value_width
+      + layout.rank_stepper_width
+      + layout.rank_allocation_spacing_width,
+    layout.evolution_inner_width,
+    "rank allocation row columns must derive from the Evolution inner width"
+  )
+  assert_true(layout.rank_allocation_detail_width > 0, "rank allocation detail text must retain a positive width")
   assert_true(
-    (layout.rank_stepper_button_size * 2) + layout.rank_stepper_label_width + (layout.rank_stepper_spacing * 2)
-      < layout.evolution_inner_width,
+    layout.rank_stepper_width < layout.evolution_inner_width,
     "rank stepper controls must fit inside Evolution rows"
   )
   assert_true(

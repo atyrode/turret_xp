@@ -118,6 +118,7 @@ return function(M)
       core_label_controls_service = gui_core_label_controls.new({
         GUI = GUI,
         COLOR = COLOR,
+        components = get_gui_components_service(),
         set_style = set_style,
         find_matching_label_color_preset = find_matching_label_color_preset,
       })
@@ -194,6 +195,7 @@ return function(M)
         core_picker_table = get_core_picker_table_service(),
         core_identity = get_core_identity_service(),
         core_label_controls = get_core_label_controls_service(),
+        components = get_gui_components_service(),
         core_platform_controls = gui_core_platform_controls,
       })
     end
@@ -208,6 +210,9 @@ return function(M)
         COLOR = COLOR,
         LAYOUT = LAYOUT,
         add_stat_row = add_stat_row,
+        add_stats_section_header = function(parent, caption)
+          return get_gui_components_service().add_stats_section_header(parent, caption)
+        end,
         make_stats_table = make_stats_table,
         add_content_pane = function(parent, options)
           return get_gui_components_service().add_content_pane(parent, options)
@@ -630,36 +635,8 @@ return function(M)
     return get_evolution_panel_service().add_element_choice_card(parent, element, state, slot)
   end
 
-  function add_allocation_row(parent, sprite, name, rank_caption, value_caption, button_caption, tags, enabled, tooltip, row_name)
-    return get_evolution_panel_service().add_allocation_row(
-      parent,
-      sprite,
-      name,
-      rank_caption,
-      value_caption,
-      button_caption,
-      tags,
-      enabled,
-      tooltip,
-      row_name
-    )
-  end
-
   function add_base_allocation_row(parent, upgrade, rank, can_increase)
     return get_evolution_panel_service().add_base_allocation_row(parent, upgrade, rank, can_increase)
-  end
-
-  function add_rank_stepper(parent, rank, decrease_tags, increase_tags, can_decrease, can_increase, decrease_tooltip, increase_tooltip)
-    return get_evolution_panel_service().add_rank_stepper(
-      parent,
-      rank,
-      decrease_tags,
-      increase_tags,
-      can_decrease,
-      can_increase,
-      decrease_tooltip,
-      increase_tooltip
-    )
   end
 
   function add_augment_allocation_row(parent, augment, rank, available, at_max)

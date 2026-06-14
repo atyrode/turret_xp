@@ -4,6 +4,7 @@ function core_platform_controls_module.new(deps)
   local GUI = deps.GUI
   local COLOR = deps.COLOR
   local CHIP_NAME = deps.CHIP_NAME
+  local components = deps.components
   local set_style = deps.set_style
   local set_element_style = deps.set_element_style
   local get_platform_hub_inventory = deps.get_platform_hub_inventory
@@ -11,11 +12,19 @@ function core_platform_controls_module.new(deps)
   local create_blank_profile = deps.create_blank_profile
   local preview_stats = deps.preview_stats
   local specialization_caption = deps.specialization_caption
-  local rich_value = deps.rich_value
-  local rich_metric = deps.rich_metric
   local widgets = deps.widgets
 
   local service = {}
+
+  local function plain_metric(label, value, suffix)
+    return {
+      "",
+      label,
+      " ",
+      tostring(value or "-"),
+      suffix or "",
+    }
+  end
 
   local function add_installed_core_row(frame)
     local flow = frame.add({
@@ -97,7 +106,7 @@ function core_platform_controls_module.new(deps)
     local stats = preview_stats(entity, profile)
     local summary = details.add({
       type = "label",
-      caption = { "turret-xp.platform-core-summary", rich_value(profile.level or 0), specialization_caption(profile) },
+      caption = { "turret-xp.platform-core-summary", tostring(profile.level or 0), specialization_caption(profile) },
       style = "caption_label",
     })
     set_style(summary, "font_color", COLOR.muted)
@@ -105,9 +114,9 @@ function core_platform_controls_module.new(deps)
       type = "label",
       caption = {
         "turret-xp.inventory-core-compact-stats",
-        rich_metric({ "turret-xp.inventory-core-stat-hp" }, stats.health),
-        rich_metric({ "turret-xp.inventory-core-stat-attack" }, stats.speed, "/s"),
-        rich_metric({ "turret-xp.inventory-core-stat-range" }, stats.range),
+        plain_metric({ "turret-xp.inventory-core-stat-hp" }, stats.health),
+        plain_metric({ "turret-xp.inventory-core-stat-attack" }, stats.speed, "/s"),
+        plain_metric({ "turret-xp.inventory-core-stat-range" }, stats.range),
       },
       style = "caption_label",
     })
@@ -131,32 +140,23 @@ function core_platform_controls_module.new(deps)
       return
     end
 
-    local frame = parent.add({
-      type = "frame",
+    local options = get_platform_core_options(entity)
+    local frame = components.add_section_frame(parent, {
       name = GUI.platform_cores,
-      direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
+      top_margin = 6,
+      title = { "turret-xp.platform-core-title" },
+      right_caption = not state and #options > 0 and { "turret-xp.inventory-core-count", #options } or nil,
     })
-    set_style(frame, "top_margin", 6)
-    set_style(frame, "horizontally_stretchable", true)
 
     if state then
       add_installed_core_row(frame)
       return
     end
 
-    local options = get_platform_core_options(entity)
     if #options == 0 then
       add_empty_label(frame)
       return
     end
-
-    local title = frame.add({
-      type = "label",
-      caption = { "turret-xp.platform-core-title" },
-      style = "caption_label",
-    })
-    set_style(title, "font", "default-bold")
 
     for _, option in ipairs(options) do
       add_core_option_row(frame, entity, option)

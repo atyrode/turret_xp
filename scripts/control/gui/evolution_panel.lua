@@ -295,17 +295,18 @@ function evolution_panel_module.new(deps)
     return row
   end
 
-  local function add_allocation_row(parent, sprite, name, rank_caption, value_caption, button_caption, tags, enabled, tooltip, row_name)
+  local function add_rank_allocation_row(parent, options)
+    options = options or {}
     local row_definition = {
       type = "table",
       column_count = 4,
     }
-    if row_name then
-      row_definition.name = row_name
+    if options.row_name then
+      row_definition.name = options.row_name
     end
     local row = parent.add(row_definition)
     set_evolution_content_width(row, true)
-    set_style(row, "horizontal_spacing", 8)
+    set_style(row, "horizontal_spacing", LAYOUT.rank_allocation_horizontal_spacing)
     set_style(row, "vertical_spacing", 2)
     pcall(function()
       row.style.column_alignments[1] = "left"
@@ -316,92 +317,69 @@ function evolution_panel_module.new(deps)
 
     local icon = row.add({
       type = "sprite",
-      sprite = sprite,
+      sprite = options.sprite,
     })
-    set_style(icon, "size", 28)
+    set_style(icon, "size", LAYOUT.rank_allocation_icon_size)
 
     local details = row.add({
       type = "flow",
       direction = "vertical",
     })
     set_style(details, "horizontally_stretchable", true)
+    set_style(details, "width", LAYOUT.rank_allocation_detail_width)
+    set_style(details, "minimal_width", LAYOUT.rank_allocation_detail_width)
+    set_style(details, "maximal_width", LAYOUT.rank_allocation_detail_width)
 
     local title = details.add({
       type = "label",
-      caption = name,
+      caption = options.name,
       style = "caption_label",
     })
     set_style(title, "font", "default-bold")
+    set_style(title, "single_line", false)
+    set_style(title, "maximal_width", LAYOUT.rank_allocation_detail_width)
 
-    local rank = details.add({
-      type = "label",
-      caption = rank_caption or "",
-      style = "caption_label",
-    })
-    set_style(rank, "font_color", COLOR.muted)
+    if options.rank_caption then
+      local rank = details.add({
+        type = "label",
+        caption = options.rank_caption,
+        style = "caption_label",
+      })
+      set_style(rank, "font_color", COLOR.muted)
+      set_style(rank, "single_line", true)
+    end
 
     local value = row.add({
       type = "label",
-      caption = rich_stat_text(value_caption or ""),
+      caption = options.value_caption or "",
       style = "caption_label",
     })
     set_style(value, "horizontal_align", "right")
+    set_style(value, "single_line", false)
+    set_style(value, "width", LAYOUT.rank_allocation_value_width)
+    set_style(value, "minimal_width", LAYOUT.rank_allocation_value_width)
+    set_style(value, "maximal_width", LAYOUT.rank_allocation_value_width)
 
-    local button = row.add({
-      type = "button",
-      caption = button_caption or "+",
-      tooltip = tooltip,
-      tags = tags,
-      enabled = enabled,
+    get_gui_components_service().add_rank_stepper(row, {
+      rank = options.rank or 0,
+      can_decrease = options.can_decrease == true,
+      can_increase = options.can_increase == true,
+      decrease_tooltip = options.decrease_tooltip,
+      increase_tooltip = options.increase_tooltip,
+      decrease_tags = options.decrease_tags,
+      increase_tags = options.increase_tags,
     })
 
-    set_style(button, "font", "default-bold")
-    set_style(button, "width", 40)
-    set_style(button, "height", 32)
-    set_style(button, "minimal_width", 40)
-
-    return button
+    return row
   end
 
   local function add_base_allocation_row(parent, upgrade, rank, can_increase)
-    local row = parent.add({
-      type = "table",
-      name = evolution_anchor_name("base", upgrade.id),
-      column_count = 4,
-    })
-    set_evolution_content_width(row, true)
-    set_style(row, "horizontal_spacing", 8)
-    set_style(row, "vertical_spacing", 2)
-    pcall(function()
-      row.style.column_alignments[1] = "left"
-      row.style.column_alignments[2] = "left"
-      row.style.column_alignments[3] = "right"
-      row.style.column_alignments[4] = "right"
-    end)
-
-    local icon = row.add({
-      type = "sprite",
+    add_rank_allocation_row(parent, {
+      row_name = evolution_anchor_name("base", upgrade.id),
       sprite = upgrade.sprite,
-    })
-    set_style(icon, "size", 28)
-
-    local name_label = row.add({
-      type = "label",
-      caption = upgrade.name,
-      style = "caption_label",
-    })
-    set_style(name_label, "font", "default-bold")
-    set_style(name_label, "horizontally_stretchable", true)
-
-    local value = row.add({
-      type = "label",
-      caption = rich_stat_text(upgrade.value),
-      style = "caption_label",
-    })
-    set_style(value, "horizontal_align", "right")
-
-    get_gui_components_service().add_rank_stepper(row, {
+      name = upgrade.name,
       rank = rank,
+      value_caption = rich_stat_text(upgrade.value),
       can_decrease = rank > 0,
       can_increase = can_increase,
       decrease_tooltip = { "turret-xp.rank-remove-tooltip", upgrade.name },
@@ -423,100 +401,35 @@ function evolution_panel_module.new(deps)
     })
   end
 
-  local function add_rank_stepper(
-    parent,
-    rank,
-    decrease_tags,
-    increase_tags,
-    can_decrease,
-    can_increase,
-    decrease_tooltip,
-    increase_tooltip
-  )
-    return get_gui_components_service().add_rank_stepper(parent, {
-      rank = rank,
-      decrease_tags = decrease_tags,
-      increase_tags = increase_tags,
-      can_decrease = can_decrease,
-      can_increase = can_increase,
-      decrease_tooltip = decrease_tooltip,
-      increase_tooltip = increase_tooltip,
-    })
-  end
-
   local function add_augment_allocation_row(parent, augment, rank, available, at_max)
-    local row = parent.add({
-      type = "table",
-      name = evolution_anchor_name("augment", augment.id),
-      column_count = 4,
-    })
-    set_evolution_content_width(row, true)
-    set_style(row, "horizontal_spacing", 8)
-    set_style(row, "vertical_spacing", 2)
-    pcall(function()
-      row.style.column_alignments[1] = "left"
-      row.style.column_alignments[2] = "left"
-      row.style.column_alignments[3] = "right"
-      row.style.column_alignments[4] = "right"
-    end)
-
-    local icon = row.add({
-      type = "sprite",
-      sprite = augment.sprite,
-    })
-    set_style(icon, "size", 28)
-
-    local details = row.add({
-      type = "flow",
-      direction = "vertical",
-    })
-    set_style(details, "horizontally_stretchable", true)
-
-    local title = details.add({
-      type = "label",
-      caption = augment.name,
-      style = "caption_label",
-    })
-    set_style(title, "font", "default-bold")
-
     local rank_caption = augment.max_rank and { "turret-xp.rank-caption-with-max", rank, augment.max_rank }
       or { "turret-xp.rank-caption", rank }
-    local rank_label = details.add({
-      type = "label",
-      caption = rank_caption,
-      style = "caption_label",
-    })
-    set_style(rank_label, "font_color", COLOR.muted)
-
-    local value = row.add({
-      type = "label",
-      caption = at_max and { "turret-xp.rank-max" } or rich_stat_text(augment.value),
-      style = "caption_label",
-    })
-    set_style(value, "horizontal_align", "right")
-
-    add_rank_stepper(
-      row,
-      rank,
-      {
+    add_rank_allocation_row(parent, {
+      row_name = evolution_anchor_name("augment", augment.id),
+      sprite = augment.sprite,
+      name = augment.name,
+      rank = rank,
+      rank_caption = rank_caption,
+      value_caption = at_max and { "turret-xp.rank-max" } or rich_stat_text(augment.value),
+      can_decrease = rank > 0,
+      can_increase = available >= 1 and not at_max,
+      decrease_tags = {
         turret_xp_action = "deallocate-augment",
         augment = augment.id,
       },
-      {
+      increase_tags = {
         turret_xp_action = "allocate-augment",
         augment = augment.id,
       },
-      rank > 0,
-      available >= 1 and not at_max,
-      { "turret-xp.rank-remove-tooltip", augment.name },
-      {
+      decrease_tooltip = { "turret-xp.rank-remove-tooltip", augment.name },
+      increase_tooltip = {
         "turret-xp.augment-rank-add-tooltip",
         augment.name,
         rich_stat_text(augment.description),
         tostring(rank),
         tostring(at_max and rank or (rank + 1)),
-      }
-    )
+      },
+    })
   end
 
   local function add_element_mastery_panel(parent, state, element_id)
@@ -985,9 +898,8 @@ function evolution_panel_module.new(deps)
     add_choice_delimiter = add_choice_delimiter,
     add_row = add_row,
     add_element_choice_card = add_element_choice_card,
-    add_allocation_row = add_allocation_row,
+    add_rank_allocation_row = add_rank_allocation_row,
     add_base_allocation_row = add_base_allocation_row,
-    add_rank_stepper = add_rank_stepper,
     add_augment_allocation_row = add_augment_allocation_row,
     add_element_mastery_panel = add_element_mastery_panel,
     add_base_section = add_base_section,

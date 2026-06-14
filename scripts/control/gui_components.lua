@@ -76,10 +76,70 @@ function gui_components.new(deps)
     return outer, header, scroll
   end
 
+  function service.add_section_frame(parent, options)
+    options = options or {}
+
+    local frame = parent.add({
+      type = "frame",
+      name = options.name,
+      direction = options.direction or "vertical",
+      style = options.style or "inside_shallow_frame_with_padding",
+    })
+    deps.set_style(frame, "horizontally_stretchable", options.horizontally_stretchable ~= false)
+    if options.top_margin then
+      deps.set_style(frame, "top_margin", options.top_margin)
+    end
+    if options.bottom_margin then
+      deps.set_style(frame, "bottom_margin", options.bottom_margin)
+    end
+    if options.padding then
+      deps.set_style(frame, "padding", options.padding)
+    end
+    if options.vertical_spacing then
+      deps.set_style(frame, "vertical_spacing", options.vertical_spacing)
+    end
+
+    local header
+    if options.title or options.right_caption then
+      header = frame.add({
+        type = "flow",
+        direction = "horizontal",
+      })
+      deps.set_style(header, "horizontally_stretchable", true)
+      deps.set_style(header, "vertical_align", "center")
+      deps.set_style(header, "horizontal_spacing", 6)
+
+      if options.title then
+        local title = header.add({
+          type = "label",
+          caption = options.title,
+          style = "caption_label",
+        })
+        deps.set_style(title, "font", "default-bold")
+      end
+
+      header.add({
+        type = "empty-widget",
+        style = "flib_horizontal_pusher",
+      })
+
+      if options.right_caption then
+        local right = header.add({
+          type = "label",
+          caption = options.right_caption,
+          style = "caption_label",
+        })
+        deps.set_style(right, "font_color", deps.COLOR.muted)
+      end
+    end
+
+    return frame, header
+  end
+
   function service.add_stat_row(parent, label, element_name, options)
     options = options or {}
 
-    if #(parent.children or {}) > 0 then
+    if #(parent.children or {}) > 0 and options.no_delimiter ~= true then
       local delimiter = parent.add({
         type = "line",
         direction = "horizontal",
@@ -141,6 +201,42 @@ function gui_components.new(deps)
     deps.set_style(value_element, "maximal_width", options.maximal_width or deps.LAYOUT.stats_value_width)
 
     return label_element, value_element
+  end
+
+  function service.add_stats_section_header(parent, caption)
+    if #(parent.children or {}) > 0 then
+      local delimiter = parent.add({
+        type = "line",
+        direction = "horizontal",
+      })
+      deps.set_style(delimiter, "horizontally_stretchable", true)
+      deps.set_style(delimiter, "top_margin", 6)
+      deps.set_style(delimiter, "bottom_margin", 2)
+    end
+
+    local header = parent.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    deps.set_style(header, "horizontally_stretchable", true)
+    deps.set_style(header, "vertical_align", "center")
+    deps.set_style(header, "height", 22)
+
+    local label = header.add({
+      type = "label",
+      caption = caption,
+      style = "caption_label",
+    })
+    deps.set_style(label, "font", "default-bold")
+    deps.set_style(label, "font_color", deps.COLOR.caption)
+    deps.set_style(label, "single_line", true)
+
+    header.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
+    })
+
+    return header
   end
 
   function service.make_stats_table(parent, name)

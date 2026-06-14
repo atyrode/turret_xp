@@ -97,6 +97,9 @@ local layout = {
   rank_stepper_button_size = 32,
   rank_stepper_label_width = 28,
   rank_stepper_spacing = 4,
+  rank_allocation_icon_size = 28,
+  rank_allocation_value_width = 112,
+  rank_allocation_horizontal_spacing = 8,
   inventory_core_picker_height = 230,
 }
 
@@ -141,6 +144,15 @@ layout.evolution_inner_width = layout.evolution_section_width - 16
 layout.evolution_card_inner_width = layout.evolution_inner_width - 28
 layout.evolution_detail_width = layout.evolution_inner_width - 96
 layout.evolution_effect_width = layout.evolution_inner_width - 64
+layout.rank_stepper_width = (layout.rank_stepper_button_size * 2)
+  + layout.rank_stepper_label_width
+  + (layout.rank_stepper_spacing * 2)
+layout.rank_allocation_spacing_width = layout.rank_allocation_horizontal_spacing * 3
+layout.rank_allocation_detail_width = layout.evolution_inner_width
+  - layout.rank_allocation_icon_size
+  - layout.rank_allocation_value_width
+  - layout.rank_stepper_width
+  - layout.rank_allocation_spacing_width
 layout.element_mastery_icon_width = 36
 layout.element_mastery_action_width = 96
 layout.element_mastery_label_width = layout.evolution_inner_width

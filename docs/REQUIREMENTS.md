@@ -82,7 +82,7 @@
 - Show locked section level gates before the turret reaches them.
 - Show material requirements and progress for every unlocked element's next passive rank, plus the current rank and technical effect.
 - Show duplicate pure-element builds as one active element stat row plus their combo identity, not as duplicate stat summary lines.
-- Always show baseline Crit Chance and Crit Damage in the stats summary when a core is installed, directly under Damage Dealt.
+- Always show baseline Crit Chance and Crit Damage in the stats summary when a core is installed, grouped with offense output.
 - Show active Resistance in the stats summary only after at least one Resistance rank is allocated.
 - Apply and show specialization and sub-specialization multipliers, including Sniper Deadeye/Overwatch, Machine Gun Shredder/Sustained Fire, Bulwark Bastion/Guardian, and Brawler Executioner/Vampire.
 - Reserve stats-scrollbar space before scrolling is needed so stat values do not shift or render underneath the scrollbar when additional rows make the panel scrollable.

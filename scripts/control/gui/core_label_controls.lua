@@ -10,6 +10,7 @@ local LABEL_LAYOUT = {
 function core_label_controls_module.new(deps)
   local GUI = deps.GUI
   local COLOR = deps.COLOR
+  local components = deps.components
   local set_style = deps.set_style
   local find_matching_label_color_preset = deps.find_matching_label_color_preset
 
@@ -82,14 +83,10 @@ function core_label_controls_module.new(deps)
   end
 
   function service.add(parent, state)
-    local frame = parent.add({
-      type = "frame",
-      direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
+    local frame = components.add_section_frame(parent, {
+      top_margin = 6,
+      vertical_spacing = 4,
     })
-    set_style(frame, "top_margin", 6)
-    set_style(frame, "horizontally_stretchable", true)
-    set_style(frame, "vertical_spacing", 4)
 
     local name_flow = frame.add({
       type = "flow",
