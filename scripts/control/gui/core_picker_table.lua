@@ -4,9 +4,7 @@ function core_picker_table_module.new(deps)
   local GUI = deps.GUI
   local COLOR = deps.COLOR
   local LAYOUT = deps.LAYOUT
-  local CHIP_NAME = deps.CHIP_NAME
   local set_style = deps.set_style
-  local set_element_style = deps.set_element_style
   local widgets = deps.widgets
 
   local service = {}
@@ -16,7 +14,7 @@ function core_picker_table_module.new(deps)
     { id = "name", caption = { "turret-xp.inventory-core-sort-name" }, tooltip = { "turret-xp.inventory-core-sort-name-tooltip" } },
     {
       id = "specialization",
-      caption = { "stat-specialization" },
+      caption = { "turret-xp.stat-specialization" },
       tooltip = { "turret-xp.inventory-core-sort-specialization-tooltip" },
     },
     { id = "hp", caption = { "turret-xp.inventory-core-stat-hp" }, tooltip = { "turret-xp.inventory-core-sort-hp-tooltip" } },
@@ -60,7 +58,7 @@ function core_picker_table_module.new(deps)
     set_cell_width(label, width)
     set_style(label, "font", "default-bold")
     set_style(label, "font_color", COLOR.caption)
-    set_style(label, "height", 24)
+    set_style(label, "height", LAYOUT.inventory_core_table_header_height)
     set_style(label, "horizontal_align", align or "right")
     set_style(label, "single_line", true)
     return label
@@ -77,14 +75,14 @@ function core_picker_table_module.new(deps)
       direction = "horizontal",
     })
     set_cell_width(cell, width)
-    set_style(cell, "height", 24)
+    set_style(cell, "height", LAYOUT.inventory_core_table_header_height)
     set_style(cell, "horizontal_spacing", 2)
     set_style(cell, "vertical_align", "center")
 
     local button = cell.add({
       type = "button",
       caption = mode.caption,
-      style = "transparent_button",
+      style = "turret_xp_table_header_button",
       tooltip = mode.tooltip,
       mouse_button_filter = { "left" },
       tags = {
@@ -93,10 +91,10 @@ function core_picker_table_module.new(deps)
       },
     })
     set_cell_width(button, button_width)
-    set_style(button, "height", 24)
+    set_style(button, "height", LAYOUT.inventory_core_table_header_height)
     set_style(button, "padding", 0)
     set_style(button, "font", "default-bold")
-    set_style(button, "font_color", active and COLOR.bonus or COLOR.caption)
+    set_style(button, "font_color", active and { 1, 1, 1 } or COLOR.caption)
     set_style(button, "horizontal_align", align or "left")
     set_style(button, "single_line", true)
 
@@ -128,31 +126,10 @@ function core_picker_table_module.new(deps)
       style = "caption_label",
     })
     set_cell_width(label, width)
+    set_style(label, "height", LAYOUT.inventory_core_table_row_height)
     set_style(label, "horizontal_align", align or "right")
     set_style(label, "single_line", true)
     return label
-  end
-
-  local function add_icon_cell(parent, row)
-    local cell = parent.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_cell_width(cell, LAYOUT.empty_inventory_core_icon_width)
-    set_style(cell, "horizontal_align", "center")
-    set_style(cell, "vertical_align", "center")
-
-    local icon = cell.add({
-      type = "sprite-button",
-      sprite = "item/" .. CHIP_NAME,
-      quality = row.quality,
-      number = row.level_number,
-      tooltip = row.install_tooltip,
-      elem_tooltip = row.elem_tooltip,
-      tags = row.install_tags,
-    })
-    set_element_style(icon, "slot_button")
-    set_style(icon, "size", 32)
   end
 
   local function add_action_cell(parent, row)
@@ -161,6 +138,7 @@ function core_picker_table_module.new(deps)
       direction = "horizontal",
     })
     set_cell_width(cell, LAYOUT.empty_inventory_core_action_width)
+    set_style(cell, "height", LAYOUT.inventory_core_table_row_height)
     set_style(cell, "horizontal_align", "center")
     set_style(cell, "vertical_align", "center")
 
@@ -193,15 +171,17 @@ function core_picker_table_module.new(deps)
     set_style(table_element, "vertical_spacing", 0)
     pcall(function()
       for index = 1, LAYOUT.inventory_core_table_column_count do
-        table_element.style.column_alignments[index] = index >= 4 and "right" or "left"
+        table_element.style.column_alignments[index] = "right"
       end
+      table_element.style.column_alignments[2] = "left"
+      table_element.style.column_alignments[3] = "left"
       table_element.style.column_alignments[LAYOUT.inventory_core_table_column_count] = "center"
-      table_element.draw_horizontal_lines = false
+      table_element.draw_horizontal_lines = true
       table_element.draw_horizontal_line_after_headers = true
-      table_element.draw_vertical_lines = false
+      table_element.draw_vertical_lines = true
     end)
 
-    add_header_label_cell(table_element, "", LAYOUT.empty_inventory_core_icon_width, "left")
+    add_sort_header_cell(table_element, sort_mode_by_id("level"), current_sort, LAYOUT.empty_inventory_core_level_width, "right")
     add_sort_header_cell(table_element, sort_mode_by_id("name"), current_sort, LAYOUT.empty_inventory_core_name_width, "left")
     add_sort_header_cell(
       table_element,
@@ -210,7 +190,6 @@ function core_picker_table_module.new(deps)
       LAYOUT.empty_inventory_core_specialization_width,
       "left"
     )
-    add_sort_header_cell(table_element, sort_mode_by_id("level"), current_sort, LAYOUT.empty_inventory_core_level_width, "right")
     add_sort_header_cell(table_element, sort_mode_by_id("hp"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
     add_sort_header_cell(table_element, sort_mode_by_id("attack"), current_sort, LAYOUT.empty_inventory_core_attack_width, "right")
     add_sort_header_cell(table_element, sort_mode_by_id("range"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
@@ -220,26 +199,21 @@ function core_picker_table_module.new(deps)
   end
 
   function service.add_row(parent, row)
-    add_icon_cell(parent, row)
+    add_value_cell(parent, row.level_caption, LAYOUT.empty_inventory_core_level_width)
 
-    local details = parent.add({
-      type = "flow",
-      direction = "vertical",
-    })
-    set_cell_width(details, LAYOUT.empty_inventory_core_name_width)
-
-    local name = details.add({
+    local name = parent.add({
       type = "label",
       caption = row.name_caption,
       style = "caption_label",
     })
+    set_cell_width(name, LAYOUT.empty_inventory_core_name_width)
     set_style(name, "font", "default-bold")
-    set_style(name, "single_line", false)
+    set_style(name, "height", LAYOUT.inventory_core_table_row_height)
+    set_style(name, "single_line", true)
     set_style(name, "maximal_width", LAYOUT.empty_inventory_core_name_width)
 
     local specialization = add_value_cell(parent, row.specialization_caption, LAYOUT.empty_inventory_core_specialization_width, "left")
     set_style(specialization, "font_color", COLOR.muted)
-    add_value_cell(parent, row.level_caption, LAYOUT.empty_inventory_core_level_width)
     add_value_cell(parent, row.hp_caption, LAYOUT.empty_inventory_core_stat_width)
     add_value_cell(parent, row.attack_caption, LAYOUT.empty_inventory_core_attack_width)
     add_value_cell(parent, row.range_caption, LAYOUT.empty_inventory_core_stat_width)

@@ -1,6 +1,7 @@
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
+  local DEFAULT_CORE_PICKER_SORT = "level:desc"
 
   function ensure_storage()
     storage.turret_xp = storage.turret_xp or {}
@@ -124,14 +125,28 @@ return function(M)
   end
 
   function get_core_picker_sort(player)
+    local settings_table = ensure_player_settings(player)
     local player_state = ensure_player_state(player)
-    return normalize_core_picker_sort(player_state.core_picker_sort or "none")
+    if settings_table.core_picker_sort == nil and player_state.core_picker_sort ~= nil then
+      settings_table.core_picker_sort = player_state.core_picker_sort
+      player_state.core_picker_sort = nil
+    end
+
+    local sort = normalize_core_picker_sort(settings_table.core_picker_sort or DEFAULT_CORE_PICKER_SORT)
+    if sort == "none" then
+      return DEFAULT_CORE_PICKER_SORT
+    end
+    return sort
   end
 
   function set_core_picker_sort(player, sort_field)
-    local player_state = ensure_player_state(player)
-    player_state.core_picker_sort = next_core_picker_sort(player_state.core_picker_sort, sort_field)
-    return player_state.core_picker_sort
+    local settings_table = ensure_player_settings(player)
+    local current_sort = normalize_core_picker_sort(settings_table.core_picker_sort or DEFAULT_CORE_PICKER_SORT)
+    if current_sort == "none" then
+      current_sort = DEFAULT_CORE_PICKER_SORT
+    end
+    settings_table.core_picker_sort = next_core_picker_sort(current_sort, sort_field)
+    return settings_table.core_picker_sort
   end
 
   local function core_picker_filter_is_known(filter_id)
@@ -203,17 +218,23 @@ return function(M)
   end
 
   function get_core_picker_filters(player)
+    local settings_table = ensure_player_settings(player)
     local player_state = ensure_player_state(player)
-    return normalize_core_picker_filters(player_state.core_picker_filters)
+    if settings_table.core_picker_filters == nil and player_state.core_picker_filters ~= nil then
+      settings_table.core_picker_filters = player_state.core_picker_filters
+      player_state.core_picker_filters = nil
+    end
+
+    return normalize_core_picker_filters(settings_table.core_picker_filters)
   end
 
   function set_core_picker_filter(player, filter_id, enabled)
-    local player_state = ensure_player_state(player)
-    local filters = normalize_core_picker_filters(player_state.core_picker_filters)
+    local settings_table = ensure_player_settings(player)
+    local filters = normalize_core_picker_filters(settings_table.core_picker_filters)
 
     if filter_id == "all" then
-      player_state.core_picker_filters = core_picker_default_filters()
-      return player_state.core_picker_filters
+      settings_table.core_picker_filters = core_picker_default_filters()
+      return settings_table.core_picker_filters
     end
 
     if core_picker_filter_is_known(filter_id) then
@@ -228,8 +249,8 @@ return function(M)
       filters.all = false
       filters[filter_id] = enabled == true
     end
-    player_state.core_picker_filters = normalize_core_picker_filters(filters)
-    return player_state.core_picker_filters
+    settings_table.core_picker_filters = normalize_core_picker_filters(filters)
+    return settings_table.core_picker_filters
   end
 
   function is_gun_turret(entity)

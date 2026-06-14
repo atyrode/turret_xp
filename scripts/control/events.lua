@@ -459,6 +459,20 @@ return function(M)
     end
   end
 
+  function handlers.on_player_main_inventory_changed(event)
+    local player = event and event.player_index and game.get_player(event.player_index) or nil
+    if not player or not player.valid or not player.connected then
+      return
+    end
+
+    local entity = get_remembered_turret(player)
+    if not entity or player.opened ~= entity or get_turret_state(entity) then
+      return
+    end
+
+    refresh_player_gui(player)
+  end
+
   script.on_init(function()
     ensure_storage()
     unlock_core_recipes_for_existing_tech()
@@ -507,6 +521,9 @@ return function(M)
   script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed, gun_turret_filters)
   script.on_event(defines.events.on_player_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
   script.on_event(defines.events.on_robot_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
+  if defines.events.on_player_main_inventory_changed then
+    script.on_event(defines.events.on_player_main_inventory_changed, handlers.on_player_main_inventory_changed)
+  end
   script.on_event(defines.events.on_tick, handlers.on_tick)
   script.on_nth_tick(REFRESH_TICKS, handlers.on_refresh_tick)
   script.on_nth_tick(SHIELD_RECHARGE_TICKS, handlers.on_shield_recharge_tick)

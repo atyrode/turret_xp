@@ -10,6 +10,7 @@ function core_panel_module.new(deps)
   local find_gui_element = deps.find_gui_element
   local get_remembered_turret = deps.get_remembered_turret
   local get_player_core_options = deps.get_player_core_options
+  local get_player_core_options_model = deps.get_player_core_options_model
   local get_core_picker_sort = deps.get_core_picker_sort
   local get_core_picker_filters = deps.get_core_picker_filters
   local core_picker_filters_key = deps.core_picker_filters_key
@@ -128,14 +129,36 @@ function core_panel_module.new(deps)
     return table.concat(parts, "|")
   end
 
-  local function core_panel_key(player, state)
-    local entity = get_remembered_turret(player)
-    local platform_core_count = #get_platform_core_options(entity)
-    local platform_inventory_present = get_platform_hub_inventory(entity) ~= nil
+  local function build_empty_core_picker_model(player)
     local sort_mode = get_core_picker_sort(player)
     local core_filters = get_core_picker_filters(player)
-    local all_inventory_core_options = get_player_core_options(player, sort_mode)
-    local inventory_core_options = get_player_core_options(player, sort_mode, core_filters)
+    local inventory_model = get_player_core_options_model(player, sort_mode, core_filters)
+    local all_inventory_core_options = inventory_model.all_options or {}
+    local inventory_core_options = inventory_model.options or {}
+
+    local model = {
+      sort_mode = sort_mode,
+      filters = core_filters,
+      all_options = all_inventory_core_options,
+      options = inventory_core_options,
+    }
+    model.key = table.concat({
+      sort_mode,
+      "filters",
+      core_picker_filters_key(core_filters),
+      "all",
+      core_options_key(all_inventory_core_options),
+      "inventory",
+      core_options_key(inventory_core_options),
+    }, ":")
+    return model
+  end
+
+  local function core_panel_key_and_model(player, state, entity)
+    entity = entity or get_remembered_turret(player)
+    local empty_picker_model
+    local platform_core_count = #get_platform_core_options(entity)
+    local platform_inventory_present = get_platform_hub_inventory(entity) ~= nil
     if state then
       local color = state.label_color or {}
       return table.concat({
@@ -152,20 +175,25 @@ function core_panel_module.new(deps)
       }, ":")
     end
 
-    return "empty:"
-      .. sort_mode
+    empty_picker_model = build_empty_core_picker_model(player)
+    local picker_key = "picker:"
+      .. empty_picker_model.key
       .. ":quality:"
       .. tostring(get_entity_quality_name(entity))
       .. ":ammo:"
       .. tostring(get_loaded_ammo(entity))
-      .. ":filters:"
-      .. core_picker_filters_key(core_filters)
-      .. ":all:"
-      .. core_options_key(all_inventory_core_options)
-      .. ":inventory:"
-      .. core_options_key(inventory_core_options)
-      .. ":platform:"
-      .. tostring(platform_core_count)
+    local base_key = table.concat({
+      "empty",
+      tostring(dev_controls_enabled(player)),
+      tostring(platform_inventory_present),
+      tostring(platform_core_count),
+    }, ":")
+    return base_key .. ":" .. picker_key, empty_picker_model, base_key, picker_key
+  end
+
+  local function core_panel_key(player, state)
+    local key = core_panel_key_and_model(player, state)
+    return key
   end
 
   local function core_display_name(profile, fallback)
@@ -559,16 +587,8 @@ function core_panel_module.new(deps)
 
   local function wide_inventory_core_row_data(option, profile, stats)
     local value_colors = option.value_colors or {}
-    local quality = option.quality or profile.chip_quality or "normal"
     return {
-      quality = quality,
-      level_number = (profile.level or 0) > 0 and profile.level or nil,
       install_tooltip = { "turret-xp.inventory-core-install-tooltip" },
-      elem_tooltip = {
-        type = "item-with-quality",
-        name = CHIP_NAME,
-        quality = quality,
-      },
       install_tags = {
         turret_xp_action = "inventory-install-core",
         slot = option.index,
@@ -582,24 +602,27 @@ function core_panel_module.new(deps)
     }
   end
 
-  local function add_inventory_core_picker(core_panel, player, entity, options)
+  local function populate_inventory_core_picker(frame, player, entity, options)
     options = options or {}
+    if not frame or not frame.valid then
+      return
+    end
+
     local wide = options.wide == true
-    local current_sort = get_core_picker_sort(player)
-    local current_filters = get_core_picker_filters(player)
-    local all_core_options = get_player_core_options(player, current_sort)
-    local core_options = get_player_core_options(player, current_sort, current_filters)
+    local picker_model = options.model or nil
+    local current_sort = picker_model and picker_model.sort_mode or get_core_picker_sort(player)
+    local current_filters = picker_model and picker_model.filters or get_core_picker_filters(player)
+    local all_core_options = picker_model and picker_model.all_options or get_player_core_options(player, current_sort)
+    local core_options = picker_model and picker_model.options or get_player_core_options(player, current_sort, current_filters)
     local picker_width = wide and LAYOUT.empty_inventory_core_picker_width or LAYOUT.inventory_core_picker_width
     local picker_height = wide and LAYOUT.empty_inventory_core_picker_height or LAYOUT.inventory_core_picker_height
     local detail_width = wide and LAYOUT.empty_inventory_core_detail_width or LAYOUT.inventory_core_detail_width
 
-    local frame = core_panel.add({
-      type = "frame",
-      name = GUI.inventory_cores,
-      direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
-    })
-    set_style(frame, "top_margin", 6)
+    frame.clear()
+    frame.tags = {
+      picker_key = options.picker_key or "",
+    }
+
     set_style(frame, "horizontally_stretchable", true)
 
     local header = frame.add({
@@ -608,6 +631,23 @@ function core_panel_module.new(deps)
     })
     set_style(header, "horizontally_stretchable", true)
     set_style(header, "vertical_align", "center")
+    set_style(header, "horizontal_spacing", 6)
+
+    if wide then
+      local sample = header.add({
+        type = "sprite-button",
+        sprite = "item/" .. CHIP_NAME,
+        quality = "normal",
+        tooltip = { "turret-xp.inventory-core-title" },
+        elem_tooltip = {
+          type = "item-with-quality",
+          name = CHIP_NAME,
+          quality = "normal",
+        },
+      })
+      set_element_style(sample, "slot_button")
+      set_style(sample, "size", LAYOUT.inventory_core_sample_slot_size)
+    end
 
     local title = header.add({
       type = "label",
@@ -646,7 +686,6 @@ function core_panel_module.new(deps)
     set_style(scroll, "minimal_width", picker_width)
     set_style(scroll, "maximal_width", picker_width)
 
-    prepare_core_options_for_display(entity, all_core_options, current_sort)
     prepare_core_options_for_display(entity, core_options, current_sort)
 
     if #core_options == 0 then
@@ -694,6 +733,42 @@ function core_panel_module.new(deps)
         add_narrow_inventory_core_row(rows, option, profile, stats, detail_width)
       end
     end
+  end
+
+  local function add_inventory_core_picker(core_panel, player, entity, options)
+    options = options or {}
+    local wide = options.wide == true
+    local frame_definition = {
+      type = wide and "flow" or "frame",
+      name = GUI.inventory_cores,
+      direction = "vertical",
+    }
+    if not wide then
+      frame_definition.style = "inside_shallow_frame_with_padding"
+    end
+
+    local frame = core_panel.add(frame_definition)
+    set_style(frame, "top_margin", 6)
+    set_style(frame, "horizontally_stretchable", true)
+    populate_inventory_core_picker(frame, player, entity, options)
+  end
+
+  local function refresh_inventory_core_picker(core_panel, player, entity, model, picker_key)
+    local frame = find_gui_element(core_panel, GUI.inventory_cores)
+    if not frame or not frame.valid then
+      return false
+    end
+
+    if (frame.tags or {}).picker_key == picker_key then
+      return true
+    end
+
+    populate_inventory_core_picker(frame, player, entity, {
+      wide = true,
+      model = model,
+      picker_key = picker_key,
+    })
+    return true
   end
 
   local function add_platform_core_list(core_panel, entity, state)
@@ -959,17 +1034,31 @@ function core_panel_module.new(deps)
       return
     end
 
-    local key = core_panel_key(player, state)
-    if (core_panel.tags or {}).key == key then
+    local key, empty_picker_model, base_key, picker_key = core_panel_key_and_model(player, state, entity)
+    local tags = core_panel.tags or {}
+    if tags.key == key then
       if state then
         update_name_render(entity, state)
       end
       return
     end
 
+    if not state and tags.base_key == base_key then
+      if refresh_inventory_core_picker(core_panel, player, entity, empty_picker_model, picker_key) then
+        core_panel.tags = {
+          key = key,
+          base_key = base_key,
+          picker_key = picker_key,
+        }
+        return
+      end
+    end
+
     core_panel.clear()
     core_panel.tags = {
       key = key,
+      base_key = base_key,
+      picker_key = picker_key,
     }
 
     local top = core_panel.add({
@@ -1065,7 +1154,11 @@ function core_panel_module.new(deps)
       set_style(note, "font_color", COLOR.muted)
       set_style(note, "single_line", false)
       set_style(note, "maximal_width", LAYOUT.empty_panel_width - 24)
-      add_inventory_core_picker(core_panel, player, entity, { wide = true })
+      add_inventory_core_picker(core_panel, player, entity, {
+        wide = true,
+        model = empty_picker_model,
+        picker_key = picker_key,
+      })
       add_platform_core_list(core_panel, entity, state)
       return
     end

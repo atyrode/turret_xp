@@ -5,7 +5,6 @@ local shell_module = {}
 function shell_module.new(deps)
   local GUI = deps.GUI
   local LAYOUT = deps.LAYOUT
-  local CHIP_NAME = deps.CHIP_NAME
   local set_style = deps.set_style
 
   local function panel_definition(anchor)
@@ -13,34 +12,8 @@ function shell_module.new(deps)
       type = "frame",
       name = GUI.panel,
       direction = "vertical",
+      caption = { "turret-xp.panel-title" },
       children = {
-        {
-          type = "flow",
-          name = GUI.panel_header,
-          direction = "horizontal",
-          style = "frame_header_flow",
-          children = {
-            {
-              type = "sprite",
-              name = GUI.panel_header_icon,
-              sprite = "item/" .. CHIP_NAME,
-              ignored_by_interaction = true,
-            },
-            {
-              type = "label",
-              name = GUI.panel_title,
-              caption = { "turret-xp.panel-title" },
-              style = "frame_title",
-              ignored_by_interaction = true,
-            },
-            {
-              type = "empty-widget",
-              name = GUI.panel_header_drag_handle,
-              style = "flib_titlebar_drag_handle",
-              ignored_by_interaction = true,
-            },
-          },
-        },
         {
           type = "flow",
           name = GUI.panel_columns,
@@ -77,27 +50,6 @@ function shell_module.new(deps)
       turret_xp_mode = mode,
     }
     set_style(frame, "maximal_width", mode == "empty" and LAYOUT.empty_panel_max_width or LAYOUT.panel_max_width)
-
-    local header = elems[GUI.panel_header]
-    pcall(function()
-      header.drag_target = frame
-    end)
-    set_style(header, "horizontally_stretchable", true)
-    set_style(header, "vertical_align", "center")
-
-    local icon = elems[GUI.panel_header_icon]
-    set_style(icon, "size", 24)
-    set_style(icon, "right_margin", 4)
-
-    local title = elems[GUI.panel_title]
-    set_style(title, "font", "default-bold")
-    set_style(title, "right_margin", 8)
-
-    local drag_handle = elems[GUI.panel_header_drag_handle]
-    pcall(function()
-      drag_handle.drag_target = frame
-    end)
-    set_style(drag_handle, "horizontally_stretchable", true)
 
     local columns = elems[GUI.panel_columns]
     set_style(columns, "horizontally_stretchable", true)
@@ -170,7 +122,6 @@ function shell_module.new(deps)
       frame = result.frame,
       columns = result.elems[GUI.panel_columns],
       body = result.elems[GUI.panel_body],
-      header = result.elems[GUI.panel_header],
     }
   end
 

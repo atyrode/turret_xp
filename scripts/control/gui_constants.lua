@@ -5,10 +5,6 @@ local prefix = domain.names.mod_prefix
 
 local gui = {
   panel = prefix .. "panel",
-  panel_header = prefix .. "panel-header",
-  panel_header_icon = prefix .. "panel-header-icon",
-  panel_header_drag_handle = prefix .. "panel-header-drag-handle",
-  panel_title = prefix .. "panel-title",
   panel_columns = prefix .. "panel-columns",
   panel_body = prefix .. "panel-body",
   sort_arrow_up = domain.names.sort_arrow_up,
@@ -85,10 +81,13 @@ local layout = {
   core_panel_padding = 16,
   inventory_core_frame_padding = 32,
   inventory_core_scrollbar_width = 20,
+  inventory_core_table_grid_inset = 8,
   inventory_core_table_spacing = 0,
-  inventory_core_table_column_count = 8,
+  inventory_core_table_column_count = 7,
   inventory_core_table_cell_horizontal_padding = 4,
   inventory_core_sort_arrow_slot_width = 12,
+  inventory_core_table_header_height = 24,
+  inventory_core_table_row_height = 28,
   label_color_picker_min_width = 300,
   evolution_outer_height = 760,
   evolution_header_height = 36,
@@ -107,24 +106,25 @@ layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12
 layout.inventory_core_picker_width = layout.left_column_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.inventory_core_detail_width = layout.inventory_core_picker_width - layout.inventory_core_scrollbar_width - 112
-layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding - layout.inventory_core_frame_padding
+layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding
 layout.empty_inventory_core_picker_height = layout.evolution_outer_height - 190
-layout.empty_inventory_core_table_width = layout.empty_inventory_core_picker_width - layout.inventory_core_scrollbar_width
+layout.empty_inventory_core_table_width = layout.empty_inventory_core_picker_width
+  - layout.inventory_core_scrollbar_width
+  - layout.inventory_core_table_grid_inset
 layout.empty_inventory_core_table_cell_padding_width = layout.inventory_core_table_column_count
   * layout.inventory_core_table_cell_horizontal_padding
   * 2
 layout.empty_inventory_core_table_content_width = layout.empty_inventory_core_table_width
   - layout.empty_inventory_core_table_cell_padding_width
-layout.empty_inventory_core_icon_width = 38
-layout.empty_inventory_core_specialization_width = 118
-layout.empty_inventory_core_level_width = 58
-layout.empty_inventory_core_stat_width = 56
-layout.empty_inventory_core_attack_width = 72
+layout.inventory_core_sample_slot_size = 32
+layout.empty_inventory_core_specialization_width = 250
+layout.empty_inventory_core_level_width = 64
+layout.empty_inventory_core_stat_width = 68
+layout.empty_inventory_core_attack_width = 84
 layout.empty_inventory_core_action_width = 38
 layout.empty_inventory_core_action_button_size = 26
-layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_icon_width
+layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_level_width
   + layout.empty_inventory_core_specialization_width
-  + layout.empty_inventory_core_level_width
   + layout.empty_inventory_core_stat_width
   + layout.empty_inventory_core_attack_width
   + layout.empty_inventory_core_stat_width

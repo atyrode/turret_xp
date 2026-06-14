@@ -61,7 +61,7 @@
 
 - Show current level and XP progress to the next level.
 - Show whether a Veteran Core is installed and provide install/extract controls, including an explicit action that moves an installed core to the player inventory when there is room.
-- When no core is installed, show a single full-width Veteran Core picker with exact-slot install actions, rich readable core summaries, an `All` filter plus specialization/base filters, and clickable table headers for name, level, HP, attack speed, and range. Sort headers must cycle ascending, descending, and clear/no explicit sort, with a compact table-header sprite cue for the active direction.
+- When no core is installed, show a single full-width Veteran Core picker with exact-slot install actions, rich readable core summaries, a persistent `All` filter plus persistent specialization/base filters, and clickable table headers for level, name, specialization, HP, attack speed, and range. Sort headers must cycle ascending, descending, and back to the default level-descending ordering, with a compact table-header sprite cue for the active direction.
 - Show Bind/Unbind controls for installed cores.
 - On space-platform turrets, show platform hub Veteran Core options when cores are available there, using install-focused summaries instead of lifetime history counters.
 - Show current HP, prototype max HP, and current Shield/Shield capacity when Shield is ranked.

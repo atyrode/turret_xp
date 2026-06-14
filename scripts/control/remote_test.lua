@@ -631,6 +631,34 @@ return function(M)
         sniper_first = only_sniper[1] and (only_sniper[1].profile.custom_name or "") or nil,
       }
 
+      storage.turret_xp.player_settings[-22] = nil
+      storage.turret_xp.players[-22] = nil
+      local prefs_player = {
+        index = -22,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+        get_main_inventory = function()
+          return inventory
+        end,
+      }
+      remember_open_turret(prefs_player, entity)
+      set_core_picker_sort(prefs_player, "name")
+      set_core_picker_filter(prefs_player, "sniper", true)
+      local persisted_before_close = {
+        sort = get_core_picker_sort(prefs_player),
+        filters = get_core_picker_filters(prefs_player),
+      }
+      forget_open_turret(prefs_player)
+      remember_open_turret(prefs_player, entity)
+      local persisted_after_reopen = {
+        sort = get_core_picker_sort(prefs_player),
+        filters = get_core_picker_filters(prefs_player),
+      }
+      forget_open_turret(prefs_player)
+
       local player = {
         index = -2,
         opened = entity,
@@ -659,6 +687,10 @@ return function(M)
         options = summarized,
         sort_samples = sort_samples,
         filter_samples = filter_samples,
+        persisted_preferences = {
+          before_close = persisted_before_close,
+          after_reopen = persisted_after_reopen,
+        },
         installed = installed,
         remaining_names = remaining_names,
       }

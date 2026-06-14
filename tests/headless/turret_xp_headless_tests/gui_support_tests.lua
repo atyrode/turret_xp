@@ -54,10 +54,9 @@ function tests.run_layout_constants_test()
     layout.stats_content_width,
     "stats label/value widths must derive from the scroll content width"
   )
-  local wide_table_width = layout.empty_inventory_core_icon_width
+  local wide_table_width = layout.empty_inventory_core_level_width
     + layout.empty_inventory_core_name_width
     + layout.empty_inventory_core_specialization_width
-    + layout.empty_inventory_core_level_width
     + layout.empty_inventory_core_stat_width
     + layout.empty_inventory_core_attack_width
     + layout.empty_inventory_core_stat_width
@@ -84,6 +83,10 @@ function tests.run_layout_constants_test()
   assert_true(
     layout.inventory_core_sort_arrow_slot_width < layout.empty_inventory_core_level_width,
     "wide inventory core sort arrow slot must fit inside compact stat headers"
+  )
+  assert_true(
+    layout.empty_inventory_core_name_width < layout.empty_inventory_core_specialization_width,
+    "wide inventory core table should favor specialization readability over long names"
   )
 end
 
@@ -199,6 +202,26 @@ function tests.run_inventory_core_picker_test(surface)
   assert_eq(sample.filter_samples.base_first, "Low", "inventory core picker base filter did not keep sorted visible rows")
   assert_eq(sample.filter_samples.sniper_count, 1, "inventory core picker specialization filter did not isolate sniper cores")
   assert_eq(sample.filter_samples.sniper_first, "High", "inventory core picker specialization filter returned the wrong core")
+  assert_eq(
+    sample.persisted_preferences.before_close.sort,
+    "name:asc",
+    "inventory core picker sort did not store the selected sort before close"
+  )
+  assert_eq(
+    sample.persisted_preferences.after_reopen.sort,
+    "name:asc",
+    "inventory core picker sort did not persist after reopening the turret GUI"
+  )
+  assert_eq(
+    sample.persisted_preferences.after_reopen.filters.sniper,
+    true,
+    "inventory core picker specialization filter did not persist after reopening the turret GUI"
+  )
+  assert_eq(
+    sample.persisted_preferences.after_reopen.filters.all,
+    false,
+    "inventory core picker All filter should remain disabled when a specific persisted filter is active"
+  )
   assert_eq(sample.installed.custom_name, "High", "inventory core picker action did not install the selected slot")
   assert_eq(sample.installed.level, 14, "inventory core picker action lost the selected core level")
   assert_eq(sample.installed.evolution.specialization, "sniper", "inventory core picker action lost the selected specialization")

@@ -27,15 +27,35 @@ return function()
     horizontally_stretchable = "on",
     vertical_spacing = 0,
     horizontal_spacing = 0,
+    cell_padding = 0,
     left_cell_padding = 4,
     right_cell_padding = 4,
-    top_cell_padding = 3,
-    bottom_cell_padding = 3,
-    apply_row_graphical_set_per_column = true,
+    top_cell_padding = 4,
+    bottom_cell_padding = 4,
+    apply_row_graphical_set_per_column = false,
     odd_row_graphical_set = {
       filename = "__core__/graphics/gui-new.png",
       position = { 472, 25 },
       size = 1,
     },
+  }
+
+  styles.turret_xp_table_header_button = {
+    type = "button_style",
+    parent = "transparent_button",
+    font = "default-bold",
+    default_font_color = { 0.62, 0.62, 0.62 },
+    hovered_font_color = { 1, 1, 1 },
+    clicked_font_color = { 1, 1, 1 },
+    disabled_font_color = { 0.62, 0.62, 0.62 },
+    default_graphical_set = {},
+    hovered_graphical_set = {},
+    clicked_graphical_set = {},
+    disabled_graphical_set = {},
+    left_padding = 0,
+    right_padding = 0,
+    top_padding = 0,
+    bottom_padding = 0,
+    clicked_vertical_offset = 0,
   }
 end

@@ -112,6 +112,7 @@ return function(M)
   find_best_carried_chip_stack = inventory_service.find_best_carried_chip_stack
   get_core_options_from_inventory = inventory_service.get_core_options_from_inventory
   get_player_core_options = inventory_service.get_player_core_options
+  get_player_core_options_model = inventory_service.get_player_core_options_model
   remove_one_chip_stack = inventory_service.remove_one_chip_stack
   insert_chip_item = inventory_service.insert_chip_item
   can_insert_chip_inventory = inventory_service.can_insert_chip_inventory

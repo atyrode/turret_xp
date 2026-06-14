@@ -29,7 +29,6 @@ return function(M)
       shell_service = gui_shell.new({
         GUI = GUI,
         LAYOUT = LAYOUT,
-        CHIP_NAME = CHIP_NAME,
         set_style = set_style,
       })
     end
@@ -85,9 +84,7 @@ return function(M)
         GUI = GUI,
         COLOR = COLOR,
         LAYOUT = LAYOUT,
-        CHIP_NAME = CHIP_NAME,
         set_style = set_style,
-        set_element_style = set_element_style,
         widgets = get_gui_widgets_service(),
       })
     end
@@ -130,6 +127,7 @@ return function(M)
         find_gui_element = find_gui_element,
         get_remembered_turret = get_remembered_turret,
         get_player_core_options = get_player_core_options,
+        get_player_core_options_model = get_player_core_options_model,
         get_core_picker_sort = get_core_picker_sort,
         get_core_picker_filters = get_core_picker_filters,
         core_picker_filters_key = core_picker_filters_key,

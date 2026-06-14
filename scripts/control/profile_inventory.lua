@@ -391,7 +391,7 @@ function profile_inventory.new(deps)
     end)
   end
 
-  function service.get_core_options_from_inventory(inventory, sort_mode, filters)
+  local function collect_core_options_from_inventory(inventory)
     local options = {}
     if not inventory or not inventory.valid then
       return options
@@ -401,16 +401,29 @@ function profile_inventory.new(deps)
       local stack = inventory[index]
       if stack and stack.valid_for_read and stack.name == deps.chip_name then
         local profile = deps.read_profile_from_chip_stack(stack)
-        if profile_matches_filters(profile, filters) then
-          options[#options + 1] = {
-            index = index,
-            quality = service.quality_name_from_stack(stack, "normal"),
-            profile = profile,
-          }
-        end
+        options[#options + 1] = {
+          index = index,
+          quality = service.quality_name_from_stack(stack, "normal"),
+          profile = profile,
+        }
       end
     end
 
+    return options
+  end
+
+  local function filter_core_options(options, filters)
+    local filtered = {}
+    for _, option in ipairs(options or {}) do
+      if profile_matches_filters(option.profile, filters) then
+        filtered[#filtered + 1] = option
+      end
+    end
+    return filtered
+  end
+
+  function service.get_core_options_from_inventory(inventory, sort_mode, filters)
+    local options = filter_core_options(collect_core_options_from_inventory(inventory), filters)
     sort_core_options(options, sort_mode)
     return options
   end
@@ -421,6 +434,24 @@ function profile_inventory.new(deps)
     end
 
     return service.get_core_options_from_inventory(player.get_main_inventory(), sort_mode, filters)
+  end
+
+  function service.get_player_core_options_model(player, sort_mode, filters)
+    if not player or type(player.get_main_inventory) ~= "function" then
+      return {
+        all_options = {},
+        options = {},
+      }
+    end
+
+    local all_options = collect_core_options_from_inventory(player.get_main_inventory())
+    local options = filter_core_options(all_options, filters)
+    sort_core_options(all_options, sort_mode)
+    sort_core_options(options, sort_mode)
+    return {
+      all_options = all_options,
+      options = options,
+    }
   end
 
   function service.find_best_carried_chip_stack(player)
