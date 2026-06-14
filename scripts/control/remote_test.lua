@@ -613,6 +613,8 @@ return function(M)
         display_level_desc = display_sort_first("level:desc"),
         display_name_asc = display_sort_first("name:asc"),
         display_name_desc = display_sort_first("name:desc"),
+        display_specialization_asc = display_sort_first("specialization:asc"),
+        display_specialization_desc = display_sort_first("specialization:desc"),
         display_hp_asc = display_sort_first("hp:asc"),
         display_hp_desc = display_sort_first("hp:desc"),
         display_attack_asc = display_sort_first("attack:asc"),

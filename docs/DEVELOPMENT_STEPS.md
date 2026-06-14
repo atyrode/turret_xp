@@ -45,7 +45,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 - Harden the current playable loop before adding progression scope. Balance/readability fixes, GUI quality, validation, and bug fixes are in scope; new branches, elements, mastery loops, quality-backed chassis work, range-band rewrites, repeatable HP/Range axes, or other prototype-backed stat axes need separate approved issues.
 - Keep documentation edits ownership-based: move facts to the owning document, replace duplicates with cross-references, and delete stale planning prose once the current decision is represented elsewhere.
-- Continue the 0.11 GUI glowup in focused slices: improve Veteran Core/Evolution interaction density, retire transitional GUI aliases where callers can be migrated cleanly, and use manual playtest checkpoints for visual regressions. Do not mix that work with balance or progression-system expansion.
+- Continue the 0.11 GUI glowup as a foundation-first PR, not a sequence of isolated visual tweaks. Acceptance criteria for this branch: GUI surfaces live under focused `scripts/control/gui/` services, table/action/header sizing comes from `gui_constants.lua` or a component-owned layout model, reusable controls move into local widgets/components before they are repeated, refresh keys avoid rebuilding unchanged interactive controls, and docs/PR tracking stay updated with every GUI ownership decision. Do not mix that work with balance or progression-system expansion.
 
 ## Validation Checklist
 

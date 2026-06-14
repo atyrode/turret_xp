@@ -7,6 +7,7 @@ local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
 local gui_shell = require("scripts.control.gui.shell")
 local gui_runtime = require("scripts.control.gui.runtime")
 local gui_widgets = require("scripts.control.gui.widgets")
+local gui_core_picker_table = require("scripts.control.gui.core_picker_table")
 
 return function(M)
   setmetatable(M, { __index = _G })
@@ -21,6 +22,7 @@ return function(M)
   local shell_service = nil
   local runtime_service = nil
   local widgets_service = nil
+  local core_picker_table_service = nil
 
   local function get_shell_service()
     if not shell_service then
@@ -75,6 +77,22 @@ return function(M)
     end
 
     return widgets_service
+  end
+
+  local function get_core_picker_table_service()
+    if not core_picker_table_service then
+      core_picker_table_service = gui_core_picker_table.new({
+        GUI = GUI,
+        COLOR = COLOR,
+        LAYOUT = LAYOUT,
+        CHIP_NAME = CHIP_NAME,
+        set_style = set_style,
+        set_element_style = set_element_style,
+        widgets = get_gui_widgets_service(),
+      })
+    end
+
+    return core_picker_table_service
   end
 
   local function get_gui_formatters_service()
@@ -142,6 +160,7 @@ return function(M)
           return get_gui_support_service().rich_specialization_caption(specialization_id, caption)
         end,
         widgets = get_gui_widgets_service(),
+        core_picker_table = get_core_picker_table_service(),
       })
     end
 

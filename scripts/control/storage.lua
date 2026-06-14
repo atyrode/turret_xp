@@ -88,24 +88,24 @@ return function(M)
 
     local field, direction = string.match(mode, "^([^:]+):([^:]+)$")
     field = field or mode
-    if field ~= "level" and field ~= "name" and field ~= "hp" and field ~= "attack" and field ~= "range" then
+    if field ~= "level" and field ~= "name" and field ~= "specialization" and field ~= "hp" and field ~= "attack" and field ~= "range" then
       return "none"
     end
 
     if direction ~= "asc" and direction ~= "desc" then
-      direction = field == "name" and "asc" or "desc"
+      direction = (field == "name" or field == "specialization") and "asc" or "desc"
     end
 
     return field .. ":" .. direction
   end
 
   function default_core_picker_sort_direction(field)
-    return field == "name" and "asc" or "desc"
+    return (field == "name" or field == "specialization") and "asc" or "desc"
   end
 
   function next_core_picker_sort(current_sort, field)
     field = tostring(field or "")
-    if field ~= "level" and field ~= "name" and field ~= "hp" and field ~= "attack" and field ~= "range" then
+    if field ~= "level" and field ~= "name" and field ~= "specialization" and field ~= "hp" and field ~= "attack" and field ~= "range" then
       return "none"
     end
 

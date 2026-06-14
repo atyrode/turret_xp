@@ -34,6 +34,7 @@ function core_panel_module.new(deps)
   local rich_metric = deps.rich_metric
   local rich_specialization_caption = deps.rich_specialization_caption
   local widgets = deps.widgets
+  local core_picker_table = deps.core_picker_table
 
   local function add_xp_panel(parent)
     local xp_panel = parent.add({
@@ -219,14 +220,6 @@ function core_panel_module.new(deps)
     }
   end
 
-  local CORE_SORT_MODES = {
-    { id = "level", caption = { "turret-xp.inventory-core-sort-level" }, tooltip = { "turret-xp.inventory-core-sort-level-tooltip" } },
-    { id = "name", caption = { "turret-xp.inventory-core-sort-name" }, tooltip = { "turret-xp.inventory-core-sort-name-tooltip" } },
-    { id = "hp", caption = { "turret-xp.inventory-core-stat-hp" }, tooltip = { "turret-xp.inventory-core-sort-hp-tooltip" } },
-    { id = "attack", caption = { "turret-xp.inventory-core-stat-attack" }, tooltip = { "turret-xp.inventory-core-sort-attack-tooltip" } },
-    { id = "range", caption = { "turret-xp.inventory-core-stat-range" }, tooltip = { "turret-xp.inventory-core-sort-range-tooltip" } },
-  }
-
   local function core_filter_modes()
     local modes = {
       {
@@ -248,86 +241,6 @@ function core_panel_module.new(deps)
       }
     end
     return modes
-  end
-
-  local function sort_mode_by_id(id)
-    for _, mode in ipairs(CORE_SORT_MODES) do
-      if mode.id == id then
-        return mode
-      end
-    end
-    return nil
-  end
-
-  local function parse_sort(sort_mode)
-    local field, direction = string.match(tostring(sort_mode or ""), "^([^:]+):([^:]+)$")
-    if field ~= "level" and field ~= "name" and field ~= "hp" and field ~= "attack" and field ~= "range" then
-      return nil, nil
-    end
-    if direction ~= "asc" and direction ~= "desc" then
-      return nil, nil
-    end
-
-    return field, direction
-  end
-
-  local function set_cell_width(element, width)
-    set_style(element, "width", width)
-    set_style(element, "minimal_width", width)
-    set_style(element, "maximal_width", width)
-  end
-
-  local function sort_caption(mode, current_sort)
-    local field, direction = parse_sort(current_sort)
-    if field ~= mode.id then
-      return mode.caption
-    end
-
-    local sprite = direction == "asc" and GUI.sort_arrow_up or GUI.sort_arrow_down
-    return { "", "[img=", sprite, "] ", mode.caption }
-  end
-
-  local function add_sort_header_cell(parent, mode, current_sort, width, align)
-    local field = parse_sort(current_sort)
-    local active = field == mode.id
-    local button = parent.add({
-      type = "button",
-      caption = sort_caption(mode, current_sort),
-      style = "transparent_button",
-      tooltip = mode.tooltip,
-      mouse_button_filter = { "left" },
-      tags = {
-        turret_xp_action = "set-core-sort",
-        sort = mode.id,
-      },
-    })
-    set_cell_width(button, width)
-    set_style(button, "height", 24)
-    set_style(button, "padding", 0)
-    set_style(button, "font", "default-bold")
-    set_style(button, "horizontal_align", align or "left")
-    set_style(button, "single_line", true)
-    if active then
-      set_style(button, "font_color", COLOR.bonus)
-    else
-      set_style(button, "font_color", COLOR.caption)
-    end
-    return button
-  end
-
-  local function add_header_label_cell(parent, caption, width, align)
-    local label = parent.add({
-      type = "label",
-      caption = caption,
-      style = "caption_label",
-    })
-    set_cell_width(label, width)
-    set_style(label, "font", "default-bold")
-    set_style(label, "font_color", COLOR.caption)
-    set_style(label, "height", 24)
-    set_style(label, "horizontal_align", align or "right")
-    set_style(label, "single_line", true)
-    return label
   end
 
   local function filter_checkbox_state(current_filters, filter_id)
@@ -378,106 +291,6 @@ function core_panel_module.new(deps)
       })
       set_style(checkbox, "font", "default")
     end
-  end
-
-  local function add_inventory_core_table(parent, current_sort)
-    local table_element = parent.add({
-      type = "table",
-      column_count = LAYOUT.inventory_core_table_column_count,
-      style = "turret_xp_inventory_core_table",
-    })
-    set_style(table_element, "horizontally_stretchable", true)
-    set_style(table_element, "width", LAYOUT.empty_inventory_core_table_width)
-    set_style(table_element, "minimal_width", LAYOUT.empty_inventory_core_table_width)
-    set_style(table_element, "maximal_width", LAYOUT.empty_inventory_core_table_width)
-    set_style(table_element, "horizontal_spacing", LAYOUT.inventory_core_table_spacing)
-    set_style(table_element, "vertical_spacing", 0)
-    pcall(function()
-      for index = 1, LAYOUT.inventory_core_table_column_count do
-        table_element.style.column_alignments[index] = index >= 4 and "right" or "left"
-      end
-      table_element.style.column_alignments[LAYOUT.inventory_core_table_column_count] = "center"
-    end)
-
-    add_header_label_cell(table_element, "", LAYOUT.empty_inventory_core_icon_width, "left")
-    add_sort_header_cell(table_element, sort_mode_by_id("name"), current_sort, LAYOUT.empty_inventory_core_name_width, "left")
-    add_header_label_cell(table_element, { "stat-specialization" }, LAYOUT.empty_inventory_core_specialization_width, "left")
-    add_sort_header_cell(table_element, sort_mode_by_id("level"), current_sort, LAYOUT.empty_inventory_core_level_width, "right")
-    add_sort_header_cell(table_element, sort_mode_by_id("hp"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
-    add_sort_header_cell(table_element, sort_mode_by_id("attack"), current_sort, LAYOUT.empty_inventory_core_attack_width, "right")
-    add_sort_header_cell(table_element, sort_mode_by_id("range"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
-    add_header_label_cell(table_element, "", LAYOUT.empty_inventory_core_action_width)
-
-    return table_element
-  end
-
-  local function add_inventory_core_value_cell(parent, caption, width, align)
-    local label = parent.add({
-      type = "label",
-      caption = caption,
-      style = "caption_label",
-    })
-    set_cell_width(label, width)
-    set_style(label, "horizontal_align", align or "right")
-    set_style(label, "single_line", true)
-    return label
-  end
-
-  local function add_wide_inventory_core_row(rows, option, profile, stats)
-    local button_definition = {
-      type = "sprite-button",
-      sprite = "item/" .. CHIP_NAME,
-      quality = option.quality or profile.chip_quality or "normal",
-      number = (profile.level or 0) > 0 and profile.level or nil,
-      tooltip = { "turret-xp.inventory-core-install-tooltip" },
-      elem_tooltip = {
-        type = "item-with-quality",
-        name = CHIP_NAME,
-        quality = option.quality or profile.chip_quality or "normal",
-      },
-      tags = {
-        turret_xp_action = "inventory-install-core",
-        slot = option.index,
-      },
-    }
-    local icon = rows.add(button_definition)
-    set_element_style(icon, "slot_button")
-    set_cell_width(icon, LAYOUT.empty_inventory_core_icon_width)
-    set_style(icon, "height", 36)
-
-    local details = rows.add({
-      type = "flow",
-      direction = "vertical",
-    })
-    set_cell_width(details, LAYOUT.empty_inventory_core_name_width)
-
-    local name = details.add({
-      type = "label",
-      caption = core_display_name(profile),
-      style = "caption_label",
-    })
-    set_style(name, "font", "default-bold")
-    set_style(name, "single_line", false)
-    set_style(name, "maximal_width", LAYOUT.empty_inventory_core_name_width)
-
-    local specialization =
-      add_inventory_core_value_cell(rows, specialization_caption(profile), LAYOUT.empty_inventory_core_specialization_width, "left")
-    set_style(specialization, "font_color", COLOR.muted)
-    add_inventory_core_value_cell(rows, rich_value(profile.level or 0), LAYOUT.empty_inventory_core_level_width)
-    add_inventory_core_value_cell(rows, rich_value(stats.health), LAYOUT.empty_inventory_core_stat_width)
-    add_inventory_core_value_cell(rows, rich_value(stats.speed, "/s"), LAYOUT.empty_inventory_core_attack_width)
-    add_inventory_core_value_cell(rows, rich_value(stats.range), LAYOUT.empty_inventory_core_stat_width)
-
-    widgets.add_tool_button(rows, {
-      sprite = "utility/add",
-      style = "flib_tool_button_light_green",
-      tooltip = { "turret-xp.inventory-core-install-tooltip" },
-      size = LAYOUT.empty_inventory_core_action_width,
-      tags = {
-        turret_xp_action = "inventory-install-core",
-        slot = option.index,
-      },
-    })
   end
 
   local function add_narrow_inventory_core_row(rows, option, profile, stats, detail_width)
@@ -572,6 +385,20 @@ function core_panel_module.new(deps)
     return normalized_name ~= "", string.lower(normalized_name)
   end
 
+  local function core_option_specialization_key(profile)
+    local specialization = get_specialization(profile)
+    if not specialization then
+      return "base"
+    end
+
+    local sub_specialization = get_sub_specialization(profile)
+    local key = tostring(specialization.name or specialization.id or "")
+    if sub_specialization then
+      key = key .. " / " .. tostring(sub_specialization.name or sub_specialization.id or "")
+    end
+    return string.lower(key)
+  end
+
   local function compare_number(left, right, field, direction)
     local left_value = left.sort_key[field]
     local right_value = right.sort_key[field]
@@ -606,6 +433,18 @@ function core_panel_module.new(deps)
     return nil
   end
 
+  local function compare_text(left, right, field, direction)
+    local left_value = left.sort_key[field] or ""
+    local right_value = right.sort_key[field] or ""
+    if left_value ~= right_value then
+      if direction == "asc" then
+        return left_value < right_value
+      end
+      return left_value > right_value
+    end
+    return nil
+  end
+
   local function compare_default(left, right)
     local result = compare_number(left, right, "level", "desc")
     if result ~= nil then
@@ -621,8 +460,62 @@ function core_panel_module.new(deps)
     return (left.index or 0) < (right.index or 0)
   end
 
+  local function interpolate_color(left, right, amount)
+    return {
+      left[1] + ((right[1] - left[1]) * amount),
+      left[2] + ((right[2] - left[2]) * amount),
+      left[3] + ((right[3] - left[3]) * amount),
+    }
+  end
+
+  local function relative_value_color(value, minimum, maximum)
+    if not value or not minimum or not maximum or minimum == maximum then
+      return COLOR.muted
+    end
+
+    local ratio = (value - minimum) / (maximum - minimum)
+    ratio = math.max(0, math.min(1, ratio))
+
+    local red = { 0.95, 0.38, 0.34 }
+    local orange = { 1, 0.62, 0.26 }
+    local yellow = { 0.96, 0.84, 0.34 }
+    local green = { 0.50, 0.86, 0.48 }
+    if ratio < 0.45 then
+      return interpolate_color(red, orange, ratio / 0.45)
+    end
+    if ratio < 0.7 then
+      return interpolate_color(orange, yellow, (ratio - 0.45) / 0.25)
+    end
+    return interpolate_color(yellow, green, (ratio - 0.7) / 0.3)
+  end
+
+  local function apply_relative_value_colors(option_list)
+    local ranges = {}
+    for _, field_name in ipairs({ "level", "hp", "attack", "range" }) do
+      ranges[field_name] = {}
+    end
+
+    for _, option in ipairs(option_list or {}) do
+      for field_name, range in pairs(ranges) do
+        local value = option.sort_key and option.sort_key[field_name] or nil
+        if value ~= nil then
+          range.min = range.min == nil and value or math.min(range.min, value)
+          range.max = range.max == nil and value or math.max(range.max, value)
+        end
+      end
+    end
+
+    for _, option in ipairs(option_list or {}) do
+      option.value_colors = {}
+      for field_name, range in pairs(ranges) do
+        local value = option.sort_key and option.sort_key[field_name] or nil
+        option.value_colors[field_name] = relative_value_color(value, range.min, range.max)
+      end
+    end
+  end
+
   local function prepare_core_options_for_display(entity, option_list, current_sort)
-    local field, direction = parse_sort(current_sort)
+    local field, direction = core_picker_table.parse_sort(current_sort)
     for _, option in ipairs(option_list or {}) do
       local profile = option.profile or create_blank_profile()
       local stats = preview_stats(entity, profile)
@@ -635,11 +528,13 @@ function core_panel_module.new(deps)
         range = stats.sort.range,
         has_name = has_name,
         name = name,
+        specialization = core_option_specialization_key(profile),
         chip_id = tonumber(profile.chip_id) or 0,
       }
     end
 
     if not field then
+      apply_relative_value_colors(option_list)
       return option_list
     end
 
@@ -647,6 +542,8 @@ function core_panel_module.new(deps)
       local result
       if field == "name" then
         result = compare_name(left, right, direction)
+      elseif field == "specialization" then
+        result = compare_text(left, right, "specialization", direction)
       else
         result = compare_number(left, right, field, direction)
       end
@@ -656,7 +553,33 @@ function core_panel_module.new(deps)
       return compare_default(left, right)
     end)
 
+    apply_relative_value_colors(option_list)
     return option_list
+  end
+
+  local function wide_inventory_core_row_data(option, profile, stats)
+    local value_colors = option.value_colors or {}
+    local quality = option.quality or profile.chip_quality or "normal"
+    return {
+      quality = quality,
+      level_number = (profile.level or 0) > 0 and profile.level or nil,
+      install_tooltip = { "turret-xp.inventory-core-install-tooltip" },
+      elem_tooltip = {
+        type = "item-with-quality",
+        name = CHIP_NAME,
+        quality = quality,
+      },
+      install_tags = {
+        turret_xp_action = "inventory-install-core",
+        slot = option.index,
+      },
+      name_caption = core_display_name(profile),
+      specialization_caption = specialization_caption(profile),
+      level_caption = rich_value(profile.level or 0, nil, value_colors.level),
+      hp_caption = rich_value(stats.health, nil, value_colors.hp),
+      attack_caption = rich_value(stats.speed, "/s", value_colors.attack),
+      range_caption = rich_value(stats.range, nil, value_colors.range),
+    }
   end
 
   local function add_inventory_core_picker(core_panel, player, entity, options)
@@ -740,17 +663,12 @@ function core_panel_module.new(deps)
     end
 
     if wide then
-      local table_element = add_inventory_core_table(scroll, current_sort)
-      pcall(function()
-        table_element.draw_horizontal_lines = true
-        table_element.draw_horizontal_line_after_headers = true
-        table_element.draw_vertical_lines = true
-      end)
+      local table_element = core_picker_table.add(scroll, current_sort)
 
       for _, option in ipairs(core_options) do
         local profile = option.profile or create_blank_profile()
         local stats = option.preview_stats or preview_stats(entity, profile)
-        add_wide_inventory_core_row(table_element, option, profile, stats)
+        core_picker_table.add_row(table_element, wide_inventory_core_row_data(option, profile, stats))
       end
     else
       local rows = scroll.add({

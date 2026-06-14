@@ -88,6 +88,7 @@ local layout = {
   inventory_core_table_spacing = 0,
   inventory_core_table_column_count = 8,
   inventory_core_table_cell_horizontal_padding = 4,
+  inventory_core_sort_arrow_slot_width = 12,
   label_color_picker_min_width = 300,
   evolution_outer_height = 760,
   evolution_header_height = 36,
@@ -114,12 +115,13 @@ layout.empty_inventory_core_table_cell_padding_width = layout.inventory_core_tab
   * 2
 layout.empty_inventory_core_table_content_width = layout.empty_inventory_core_table_width
   - layout.empty_inventory_core_table_cell_padding_width
-layout.empty_inventory_core_icon_width = 40
-layout.empty_inventory_core_specialization_width = 128
-layout.empty_inventory_core_level_width = 46
-layout.empty_inventory_core_stat_width = 48
-layout.empty_inventory_core_attack_width = 58
-layout.empty_inventory_core_action_width = 32
+layout.empty_inventory_core_icon_width = 38
+layout.empty_inventory_core_specialization_width = 118
+layout.empty_inventory_core_level_width = 58
+layout.empty_inventory_core_stat_width = 56
+layout.empty_inventory_core_attack_width = 72
+layout.empty_inventory_core_action_width = 38
+layout.empty_inventory_core_action_button_size = 26
 layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_icon_width
   + layout.empty_inventory_core_specialization_width
   + layout.empty_inventory_core_level_width

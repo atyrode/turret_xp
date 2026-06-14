@@ -77,6 +77,14 @@ function tests.run_layout_constants_test()
     layout.empty_inventory_core_table_width < layout.empty_inventory_core_picker_width,
     "wide inventory core table must reserve the scroll-pane scrollbar lane"
   )
+  assert_true(
+    layout.empty_inventory_core_action_button_size < layout.empty_inventory_core_action_width,
+    "wide inventory core action button must be smaller than its table cell"
+  )
+  assert_true(
+    layout.inventory_core_sort_arrow_slot_width < layout.empty_inventory_core_level_width,
+    "wide inventory core sort arrow slot must fit inside compact stat headers"
+  )
 end
 
 function tests.run_gui_support_samples_test()
@@ -173,6 +181,8 @@ function tests.run_inventory_core_picker_test(surface)
   assert_eq(sample.sort_samples.display_level_desc, "High", "inventory core display sort did not sort level descending")
   assert_eq(sample.sort_samples.display_name_asc, "High", "inventory core display sort did not sort name ascending")
   assert_eq(sample.sort_samples.display_name_desc, "Mid", "inventory core display sort did not sort name descending")
+  assert_eq(sample.sort_samples.display_specialization_asc, "Low", "inventory core display sort did not sort specialization ascending")
+  assert_eq(sample.sort_samples.display_specialization_desc, "High", "inventory core display sort did not sort specialization descending")
   assert_true(sample.sort_samples.display_hp_asc ~= nil, "inventory core display HP ascending sort crashed")
   assert_true(sample.sort_samples.display_hp_desc ~= nil, "inventory core display HP descending sort crashed")
   assert_true(sample.sort_samples.display_attack_asc ~= nil, "inventory core display attack ascending sort crashed")

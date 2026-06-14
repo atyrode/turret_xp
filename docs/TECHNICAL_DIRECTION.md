@@ -63,11 +63,13 @@ Factory Planner is the strongest current reference for this direction. Its Mod P
 Current GUI reference findings:
 
 - Factory Planner uses real Factorio tables, `table_with_selection`-derived styles, central style constants, tagged actions, and screen-frame titlebars with `drag_target`. Turret XP should keep copying those architectural patterns, not a literal visual skin.
+- Factory Planner still uses explicit widths where Factorio's GUI requires them, but those widths are derived from central dimension models and paired with stretchable/pusher elements. Turret XP should follow that contract: no hidden one-off widths in render code, and every fixed table/action/header size must derive from `gui_constants.lua` or a focused component-local layout model.
 - `Kux-GuiLib` and `Kux-CoreLib` show reusable screen-window/titlebar builders and confirm the same `drag_target` limitation: draggable titlebars belong to top-level `player.gui.screen` elements, not relative GUI anchors.
 - `gvv` defines compact table-header sort arrows from `__core__/graphics/arrows/table-header-sort-arrow-up-white.png` and `table-header-sort-arrow-down-white.png`; Turret XP now exposes its own data-stage sprite names for those core assets instead of using oversized rich-text utility arrows.
 - `FactorySearch`, Space Exploration, Krastorio 2, and Even Distribution references use `auto-and-reserve-space` scroll policies when rows must not shift after a scrollbar appears.
 - `Tapeline` uses `color-setting` for mod settings, but the runtime GUI API does not expose that settings-widget color picker for ordinary runtime panels. Turret XP therefore owns a square-swatch plus draggable runtime color popup.
 - `entity-gui-lib` remains the best reference if Turret XP later replaces the entire vanilla entity GUI, but the current anchored glowup can stay on `flib`, native GUI primitives, and local domain widgets.
+- The vanilla Mod Portal browser table appears to be engine UI built from Factorio's native GUI/style system, not a runtime widget exported to mods. The mod-facing path is to mirror its primitives: `table`/`table_with_selection`, scroll panes with reserved scrollbars, core table-header arrow sprites, and component-owned sort state.
 
 The next major GUI pass should therefore prefer:
 
@@ -77,6 +79,7 @@ The next major GUI pass should therefore prefer:
 - `scripts/control/gui/runtime.lua` should own opened-turret context assembly and GUI refresh orchestration so panel section modules can stay rendering-focused;
 - `scripts/control/gui/widgets.lua` should collect reusable local widgets before they are repeated across Veteran Core, Stats, and Evolution surfaces;
 - a small local GUI builder/helper layer for repeated domain widgets such as Veteran Core slots, stat rows, Evolution cards, element progress, and action toolbars;
+- table-like GUI surfaces should be owned by focused components, starting with `scripts/control/gui/core_picker_table.lua`, so headers, rows, column budgets, action-cell sizing, and sort indicators cannot drift independently;
 - `flib` styles/helpers where they match the desired vanilla language, especially slot buttons, drag handles, pushers, and future dictionary/migration utilities;
 - custom sprites and data-stage styles for Turret XP-specific actions only when vanilla utility sprites or `flib` styles are insufficient;
 - tag-based action routing and refresh/build triggers that keep behavior discoverable without burying player actions in ad hoc closures;
