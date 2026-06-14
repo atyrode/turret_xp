@@ -48,6 +48,21 @@ function evolution_panel_module.new(deps)
     { id = "augments", caption = { "turret-xp.evolution-tab-augments" } },
   }
 
+  local BASE_UPGRADE_GROUPS = {
+    {
+      caption = { "turret-xp.core-upgrade-group-offense" },
+      upgrades = { "damage", "crit_chance", "crit_damage" },
+    },
+    {
+      caption = { "turret-xp.core-upgrade-group-defense" },
+      upgrades = { "resistance", "shield" },
+    },
+    {
+      caption = { "turret-xp.core-upgrade-group-support" },
+      upgrades = { "ammo_regen" },
+    },
+  }
+
   local function add_specialization_effect_table(parent, entries)
     local table_element = parent.add({
       type = "table",
@@ -157,35 +172,69 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_evolution_panel(parent)
-    local _, _, panel = get_gui_components_service().add_content_pane(parent, {
-      top_margin = 8,
-      width = LAYOUT.evolution_scroll_width,
-      height = LAYOUT.evolution_outer_height,
-      header_name = GUI.evolution_summary,
-      header_height = LAYOUT.evolution_header_height,
-      scroll_name = GUI.evolution,
-      scroll_width = LAYOUT.evolution_scroll_width,
-      scroll_height = LAYOUT.evolution_scroll_height,
-      vertically_stretchable = true,
+    local outer = parent.add({
+      type = "frame",
+      direction = "vertical",
+      style = "inside_shallow_frame",
     })
-    return panel
-  end
+    set_style(outer, "top_margin", 8)
+    set_style(outer, "width", LAYOUT.evolution_scroll_width)
+    set_style(outer, "minimal_width", LAYOUT.evolution_scroll_width)
+    set_style(outer, "maximal_width", LAYOUT.evolution_scroll_width)
+    set_style(outer, "height", LAYOUT.evolution_outer_height)
+    set_style(outer, "maximal_height", LAYOUT.evolution_outer_height)
 
-  local function add_tab_bar(parent, selected_tab)
-    local tabs = parent.add({
-      type = "flow",
+    local header = outer.add({
+      type = "frame",
+      name = GUI.evolution_summary,
+      direction = "horizontal",
+      style = "subheader_frame",
+    })
+    set_style(header, "height", LAYOUT.evolution_header_height)
+    set_style(header, "horizontally_stretchable", true)
+    set_style(header, "vertical_align", "center")
+
+    local tabs = outer.add({
+      type = "frame",
       name = GUI.evolution_tabs,
       direction = "horizontal",
+      style = "subheader_frame",
     })
+    set_style(tabs, "height", LAYOUT.evolution_tab_bar_height)
     set_style(tabs, "horizontally_stretchable", true)
+    set_style(tabs, "vertical_align", "bottom")
     set_style(tabs, "horizontal_spacing", 4)
-    set_style(tabs, "vertical_align", "center")
-    set_style(tabs, "bottom_margin", 6)
+
+    local scroll = outer.add({
+      type = "scroll-pane",
+      name = GUI.evolution,
+      vertical_scroll_policy = "auto-and-reserve-space",
+      horizontal_scroll_policy = "never",
+    })
+    set_style(scroll, "horizontally_stretchable", true)
+    set_style(scroll, "vertically_stretchable", true)
+    set_style(scroll, "width", LAYOUT.evolution_scroll_width)
+    set_style(scroll, "minimal_width", LAYOUT.evolution_scroll_width)
+    set_style(scroll, "maximal_width", LAYOUT.evolution_scroll_width)
+    set_style(scroll, "height", LAYOUT.evolution_scroll_height)
+    set_style(scroll, "maximal_height", LAYOUT.evolution_scroll_height)
+
+    return scroll
+  end
+
+  local function update_tab_bar(panel, selected_tab)
+    local tabs = find_gui_element(panel, GUI.evolution_tabs)
+    if not tabs then
+      return
+    end
+
+    tabs.clear()
 
     for _, tab in ipairs(EVOLUTION_TABS) do
       local active = selected_tab == tab.id
       local button = tabs.add({
         type = "button",
+        style = "turret_xp_table_header_button",
         caption = tab.caption,
         tags = {
           turret_xp_action = "set-evolution-tab",
@@ -193,6 +242,7 @@ function evolution_panel_module.new(deps)
         },
       })
       set_style(button, "minimal_width", LAYOUT.evolution_tab_button_width)
+      set_style(button, "height", LAYOUT.evolution_tab_bar_height - 4)
       set_style(button, "font", active and "default-bold" or "default")
       set_style(button, "font_color", active and COLOR.section_header or COLOR.muted)
     end
@@ -394,15 +444,80 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_base_allocation_row(parent, upgrade, rank, can_increase)
+    local card = parent.add({
+      type = "frame",
+      name = evolution_anchor_name("base", upgrade.id),
+      direction = "vertical",
+      style = "inside_shallow_frame_with_padding",
+    })
+    set_style(card, "width", LAYOUT.evolution_upgrade_group_width)
+    set_style(card, "minimal_width", LAYOUT.evolution_upgrade_group_width)
+    set_style(card, "maximal_width", LAYOUT.evolution_upgrade_group_width)
+
+    local title_row = card.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(title_row, "horizontally_stretchable", true)
+    set_style(title_row, "horizontal_spacing", 6)
+    set_style(title_row, "vertical_align", "center")
+
+    local icon = title_row.add({
+      type = "sprite",
+      sprite = upgrade.sprite,
+    })
+    set_style(icon, "size", LAYOUT.rank_allocation_icon_size)
+
+    local labels = title_row.add({
+      type = "flow",
+      direction = "vertical",
+    })
+    set_style(labels, "width", LAYOUT.evolution_upgrade_card_detail_width)
+    set_style(labels, "minimal_width", LAYOUT.evolution_upgrade_card_detail_width)
+    set_style(labels, "maximal_width", LAYOUT.evolution_upgrade_card_detail_width)
+
+    local name = labels.add({
+      type = "label",
+      caption = upgrade.name,
+      style = "caption_label",
+    })
+    set_style(name, "font", "default-bold")
+    set_style(name, "single_line", true)
+
     local rank_caption = upgrade.max_rank and { "turret-xp.rank-caption-with-max", rank, upgrade.max_rank }
       or { "turret-xp.rank-caption", rank }
-    add_rank_allocation_row(parent, {
-      row_name = evolution_anchor_name("base", upgrade.id),
-      sprite = upgrade.sprite,
-      name = upgrade.name,
+    local rank_label = labels.add({
+      type = "label",
+      caption = rank_caption,
+      style = "caption_label",
+    })
+    set_style(rank_label, "font_color", COLOR.muted)
+    set_style(rank_label, "single_line", true)
+
+    local control_row = card.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(control_row, "top_margin", 4)
+    set_style(control_row, "horizontally_stretchable", true)
+    set_style(control_row, "horizontal_spacing", 6)
+    set_style(control_row, "vertical_align", "center")
+
+    local value = control_row.add({
+      type = "label",
+      caption = rich_stat_text(upgrade.value),
+      style = "caption_label",
+    })
+    set_style(value, "single_line", false)
+    set_style(value, "maximal_width", LAYOUT.evolution_upgrade_card_value_width)
+
+    control_row.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
+    })
+
+    get_gui_components_service().add_rank_stepper(control_row, {
       rank = rank,
-      rank_caption = rank_caption,
-      value_caption = rich_stat_text(upgrade.value),
       can_decrease = rank > 0,
       can_increase = can_increase,
       decrease_tooltip = { "turret-xp.rank-remove-tooltip", upgrade.name },
@@ -422,6 +537,53 @@ function evolution_panel_module.new(deps)
         upgrade = upgrade.id,
       },
     })
+  end
+
+  local function base_upgrade_by_id(upgrade_id)
+    for _, upgrade in ipairs(BASE_UPGRADES) do
+      if upgrade.id == upgrade_id then
+        return upgrade
+      end
+    end
+    return nil
+  end
+
+  local function add_base_upgrade_group(parent, group, state, available, grouped_ids)
+    local column = parent.add({
+      type = "flow",
+      direction = "vertical",
+    })
+    set_style(column, "width", LAYOUT.evolution_upgrade_group_width)
+    set_style(column, "minimal_width", LAYOUT.evolution_upgrade_group_width)
+    set_style(column, "maximal_width", LAYOUT.evolution_upgrade_group_width)
+    set_style(column, "vertical_spacing", 6)
+
+    local header = column.add({
+      type = "frame",
+      direction = "horizontal",
+      style = "subheader_frame",
+    })
+    set_style(header, "height", LAYOUT.stats_section_header_height)
+    set_style(header, "horizontally_stretchable", true)
+    set_style(header, "vertical_align", "center")
+
+    local title = header.add({
+      type = "label",
+      caption = group.caption,
+      style = "heading_2_label",
+    })
+    set_style(title, "font", "default-bold")
+    set_style(title, "font_color", COLOR.section_header)
+
+    for _, upgrade_id in ipairs(group.upgrades) do
+      local upgrade = base_upgrade_by_id(upgrade_id)
+      if upgrade then
+        grouped_ids[upgrade.id] = true
+        local rank = get_base_rank(state, upgrade.id)
+        local at_max = upgrade.max_rank and rank >= upgrade.max_rank
+        add_base_allocation_row(column, upgrade, rank, available >= 1 and not at_max)
+      end
+    end
   end
 
   local function add_augment_allocation_row(parent, augment, rank, available, at_max)
@@ -556,13 +718,30 @@ function evolution_panel_module.new(deps)
     local available = get_available_skill_points(state)
     local section = add_section(parent, { "turret-xp.section-core-upgrades" }, true, nil, nil, nil, nil, nil)
 
-    for index, upgrade in ipairs(BASE_UPGRADES) do
-      if index > 1 then
-        add_choice_delimiter(section)
+    local grid = section.add({
+      type = "table",
+      column_count = 3,
+    })
+    set_evolution_content_width(grid, true)
+    set_style(grid, "horizontal_spacing", LAYOUT.evolution_upgrade_group_spacing)
+    set_style(grid, "vertical_spacing", 0)
+    pcall(function()
+      grid.style.column_alignments[1] = "left"
+      grid.style.column_alignments[2] = "left"
+      grid.style.column_alignments[3] = "left"
+    end)
+
+    local grouped_ids = {}
+    for _, group in ipairs(BASE_UPGRADE_GROUPS) do
+      add_base_upgrade_group(grid, group, state, available, grouped_ids)
+    end
+
+    for _, upgrade in ipairs(BASE_UPGRADES) do
+      if not grouped_ids[upgrade.id] then
+        local rank = get_base_rank(state, upgrade.id)
+        local at_max = upgrade.max_rank and rank >= upgrade.max_rank
+        add_base_allocation_row(grid.children[#grid.children] or section, upgrade, rank, available >= 1 and not at_max)
       end
-      local rank = get_base_rank(state, upgrade.id)
-      local at_max = upgrade.max_rank and rank >= upgrade.max_rank
-      add_base_allocation_row(section, upgrade, rank, available >= 1 and not at_max)
     end
   end
 
@@ -837,8 +1016,8 @@ function evolution_panel_module.new(deps)
       key = key,
     }
     update_evolution_summary(panel, state)
+    update_tab_bar(panel, selected_tab)
     evolution_panel.clear()
-    add_tab_bar(evolution_panel, selected_tab)
 
     if not state then
       local label = evolution_panel.add({

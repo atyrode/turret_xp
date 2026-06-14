@@ -21,6 +21,11 @@ function tests.run_layout_constants_test()
     "Evolution content width must reserve the default scrollbar lane"
   )
   assert_eq(
+    layout.evolution_scroll_height,
+    layout.evolution_outer_height - layout.evolution_header_height - layout.evolution_tab_bar_height,
+    "Evolution scroll height must leave room for the fixed summary and tab rows"
+  )
+  assert_eq(
     layout.evolution_section_width,
     layout.evolution_content_width - (layout.evolution_section_margin * 2),
     "Evolution section width must reserve visible side margins"
@@ -151,6 +156,12 @@ function tests.run_layout_constants_test()
     layout.rank_stepper_width < layout.evolution_inner_width,
     "rank stepper controls must fit inside Evolution rows"
   )
+  assert_true(
+    (layout.evolution_upgrade_group_width * 3) + (layout.evolution_upgrade_group_spacing * 2) <= layout.evolution_inner_width,
+    "three core-upgrade columns must fit inside the Evolution inner width"
+  )
+  assert_true(layout.evolution_upgrade_card_detail_width > 0, "core-upgrade cards must retain text detail space")
+  assert_true(layout.evolution_upgrade_card_value_width > 0, "core-upgrade cards must retain effect value space")
   assert_true(
     layout.empty_inventory_core_name_width < layout.empty_inventory_core_specialization_width,
     "wide inventory core table should favor specialization readability over long names"

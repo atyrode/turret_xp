@@ -98,6 +98,7 @@ local layout = {
   label_color_picker_min_width = 300,
   evolution_outer_height = 430,
   evolution_header_height = 36,
+  evolution_tab_bar_height = 32,
   evolution_tab_button_width = 124,
   stats_header_height = 34,
   stats_height = 360,
@@ -173,11 +174,12 @@ layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_level_widt
 layout.empty_inventory_core_name_width = layout.empty_inventory_core_table_content_width - layout.empty_inventory_core_fixed_width
 layout.empty_inventory_core_detail_width = layout.empty_inventory_core_name_width
 layout.evolution_scroll_width = layout.panel_width
-layout.evolution_scroll_height = layout.evolution_outer_height - layout.evolution_header_height
+layout.evolution_scroll_height = layout.evolution_outer_height - layout.evolution_header_height - layout.evolution_tab_bar_height
 layout.evolution_content_width = layout.evolution_scroll_width - 28
 layout.evolution_section_margin = 6
 layout.evolution_section_width = layout.evolution_content_width - (layout.evolution_section_margin * 2)
 layout.evolution_inner_width = layout.evolution_section_width - 16
+layout.evolution_upgrade_group_spacing = 8
 layout.evolution_card_inner_width = layout.evolution_inner_width - 28
 layout.evolution_card_title_width = layout.evolution_card_inner_width
   - layout.evolution_card_icon_size
@@ -192,6 +194,11 @@ layout.evolution_effect_width = layout.evolution_inner_width - 64
 layout.rank_stepper_width = (layout.rank_stepper_button_size * 2)
   + layout.rank_stepper_label_width
   + (layout.rank_stepper_spacing * 2)
+layout.evolution_upgrade_group_width = math.floor(
+  (layout.evolution_inner_width - (layout.evolution_upgrade_group_spacing * 2)) / 3
+)
+layout.evolution_upgrade_card_detail_width = layout.evolution_upgrade_group_width - layout.rank_allocation_icon_size - 18
+layout.evolution_upgrade_card_value_width = layout.evolution_upgrade_group_width - layout.rank_stepper_width - 22
 layout.rank_allocation_spacing_width = layout.rank_allocation_horizontal_spacing * 3
 layout.rank_allocation_detail_width = layout.evolution_inner_width
   - layout.rank_allocation_icon_size
