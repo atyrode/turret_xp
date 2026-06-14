@@ -148,16 +148,6 @@ function core_picker_table_module.new(deps)
     return label
   end
 
-  local function add_separator_cell(parent, height)
-    local separator = parent.add({
-      type = "empty-widget",
-      style = "turret_xp_inventory_core_table_separator",
-    })
-    set_cell_width(separator, LAYOUT.inventory_core_table_separator_width)
-    set_style(separator, "height", height)
-    return separator
-  end
-
   local function add_action_cell(parent, row)
     local cell = add_cell(
       parent,
@@ -184,7 +174,7 @@ function core_picker_table_module.new(deps)
     return sort_mode_by_id(id)
   end
 
-  local function configure_table(table_element, draw_horizontal_lines)
+  local function configure_table(table_element)
     set_style(table_element, "horizontally_stretchable", true)
     set_cell_width(table_element, LAYOUT.empty_inventory_core_table_width)
     set_style(table_element, "horizontal_spacing", LAYOUT.inventory_core_table_spacing)
@@ -194,25 +184,25 @@ function core_picker_table_module.new(deps)
         table_element.style.column_alignments[index] = "center"
       end
       table_element.style.column_alignments[1] = "left"
+      table_element.style.column_alignments[2] = "left"
       table_element.style.column_alignments[3] = "left"
-      table_element.style.column_alignments[5] = "left"
-      table_element.style.column_alignments[7] = "right"
-      table_element.style.column_alignments[9] = "right"
-      table_element.style.column_alignments[11] = "right"
+      table_element.style.column_alignments[4] = "right"
+      table_element.style.column_alignments[5] = "right"
+      table_element.style.column_alignments[6] = "right"
       table_element.style.column_alignments[LAYOUT.inventory_core_table_column_count] = "center"
-      table_element.draw_horizontal_lines = draw_horizontal_lines
-      table_element.draw_horizontal_line_after_headers = false
-      table_element.draw_vertical_lines = false
+      table_element.draw_horizontal_lines = true
+      table_element.draw_horizontal_line_after_headers = true
+      table_element.draw_vertical_lines = true
     end)
   end
 
-  local function add_table(parent, draw_horizontal_lines)
+  local function add_table(parent)
     local table_element = parent.add({
       type = "table",
       column_count = LAYOUT.inventory_core_table_column_count,
       style = "turret_xp_inventory_core_table",
     })
-    configure_table(table_element, draw_horizontal_lines)
+    configure_table(table_element)
     return table_element
   end
 
@@ -222,43 +212,31 @@ function core_picker_table_module.new(deps)
       direction = "vertical",
     })
     set_cell_width(container, LAYOUT.empty_inventory_core_table_width)
+    set_style(container, "left_margin", LAYOUT.inventory_core_table_side_margin)
+    set_style(container, "right_margin", LAYOUT.inventory_core_table_side_margin)
     set_style(container, "vertical_spacing", 0)
 
-    local header_table = add_table(container, false)
+    local table_element = add_table(container)
 
-    add_sort_header_cell(header_table, sort_mode_by_id("level"), current_sort, LAYOUT.empty_inventory_core_level_width, "left")
-    add_separator_cell(header_table, LAYOUT.inventory_core_table_header_height)
-    add_sort_header_cell(header_table, sort_mode_by_id("name"), current_sort, LAYOUT.empty_inventory_core_name_width, "left")
-    add_separator_cell(header_table, LAYOUT.inventory_core_table_header_height)
+    add_sort_header_cell(table_element, sort_mode_by_id("level"), current_sort, LAYOUT.empty_inventory_core_level_width, "left")
+    add_sort_header_cell(table_element, sort_mode_by_id("name"), current_sort, LAYOUT.empty_inventory_core_name_width, "left")
     add_sort_header_cell(
-      header_table,
+      table_element,
       sort_mode_by_id("specialization"),
       current_sort,
       LAYOUT.empty_inventory_core_specialization_width,
       "left"
     )
-    add_separator_cell(header_table, LAYOUT.inventory_core_table_header_height)
-    add_sort_header_cell(header_table, sort_mode_by_id("hp"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
-    add_separator_cell(header_table, LAYOUT.inventory_core_table_header_height)
-    add_sort_header_cell(header_table, sort_mode_by_id("attack"), current_sort, LAYOUT.empty_inventory_core_attack_width, "right")
-    add_separator_cell(header_table, LAYOUT.inventory_core_table_header_height)
-    add_sort_header_cell(header_table, sort_mode_by_id("range"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
-    add_separator_cell(header_table, LAYOUT.inventory_core_table_header_height)
-    add_header_label_cell(header_table, "", LAYOUT.empty_inventory_core_action_width)
+    add_sort_header_cell(table_element, sort_mode_by_id("hp"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
+    add_sort_header_cell(table_element, sort_mode_by_id("attack"), current_sort, LAYOUT.empty_inventory_core_attack_width, "right")
+    add_sort_header_cell(table_element, sort_mode_by_id("range"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
+    add_header_label_cell(table_element, "", LAYOUT.empty_inventory_core_action_width)
 
-    local divider = container.add({
-      type = "empty-widget",
-      style = "turret_xp_inventory_core_table_header_divider",
-    })
-    set_cell_width(divider, LAYOUT.empty_inventory_core_table_width)
-    set_style(divider, "height", 2)
-
-    return add_table(container, true)
+    return table_element
   end
 
   function service.add_row(parent, row)
     add_value_cell(parent, row.level_caption, LAYOUT.empty_inventory_core_level_width, "left")
-    add_separator_cell(parent, LAYOUT.inventory_core_table_row_height)
 
     local name_cell = add_cell(parent, LAYOUT.empty_inventory_core_name_width, LAYOUT.inventory_core_table_row_height, "left")
     local name = name_cell.add({
@@ -271,16 +249,11 @@ function core_picker_table_module.new(deps)
     set_style(name, "height", LAYOUT.inventory_core_table_row_height)
     set_style(name, "single_line", true)
     set_style(name, "maximal_width", cell_content_width(LAYOUT.empty_inventory_core_name_width))
-    add_separator_cell(parent, LAYOUT.inventory_core_table_row_height)
 
     add_value_cell(parent, row.specialization_caption, LAYOUT.empty_inventory_core_specialization_width, "left", COLOR.muted)
-    add_separator_cell(parent, LAYOUT.inventory_core_table_row_height)
     add_value_cell(parent, row.hp_caption, LAYOUT.empty_inventory_core_stat_width)
-    add_separator_cell(parent, LAYOUT.inventory_core_table_row_height)
     add_value_cell(parent, row.attack_caption, LAYOUT.empty_inventory_core_attack_width)
-    add_separator_cell(parent, LAYOUT.inventory_core_table_row_height)
     add_value_cell(parent, row.range_caption, LAYOUT.empty_inventory_core_stat_width)
-    add_separator_cell(parent, LAYOUT.inventory_core_table_row_height)
     add_action_cell(parent, row)
   end
 

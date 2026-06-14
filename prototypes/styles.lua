@@ -32,7 +32,7 @@ return function()
     right_cell_padding = 0,
     top_cell_padding = 0,
     bottom_cell_padding = 0,
-    apply_row_graphical_set_per_column = true,
+    apply_row_graphical_set_per_column = false,
     odd_row_graphical_set = {
       filename = "__core__/graphics/gui-new.png",
       position = { 472, 25 },
@@ -54,26 +54,6 @@ return function()
     type = "horizontal_flow_style",
     parent = "turret_xp_inventory_core_table_cell",
     horizontal_align = "center",
-  }
-
-  styles.turret_xp_inventory_core_table_separator = {
-    type = "empty_widget_style",
-    width = 1,
-    graphical_set = {
-      base = {
-        center = { position = { 76, 8 }, size = { 1, 1 } },
-      },
-    },
-  }
-
-  styles.turret_xp_inventory_core_table_header_divider = {
-    type = "empty_widget_style",
-    height = 2,
-    graphical_set = {
-      base = {
-        center = { position = { 76, 8 }, size = { 1, 1 } },
-      },
-    },
   }
 
   styles.turret_xp_table_header_button = {

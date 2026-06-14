@@ -454,28 +454,6 @@ function profile_inventory.new(deps)
     }
   end
 
-  function service.find_core_option_by_chip_id(inventory, chip_id)
-    if not inventory or not inventory.valid or not chip_id then
-      return nil
-    end
-
-    for index = 1, #inventory do
-      local stack = inventory[index]
-      if stack and stack.valid_for_read and stack.name == deps.chip_name then
-        local profile = deps.read_profile_from_chip_stack(stack)
-        if profile and profile.chip_id == chip_id then
-          return {
-            index = index,
-            quality = service.quality_name_from_stack(stack, "normal"),
-            profile = profile,
-          }
-        end
-      end
-    end
-
-    return nil
-  end
-
   function service.find_best_carried_chip_stack(player)
     local cursor_stack = player.cursor_stack
     if cursor_stack and cursor_stack.valid_for_read and cursor_stack.name == deps.chip_name then

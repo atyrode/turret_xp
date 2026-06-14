@@ -11,7 +11,6 @@ function core_panel_module.new(deps)
   local get_remembered_turret = deps.get_remembered_turret
   local get_player_core_options = deps.get_player_core_options
   local get_player_core_options_model = deps.get_player_core_options_model
-  local get_last_extracted_core = deps.get_last_extracted_core
   local get_core_picker_sort = deps.get_core_picker_sort
   local get_core_picker_filters = deps.get_core_picker_filters
   local core_picker_filters_key = deps.core_picker_filters_key
@@ -130,47 +129,19 @@ function core_panel_module.new(deps)
     return table.concat(parts, "|")
   end
 
-  local function find_option_by_chip_id(options, chip_id)
-    if not chip_id then
-      return nil
-    end
-
-    for _, option in ipairs(options or {}) do
-      local profile = option.profile or {}
-      if profile.chip_id == chip_id then
-        return option
-      end
-    end
-
-    return nil
-  end
-
   local function build_empty_core_picker_model(player, entity)
     local sort_mode = get_core_picker_sort(player)
     local core_filters = get_core_picker_filters(player)
     local inventory_model = get_player_core_options_model(player, sort_mode, core_filters)
     local all_inventory_core_options = inventory_model.all_options or {}
     local inventory_core_options = inventory_model.options or {}
-    local last_extracted_core = get_last_extracted_core and get_last_extracted_core(player, entity) or nil
-    local last_extracted_option = last_extracted_core and find_option_by_chip_id(all_inventory_core_options, last_extracted_core.chip_id)
-      or nil
 
     local model = {
       sort_mode = sort_mode,
       filters = core_filters,
       all_options = all_inventory_core_options,
       options = inventory_core_options,
-      last_extracted_core = last_extracted_core,
-      last_extracted_option = last_extracted_option,
     }
-    model.last_extracted_key = last_extracted_option
-        and table.concat({
-          tostring(last_extracted_core.chip_id or ""),
-          tostring(last_extracted_option.quality or ""),
-          tostring((last_extracted_option.profile or {}).level or 0),
-          tostring((last_extracted_option.profile or {}).custom_name or ""),
-        }, "/")
-      or ""
     model.key = table.concat({
       sort_mode,
       "filters",
@@ -216,7 +187,6 @@ function core_panel_module.new(deps)
       tostring(dev_controls_enabled(player)),
       tostring(platform_inventory_present),
       tostring(platform_core_count),
-      tostring(empty_picker_model.last_extracted_key or ""),
     }, ":")
     return base_key .. ":" .. picker_key, empty_picker_model, base_key, picker_key
   end
@@ -518,60 +488,6 @@ function core_panel_module.new(deps)
     return (left.index or 0) < (right.index or 0)
   end
 
-  local function interpolate_color(left, right, amount)
-    return {
-      left[1] + ((right[1] - left[1]) * amount),
-      left[2] + ((right[2] - left[2]) * amount),
-      left[3] + ((right[3] - left[3]) * amount),
-    }
-  end
-
-  local function relative_value_color(value, minimum, maximum)
-    if not value or not minimum or not maximum or minimum == maximum then
-      return COLOR.muted
-    end
-
-    local ratio = (value - minimum) / (maximum - minimum)
-    ratio = math.max(0, math.min(1, ratio))
-
-    local red = { 0.95, 0.38, 0.34 }
-    local orange = { 1, 0.62, 0.26 }
-    local yellow = { 0.96, 0.84, 0.34 }
-    local green = { 0.50, 0.86, 0.48 }
-    if ratio < 0.45 then
-      return interpolate_color(red, orange, ratio / 0.45)
-    end
-    if ratio < 0.7 then
-      return interpolate_color(orange, yellow, (ratio - 0.45) / 0.25)
-    end
-    return interpolate_color(yellow, green, (ratio - 0.7) / 0.3)
-  end
-
-  local function apply_relative_value_colors(option_list)
-    local ranges = {}
-    for _, field_name in ipairs({ "level", "hp", "attack", "range" }) do
-      ranges[field_name] = {}
-    end
-
-    for _, option in ipairs(option_list or {}) do
-      for field_name, range in pairs(ranges) do
-        local value = option.sort_key and option.sort_key[field_name] or nil
-        if value ~= nil then
-          range.min = range.min == nil and value or math.min(range.min, value)
-          range.max = range.max == nil and value or math.max(range.max, value)
-        end
-      end
-    end
-
-    for _, option in ipairs(option_list or {}) do
-      option.value_colors = {}
-      for field_name, range in pairs(ranges) do
-        local value = option.sort_key and option.sort_key[field_name] or nil
-        option.value_colors[field_name] = relative_value_color(value, range.min, range.max)
-      end
-    end
-  end
-
   local function prepare_core_options_for_display(entity, option_list, current_sort)
     local field, direction = core_picker_table.parse_sort(current_sort)
     for _, option in ipairs(option_list or {}) do
@@ -592,7 +508,6 @@ function core_panel_module.new(deps)
     end
 
     if not field then
-      apply_relative_value_colors(option_list)
       return option_list
     end
 
@@ -611,12 +526,10 @@ function core_panel_module.new(deps)
       return compare_default(left, right)
     end)
 
-    apply_relative_value_colors(option_list)
     return option_list
   end
 
   local function wide_inventory_core_row_data(option, profile, stats)
-    local value_colors = option.value_colors or {}
     return {
       install_tooltip = { "turret-xp.inventory-core-install-tooltip" },
       install_tags = {
@@ -625,10 +538,10 @@ function core_panel_module.new(deps)
       },
       name_caption = core_display_name(profile),
       specialization_caption = specialization_caption(profile),
-      level_caption = rich_value(profile.level or 0, nil, value_colors.level),
-      hp_caption = rich_value(stats.health, nil, value_colors.hp),
-      attack_caption = rich_value(stats.speed, "/s", value_colors.attack),
-      range_caption = rich_value(stats.range, nil, value_colors.range),
+      level_caption = rich_value(profile.level or 0),
+      hp_caption = rich_value(stats.health),
+      attack_caption = rich_value(stats.speed, "/s"),
+      range_caption = rich_value(stats.range),
     }
   end
 
@@ -1118,9 +1031,6 @@ function core_panel_module.new(deps)
     set_element_style(icon, "slot_button")
     set_style(icon, "size", 40)
 
-    local last_extracted_option = (not state and empty_picker_model and empty_picker_model.last_extracted_option) or nil
-    local last_extracted_profile = last_extracted_option and last_extracted_option.profile or nil
-
     local label = top.add({
       type = "label",
       name = GUI.core_status,
@@ -1129,29 +1039,13 @@ function core_panel_module.new(deps)
     })
     set_style(label, "font", "default-bold")
     set_style(label, "single_line", false)
-    set_style(label, "maximal_width", state and 180 or last_extracted_option and 300 or LAYOUT.empty_panel_width - 136)
+    set_style(label, "maximal_width", state and 180 or LAYOUT.empty_panel_width - 136)
 
-    if state or last_extracted_option then
+    if state then
       top.add({
         type = "empty-widget",
         style = "flib_horizontal_pusher",
       })
-    end
-
-    if last_extracted_option then
-      local reinstall = top.add({
-        type = "button",
-        caption = { "turret-xp.reinstall-last-core" },
-        tooltip = {
-          "turret-xp.reinstall-last-core-tooltip",
-          core_display_name(last_extracted_profile),
-          rich_value((last_extracted_profile and last_extracted_profile.level) or 0),
-        },
-        tags = {
-          turret_xp_action = "reinstall-last-core",
-        },
-      })
-      set_style(reinstall, "minimal_width", 132)
     end
 
     if state then

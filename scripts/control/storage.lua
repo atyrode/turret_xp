@@ -81,50 +81,6 @@ return function(M)
     return player_state
   end
 
-  function remember_last_extracted_core(player, entity, profile)
-    if not player or not entity or not profile or not profile.chip_id then
-      return nil
-    end
-
-    local player_state = ensure_player_state(player)
-    player_state.last_extracted_core = {
-      chip_id = profile.chip_id,
-      turret_key = turret_key(entity),
-      quality = profile.chip_quality or "normal",
-      level = profile.level or 0,
-      custom_name = profile.custom_name or "",
-      tick = game and game.tick or 0,
-    }
-    return player_state.last_extracted_core
-  end
-
-  function get_last_extracted_core(player, entity)
-    if not player then
-      return nil
-    end
-
-    local player_state = ensure_player_state(player)
-    local record = player_state.last_extracted_core
-    if type(record) ~= "table" or not record.chip_id then
-      player_state.last_extracted_core = nil
-      return nil
-    end
-
-    if entity and record.turret_key and record.turret_key ~= turret_key(entity) then
-      return nil
-    end
-
-    return record
-  end
-
-  function clear_last_extracted_core(player)
-    if not player then
-      return
-    end
-
-    ensure_player_state(player).last_extracted_core = nil
-  end
-
   function normalize_core_picker_sort(sort_mode)
     local mode = tostring(sort_mode or "")
     if mode == "none" or mode == "" then
