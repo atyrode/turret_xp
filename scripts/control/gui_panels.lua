@@ -209,6 +209,9 @@ return function(M)
         LAYOUT = LAYOUT,
         add_stat_row = add_stat_row,
         make_stats_table = make_stats_table,
+        add_content_pane = function(parent, options)
+          return get_gui_components_service().add_content_pane(parent, options)
+        end,
         set_style = set_style,
         set_element_style = set_element_style,
         find_gui_element = find_gui_element,

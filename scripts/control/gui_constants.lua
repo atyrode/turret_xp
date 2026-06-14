@@ -94,6 +94,9 @@ local layout = {
   stats_header_height = 34,
   stats_height = 360,
   stats_value_width = 190,
+  rank_stepper_button_size = 32,
+  rank_stepper_label_width = 28,
+  rank_stepper_spacing = 4,
   inventory_core_picker_height = 230,
 }
 

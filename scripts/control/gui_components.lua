@@ -3,6 +3,79 @@ local gui_components = {}
 function gui_components.new(deps)
   local service = {}
 
+  function service.add_content_pane(parent, options)
+    options = options or {}
+
+    local outer = parent.add({
+      type = "frame",
+      direction = "vertical",
+      style = options.outer_style or "inside_shallow_frame",
+    })
+    deps.set_style(outer, "horizontally_stretchable", options.horizontally_stretchable ~= false)
+    if options.top_margin then
+      deps.set_style(outer, "top_margin", options.top_margin)
+    end
+    if options.width then
+      deps.set_style(outer, "width", options.width)
+      deps.set_style(outer, "minimal_width", options.width)
+      deps.set_style(outer, "maximal_width", options.width)
+    end
+    if options.height then
+      deps.set_style(outer, "height", options.height)
+      deps.set_style(outer, "maximal_height", options.height)
+    end
+
+    local header = outer.add({
+      type = "frame",
+      name = options.header_name,
+      direction = "horizontal",
+      style = options.header_style or "subheader_frame",
+    })
+    if options.header_height then
+      deps.set_style(header, "height", options.header_height)
+    end
+    deps.set_style(header, "horizontally_stretchable", true)
+    deps.set_style(header, "vertical_align", "center")
+
+    if options.title then
+      local title = header.add({
+        type = "label",
+        caption = options.title,
+        style = options.title_style or "heading_2_label",
+      })
+      deps.set_style(title, "font", "default-bold")
+
+      header.add({
+        type = "empty-widget",
+        style = "flib_horizontal_pusher",
+      })
+    end
+
+    local scroll = outer.add({
+      type = "scroll-pane",
+      name = options.scroll_name,
+      direction = options.scroll_direction,
+      vertical_scroll_policy = options.vertical_scroll_policy or "auto-and-reserve-space",
+      horizontal_scroll_policy = options.horizontal_scroll_policy or "never",
+    })
+    deps.set_style(scroll, "horizontally_stretchable", true)
+    deps.set_style(scroll, "vertically_stretchable", options.vertically_stretchable == true)
+    if options.scroll_width then
+      deps.set_style(scroll, "width", options.scroll_width)
+      deps.set_style(scroll, "minimal_width", options.scroll_width)
+      deps.set_style(scroll, "maximal_width", options.scroll_width)
+    end
+    if options.scroll_height then
+      deps.set_style(scroll, "height", options.scroll_height)
+      deps.set_style(scroll, "maximal_height", options.scroll_height)
+    end
+    if options.scroll_padding then
+      deps.set_style(scroll, "padding", options.scroll_padding)
+    end
+
+    return outer, header, scroll
+  end
+
   function service.add_stat_row(parent, label, element_name, options)
     options = options or {}
 
@@ -180,6 +253,53 @@ function gui_components.new(deps)
     })
     deps.set_style(value, "font_color", deps.COLOR.muted)
     return value
+  end
+
+  function service.add_rank_stepper(parent, options)
+    options = options or {}
+
+    local controls = parent.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    deps.set_style(controls, "horizontal_spacing", deps.LAYOUT.rank_stepper_spacing)
+    deps.set_style(controls, "vertical_align", "center")
+    deps.set_style(controls, "horizontal_align", "right")
+
+    local button_size = deps.LAYOUT.rank_stepper_button_size
+    local decrease = controls.add({
+      type = "button",
+      caption = options.decrease_caption or "-",
+      tooltip = options.decrease_tooltip,
+      enabled = options.can_decrease == true,
+      tags = options.decrease_tags,
+    })
+    deps.set_style(decrease, "font", "default-bold")
+    deps.set_style(decrease, "width", button_size)
+    deps.set_style(decrease, "height", button_size)
+    deps.set_style(decrease, "minimal_width", button_size)
+
+    local rank_label = controls.add({
+      type = "label",
+      caption = tostring(options.rank or 0),
+      style = "caption_label",
+    })
+    deps.set_style(rank_label, "width", deps.LAYOUT.rank_stepper_label_width)
+    deps.set_style(rank_label, "horizontal_align", "center")
+
+    local increase = controls.add({
+      type = "button",
+      caption = options.increase_caption or "+",
+      tooltip = options.increase_tooltip,
+      enabled = options.can_increase == true,
+      tags = options.increase_tags,
+    })
+    deps.set_style(increase, "font", "default-bold")
+    deps.set_style(increase, "width", button_size)
+    deps.set_style(increase, "height", button_size)
+    deps.set_style(increase, "minimal_width", button_size)
+
+    return controls
   end
 
   function service.add_evolution_section(parent, options)

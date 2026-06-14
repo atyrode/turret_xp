@@ -90,40 +90,16 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_evolution_panel(parent)
-    local outer = parent.add({
-      type = "frame",
-      direction = "vertical",
-      style = "inside_shallow_frame",
+    local _, _, panel = get_gui_components_service().add_content_pane(parent, {
+      width = LAYOUT.evolution_column_width,
+      height = LAYOUT.evolution_outer_height,
+      header_name = GUI.evolution_summary,
+      header_height = LAYOUT.evolution_header_height,
+      scroll_name = GUI.evolution,
+      scroll_width = LAYOUT.evolution_scroll_width,
+      scroll_height = LAYOUT.evolution_scroll_height,
+      vertically_stretchable = true,
     })
-    set_style(outer, "width", LAYOUT.evolution_column_width)
-    set_style(outer, "minimal_width", LAYOUT.evolution_column_width)
-    set_style(outer, "maximal_width", LAYOUT.evolution_column_width)
-    set_style(outer, "height", LAYOUT.evolution_outer_height)
-    set_style(outer, "maximal_height", LAYOUT.evolution_outer_height)
-
-    local header = outer.add({
-      type = "frame",
-      name = GUI.evolution_summary,
-      direction = "horizontal",
-      style = "subheader_frame",
-    })
-    set_style(header, "height", LAYOUT.evolution_header_height)
-    set_style(header, "horizontally_stretchable", true)
-    set_style(header, "vertical_align", "center")
-
-    local panel = outer.add({
-      type = "scroll-pane",
-      name = GUI.evolution,
-      vertical_scroll_policy = "auto",
-      horizontal_scroll_policy = "never",
-    })
-    set_style(panel, "horizontally_stretchable", true)
-    set_style(panel, "vertically_stretchable", true)
-    set_style(panel, "width", LAYOUT.evolution_scroll_width)
-    set_style(panel, "minimal_width", LAYOUT.evolution_scroll_width)
-    set_style(panel, "maximal_width", LAYOUT.evolution_scroll_width)
-    set_style(panel, "height", LAYOUT.evolution_scroll_height)
-    set_style(panel, "maximal_height", LAYOUT.evolution_scroll_height)
     return panel
   end
 
@@ -424,57 +400,27 @@ function evolution_panel_module.new(deps)
     })
     set_style(value, "horizontal_align", "right")
 
-    local controls = row.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(controls, "horizontal_spacing", 4)
-    set_style(controls, "vertical_align", "center")
-    set_style(controls, "horizontal_align", "right")
-
-    local decrease = controls.add({
-      type = "button",
-      caption = "-",
-      tooltip = { "turret-xp.rank-remove-tooltip", upgrade.name },
-      enabled = rank > 0,
-      tags = {
-        turret_xp_action = "deallocate-base",
-        upgrade = upgrade.id,
-      },
-    })
-    set_style(decrease, "font", "default-bold")
-    set_style(decrease, "width", 32)
-    set_style(decrease, "height", 32)
-    set_style(decrease, "minimal_width", 32)
-
-    local rank_label = controls.add({
-      type = "label",
-      caption = tostring(rank),
-      style = "caption_label",
-    })
-    set_style(rank_label, "width", 28)
-    set_style(rank_label, "horizontal_align", "center")
-
-    local increase = controls.add({
-      type = "button",
-      caption = "+",
-      tooltip = {
+    get_gui_components_service().add_rank_stepper(row, {
+      rank = rank,
+      can_decrease = rank > 0,
+      can_increase = can_increase,
+      decrease_tooltip = { "turret-xp.rank-remove-tooltip", upgrade.name },
+      increase_tooltip = {
         "turret-xp.base-rank-add-tooltip",
         upgrade.name,
         rich_stat_text(upgrade.value),
         tostring(rank),
         tostring(rank + 1),
       },
-      enabled = can_increase,
-      tags = {
+      decrease_tags = {
+        turret_xp_action = "deallocate-base",
+        upgrade = upgrade.id,
+      },
+      increase_tags = {
         turret_xp_action = "allocate-base",
         upgrade = upgrade.id,
       },
     })
-    set_style(increase, "font", "default-bold")
-    set_style(increase, "width", 32)
-    set_style(increase, "height", 32)
-    set_style(increase, "minimal_width", 32)
   end
 
   local function add_rank_stepper(
@@ -487,47 +433,15 @@ function evolution_panel_module.new(deps)
     decrease_tooltip,
     increase_tooltip
   )
-    local controls = parent.add({
-      type = "flow",
-      direction = "horizontal",
+    return get_gui_components_service().add_rank_stepper(parent, {
+      rank = rank,
+      decrease_tags = decrease_tags,
+      increase_tags = increase_tags,
+      can_decrease = can_decrease,
+      can_increase = can_increase,
+      decrease_tooltip = decrease_tooltip,
+      increase_tooltip = increase_tooltip,
     })
-    set_style(controls, "horizontal_spacing", 4)
-    set_style(controls, "vertical_align", "center")
-    set_style(controls, "horizontal_align", "right")
-
-    local decrease = controls.add({
-      type = "button",
-      caption = "-",
-      tooltip = decrease_tooltip,
-      enabled = can_decrease,
-      tags = decrease_tags,
-    })
-    set_style(decrease, "font", "default-bold")
-    set_style(decrease, "width", 32)
-    set_style(decrease, "height", 32)
-    set_style(decrease, "minimal_width", 32)
-
-    local rank_label = controls.add({
-      type = "label",
-      caption = tostring(rank or 0),
-      style = "caption_label",
-    })
-    set_style(rank_label, "width", 28)
-    set_style(rank_label, "horizontal_align", "center")
-
-    local increase = controls.add({
-      type = "button",
-      caption = "+",
-      tooltip = increase_tooltip,
-      enabled = can_increase,
-      tags = increase_tags,
-    })
-    set_style(increase, "font", "default-bold")
-    set_style(increase, "width", 32)
-    set_style(increase, "height", 32)
-    set_style(increase, "minimal_width", 32)
-
-    return controls
   end
 
   local function add_augment_allocation_row(parent, augment, rank, available, at_max)

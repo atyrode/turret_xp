@@ -89,6 +89,13 @@ function tests.run_layout_constants_test()
     layout.inventory_core_sort_arrow_slot_width < layout.empty_inventory_core_level_width,
     "wide inventory core sort arrow slot must fit inside compact stat headers"
   )
+  assert_true(layout.rank_stepper_button_size > 0, "rank stepper buttons must have an explicit layout size")
+  assert_true(layout.rank_stepper_label_width > 0, "rank stepper label must have an explicit layout width")
+  assert_true(
+    (layout.rank_stepper_button_size * 2) + layout.rank_stepper_label_width + (layout.rank_stepper_spacing * 2)
+      < layout.evolution_inner_width,
+    "rank stepper controls must fit inside Evolution rows"
+  )
   assert_true(
     layout.empty_inventory_core_name_width < layout.empty_inventory_core_specialization_width,
     "wide inventory core table should favor specialization readability over long names"

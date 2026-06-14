@@ -6,6 +6,7 @@ function stats_panel.new(deps)
   local LAYOUT = deps.LAYOUT
   local add_stat_row = deps.add_stat_row
   local make_stats_table = deps.make_stats_table
+  local add_content_pane = deps.add_content_pane
   local set_style = deps.set_style
   local set_element_style = deps.set_element_style
   local find_gui_element = deps.find_gui_element
@@ -242,53 +243,18 @@ function stats_panel.new(deps)
   end
 
   local function add_stats_panel(parent)
-    local outer = parent.add({
-      type = "frame",
-      direction = "vertical",
-      style = "inside_shallow_frame",
+    local _, _, scroll = add_content_pane(parent, {
+      top_margin = 8,
+      width = LAYOUT.stats_scroll_width,
+      header_name = GUI.stats_header,
+      header_height = LAYOUT.stats_header_height,
+      title = { "turret-xp.stats-title" },
+      scroll_name = GUI.stats_scroll,
+      scroll_direction = "vertical",
+      scroll_width = LAYOUT.stats_scroll_width,
+      scroll_height = LAYOUT.stats_height,
+      scroll_padding = { 6, 6, 6, 6 },
     })
-    set_style(outer, "top_margin", 8)
-    set_style(outer, "horizontally_stretchable", true)
-    set_style(outer, "width", LAYOUT.stats_scroll_width)
-    set_style(outer, "minimal_width", LAYOUT.stats_scroll_width)
-    set_style(outer, "maximal_width", LAYOUT.stats_scroll_width)
-
-    local header = outer.add({
-      type = "frame",
-      name = GUI.stats_header,
-      direction = "horizontal",
-      style = "subheader_frame",
-    })
-    set_style(header, "height", LAYOUT.stats_header_height)
-    set_style(header, "horizontally_stretchable", true)
-    set_style(header, "vertical_align", "center")
-
-    local title = header.add({
-      type = "label",
-      caption = { "turret-xp.stats-title" },
-      style = "heading_2_label",
-    })
-    set_style(title, "font", "default-bold")
-
-    header.add({
-      type = "empty-widget",
-      style = "flib_horizontal_pusher",
-    })
-
-    local scroll = outer.add({
-      type = "scroll-pane",
-      name = GUI.stats_scroll,
-      direction = "vertical",
-      vertical_scroll_policy = "auto-and-reserve-space",
-      horizontal_scroll_policy = "never",
-    })
-    set_style(scroll, "horizontally_stretchable", true)
-    set_style(scroll, "width", LAYOUT.stats_scroll_width)
-    set_style(scroll, "minimal_width", LAYOUT.stats_scroll_width)
-    set_style(scroll, "maximal_width", LAYOUT.stats_scroll_width)
-    set_style(scroll, "height", LAYOUT.stats_height)
-    set_style(scroll, "maximal_height", LAYOUT.stats_height)
-    set_style(scroll, "padding", { 6, 6, 6, 6 })
 
     return make_stats_table(scroll, GUI.stats)
   end
