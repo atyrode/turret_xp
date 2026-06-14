@@ -12,7 +12,6 @@ import zlib
 
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-DEFAULT_LEFT = 895
 DEFAULT_WIDTH = 860
 DEFAULT_HEIGHT = 832
 
@@ -179,13 +178,17 @@ def load_manifest(path: pathlib.Path | None) -> dict:
         return json.load(handle)
 
 
-def crop_settings(args: argparse.Namespace, manifest: dict) -> tuple[int, int | None, int, int]:
+def crop_settings(args: argparse.Namespace, manifest: dict) -> tuple[int | None, int | None, int, int]:
     layout = manifest.get("layout") if isinstance(manifest.get("layout"), dict) else {}
-    left = args.left if args.left is not None else int(layout.get("default_crop_left") or DEFAULT_LEFT)
+    left = args.left
     top = args.top
     width = args.width if args.width is not None else int(layout.get("panel_width") or DEFAULT_WIDTH)
     height = args.height if args.height is not None else int(layout.get("panel_height") or DEFAULT_HEIGHT)
     return left, top, width, height
+
+
+def centered_left(image: PngImage, width: int) -> int:
+    return max(0, (image.width - min(width, image.width)) // 2)
 
 
 def scene_frame_for_image(manifest: dict, image_name: str) -> dict | None:
@@ -243,9 +246,9 @@ def main(argv: list[str]) -> int:
         if frame_settings:
             left, top, width, height = frame_settings
         else:
-            left = fallback_left
             width = fallback_width
             height = fallback_height
+            left = fallback_left if fallback_left is not None else centered_left(image, width)
             top = top_override if top_override is not None else detect_top(image, left, width)
         cropped = crop_png(image, left, top, width, height)
         destination = args.output / image_path.name

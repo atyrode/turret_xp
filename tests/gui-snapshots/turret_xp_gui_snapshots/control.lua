@@ -248,6 +248,16 @@ local function snapshot_frame(player)
   return nil
 end
 
+local function center_snapshot_frame(player)
+  if remote.interfaces[IFACE] and remote.interfaces[IFACE].center_gui_snapshot_frame then
+    local ok, result = pcall(remote.call, IFACE, "center_gui_snapshot_frame", player)
+    if ok and type(result) == "table" then
+      return result
+    end
+  end
+  return snapshot_frame(player)
+end
+
 local function cleanup_entities(session)
   if not session or not session.surface_name then
     return
@@ -455,8 +465,21 @@ local function setup_next_scene(session)
   end
 
   session.current_scene = scene
-  session.step = "capture"
+  session.current_frame = nil
+  session.step = "center"
   session.wait = 20
+end
+
+local function center_current_scene(session)
+  local player = game.get_player(session.player_index)
+  if not player or not player.valid then
+    storage.turret_xp_gui_snapshots.session = nil
+    return
+  end
+
+  session.current_frame = center_snapshot_frame(player)
+  session.step = "capture"
+  session.wait = 2
 end
 
 local function capture_current_scene(session)
@@ -470,7 +493,7 @@ local function capture_current_scene(session)
   local file_name = string.format("%02d-%s.png", session.scene_index, scene.id)
   local path = OUTPUT_ROOT .. "/" .. file_name
   local resolution = session.capture_resolution or capture_resolution(player)
-  local frame = snapshot_frame(player)
+  local frame = session.current_frame or snapshot_frame(player)
   game.take_screenshot({
     player = player.index,
     by_player = player.index,
@@ -496,6 +519,7 @@ local function capture_current_scene(session)
   print_player(player, "Captured " .. file_name)
 
   session.current_scene = nil
+  session.current_frame = nil
   session.step = "setup"
   session.wait = 20
 end
@@ -512,7 +536,9 @@ script.on_event(defines.events.on_tick, function()
     return
   end
 
-  if session.step == "capture" then
+  if session.step == "center" then
+    center_current_scene(session)
+  elseif session.step == "capture" then
     capture_current_scene(session)
   else
     setup_next_scene(session)

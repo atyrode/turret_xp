@@ -448,6 +448,64 @@ return function(M)
     end,
   })
 
+  local function gui_snapshot_frame_for_player(player, center)
+    if not player or not player.valid then
+      return nil
+    end
+
+    local panel = get_gui_panel(player)
+    if not panel or not panel.valid then
+      return nil
+    end
+
+    local actual_size = panel.actual_size
+    if not actual_size then
+      return nil
+    end
+
+    local width = tonumber(actual_size.width or actual_size.x)
+    local height = tonumber(actual_size.height or actual_size.y)
+    if not width or not height or width <= 0 or height <= 0 then
+      return nil
+    end
+
+    local location = panel.location
+    local x = location and tonumber(location.x)
+    local y = location and tonumber(location.y)
+    if center or not x or not y then
+      local display = player.display_resolution or {}
+      local display_width = tonumber(display.width or display.x) or width
+      local display_height = tonumber(display.height or display.y) or height
+      x = math.max(0, math.floor((display_width - width) / 2))
+      y = math.max(0, math.floor((display_height - height) / 2))
+      pcall(function()
+        panel.location = { x = x, y = y }
+      end)
+      location = panel.location
+      x = location and tonumber(location.x) or x
+      y = location and tonumber(location.y) or y
+    end
+
+    return {
+      location = {
+        x = x,
+        y = y,
+      },
+      actual_size = {
+        width = width,
+        height = height,
+      },
+      top_left = {
+        x = x,
+        y = y,
+      },
+      bottom_right = {
+        x = x + width,
+        y = y + height,
+      },
+    }
+  end
+
   -- GUI, compatibility, and prototype inspection fixtures.
   turret_xp_test_register_methods(turret_xp_test_remote_methods, {
     open_gui = function(player, entity)
@@ -477,39 +535,10 @@ return function(M)
       return true
     end,
     gui_snapshot_frame = function(player)
-      if not player or not player.valid then
-        return nil
-      end
-
-      local panel = get_gui_panel(player)
-      if not panel or not panel.valid then
-        return nil
-      end
-
-      local location = panel.location
-      local actual_size = panel.actual_size
-      if not location or not actual_size then
-        return nil
-      end
-
-      return {
-        location = {
-          x = location.x,
-          y = location.y,
-        },
-        actual_size = {
-          width = actual_size.width,
-          height = actual_size.height,
-        },
-        top_left = {
-          x = location.x,
-          y = location.y,
-        },
-        bottom_right = {
-          x = location.x + actual_size.width,
-          y = location.y + actual_size.height,
-        },
-      }
+      return gui_snapshot_frame_for_player(player, false)
+    end,
+    center_gui_snapshot_frame = function(player)
+      return gui_snapshot_frame_for_player(player, true)
     end,
     gui_snapshot_layout = function()
       return {
@@ -517,7 +546,7 @@ return function(M)
         panel_body_width = LAYOUT.left_column_width,
         evolution_column_width = LAYOUT.evolution_column_width,
         panel_height = LAYOUT.evolution_outer_height + 72,
-        default_crop_left = 895,
+        fallback_crop = "center",
       }
     end,
     dispatch_cycle_label_color = function(entity)
