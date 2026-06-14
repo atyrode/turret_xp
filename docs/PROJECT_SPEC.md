@@ -31,6 +31,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - Core points equal `level - spent_core_points`, so a level 10 core has 10 core points before spending.
 - Core upgrade ranks cost one point each and can be purchased repeatedly unless the specific upgrade has a cap.
 - Core upgrades and augments use embedded `- value +` controls. Element ranks are advanced through passive material progress instead of point spending or a separate upgrade-start click. The static Evolution header exposes one always-visible `Reset` action that clears all Evolution choices and refunds spent core/augment ranks while preserving XP, level, combat history, name, and binding. Element, specialization, and sub-specialization sections expose `Change` actions for focused local edits.
+- Evolution rank controls use normal click for one rank, Shift-click for up to ten ranks, and Ctrl-click for all available points or all allocated ranks.
 - Powerful augment ranks unlock at level 30, cost one augment point each, and earn one augment point every ten levels.
 - Element choices do not cost points. When the matching level gate is unlocked, choosing an element permanently assigns rank 1 for free.
 - Further element ranks always expose a single-resource material requirement for the chosen element. Those passive ranks consume from the installed core's hidden turret-tile input, not from the player inventory.
@@ -121,6 +122,7 @@ V0.10.x keeps the vanilla turret GUI as the main interaction and presents Turret
 - Stat, upgrade, augment, specialization, sub-specialization, element, and material-count values color numeric fragments only. Unchanged values remain neutral, beneficial deltas use a muted green, harmful deltas use a muted red, and units/descriptive words remain neutral; elemental damage amounts use fire, electric, explosive, or toxic colors for the numeric amount.
 - Duplicate pure-element builds show one active element stat row plus the combo identity instead of duplicate stat rows.
 - Evolution choices inside the unlocked list sections use horizontal delimiters and section headers with right-side point/status text to improve readability without adding extra explanatory text.
+- Embedded Evolution rank steppers use one consistent `- value +` control shape and tooltips that describe normal, Shift-click, and Ctrl-click rank amounts without adding extra panel text.
 - The panel updates named stat elements and rebuilds the Evolution list every 60 ticks while the turret GUI remains open.
 - Point allocation refreshes rebuild the Evolution column in place; prototype body swaps remain deferred while the turret GUI is open so the whole vanilla window does not jump back to its default position.
 - The GUI depends on `flib >= 0.16.4` for shared Factorio-style slot, pusher, drag-handle, panel styles, and the top-level shell builder.

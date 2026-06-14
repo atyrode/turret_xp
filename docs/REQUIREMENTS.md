@@ -39,7 +39,7 @@
 - XP overflow must advance levels and carry remaining XP into the next level.
 - When XP progression increases an installed core's level, a short in-world level-up popup should appear above the turret.
 - Evolution points must be derived from turret level and spent allocations.
-- Clicking an allocatable core upgrade or augment must allocate one rank to the opened turret and refresh the panel.
+- Clicking an allocatable core upgrade or augment must allocate one rank to the opened turret and refresh the panel; Shift-click must apply up to ten ranks, and Ctrl-click must spend all currently available points or remove all ranks from that row.
 - Shield core upgrade ranks must add 10 scripted shield capacity per rank, absorb incoming damage before HP, recharge in small increments after a short delay without incoming damage, and keep current shield unchanged when capacity changes except for clamping down to a lower maximum.
 - Retired Range and Max HP augment ranks from old profiles must be normalized away so old tags do not keep dead upgrade state.
 - Resistance core upgrade ranks must reduce non-lethal incoming damage through scripted mitigation without adding more hidden turret variants.

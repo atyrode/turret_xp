@@ -16,6 +16,18 @@ function gui_actions_module.new(deps)
   local refresh_open_turret = deps.refresh_open_turret
   local update_name_render = deps.update_name_render
 
+  local ALL_RANK_POINTS = 1000000
+
+  local function rank_click_amount(event)
+    if event and event.control then
+      return ALL_RANK_POINTS
+    end
+    if event and event.shift then
+      return 10
+    end
+    return 1
+  end
+
   local click_dispatch = {
     ["core-slot"] = function(player, event)
       handle_core_slot_click(player, event)
@@ -61,10 +73,10 @@ function gui_actions_module.new(deps)
       actions.dev_create_core(player)
     end,
     ["allocate-base"] = function(player, event, tags)
-      actions.allocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
+      actions.allocate_base_upgrade(player, tags.upgrade, rank_click_amount(event))
     end,
     ["deallocate-base"] = function(player, event, tags)
-      actions.deallocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
+      actions.deallocate_base_upgrade(player, tags.upgrade, rank_click_amount(event))
     end,
     ["reset-base-upgrades"] = function(player)
       actions.reset_base_upgrades(player)
@@ -82,10 +94,10 @@ function gui_actions_module.new(deps)
       actions.reset_sub_specialization(player)
     end,
     ["allocate-augment"] = function(player, event, tags)
-      actions.allocate_augment(player, tags.augment, event.shift and 10 or 1)
+      actions.allocate_augment(player, tags.augment, rank_click_amount(event))
     end,
     ["deallocate-augment"] = function(player, event, tags)
-      actions.deallocate_augment(player, tags.augment, event.shift and 10 or 1)
+      actions.deallocate_augment(player, tags.augment, rank_click_amount(event))
     end,
     ["reset-augments"] = function(player)
       actions.reset_augments(player)

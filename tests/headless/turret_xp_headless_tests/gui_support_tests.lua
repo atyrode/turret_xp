@@ -174,6 +174,21 @@ function tests.run_gui_action_dispatch_test(surface)
   summary = call("dispatch_toggle_label_level", turret, true)
   assert_true(summary ~= nil, "GUI checked-state dispatch did not return a turret summary after re-enable")
   assert_eq(summary.show_label_level, true, "GUI checked-state dispatch did not restore the level suffix")
+
+  local rank_turret = create_turret(surface, { 6, 0 }, 10)
+  summary = call("install_core", rank_turret, { level = 40 })
+  assert_true(summary ~= nil, "failed to install core for GUI rank modifier dispatch test")
+
+  local rank_sample = call("dispatch_rank_modifier_sample", rank_turret)
+  assert_true(rank_sample ~= nil, "GUI rank modifier dispatch did not return a sample")
+  assert_eq(rank_sample.base_after_ctrl_add, 40, "Ctrl-click did not spend all available core points")
+  assert_eq(rank_sample.base_available_after_ctrl_add, 0, "Ctrl-click core allocation left available points")
+  assert_eq(rank_sample.base_after_ctrl_remove, 0, "Ctrl-click did not remove all core ranks")
+  assert_eq(rank_sample.base_available_after_ctrl_remove, 40, "Ctrl-click core removal did not refund all points")
+  assert_eq(rank_sample.augment_after_ctrl_add, 2, "Ctrl-click did not spend all available augment points")
+  assert_eq(rank_sample.augment_available_after_ctrl_add, 0, "Ctrl-click augment allocation left available points")
+  assert_eq(rank_sample.augment_after_ctrl_remove, 0, "Ctrl-click did not remove all augment ranks")
+  assert_eq(rank_sample.augment_available_after_ctrl_remove, 2, "Ctrl-click augment removal did not refund all points")
 end
 
 function tests.run_inventory_core_picker_test(surface)

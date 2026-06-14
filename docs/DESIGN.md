@@ -21,6 +21,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep the Evolution column stable: a fixed summary header, one scrollable section body, section widths derived from the viewport, and no content rendering under the scrollbar.
 - Keep the Stats pane visually parallel to Evolution: a fixed header and a bounded scroll body for stat rows and ammo readouts.
 - Use direct labels, compact controls, restrained rich text markers, and vanilla-like layout rhythm.
+- Keep Evolution rank allocation controls as consistent compact steppers: normal click changes one rank, Shift-click changes up to ten, and Ctrl-click spends or refunds the whole applicable amount.
 - Keep stat rows scannable: show final values in the panel, put formulas in the stat-name info hover, and reserve the quality diamond for quality-specific HP/range breakdowns.
 - Keep dev controls hidden by default and toggled through `/turret-xp-dev`.
 - Use the Veteran Core slot as a scripted tag-preserving control. Do not imply native arbitrary inventory-slot support inside the vanilla turret GUI.

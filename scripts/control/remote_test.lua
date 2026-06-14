@@ -503,6 +503,62 @@ return function(M)
 
       return summary
     end,
+    dispatch_rank_modifier_sample = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local player = {
+        index = -1,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+      }
+      remember_open_turret(player, entity)
+      dispatch_gui_click_action(player, {
+        control = true,
+      }, {
+        turret_xp_action = "allocate-base",
+        upgrade = "damage",
+      })
+      local after_base_add = turret_xp_test_state_summary(entity)
+      dispatch_gui_click_action(player, {
+        control = true,
+      }, {
+        turret_xp_action = "deallocate-base",
+        upgrade = "damage",
+      })
+      local after_base_remove = turret_xp_test_state_summary(entity)
+      dispatch_gui_click_action(player, {
+        control = true,
+      }, {
+        turret_xp_action = "allocate-augment",
+        augment = "luck",
+      })
+      local after_augment_add = turret_xp_test_state_summary(entity)
+      dispatch_gui_click_action(player, {
+        control = true,
+      }, {
+        turret_xp_action = "deallocate-augment",
+        augment = "luck",
+      })
+      local after_augment_remove = turret_xp_test_state_summary(entity)
+      forget_open_turret(player)
+
+      return {
+        base_after_ctrl_add = after_base_add and after_base_add.evolution.base.damage or 0,
+        base_available_after_ctrl_add = after_base_add and after_base_add.evolution.available_core_points or 0,
+        base_after_ctrl_remove = after_base_remove and (after_base_remove.evolution.base.damage or 0) or 0,
+        base_available_after_ctrl_remove = after_base_remove and after_base_remove.evolution.available_core_points or 0,
+        augment_after_ctrl_add = after_augment_add and after_augment_add.evolution.augments.luck or 0,
+        augment_available_after_ctrl_add = after_augment_add and after_augment_add.evolution.available_augment_points or 0,
+        augment_after_ctrl_remove = after_augment_remove and (after_augment_remove.evolution.augments.luck or 0) or 0,
+        augment_available_after_ctrl_remove = after_augment_remove and after_augment_remove.evolution.available_augment_points or 0,
+      }
+    end,
     layout = function()
       return copy_serializable(LAYOUT)
     end,
