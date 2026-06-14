@@ -99,18 +99,6 @@ function core_identity_module.new(deps)
       })
       set_style(bind_button, "minimal_width", 56)
     else
-      top.add({
-        type = "empty-widget",
-        style = "flib_horizontal_pusher",
-      })
-      widgets.add_tool_button(top, {
-        sprite = "utility/import_slot",
-        style = "flib_tool_button_light_green",
-        tooltip = { "turret-xp.import-core-button-tooltip" },
-        tags = {
-          turret_xp_action = "install-core",
-        },
-      })
       add_empty_dev_actions(parent, player)
     end
   end
