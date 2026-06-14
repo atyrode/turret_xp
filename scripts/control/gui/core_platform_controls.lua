@@ -3,6 +3,7 @@ local core_platform_controls_module = {}
 function core_platform_controls_module.new(deps)
   local GUI = deps.GUI
   local COLOR = deps.COLOR
+  local LAYOUT = deps.LAYOUT
   local CHIP_NAME = deps.CHIP_NAME
   local components = deps.components
   local set_style = deps.set_style
@@ -89,13 +90,16 @@ function core_platform_controls_module.new(deps)
     }
     local icon = row.add(button_definition)
     set_element_style(icon, "slot_button")
-    set_style(icon, "size", 34)
+    set_style(icon, "size", LAYOUT.platform_core_icon_size)
 
     local details = row.add({
       type = "flow",
       direction = "vertical",
     })
     set_style(details, "horizontally_stretchable", true)
+    set_style(details, "width", LAYOUT.platform_core_row_detail_width)
+    set_style(details, "minimal_width", LAYOUT.platform_core_row_detail_width)
+    set_style(details, "maximal_width", LAYOUT.platform_core_row_detail_width)
     local core_name = profile.custom_name and profile.custom_name ~= "" and profile.custom_name or { "turret-xp.platform-core-unnamed" }
     local name = details.add({
       type = "label",
@@ -103,6 +107,8 @@ function core_platform_controls_module.new(deps)
       style = "caption_label",
     })
     set_style(name, "font", "default-bold")
+    set_style(name, "single_line", false)
+    set_style(name, "maximal_width", LAYOUT.platform_core_row_detail_width)
     local stats = preview_stats(entity, profile)
     local summary = details.add({
       type = "label",
@@ -110,6 +116,8 @@ function core_platform_controls_module.new(deps)
       style = "caption_label",
     })
     set_style(summary, "font_color", COLOR.muted)
+    set_style(summary, "single_line", false)
+    set_style(summary, "maximal_width", LAYOUT.platform_core_row_detail_width)
     local stat_summary = details.add({
       type = "label",
       caption = {
@@ -122,6 +130,7 @@ function core_platform_controls_module.new(deps)
     })
     set_style(stat_summary, "font_color", COLOR.muted)
     set_style(stat_summary, "single_line", false)
+    set_style(stat_summary, "maximal_width", LAYOUT.platform_core_row_detail_width)
 
     widgets.add_tool_button(row, {
       sprite = "utility/import_slot",
@@ -158,7 +167,10 @@ function core_platform_controls_module.new(deps)
       return
     end
 
-    for _, option in ipairs(options) do
+    for index, option in ipairs(options) do
+      if index > 1 then
+        components.add_choice_delimiter(frame)
+      end
       add_core_option_row(frame, entity, option)
     end
   end

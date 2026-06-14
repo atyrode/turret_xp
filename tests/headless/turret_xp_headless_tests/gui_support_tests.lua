@@ -44,6 +44,12 @@ function tests.run_layout_constants_test()
     layout.core_identity_tool_button_size + layout.core_identity_action_button_width + layout.core_identity_action_spacing,
     "core identity action width must derive from button and spacing budgets"
   )
+  assert_true(layout.platform_core_icon_size > 0, "platform core rows must have an explicit icon size")
+  assert_true(layout.platform_core_row_detail_width > 0, "platform core row details must retain a positive width")
+  assert_true(
+    layout.platform_core_row_detail_width < layout.left_column_width,
+    "platform core row details must stay inside the left-column panel"
+  )
   assert_true(layout.stats_scroll_width < layout.left_column_width, "Stats pane must stay inside the left column")
   assert_true(layout.inventory_core_picker_width < layout.left_column_width, "inventory core picker must stay inside the left column")
   assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full two-column shell width")
