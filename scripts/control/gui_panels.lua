@@ -2,6 +2,7 @@ local gui_support = require("scripts.control.gui_support")
 local gui_components = require("scripts.control.gui_components")
 local gui_formatters = require("scripts.control.gui.formatters")
 local gui_core_panel = require("scripts.control.gui.core_panel")
+local gui_core_identity = require("scripts.control.gui.core_identity")
 local gui_stats_panel = require("scripts.control.gui.stats_panel")
 local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
 local gui_shell = require("scripts.control.gui.shell")
@@ -17,6 +18,7 @@ return function(M)
   local gui_components_service = nil
   local gui_formatters_service = nil
   local core_panel_service = nil
+  local core_identity_service = nil
   local stats_panel_service = nil
   local evolution_panel_service = nil
   local shell_service = nil
@@ -92,6 +94,22 @@ return function(M)
     return core_picker_table_service
   end
 
+  local function get_core_identity_service()
+    if not core_identity_service then
+      core_identity_service = gui_core_identity.new({
+        GUI = GUI,
+        LAYOUT = LAYOUT,
+        CHIP_NAME = CHIP_NAME,
+        set_style = set_style,
+        set_element_style = set_element_style,
+        dev_controls_enabled = dev_controls_enabled,
+        widgets = get_gui_widgets_service(),
+      })
+    end
+
+    return core_identity_service
+  end
+
   local function get_gui_formatters_service()
     if not gui_formatters_service then
       gui_formatters_service = gui_formatters.new({
@@ -159,6 +177,7 @@ return function(M)
         end,
         widgets = get_gui_widgets_service(),
         core_picker_table = get_core_picker_table_service(),
+        core_identity = get_core_identity_service(),
       })
     end
 
