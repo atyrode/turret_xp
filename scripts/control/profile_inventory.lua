@@ -215,6 +215,257 @@ function profile_inventory.new(deps)
     return nil
   end
 
+  local function normalize_sort_mode(sort_mode)
+    local mode = tostring(sort_mode or "")
+    local field, direction = string.match(mode, "^([^:]+):([^:]+)$")
+    field = field or mode
+    if field ~= "level" and field ~= "kills" and field ~= "damage" and field ~= "name" then
+      return "level", "desc", false
+    end
+
+    if direction ~= "asc" and direction ~= "desc" then
+      direction = field == "name" and "asc" or "desc"
+    end
+
+    return field, direction, true
+  end
+
+  local function core_option_sort_key(profile)
+    profile = profile or {}
+    local raw_name = tostring(profile.custom_name or "")
+    local normalized_name = raw_name:gsub("^%s+", ""):gsub("%s+$", "")
+    return {
+      level = math.max(0, math.floor(tonumber(profile.level) or 0)),
+      kills = math.max(0, math.floor(tonumber(profile.kills) or 0)),
+      damage = math.max(0, math.floor(tonumber(profile.damage) or 0)),
+      has_name = normalized_name ~= "",
+      name = string.lower(normalized_name),
+      chip_id = tonumber(profile.chip_id) or 0,
+    }
+  end
+
+  local function profile_filter_group(profile)
+    local evolution = deps.ensure_evolution_state and deps.ensure_evolution_state(profile or {}) or ((profile or {}).evolution or {})
+    local specialization_id = evolution and evolution.specialization or nil
+    if specialization_id and deps.specialization_by_id and deps.specialization_by_id[specialization_id] then
+      return specialization_id
+    end
+
+    return "base"
+  end
+
+  local function profile_matches_filters(profile, filters)
+    if type(filters) ~= "table" then
+      return true
+    end
+
+    if filters.all == true then
+      return true
+    end
+
+    local group = profile_filter_group(profile)
+    if filters[group] == nil then
+      return false
+    end
+
+    return filters[group] == true
+  end
+
+  local function compare_desc(left, right, field)
+    if left[field] ~= right[field] then
+      return left[field] > right[field]
+    end
+    return nil
+  end
+
+  local function compare_asc(left, right, field)
+    if left[field] ~= right[field] then
+      return left[field] < right[field]
+    end
+    return nil
+  end
+
+  local function compare_by_direction(left, right, field, direction)
+    if direction == "asc" then
+      return compare_asc(left, right, field)
+    end
+
+    return compare_desc(left, right, field)
+  end
+
+  local function compare_named_first(left, right)
+    if left.has_name ~= right.has_name then
+      return left.has_name
+    end
+    return nil
+  end
+
+  local function sort_core_options(options, sort_mode)
+    local sort_field, sort_direction = normalize_sort_mode(sort_mode)
+    table.sort(options, function(a, b)
+      local left = core_option_sort_key(a.profile)
+      local right = core_option_sort_key(b.profile)
+
+      local comparisons = {
+        level = {
+          function()
+            return compare_by_direction(left, right, "level", sort_direction)
+          end,
+          function()
+            return compare_desc(left, right, "kills")
+          end,
+          function()
+            return compare_desc(left, right, "damage")
+          end,
+          function()
+            return compare_named_first(left, right)
+          end,
+          function()
+            return compare_asc(left, right, "name")
+          end,
+        },
+        kills = {
+          function()
+            return compare_by_direction(left, right, "kills", sort_direction)
+          end,
+          function()
+            return compare_desc(left, right, "level")
+          end,
+          function()
+            return compare_desc(left, right, "damage")
+          end,
+          function()
+            return compare_named_first(left, right)
+          end,
+          function()
+            return compare_asc(left, right, "name")
+          end,
+        },
+        damage = {
+          function()
+            return compare_by_direction(left, right, "damage", sort_direction)
+          end,
+          function()
+            return compare_desc(left, right, "level")
+          end,
+          function()
+            return compare_desc(left, right, "kills")
+          end,
+          function()
+            return compare_named_first(left, right)
+          end,
+          function()
+            return compare_asc(left, right, "name")
+          end,
+        },
+        name = {
+          function()
+            return compare_named_first(left, right)
+          end,
+          function()
+            return compare_by_direction(left, right, "name", sort_direction)
+          end,
+          function()
+            return compare_desc(left, right, "level")
+          end,
+          function()
+            return compare_desc(left, right, "kills")
+          end,
+          function()
+            return compare_desc(left, right, "damage")
+          end,
+        },
+      }
+
+      for _, compare in ipairs(comparisons[sort_field] or comparisons.level) do
+        local result = compare()
+        if result ~= nil then
+          return result
+        end
+      end
+
+      if left.chip_id ~= right.chip_id then
+        return left.chip_id < right.chip_id
+      end
+      return (a.index or 0) < (b.index or 0)
+    end)
+  end
+
+  local function collect_core_options_from_inventory(inventory)
+    local options = {}
+    if not inventory or not inventory.valid then
+      return options
+    end
+
+    for index = 1, #inventory do
+      local stack = inventory[index]
+      if stack and stack.valid_for_read and stack.name == deps.chip_name then
+        local profile = deps.read_profile_from_chip_stack(stack)
+        options[#options + 1] = {
+          index = index,
+          quality = service.quality_name_from_stack(stack, "normal"),
+          profile = profile,
+        }
+      end
+    end
+
+    return options
+  end
+
+  local function filter_core_options(options, filters)
+    local filtered = {}
+    for _, option in ipairs(options or {}) do
+      if profile_matches_filters(option.profile, filters) then
+        filtered[#filtered + 1] = option
+      end
+    end
+    return filtered
+  end
+
+  function service.get_core_options_from_inventory(inventory, sort_mode, filters)
+    local options = filter_core_options(collect_core_options_from_inventory(inventory), filters)
+    sort_core_options(options, sort_mode)
+    return options
+  end
+
+  function service.get_player_core_options(player, sort_mode, filters)
+    if not player or type(player.get_main_inventory) ~= "function" then
+      return {}
+    end
+
+    return service.get_core_options_from_inventory(player.get_main_inventory(), sort_mode, filters)
+  end
+
+  function service.get_player_core_options_model(player, sort_mode, filters)
+    if not player or type(player.get_main_inventory) ~= "function" then
+      return {
+        all_options = {},
+        options = {},
+      }
+    end
+
+    local all_options = collect_core_options_from_inventory(player.get_main_inventory())
+    local options = filter_core_options(all_options, filters)
+    sort_core_options(all_options, sort_mode)
+    sort_core_options(options, sort_mode)
+    return {
+      all_options = all_options,
+      options = options,
+    }
+  end
+
+  function service.find_best_carried_chip_stack(player)
+    local cursor_stack = player.cursor_stack
+    if cursor_stack and cursor_stack.valid_for_read and cursor_stack.name == deps.chip_name then
+      return cursor_stack
+    end
+
+    local inventory = player and type(player.get_main_inventory) == "function" and player.get_main_inventory() or nil
+    local options = service.get_core_options_from_inventory(inventory)
+    local option = options[1]
+    return option and inventory[option.index] or nil
+  end
+
   function service.remove_one_chip_stack(stack)
     if not stack or not stack.valid_for_read or stack.name ~= deps.chip_name then
       return false

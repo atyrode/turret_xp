@@ -5,7 +5,9 @@ function stats_panel.new(deps)
   local COLOR = deps.COLOR
   local LAYOUT = deps.LAYOUT
   local add_stat_row = deps.add_stat_row
+  local add_stats_section_header = deps.add_stats_section_header
   local make_stats_table = deps.make_stats_table
+  local add_content_pane = deps.add_content_pane
   local set_style = deps.set_style
   local set_element_style = deps.set_element_style
   local find_gui_element = deps.find_gui_element
@@ -14,6 +16,7 @@ function stats_panel.new(deps)
   local rich_number = deps.rich_number
   local rich_color = deps.rich_color
   local color_to_rich_string = deps.color_to_rich_string
+  local rich_specialization_caption = deps.rich_specialization_caption
   local format_colored_multiplier = deps.format_colored_multiplier
   local format_stat_formula = deps.format_stat_formula
   local get_base_rank = deps.get_base_rank
@@ -190,86 +193,41 @@ function stats_panel.new(deps)
     set_style(label, "single_line", true)
   end
 
-  local function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality, ammo_in_magazine, ammo_magazine_size, state)
-    local magazine_flow = find_gui_element(panel, GUI.magazine)
-    local ammo_flow = find_gui_element(panel, GUI.ammo)
-    if not ammo_flow and not magazine_flow then
-      return
-    end
-
-    local current_tags = (magazine_flow and magazine_flow.tags) or (ammo_flow and ammo_flow.tags) or {}
-    local productivity_progress = state and (state.ammo_productivity_progress or state.ammo_regen_progress) or 0
-    local productivity_fraction = state and get_ammo_productivity_fraction(state) or 0
-    local effective_productivity_fraction = state and get_effective_ammo_productivity_fraction(state) or 0
-    if
-      current_tags.ammo_name == (ammo_name or "")
-      and current_tags.ammo_count == (ammo_count or 0)
-      and current_tags.ammo_quality == (ammo_quality or "")
-      and current_tags.ammo_in_magazine == (ammo_in_magazine or -1)
-      and current_tags.ammo_magazine_size == (ammo_magazine_size or -1)
-      and current_tags.ammo_productivity_progress == productivity_progress
-      and current_tags.ammo_productivity_fraction == productivity_fraction
-      and current_tags.effective_ammo_productivity_fraction == effective_productivity_fraction
-    then
-      return
-    end
-
-    local tags = {
-      ammo_name = ammo_name or "",
-      ammo_count = ammo_count or 0,
-      ammo_quality = ammo_quality or "",
-      ammo_in_magazine = ammo_in_magazine or -1,
-      ammo_magazine_size = ammo_magazine_size or -1,
-      ammo_productivity_progress = productivity_progress,
-      ammo_productivity_fraction = productivity_fraction,
-      effective_ammo_productivity_fraction = effective_productivity_fraction,
-    }
-
-    if magazine_flow then
-      magazine_flow.tags = tags
-      render_magazine_stack_flow(magazine_flow, ammo_name, ammo_count, ammo_quality)
-    end
-    if ammo_flow then
-      ammo_flow.tags = tags
-      render_current_ammo_flow(ammo_flow, ammo_in_magazine, ammo_magazine_size)
-    end
-
-    local productivity_flow = find_gui_element(panel, GUI.ammo_productivity)
-    if productivity_flow then
-      render_ammo_productivity(productivity_flow, state)
-    end
-  end
-
   local function add_stats_panel(parent)
-    local scroll = parent.add({
-      type = "scroll-pane",
-      name = GUI.stats_scroll,
-      direction = "vertical",
-      vertical_scroll_policy = "auto-and-reserve-space",
-      horizontal_scroll_policy = "never",
+    local _, _, scroll = add_content_pane(parent, {
+      width = LAYOUT.stats_scroll_width,
+      header_name = GUI.stats_header,
+      header_height = LAYOUT.stats_header_height,
+      title = { "turret-xp.stats-title" },
+      scroll_name = GUI.stats_scroll,
+      scroll_direction = "vertical",
+      scroll_width = LAYOUT.stats_scroll_width,
+      scroll_height = LAYOUT.stats_height,
+      scroll_padding = { 6, 6, 6, 6 },
+      top_margin = 8,
     })
-    set_style(scroll, "top_margin", 8)
-    set_style(scroll, "horizontally_stretchable", true)
-    set_style(scroll, "width", LAYOUT.stats_scroll_width)
-    set_style(scroll, "minimal_width", LAYOUT.stats_scroll_width)
-    set_style(scroll, "maximal_width", LAYOUT.stats_scroll_width)
-    set_style(scroll, "height", LAYOUT.stats_height)
-    set_style(scroll, "maximal_height", LAYOUT.stats_height)
-    set_style(scroll, "padding", { 6, 6, 6, 6 })
 
     return make_stats_table(scroll, GUI.stats)
   end
 
-  local function add_stat_value(stats, label, value, tooltip)
+  local function add_stats_section(stats, caption)
+    add_stats_section_header(stats, caption)
+    return {
+      no_delimiter = true,
+    }
+  end
+
+  local function add_stat_value(stats, label, value, tooltip, options)
     local _, value_element = add_stat_row(stats, label, nil, {
       info_tooltip = tooltip,
       maximal_width = LAYOUT.stats_value_width,
+      no_delimiter = options and options.no_delimiter == true,
     })
     value_element.caption = value
     return value_element
   end
 
-  local function add_custom_stat(stats, label, value, tooltip)
+  local function add_custom_stat(stats, label, value, tooltip, options)
     if value == nil or value == "" then
       return
     end
@@ -278,6 +236,7 @@ function stats_panel.new(deps)
       info_tooltip = tooltip,
       maximal_width = LAYOUT.stats_value_width,
       value_style = "label",
+      no_delimiter = options and options.no_delimiter == true,
     })
     value_element.caption = value
   end
@@ -290,10 +249,11 @@ function stats_panel.new(deps)
     return { "", description, "\n", { "turret-xp.stat-formula-tooltip", formula } }
   end
 
-  local function add_stat_value_with_quality_marker(stats, label, value, info_tooltip, quality_tooltip)
+  local function add_stat_value_with_quality_marker(stats, label, value, info_tooltip, quality_tooltip, options)
     local _, value_flow = add_stat_row(stats, label, nil, {
       info_tooltip = info_tooltip,
       flow_only = true,
+      no_delimiter = options and options.no_delimiter == true,
     })
 
     local value_label = value_flow.add({
@@ -385,14 +345,19 @@ function stats_panel.new(deps)
     }
   end
 
-  local function add_active_custom_stats(stats, state, entity)
+  local function add_active_custom_stats(stats, state, entity, first_row_options)
     if not state then
       return
     end
 
+    local function add_effect_stat(label, value, tooltip)
+      add_custom_stat(stats, label, value, tooltip, first_row_options)
+      first_row_options = nil
+    end
+
     local damage_rank = get_base_rank(state, "damage")
     if damage_rank > 0 then
-      add_custom_stat(stats, { "turret-xp.stat-core-damage" }, {
+      add_effect_stat({ "turret-xp.stat-core-damage" }, {
         "turret-xp.stat-core-damage-value",
         rich_number("+" .. format_number(damage_rank * 0.5, 1)),
       })
@@ -401,13 +366,12 @@ function stats_panel.new(deps)
     local shield_on_hit_rank = get_augment_rank(state, "siphon")
     if shield_on_hit_rank > 0 then
       local shield_value = format_bonus_value_with_multiplier(get_shield_on_hit_fraction(state) * 100, 1, "", 1, "%")
-      add_custom_stat(stats, { "turret-xp.stat-shield-on-hit" }, { "turret-xp.stat-shield-on-hit-value", shield_value })
+      add_effect_stat({ "turret-xp.stat-shield-on-hit" }, { "turret-xp.stat-shield-on-hit-value", shield_value })
     end
 
     local lifesteal_rate = get_lifesteal_rate(state)
     if lifesteal_rate > 0 then
-      add_custom_stat(
-        stats,
+      add_effect_stat(
         { "turret-xp.stat-lifesteal" },
         format_percent(lifesteal_rate, 0),
         { "turret-xp.lifesteal-tooltip", format_percent(lifesteal_rate, 0) }
@@ -416,18 +380,17 @@ function stats_panel.new(deps)
 
     local bounce_rank = get_augment_rank(state, "bounce")
     if bounce_rank > 0 then
-      add_custom_stat(
-        stats,
+      add_effect_stat(
         { "turret-xp.stat-bounce-chance" },
         format_percent(apply_luck_to_chance(state, bounce_rank * 0.05), 1),
         { "turret-xp.bounce-chance-tooltip" }
       )
-      add_custom_stat(stats, { "turret-xp.stat-bounce-damage" }, "35%", { "turret-xp.bounce-damage-tooltip" })
+      add_effect_stat({ "turret-xp.stat-bounce-damage" }, "35%", { "turret-xp.bounce-damage-tooltip" })
     end
 
     local double_shot_chance = get_double_shot_chance(state)
     if double_shot_chance > 0 then
-      add_custom_stat(stats, { "turret-xp.stat-double-shot" }, {
+      add_effect_stat({ "turret-xp.stat-double-shot" }, {
         "turret-xp.stat-double-shot-value",
         rich_number(format_percent(double_shot_chance, 1)),
       })
@@ -435,7 +398,7 @@ function stats_panel.new(deps)
 
     local luck_rank = get_augment_rank(state, "luck")
     if luck_rank > 0 then
-      add_custom_stat(stats, { "turret-xp.stat-luck" }, {
+      add_effect_stat({ "turret-xp.stat-luck" }, {
         "turret-xp.stat-luck-value",
         format_colored_multiplier(get_luck_multiplier(state)),
       })
@@ -443,7 +406,7 @@ function stats_panel.new(deps)
 
     local training_rank = get_augment_rank(state, "veteran_training")
     if training_rank > 0 then
-      add_custom_stat(stats, { "turret-xp.stat-xp-gain" }, {
+      add_effect_stat({ "turret-xp.stat-xp-gain" }, {
         "turret-xp.stat-xp-gain-value",
         rich_number("+" .. format_number(training_rank * 5, 0) .. "%"),
       })
@@ -453,15 +416,53 @@ function stats_panel.new(deps)
       local rank = get_element_rank(state, element_id)
       local summary = get_element_effect_summary_for_rank(state, element_id, rank, true, false)
       if summary then
-        add_custom_stat(stats, element_name(element_id), summary)
+        add_effect_stat(element_name(element_id), summary)
       end
     end
 
     local evolution = ensure_evolution_state(state)
     local combo = get_combo_caption(state)
     if combo and evolution.elements[1] and evolution.elements[2] then
-      add_custom_stat(stats, { "turret-xp.stat-element-combo" }, combo)
+      add_effect_stat({ "turret-xp.stat-element-combo" }, combo)
     end
+  end
+
+  local function has_active_custom_stats(state)
+    if not state then
+      return false
+    end
+
+    if get_base_rank(state, "damage") > 0 then
+      return true
+    end
+    if get_augment_rank(state, "siphon") > 0 then
+      return true
+    end
+    if get_lifesteal_rate(state) > 0 then
+      return true
+    end
+    if get_augment_rank(state, "bounce") > 0 then
+      return true
+    end
+    if get_double_shot_chance(state) > 0 then
+      return true
+    end
+    if get_augment_rank(state, "luck") > 0 then
+      return true
+    end
+    if get_augment_rank(state, "veteran_training") > 0 then
+      return true
+    end
+
+    for _, element_id in ipairs(get_unique_active_element_ids(state)) do
+      local rank = get_element_rank(state, element_id)
+      if get_element_effect_summary_for_rank(state, element_id, rank, true, false) then
+        return true
+      end
+    end
+
+    local evolution = ensure_evolution_state(state)
+    return get_combo_caption(state) ~= nil and evolution.elements[1] ~= nil and evolution.elements[2] ~= nil
   end
 
   local function update_stats_panel(
@@ -485,15 +486,22 @@ function stats_panel.new(deps)
     stats.clear()
 
     if state then
+      local identity_section = add_stats_section(stats, { "turret-xp.stats-section-identity" })
       local specialization = get_specialization(state)
       local sub_specialization = get_sub_specialization(state)
-      local specialization_caption = specialization and specialization.name or "-"
+      local specialization_caption = specialization and rich_specialization_caption(specialization.id, specialization.name) or "-"
       if specialization and sub_specialization then
-        specialization_caption = specialization.name .. "/" .. sub_specialization.name
+        specialization_caption = {
+          "",
+          rich_specialization_caption(specialization.id, specialization.name),
+          " / ",
+          rich_specialization_caption(specialization.id, sub_specialization.name),
+        }
       end
-      add_custom_stat(stats, { "turret-xp.stat-specialization" }, specialization_caption)
+      add_custom_stat(stats, { "turret-xp.stat-specialization" }, specialization_caption, nil, identity_section)
     end
 
+    local defense_section = add_stats_section(stats, { "turret-xp.stats-section-defense" })
     local health_tooltip = make_quality_tooltip(function(quality)
       return format_number(get_max_health_for_quality(entity, quality.name, state), 0)
     end)
@@ -514,7 +522,8 @@ function stats_panel.new(deps)
       { "turret-xp.hp" },
       health_caption,
       stat_formula_tooltip({ "turret-xp.hp-tooltip" }, health_formula),
-      health_tooltip
+      health_tooltip,
+      defense_section
     )
 
     if state then
@@ -561,6 +570,7 @@ function stats_panel.new(deps)
       end
     end
 
+    local offense_section = add_stats_section(stats, { "turret-xp.stats-section-offense" })
     local speed_values = get_shooting_speed_formula_values(entity, state, ammo_name)
     local speed_formula = speed_values
         and format_stat_formula(speed_values.base, speed_values.additive, speed_values.multiplier, speed_values.total, "/s", 2)
@@ -569,7 +579,8 @@ function stats_panel.new(deps)
       stats,
       { "turret-xp.shooting-speed" },
       speed_values and formula_total_caption(speed_values, "/s", 2) or format_shots_per_second(entity, ammo_name, state),
-      stat_formula_tooltip({ "turret-xp.shooting-speed-tooltip" }, speed_formula)
+      stat_formula_tooltip({ "turret-xp.shooting-speed-tooltip" }, speed_formula),
+      offense_section
     )
 
     local range_tooltip = make_quality_tooltip(function(quality)
@@ -586,40 +597,6 @@ function stats_panel.new(deps)
       stat_formula_tooltip({ "turret-xp.range-tooltip" }, range_formula),
       range_tooltip
     )
-
-    local _, magazine_flow = add_stat_row(stats, { "turret-xp.magazine" }, nil, {
-      info_tooltip = { "turret-xp.magazine-tooltip" },
-      flow_name = GUI.magazine,
-      flow_only = true,
-    })
-    render_magazine_stack_flow(magazine_flow, ammo_name, ammo_count, ammo_quality)
-
-    local ammo_tooltip = {
-      "turret-xp.ammo-tooltip",
-      ammo_in_magazine and format_number(ammo_in_magazine, 0) or "-",
-      ammo_magazine_size and ammo_magazine_size > 0 and format_number(ammo_magazine_size, 0) or "-",
-    }
-    local _, ammo_flow = add_stat_row(stats, { "turret-xp.ammo" }, nil, {
-      info_tooltip = ammo_tooltip,
-      flow_name = GUI.ammo,
-      flow_only = true,
-    })
-    render_current_ammo_flow(ammo_flow, ammo_in_magazine, ammo_magazine_size)
-
-    if state and get_base_rank(state, "ammo_regen") > 0 then
-      local productivity_progress = math.min(1, math.max(0, tonumber(state.ammo_productivity_progress or state.ammo_regen_progress) or 0))
-      local _, ammo_productivity_flow = add_stat_row(stats, { "turret-xp.stat-ammo-productivity" }, nil, {
-        info_tooltip = {
-          "turret-xp.ammo-productivity-tooltip",
-          "+" .. format_percent(get_ammo_productivity_fraction(state), 0),
-          format_percent(get_effective_ammo_productivity_fraction(state), 1),
-          format_percent(productivity_progress, 0),
-        },
-        flow_name = GUI.ammo_productivity,
-        flow_only = true,
-      })
-      render_ammo_productivity(ammo_productivity_flow, state)
-    end
 
     if ammo_name then
       local damage_values = get_damage_formula_values(entity, state, ammo_name)
@@ -650,29 +627,57 @@ function stats_panel.new(deps)
       add_stat_value(stats, { "turret-xp.dps" }, "-", nil)
     end
 
-    add_stat_value(stats, { "turret-xp.kills" }, state and format_number(state.kills, 0) or "-")
-    add_stat_value(stats, { "turret-xp.damage-dealt" }, state and format_number(state.damage, 0) or "-")
     if state then
       add_base_crit_stats(stats, state)
     end
-    add_active_custom_stats(stats, state, entity)
+
+    local ammo_section = add_stats_section(stats, { "turret-xp.stats-section-ammo" })
+    local _, magazine_flow = add_stat_row(stats, { "turret-xp.magazine" }, nil, {
+      info_tooltip = { "turret-xp.magazine-tooltip" },
+      flow_name = GUI.magazine,
+      flow_only = true,
+      no_delimiter = ammo_section.no_delimiter,
+    })
+    render_magazine_stack_flow(magazine_flow, ammo_name, ammo_count, ammo_quality)
+
+    local ammo_tooltip = {
+      "turret-xp.ammo-tooltip",
+      ammo_in_magazine and format_number(ammo_in_magazine, 0) or "-",
+      ammo_magazine_size and ammo_magazine_size > 0 and format_number(ammo_magazine_size, 0) or "-",
+    }
+    local _, ammo_flow = add_stat_row(stats, { "turret-xp.ammo" }, nil, {
+      info_tooltip = ammo_tooltip,
+      flow_name = GUI.ammo,
+      flow_only = true,
+    })
+    render_current_ammo_flow(ammo_flow, ammo_in_magazine, ammo_magazine_size)
+
+    if state and get_base_rank(state, "ammo_regen") > 0 then
+      local productivity_progress = math.min(1, math.max(0, tonumber(state.ammo_productivity_progress or state.ammo_regen_progress) or 0))
+      local _, ammo_productivity_flow = add_stat_row(stats, { "turret-xp.stat-ammo-productivity" }, nil, {
+        info_tooltip = {
+          "turret-xp.ammo-productivity-tooltip",
+          "+" .. format_percent(get_ammo_productivity_fraction(state), 0),
+          format_percent(get_effective_ammo_productivity_fraction(state), 1),
+          format_percent(productivity_progress, 0),
+        },
+        flow_name = GUI.ammo_productivity,
+        flow_only = true,
+      })
+      render_ammo_productivity(ammo_productivity_flow, state)
+    end
+
+    local history_section = add_stats_section(stats, { "turret-xp.stats-section-history" })
+    add_stat_value(stats, { "turret-xp.kills" }, state and format_number(state.kills, 0) or "-", nil, history_section)
+    add_stat_value(stats, { "turret-xp.damage-dealt" }, state and format_number(state.damage, 0) or "-")
+    if state and has_active_custom_stats(state) then
+      local effects_section = add_stats_section(stats, { "turret-xp.stats-section-effects" })
+      add_active_custom_stats(stats, state, entity, effects_section)
+    end
   end
 
   return {
-    render_ammo_productivity = render_ammo_productivity,
-    render_magazine_stack_flow = render_magazine_stack_flow,
-    render_current_ammo_flow = render_current_ammo_flow,
-    update_ammo_row = update_ammo_row,
     add_stats_panel = add_stats_panel,
-    add_stat_value = add_stat_value,
-    add_custom_stat = add_custom_stat,
-    stat_formula_tooltip = stat_formula_tooltip,
-    add_stat_value_with_quality_marker = add_stat_value_with_quality_marker,
-    format_final_stat_value = format_final_stat_value,
-    formula_total_caption = formula_total_caption,
-    add_base_crit_stats = add_base_crit_stats,
-    format_bonus_value_with_multiplier = format_bonus_value_with_multiplier,
-    add_active_custom_stats = add_active_custom_stats,
     update_stats_panel = update_stats_panel,
   }
 end

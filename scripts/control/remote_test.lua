@@ -448,8 +448,177 @@ return function(M)
     end,
   })
 
+  local function gui_snapshot_frame_for_player(player, center)
+    if not player or not player.valid then
+      return nil
+    end
+
+    local panel = get_gui_panel(player)
+    if not panel or not panel.valid then
+      return nil
+    end
+
+    local actual_size = panel.actual_size
+    if not actual_size then
+      return nil
+    end
+
+    local width = tonumber(actual_size.width or actual_size.x)
+    local height = tonumber(actual_size.height or actual_size.y)
+    if not width or not height or width <= 0 or height <= 0 then
+      return nil
+    end
+
+    local location = panel.location
+    local x = location and tonumber(location.x)
+    local y = location and tonumber(location.y)
+    if center or not x or not y then
+      local display = player.display_resolution or {}
+      local display_width = tonumber(display.width or display.x) or width
+      local display_height = tonumber(display.height or display.y) or height
+      x = math.max(0, math.floor((display_width - width) / 2))
+      y = math.max(0, math.floor((display_height - height) / 2))
+      pcall(function()
+        panel.location = { x = x, y = y }
+      end)
+      location = panel.location
+      x = location and tonumber(location.x) or x
+      y = location and tonumber(location.y) or y
+    end
+
+    return {
+      location = {
+        x = x,
+        y = y,
+      },
+      actual_size = {
+        width = width,
+        height = height,
+      },
+      top_left = {
+        x = x,
+        y = y,
+      },
+      bottom_right = {
+        x = x + width,
+        y = y + height,
+      },
+    }
+  end
+
+  local function last_gui_descendant(element)
+    local children = element and element.children or nil
+    if not children or #children == 0 then
+      return element
+    end
+
+    return last_gui_descendant(children[#children])
+  end
+
+  local function first_gui_descendant(element)
+    local children = element and element.children or nil
+    if not children or #children == 0 then
+      return element
+    end
+
+    return first_gui_descendant(children[1])
+  end
+
+  local function find_first_gui_type(parent, gui_type)
+    if not parent or not parent.valid then
+      return nil
+    end
+
+    if parent.type == gui_type then
+      return parent
+    end
+
+    for _, child in pairs(parent.children or {}) do
+      local found = find_first_gui_type(child, gui_type)
+      if found then
+        return found
+      end
+    end
+
+    return nil
+  end
+
+  local function gui_snapshot_scroll_target(panel, target)
+    if target == "stats" then
+      return find_gui_element(panel, GUI.stats_scroll)
+    end
+    if target == "inventory" then
+      local inventory = find_gui_element(panel, GUI.inventory_cores)
+      return find_first_gui_type(inventory, "scroll-pane")
+    end
+
+    return find_gui_element(panel, GUI.evolution)
+  end
+
+  local function scroll_gui_snapshot(player, target, position)
+    local panel = get_gui_panel(player)
+    local scroll = panel and gui_snapshot_scroll_target(panel, target or "evolution") or nil
+    if not scroll or not scroll.valid then
+      return false
+    end
+
+    local anchor = position == "top" and first_gui_descendant(scroll) or last_gui_descendant(scroll)
+    if not anchor or not anchor.valid or anchor == scroll then
+      return false
+    end
+
+    local ok = pcall(function()
+      scroll.scroll_to_element(anchor)
+    end)
+    return ok == true
+  end
+
   -- GUI, compatibility, and prototype inspection fixtures.
   turret_xp_test_register_methods(turret_xp_test_remote_methods, {
+    open_gui = function(player, entity)
+      if not player or not player.valid or not is_gun_turret(entity) then
+        return false
+      end
+
+      player.opened = entity
+      build_turret_gui(player, entity)
+      return true
+    end,
+    open_gui_standalone = function(player, entity)
+      if not player or not player.valid or not is_gun_turret(entity) then
+        return false
+      end
+
+      build_turret_gui_screen(player, entity)
+      return true
+    end,
+    close_gui = function(player)
+      if not player or not player.valid then
+        return false
+      end
+
+      destroy_gui(player)
+      forget_open_turret(player)
+      return true
+    end,
+    gui_snapshot_frame = function(player)
+      return gui_snapshot_frame_for_player(player, false)
+    end,
+    center_gui_snapshot_frame = function(player)
+      return gui_snapshot_frame_for_player(player, true)
+    end,
+    set_gui_snapshot_scroll = function(player, target, position)
+      return scroll_gui_snapshot(player, target, position)
+    end,
+    gui_snapshot_layout = function()
+      return {
+        panel_width = LAYOUT.panel_max_width,
+        panel_body_width = LAYOUT.left_column_width,
+        evolution_column_width = LAYOUT.evolution_column_width,
+        panel_height = LAYOUT.evolution_outer_height + 72,
+        fallback_crop = "center",
+      }
+    end,
     dispatch_cycle_label_color = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
@@ -474,6 +643,91 @@ return function(M)
 
       return summary
     end,
+    dispatch_toggle_label_level = function(entity, visible)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local player = {
+        index = -1,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+      }
+      remember_open_turret(player, entity)
+      dispatch_gui_checked_state_action(player, {
+        element = {
+          valid = true,
+          state = visible == true,
+        },
+      }, {
+        turret_xp_action = "toggle-label-level",
+      })
+
+      local summary = turret_xp_test_state_summary(entity)
+      forget_open_turret(player)
+
+      return summary
+    end,
+    dispatch_rank_modifier_sample = function(entity)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local player = {
+        index = -1,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+      }
+      remember_open_turret(player, entity)
+      dispatch_gui_click_action(player, {
+        control = true,
+      }, {
+        turret_xp_action = "allocate-base",
+        upgrade = "damage",
+      })
+      local after_base_add = turret_xp_test_state_summary(entity)
+      dispatch_gui_click_action(player, {
+        control = true,
+      }, {
+        turret_xp_action = "deallocate-base",
+        upgrade = "damage",
+      })
+      local after_base_remove = turret_xp_test_state_summary(entity)
+      dispatch_gui_click_action(player, {
+        control = true,
+      }, {
+        turret_xp_action = "allocate-augment",
+        augment = "luck",
+      })
+      local after_augment_add = turret_xp_test_state_summary(entity)
+      dispatch_gui_click_action(player, {
+        control = true,
+      }, {
+        turret_xp_action = "deallocate-augment",
+        augment = "luck",
+      })
+      local after_augment_remove = turret_xp_test_state_summary(entity)
+      forget_open_turret(player)
+
+      return {
+        base_after_ctrl_add = after_base_add and after_base_add.evolution.base.damage or 0,
+        base_available_after_ctrl_add = after_base_add and after_base_add.evolution.available_core_points or 0,
+        base_after_ctrl_remove = after_base_remove and (after_base_remove.evolution.base.damage or 0) or 0,
+        base_available_after_ctrl_remove = after_base_remove and after_base_remove.evolution.available_core_points or 0,
+        augment_after_ctrl_add = after_augment_add and after_augment_add.evolution.augments.luck or 0,
+        augment_available_after_ctrl_add = after_augment_add and after_augment_add.evolution.available_augment_points or 0,
+        augment_after_ctrl_remove = after_augment_remove and (after_augment_remove.evolution.augments.luck or 0) or 0,
+        augment_available_after_ctrl_remove = after_augment_remove and after_augment_remove.evolution.available_augment_points or 0,
+      }
+    end,
     layout = function()
       return copy_serializable(LAYOUT)
     end,
@@ -482,7 +736,188 @@ return function(M)
         percent = format_percent(0.125, 1),
         color = color_to_rich_string(COLOR.bonus),
         rich_number = rich_number("+5"),
+        rich_value = rich_value(42, "/s"),
+        rich_metric = rich_metric("HP", 400),
         rich_stat = rich_stat_text("Damage +5 x1.2"),
+        rich_specialization = rich_specialization_caption("sniper", "Sniper"),
+      }
+    end,
+    inventory_core_picker_sample = function(entity)
+      local inventory = game.create_inventory(4)
+      local low = turret_xp_test_set_profile_fields(create_blank_profile(), {
+        custom_name = "Low",
+        level = 3,
+        kills = 2,
+        damage = 50,
+      })
+      local high = turret_xp_test_set_profile_fields(create_blank_profile(), {
+        custom_name = "High",
+        level = 14,
+        kills = 1,
+        damage = 75,
+      })
+      local mid = turret_xp_test_set_profile_fields(create_blank_profile(), {
+        custom_name = "Mid",
+        level = 9,
+        kills = 20,
+        damage = 500,
+      })
+      local unnamed = turret_xp_test_set_profile_fields(create_blank_profile(), {
+        level = 1,
+        kills = 0,
+        damage = 0,
+      })
+      ensure_evolution_state(high).specialization = "sniper"
+      ensure_evolution_state(mid).specialization = "machine_gun"
+
+      inventory[1].set_stack(make_chip_item_stack(low))
+      inventory[2].set_stack(make_chip_item_stack(high))
+      inventory[3].set_stack(make_chip_item_stack(mid))
+      inventory[4].set_stack(make_chip_item_stack(unnamed))
+
+      local options = get_core_options_from_inventory(inventory)
+      local kill_sorted = get_core_options_from_inventory(inventory, "kills:desc")
+      local damage_sorted = get_core_options_from_inventory(inventory, "damage:desc")
+      local name_sorted = get_core_options_from_inventory(inventory, "name:asc")
+      local name_desc_sorted = get_core_options_from_inventory(inventory, "name:desc")
+      local function display_sort_first(sort_mode)
+        local display_options = get_core_options_from_inventory(inventory)
+        prepare_inventory_core_options_for_display(entity, display_options, sort_mode)
+        return display_options[1] and (display_options[1].profile.custom_name or "") or nil
+      end
+
+      local only_base = get_core_options_from_inventory(inventory, "level:desc", {
+        all = false,
+        base = true,
+        sniper = false,
+        machine_gun = false,
+        bulwark = false,
+        brawler = false,
+      })
+      local only_sniper = get_core_options_from_inventory(inventory, "level:desc", {
+        all = false,
+        base = false,
+        sniper = true,
+        machine_gun = false,
+        bulwark = false,
+        brawler = false,
+      })
+      local all_filter = normalize_core_picker_filters({ all = true })
+      local none_filter = normalize_core_picker_filters({
+        all = false,
+        base = false,
+        sniper = false,
+        machine_gun = false,
+        bulwark = false,
+        brawler = false,
+      })
+      local legacy_all_filter = normalize_core_picker_filters({
+        base = true,
+        sniper = true,
+        machine_gun = true,
+        bulwark = true,
+        brawler = true,
+      })
+      local all_filtered = get_core_options_from_inventory(inventory, "level:desc", all_filter)
+      local summarized = {}
+      for _, option in ipairs(options) do
+        summarized[#summarized + 1] = {
+          slot = option.index,
+          name = option.profile and (option.profile.custom_name or "") or "",
+          level = option.profile and option.profile.level or nil,
+          specialization = option.profile and option.profile.evolution and option.profile.evolution.specialization or nil,
+        }
+      end
+      local sort_samples = {
+        kills = kill_sorted[1] and kill_sorted[1].profile.custom_name or nil,
+        damage = damage_sorted[1] and damage_sorted[1].profile.custom_name or nil,
+        name = name_sorted[1] and name_sorted[1].profile.custom_name or nil,
+        name_desc = name_desc_sorted[1] and name_desc_sorted[1].profile.custom_name or nil,
+        name_last = name_sorted[#name_sorted] and (name_sorted[#name_sorted].profile.custom_name or "") or nil,
+        display_level_asc = display_sort_first("level:asc"),
+        display_level_desc = display_sort_first("level:desc"),
+        display_name_asc = display_sort_first("name:asc"),
+        display_name_desc = display_sort_first("name:desc"),
+        display_specialization_asc = display_sort_first("specialization:asc"),
+        display_specialization_desc = display_sort_first("specialization:desc"),
+        display_hp_asc = display_sort_first("hp:asc"),
+        display_hp_desc = display_sort_first("hp:desc"),
+        display_attack_asc = display_sort_first("attack:asc"),
+        display_range_asc = display_sort_first("range:asc"),
+      }
+      local filter_samples = {
+        all_count = #all_filtered,
+        all_filter_enabled = all_filter.all == true,
+        none_filter_enabled = none_filter.all == true,
+        legacy_all_filter_enabled = legacy_all_filter.all == true,
+        base_count = #only_base,
+        base_first = only_base[1] and (only_base[1].profile.custom_name or "") or nil,
+        sniper_count = #only_sniper,
+        sniper_first = only_sniper[1] and (only_sniper[1].profile.custom_name or "") or nil,
+      }
+
+      storage.turret_xp.player_settings[-22] = nil
+      storage.turret_xp.players[-22] = nil
+      local prefs_player = {
+        index = -22,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+        get_main_inventory = function()
+          return inventory
+        end,
+      }
+      remember_open_turret(prefs_player, entity)
+      set_core_picker_sort(prefs_player, "name")
+      set_core_picker_filter(prefs_player, "sniper", true)
+      local persisted_before_close = {
+        sort = get_core_picker_sort(prefs_player),
+        filters = get_core_picker_filters(prefs_player),
+      }
+      forget_open_turret(prefs_player)
+      remember_open_turret(prefs_player, entity)
+      local persisted_after_reopen = {
+        sort = get_core_picker_sort(prefs_player),
+        filters = get_core_picker_filters(prefs_player),
+      }
+      forget_open_turret(prefs_player)
+
+      local player = {
+        index = -2,
+        opened = entity,
+        gui = {
+          relative = {},
+          left = {},
+        },
+        get_main_inventory = function()
+          return inventory
+        end,
+        print = function() end,
+        create_local_flying_text = function() end,
+      }
+      remember_open_turret(player, entity)
+      install_core_from_inventory(player, 2)
+      local installed = turret_xp_test_state_summary(entity)
+      local remaining = get_core_options_from_inventory(inventory)
+      local remaining_names = {}
+      for _, option in ipairs(remaining) do
+        remaining_names[#remaining_names + 1] = option.profile and (option.profile.custom_name or "") or ""
+      end
+      forget_open_turret(player)
+      inventory.destroy()
+
+      return {
+        options = summarized,
+        sort_samples = sort_samples,
+        filter_samples = filter_samples,
+        persisted_preferences = {
+          before_close = persisted_before_close,
+          after_reopen = persisted_after_reopen,
+        },
+        installed = installed,
+        remaining_names = remaining_names,
       }
     end,
     stats_formula_samples = function(fields, reference_health)

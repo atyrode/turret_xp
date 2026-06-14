@@ -2,71 +2,45 @@ return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
 
-  function make_gui_frame(player)
-    local ok, frame = pcall(function()
-      return player.gui.relative.add({
-        type = "frame",
-        name = GUI.panel,
-        direction = "vertical",
-        caption = { "turret-xp.panel-title" },
-        anchor = {
-          gui = defines.relative_gui_type.turret_gui,
-          position = defines.relative_gui_position.right,
-        },
-      })
-    end)
-
-    if ok and frame then
-      return frame
-    end
-
-    return player.gui.left.add({
-      type = "frame",
-      name = GUI.panel,
-      direction = "vertical",
-      caption = { "turret-xp.panel-title" },
-    })
-  end
-
-  build_turret_gui = function(player, entity, evolution_anchor)
+  local function build_turret_gui_with_shell(player, entity, shell_builder, evolution_anchor)
     destroy_gui(player)
 
     if not is_gun_turret(entity) then
       forget_open_turret(player)
-      return
+      return nil
     end
 
     remember_open_turret(player, entity)
+    local state = get_turret_state(entity)
+    local mode = state and "installed" or "empty"
 
-    local frame = make_gui_frame(player)
-    set_style(frame, "maximal_width", LAYOUT.panel_max_width)
+    local shell = shell_builder(player, mode)
+    if not shell then
+      return nil
+    end
 
-    local columns = frame.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(columns, "horizontally_stretchable", true)
-    set_style(columns, "vertical_align", "top")
-    set_style(columns, "horizontal_spacing", LAYOUT.column_spacing)
+    local body = shell.body or shell.frame
+    local columns = shell.columns or shell.frame
 
-    local body = columns.add({
-      type = "frame",
-      direction = "vertical",
-    })
-    set_element_style(body, "inside_shallow_frame_with_padding")
-    set_style(body, "width", LAYOUT.left_column_width)
-    set_style(body, "minimal_width", LAYOUT.left_column_width)
-    set_style(body, "maximal_width", LAYOUT.left_column_width)
+    add_core_panel(body, mode)
+    if state then
+      add_xp_panel(body)
+      add_dev_controls_panel(body, player)
+      add_stats_panel(body)
 
-    add_core_panel(body)
-    add_xp_panel(body)
-    add_dev_controls_panel(body, player)
-
-    add_stats_panel(body)
-
-    add_evolution_panel(columns)
+      add_evolution_panel(columns)
+    end
 
     update_turret_gui(player, entity, evolution_anchor)
+    return shell
+  end
+
+  build_turret_gui = function(player, entity, evolution_anchor)
+    return build_turret_gui_with_shell(player, entity, build_gui_shell, evolution_anchor)
+  end
+
+  build_turret_gui_screen = function(player, entity, evolution_anchor)
+    return build_turret_gui_with_shell(player, entity, build_gui_shell_screen, evolution_anchor)
   end
 
   function refresh_player_gui(player)
@@ -77,7 +51,9 @@ return function(M)
       return
     end
 
-    if player.opened ~= entity then
+    local panel = get_gui_panel(player)
+    local snapshot_panel = panel and panel.valid and panel.tags and panel.tags.turret_xp_snapshot == true
+    if not snapshot_panel and player.opened ~= entity then
       destroy_gui(player)
       forget_open_turret(player)
       return
@@ -159,164 +135,20 @@ return function(M)
     end
   end
 
-  local gui_click_dispatch = {
-    ["core-slot"] = function(player, event)
-      handle_core_slot_click(player, event)
-    end,
-    ["install-core"] = function(player)
-      install_core(player)
-    end,
-    ["extract-core"] = function(player)
-      extract_core(player)
-    end,
-    ["platform-install-core"] = function(player, event, tags)
-      install_core_from_platform(player, tags.slot)
-    end,
-    ["platform-send-core"] = function(player)
-      send_core_to_platform(player)
-    end,
-    ["bind-turret"] = function(player)
-      set_bound_turret(player, true)
-    end,
-    ["unbind-turret"] = function(player)
-      set_bound_turret(player, false)
-    end,
-    ["cycle-label-color"] = function(player)
-      cycle_label_color(player)
-    end,
-    ["dev-create-core"] = function(player)
-      dev_create_core(player)
-    end,
-    ["allocate-base"] = function(player, event, tags)
-      allocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
-    end,
-    ["deallocate-base"] = function(player, event, tags)
-      deallocate_base_upgrade(player, tags.upgrade, event.shift and 10 or 1)
-    end,
-    ["reset-base-upgrades"] = function(player)
-      reset_base_upgrades(player)
-    end,
-    ["choose-specialization"] = function(player, event, tags)
-      choose_specialization(player, tags.specialization)
-    end,
-    ["reset-specialization"] = function(player)
-      reset_specialization(player)
-    end,
-    ["choose-sub-specialization"] = function(player, event, tags)
-      choose_sub_specialization(player, tags.sub_specialization)
-    end,
-    ["reset-sub-specialization"] = function(player)
-      reset_sub_specialization(player)
-    end,
-    ["allocate-augment"] = function(player, event, tags)
-      allocate_augment(player, tags.augment, event.shift and 10 or 1)
-    end,
-    ["deallocate-augment"] = function(player, event, tags)
-      deallocate_augment(player, tags.augment, event.shift and 10 or 1)
-    end,
-    ["reset-augments"] = function(player)
-      reset_augments(player)
-    end,
-    ["reset-evolution"] = function(player)
-      reset_evolution(player)
-    end,
-    ["reset-element-slot"] = function(player, event, tags)
-      reset_element_slot(player, tags.slot)
-    end,
-    ["start-element"] = function(player, event, tags)
-      pick_element(player, tags.slot, tags.element)
-    end,
-    ["dev-complete-element-rank"] = function(player)
-      dev_complete_next_element_rank(player)
-    end,
-    ["dev-level"] = function(player, event, tags)
-      add_dev_levels(player, tags.levels)
-    end,
-    ["dev-reset-core"] = function(player)
-      dev_reset_core(player)
-    end,
-  }
-
-  function dispatch_gui_click_action(player, event, tags)
-    tags = tags or {}
-    local action = tags.turret_xp_action
-    local handler = action and gui_click_dispatch[action] or nil
-    if not handler then
-      return false
-    end
-
-    handler(player, event or {}, tags)
-    return true
-  end
-
   function handlers.on_gui_click(event)
-    local element = event.element
-    if not element or not element.valid then
-      return
-    end
-
-    local player = game.get_player(event.player_index)
-    if not player then
-      return
-    end
-
-    local tags = element.tags or {}
-    dispatch_gui_click_action(player, event, tags)
+    handle_gui_click_event(event)
   end
 
   function handlers.on_gui_checked_state_changed(event)
-    local element = event.element
-    if not element or not element.valid then
-      return
-    end
-
-    local tags = element.tags or {}
-    local player = game.get_player(event.player_index)
-    if not player then
-      return
-    end
-
-    if tags.turret_xp_action == "toggle-core-label" then
-      set_core_label_visibility(player, element.state == true)
-    elseif tags.turret_xp_action == "toggle-label-level" then
-      local entity, state = get_open_turret_state(player)
-      if state then
-        state.show_label_level = element.state == true
-        update_name_render(entity, state)
-        refresh_open_turret(player, entity)
-      end
-    end
+    handle_gui_checked_state_changed_event(event)
   end
 
   function handlers.on_gui_value_changed(event)
-    local element = event.element
-    if not element or not element.valid then
-      return
-    end
-
-    local tags = element.tags or {}
-    if tags.turret_xp_action ~= "set-label-color" then
-      return
-    end
-
-    local player = game.get_player(event.player_index)
-    if not player then
-      return
-    end
-
-    set_label_color_channel(player, tags.channel, element.slider_value or element.value)
+    handle_gui_value_changed_event(event)
   end
 
   function handlers.on_gui_text_changed(event)
-    local element = event.element
-    if not element or not element.valid then
-      return
-    end
-
-    local player = game.get_player(event.player_index)
-    if player then
-      update_core_name_from_textfield(player, element)
-    end
+    handle_gui_text_changed_event(event)
   end
 
   function handlers.on_runtime_mod_setting_changed(event)
@@ -638,6 +470,20 @@ return function(M)
     end
   end
 
+  function handlers.on_player_main_inventory_changed(event)
+    local player = event and event.player_index and game.get_player(event.player_index) or nil
+    if not player or not player.valid or not player.connected then
+      return
+    end
+
+    local entity = get_remembered_turret(player)
+    if not entity or player.opened ~= entity or get_turret_state(entity) then
+      return
+    end
+
+    refresh_player_gui(player)
+  end
+
   script.on_init(function()
     ensure_storage()
     unlock_core_recipes_for_existing_tech()
@@ -686,6 +532,9 @@ return function(M)
   script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed, gun_turret_filters)
   script.on_event(defines.events.on_player_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
   script.on_event(defines.events.on_robot_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
+  if defines.events.on_player_main_inventory_changed then
+    script.on_event(defines.events.on_player_main_inventory_changed, handlers.on_player_main_inventory_changed)
+  end
   script.on_event(defines.events.on_tick, handlers.on_tick)
   script.on_nth_tick(REFRESH_TICKS, handlers.on_refresh_tick)
   script.on_nth_tick(SHIELD_RECHARGE_TICKS, handlers.on_shield_recharge_tick)

@@ -3,9 +3,15 @@ return function(M)
   local _ENV = M
 
   function destroy_gui(player)
+    local color_picker = player.gui.screen and player.gui.screen[GUI.core_color_picker] or nil
+    if color_picker and color_picker.valid then
+      color_picker.destroy()
+    end
+
     local roots = {
       player.gui.relative,
       player.gui.left,
+      player.gui.screen,
     }
 
     for _, root in pairs(roots) do
@@ -85,6 +91,13 @@ return function(M)
     panel = player.gui.left[GUI.panel]
     if panel and panel.valid then
       return panel
+    end
+
+    if player.gui.screen then
+      panel = player.gui.screen[GUI.panel]
+      if panel and panel.valid then
+        return panel
+      end
     end
 
     return nil

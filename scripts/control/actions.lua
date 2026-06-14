@@ -3,6 +3,7 @@ local actions_module = {}
 function actions_module.new(deps)
   local GUI = deps.GUI
   local COLOR = deps.COLOR
+  local LAYOUT = deps.LAYOUT or {}
   local GATES = deps.GATES
   local BASE_UPGRADE_BY_ID = deps.BASE_UPGRADE_BY_ID
   local ELEMENT_BY_ID = deps.ELEMENT_BY_ID
@@ -92,11 +93,11 @@ function actions_module.new(deps)
   end
 
   local function update_label_color_preview(player, state)
-    local panel = get_gui_panel(player)
-    if not panel or not state then
+    if not state then
       return
     end
 
+    local panel = get_gui_panel(player)
     local core_panel = find_gui_element(panel, GUI.core)
     if core_panel then
       core_panel.tags = {
@@ -105,29 +106,42 @@ function actions_module.new(deps)
     end
 
     local color = state.label_color or { 1, 0.86, 0.46 }
-    local preview = find_gui_element(panel, GUI.core_color_preview)
-    if preview then
-      local preset = find_matching_label_color_preset(state)
-      preview.caption = preset and preset.name or "Custom"
-      set_style(preview, "font_color", color)
-    end
-
     local values = {
       { name = GUI.core_color_r_value, slider = GUI.core_color_r, value = color[1] or 0 },
       { name = GUI.core_color_g_value, slider = GUI.core_color_g, value = color[2] or 0 },
       { name = GUI.core_color_b_value, slider = GUI.core_color_b, value = color[3] or 0 },
     }
-    for _, entry in ipairs(values) do
-      local raw_value = math.floor(math.max(0, math.min(1, entry.value)) * 255 + 0.5)
-      local label = find_gui_element(panel, entry.name)
-      if label then
-        label.caption = tostring(raw_value)
-      end
-      local slider = find_gui_element(panel, entry.slider)
-      if slider then
-        pcall(function()
-          slider.slider_value = raw_value
-        end)
+    local preset = find_matching_label_color_preset(state)
+    local roots = {
+      panel,
+      player.gui.screen and player.gui.screen[GUI.core_color_picker] or nil,
+    }
+
+    for _, root in ipairs(roots) do
+      if root and root.valid then
+        local preview = find_gui_element(root, GUI.core_color_preview)
+        if preview then
+          preview.caption = preset and preset.name or { "turret-xp.label-custom-color" }
+          set_style(preview, "font_color", color)
+        end
+        local swatch = find_gui_element(root, GUI.core_color_swatch)
+        if swatch then
+          set_style(swatch, "color", color)
+        end
+
+        for _, entry in ipairs(values) do
+          local raw_value = math.floor(math.max(0, math.min(1, entry.value)) * 255 + 0.5)
+          local label = find_gui_element(root, entry.name)
+          if label then
+            label.caption = tostring(raw_value)
+          end
+          local slider = find_gui_element(root, entry.slider)
+          if slider then
+            pcall(function()
+              slider.slider_value = raw_value
+            end)
+          end
+        end
       end
     end
   end
@@ -169,6 +183,219 @@ function actions_module.new(deps)
       update_label_color_preview(player, state)
       return nil, false
     end)
+  end
+
+  local function destroy_label_color_picker(player)
+    local picker = player.gui.screen and player.gui.screen[GUI.core_color_picker] or nil
+    if picker and picker.valid then
+      picker.destroy()
+    end
+  end
+
+  local function color_channel_value(color, index)
+    return math.floor(math.max(0, math.min(1, (color or {})[index] or 0)) * 255 + 0.5)
+  end
+
+  local function add_color_swatch(parent, color, size, name)
+    local swatch = parent.add({
+      type = "progressbar",
+      name = name,
+      value = 1,
+      tooltip = { "turret-xp.label-color-tooltip" },
+    })
+    set_style(swatch, "width", size)
+    set_style(swatch, "height", size)
+    set_style(swatch, "minimal_width", size)
+    set_style(swatch, "maximal_width", size)
+    set_style(swatch, "bar_width", size)
+    set_style(swatch, "color", color)
+    return swatch
+  end
+
+  local function set_label_color_preset(player, preset_id)
+    opened_turret_action(player, function(entity, state)
+      for _, preset in ipairs(COLOR.label_presets or {}) do
+        if preset.id == preset_id then
+          state.label_color = {
+            preset.color[1],
+            preset.color[2],
+            preset.color[3],
+          }
+          state.label_color_preset = preset.id
+          update_name_render(entity, state)
+          update_label_color_preview(player, state)
+          return nil, false
+        end
+      end
+      return nil, false
+    end)
+  end
+
+  local function open_label_color_picker(player)
+    local _, state = get_open_turret_state(player)
+    if not state then
+      return
+    end
+
+    destroy_label_color_picker(player)
+
+    local color = state.label_color or { 1, 0.86, 0.46 }
+    local frame = player.gui.screen.add({
+      type = "frame",
+      name = GUI.core_color_picker,
+      direction = "vertical",
+    })
+    pcall(function()
+      frame.force_auto_center()
+    end)
+    pcall(function()
+      frame.bring_to_front()
+    end)
+
+    local header = frame.add({
+      type = "flow",
+      name = GUI.core_color_picker_header,
+      direction = "horizontal",
+      style = "frame_header_flow",
+    })
+    pcall(function()
+      header.drag_target = frame
+    end)
+    set_style(header, "horizontally_stretchable", true)
+    set_style(header, "vertical_align", "center")
+
+    header.add({
+      type = "label",
+      name = GUI.core_color_picker_title,
+      caption = { "turret-xp.label-color-title" },
+      style = "frame_title",
+      ignored_by_interaction = true,
+    })
+    header.add({
+      type = "empty-widget",
+      style = "flib_titlebar_drag_handle",
+      ignored_by_interaction = true,
+    })
+    local close = header.add({
+      type = "sprite-button",
+      sprite = "utility/close",
+      style = "frame_action_button",
+      tooltip = { "gui.close" },
+      tags = {
+        turret_xp_action = "close-label-color-picker",
+      },
+    })
+    set_style(close, "padding", 1)
+
+    local content = frame.add({
+      type = "frame",
+      direction = "vertical",
+      style = "inside_shallow_frame_with_padding",
+    })
+    set_style(content, "horizontally_stretchable", true)
+    set_style(content, "minimal_width", LAYOUT.label_color_picker_min_width or 300)
+
+    local current = content.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(current, "horizontally_stretchable", true)
+    set_style(current, "vertical_align", "center")
+    set_style(current, "horizontal_spacing", 8)
+    add_color_swatch(current, color, 22, GUI.core_color_swatch)
+    local preview = current.add({
+      type = "label",
+      name = GUI.core_color_preview,
+      caption = (find_matching_label_color_preset(state) or {}).name or { "turret-xp.label-custom-color" },
+      style = "caption_label",
+    })
+    set_style(preview, "font", "default-bold")
+    set_style(preview, "font_color", color)
+    current.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
+    })
+    local level = current.add({
+      type = "checkbox",
+      name = GUI.core_name_level_visible,
+      caption = { "turret-xp.label-level" },
+      state = state.show_label_level ~= false,
+      tags = {
+        turret_xp_action = "toggle-label-level",
+      },
+    })
+    set_style(level, "left_margin", 8)
+
+    local presets_table = content.add({
+      type = "table",
+      column_count = 2,
+      style = "table_with_selection",
+    })
+    set_style(presets_table, "top_margin", 8)
+    set_style(presets_table, "horizontally_stretchable", true)
+    set_style(presets_table, "horizontal_spacing", 8)
+    set_style(presets_table, "vertical_spacing", 2)
+
+    for _, preset in ipairs(COLOR.label_presets or {}) do
+      add_color_swatch(presets_table, preset.color, 18)
+      local button = presets_table.add({
+        type = "button",
+        caption = preset.name,
+        style = "list_box_item",
+        tags = {
+          turret_xp_action = "set-label-color-preset",
+          preset = preset.id,
+        },
+      })
+      set_style(button, "horizontally_stretchable", true)
+      set_style(button, "font_color", preset.color)
+    end
+
+    local color_table = content.add({
+      type = "table",
+      column_count = 3,
+    })
+    set_style(color_table, "top_margin", 8)
+    set_style(color_table, "horizontally_stretchable", true)
+    set_style(color_table, "horizontal_spacing", 6)
+    set_style(color_table, "vertical_spacing", 2)
+
+    local channels = {
+      { key = "r", label = "R", name = GUI.core_color_r, value_name = GUI.core_color_r_value, color = { 1, 0.36, 0.30 } },
+      { key = "g", label = "G", name = GUI.core_color_g, value_name = GUI.core_color_g_value, color = { 0.45, 1, 0.45 } },
+      { key = "b", label = "B", name = GUI.core_color_b, value_name = GUI.core_color_b_value, color = { 0.45, 0.78, 1 } },
+    }
+    for index, channel in ipairs(channels) do
+      local channel_label = color_table.add({
+        type = "label",
+        caption = channel.label,
+        style = "caption_label",
+      })
+      set_style(channel_label, "font", "default-bold")
+      set_style(channel_label, "font_color", channel.color)
+
+      local slider = color_table.add({
+        type = "slider",
+        name = channel.name,
+        minimum_value = 0,
+        maximum_value = 255,
+        value = color_channel_value(color, index),
+        tags = {
+          turret_xp_action = "set-label-color",
+          channel = channel.key,
+        },
+      })
+      set_style(slider, "horizontally_stretchable", true)
+
+      local value = color_table.add({
+        type = "label",
+        name = channel.value_name,
+        caption = tostring(color_channel_value(color, index)),
+        style = "caption_label",
+      })
+      set_style(value, "width", 32)
+      set_style(value, "horizontal_align", "right")
+    end
   end
 
   local function allocate_base_upgrade(player, upgrade_id, amount)
@@ -666,15 +893,25 @@ function actions_module.new(deps)
 
   local function add_dev_levels(player, levels)
     opened_turret_action(player, function(_, state)
-      levels = math.max(1, math.floor(tonumber(levels) or 1))
+      levels = math.floor(tonumber(levels) or 1)
+      if levels == 0 then
+        return
+      end
+
       sync_turret_progression(state)
-      local target_level = (state.level or 0) + levels
+
+      local target_level = math.max(0, (state.level or 0) + levels)
       local needed_total = 0
       for level = 0, target_level - 1 do
         needed_total = needed_total + xp_required(level)
       end
 
-      state.dev_xp = (state.dev_xp or 0) + math.max(0, needed_total - (state.total_xp or 0))
+      if levels > 0 then
+        state.dev_xp = (state.dev_xp or 0) + math.max(0, needed_total - (state.total_xp or 0))
+      else
+        local combat_xp = math.max(0, (state.total_xp or 0) - (state.dev_xp or 0))
+        state.dev_xp = math.max(0, needed_total - combat_xp)
+      end
       sync_turret_progression(state)
     end)
   end
@@ -710,6 +947,9 @@ function actions_module.new(deps)
     update_label_color_preview = update_label_color_preview,
     set_label_color_channel = set_label_color_channel,
     cycle_label_color = cycle_label_color,
+    open_label_color_picker = open_label_color_picker,
+    close_label_color_picker = destroy_label_color_picker,
+    set_label_color_preset = set_label_color_preset,
     allocate_base_upgrade = allocate_base_upgrade,
     deallocate_base_upgrade = deallocate_base_upgrade,
     reset_base_upgrades_state = reset_base_upgrades_state,

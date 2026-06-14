@@ -1,6 +1,7 @@
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
+  local DEFAULT_CORE_PICKER_SORT = "level:desc"
 
   function ensure_storage()
     storage.turret_xp = storage.turret_xp or {}
@@ -78,6 +79,178 @@ return function(M)
     end
 
     return player_state
+  end
+
+  function normalize_core_picker_sort(sort_mode)
+    local mode = tostring(sort_mode or "")
+    if mode == "none" or mode == "" then
+      return "none"
+    end
+
+    local field, direction = string.match(mode, "^([^:]+):([^:]+)$")
+    field = field or mode
+    if field ~= "level" and field ~= "name" and field ~= "specialization" and field ~= "hp" and field ~= "attack" and field ~= "range" then
+      return "none"
+    end
+
+    if direction ~= "asc" and direction ~= "desc" then
+      direction = (field == "name" or field == "specialization") and "asc" or "desc"
+    end
+
+    return field .. ":" .. direction
+  end
+
+  function default_core_picker_sort_direction(field)
+    return (field == "name" or field == "specialization") and "asc" or "desc"
+  end
+
+  function next_core_picker_sort(current_sort, field)
+    field = tostring(field or "")
+    if field ~= "level" and field ~= "name" and field ~= "specialization" and field ~= "hp" and field ~= "attack" and field ~= "range" then
+      return "none"
+    end
+
+    local current = normalize_core_picker_sort(current_sort)
+    local current_field, current_direction = string.match(current, "^([^:]+):([^:]+)$")
+    local default_direction = default_core_picker_sort_direction(field)
+    if current_field ~= field then
+      return field .. ":" .. default_direction
+    end
+
+    if current_direction == default_direction then
+      return field .. ":" .. (default_direction == "asc" and "desc" or "asc")
+    end
+
+    return "none"
+  end
+
+  function get_core_picker_sort(player)
+    local settings_table = ensure_player_settings(player)
+    local player_state = ensure_player_state(player)
+    if settings_table.core_picker_sort == nil and player_state.core_picker_sort ~= nil then
+      settings_table.core_picker_sort = player_state.core_picker_sort
+      player_state.core_picker_sort = nil
+    end
+
+    local sort = normalize_core_picker_sort(settings_table.core_picker_sort or DEFAULT_CORE_PICKER_SORT)
+    if sort == "none" then
+      return DEFAULT_CORE_PICKER_SORT
+    end
+    return sort
+  end
+
+  function set_core_picker_sort(player, sort_field)
+    local settings_table = ensure_player_settings(player)
+    local current_sort = normalize_core_picker_sort(settings_table.core_picker_sort or DEFAULT_CORE_PICKER_SORT)
+    if current_sort == "none" then
+      current_sort = DEFAULT_CORE_PICKER_SORT
+    end
+    settings_table.core_picker_sort = next_core_picker_sort(current_sort, sort_field)
+    return settings_table.core_picker_sort
+  end
+
+  local function core_picker_filter_is_known(filter_id)
+    if filter_id == "all" then
+      return true
+    end
+
+    if filter_id == "base" then
+      return true
+    end
+
+    return SPECIALIZATION_BY_ID[filter_id] ~= nil
+  end
+
+  local function core_picker_default_filters()
+    local filters = {
+      all = true,
+      base = false,
+    }
+    for _, specialization in ipairs(SPECIALIZATIONS) do
+      filters[specialization.id] = false
+    end
+    return filters
+  end
+
+  local function core_picker_filter_categories()
+    local categories = { "base" }
+    for _, specialization in ipairs(SPECIALIZATIONS) do
+      categories[#categories + 1] = specialization.id
+    end
+    return categories
+  end
+
+  function normalize_core_picker_filters(filters)
+    if type(filters) ~= "table" then
+      return core_picker_default_filters()
+    end
+
+    local normalized = {
+      all = filters.all == true,
+      base = filters.base == true,
+    }
+    local any_enabled = normalized.base
+    local legacy_all_enabled = filters.base ~= false
+    for _, specialization in ipairs(SPECIALIZATIONS) do
+      local enabled = filters[specialization.id] == true
+      normalized[specialization.id] = enabled
+      any_enabled = any_enabled or enabled
+      legacy_all_enabled = legacy_all_enabled and filters[specialization.id] ~= false
+    end
+
+    if filters.all == true or (filters.all == nil and legacy_all_enabled) or not any_enabled then
+      return core_picker_default_filters()
+    end
+
+    return normalized
+  end
+
+  function core_picker_filters_key(filters)
+    local normalized = normalize_core_picker_filters(filters)
+    local parts = {
+      "all=" .. tostring(normalized.all == true),
+      "base=" .. tostring(normalized.base == true),
+    }
+    for _, specialization in ipairs(SPECIALIZATIONS) do
+      parts[#parts + 1] = specialization.id .. "=" .. tostring(normalized[specialization.id] == true)
+    end
+    return table.concat(parts, ";")
+  end
+
+  function get_core_picker_filters(player)
+    local settings_table = ensure_player_settings(player)
+    local player_state = ensure_player_state(player)
+    if settings_table.core_picker_filters == nil and player_state.core_picker_filters ~= nil then
+      settings_table.core_picker_filters = player_state.core_picker_filters
+      player_state.core_picker_filters = nil
+    end
+
+    return normalize_core_picker_filters(settings_table.core_picker_filters)
+  end
+
+  function set_core_picker_filter(player, filter_id, enabled)
+    local settings_table = ensure_player_settings(player)
+    local filters = normalize_core_picker_filters(settings_table.core_picker_filters)
+
+    if filter_id == "all" then
+      settings_table.core_picker_filters = core_picker_default_filters()
+      return settings_table.core_picker_filters
+    end
+
+    if core_picker_filter_is_known(filter_id) then
+      if filters.all == true then
+        filters = {
+          all = false,
+        }
+        for _, category in ipairs(core_picker_filter_categories()) do
+          filters[category] = false
+        end
+      end
+      filters.all = false
+      filters[filter_id] = enabled == true
+    end
+    settings_table.core_picker_filters = normalize_core_picker_filters(filters)
+    return settings_table.core_picker_filters
   end
 
   function is_gun_turret(entity)

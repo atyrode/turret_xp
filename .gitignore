@@ -1,3 +1,5 @@
 dist/
 *.tmp
 .env
+.codex_tmp/
+case_study/
