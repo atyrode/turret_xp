@@ -58,6 +58,13 @@ return function(M)
     end
   end
 
+  local function clear_last_extracted_core_if_reinstalled(player, entity, installed)
+    local record = get_last_extracted_core(player, entity)
+    if record and installed and installed.chip_id == record.chip_id then
+      clear_last_extracted_core(player)
+    end
+  end
+
   function install_core(player)
     local entity = get_remembered_turret(player)
     if not entity or player.opened ~= entity then
@@ -87,6 +94,7 @@ return function(M)
     if not installed then
       insert_chip_item(player, profile)
     else
+      clear_last_extracted_core_if_reinstalled(player, entity, installed)
       combat.mark_turret_body_sync_pending(installed)
     end
 
@@ -133,7 +141,33 @@ return function(M)
     end
 
     combat.mark_turret_body_sync_pending(installed)
+    clear_last_extracted_core_if_reinstalled(player, entity, installed)
     refresh_open_turret(player, entity)
+  end
+
+  function reinstall_last_extracted_core(player)
+    local entity, existing = get_open_turret_state(player)
+    if not entity then
+      return
+    end
+
+    if existing then
+      show_core_slot_warning(player, { "turret-xp.core-already-installed" })
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local record = get_last_extracted_core(player, entity)
+    local inventory = type(player.get_main_inventory) == "function" and player.get_main_inventory() or nil
+    local option = record and find_core_option_by_chip_id(inventory, record.chip_id) or nil
+    if not option then
+      clear_last_extracted_core(player)
+      show_core_slot_warning(player, { "turret-xp.inventory-core-missing" })
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    install_core_from_inventory(player, option.index)
   end
 
   function extract_core(player)
@@ -166,6 +200,7 @@ return function(M)
       return
     end
 
+    remember_last_extracted_core(player, entity, profile)
     combat.mark_turret_body_target_pending(entity, BASE_TURRET_NAME)
     refresh_open_turret(player, entity)
   end
@@ -208,6 +243,7 @@ return function(M)
     end
 
     combat.mark_turret_body_sync_pending(installed)
+    clear_last_extracted_core_if_reinstalled(player, entity, installed)
 
     refresh_open_turret(player, entity)
   end
@@ -289,6 +325,7 @@ return function(M)
 
         cursor.set_stack(outgoing_stack)
         combat.mark_turret_body_sync_pending(installed)
+        clear_last_extracted_core_if_reinstalled(player, entity, installed)
 
         refresh_open_turret(player, entity)
         return
@@ -342,6 +379,7 @@ return function(M)
       end
 
       combat.mark_turret_body_sync_pending(installed)
+      clear_last_extracted_core_if_reinstalled(player, entity, installed)
 
       refresh_open_turret(player, entity)
       return

@@ -28,15 +28,51 @@ return function()
     vertical_spacing = 0,
     horizontal_spacing = 0,
     cell_padding = 0,
-    left_cell_padding = 4,
-    right_cell_padding = 4,
-    top_cell_padding = 4,
-    bottom_cell_padding = 4,
-    apply_row_graphical_set_per_column = false,
+    left_cell_padding = 0,
+    right_cell_padding = 0,
+    top_cell_padding = 0,
+    bottom_cell_padding = 0,
+    apply_row_graphical_set_per_column = true,
     odd_row_graphical_set = {
       filename = "__core__/graphics/gui-new.png",
       position = { 472, 25 },
       size = 1,
+    },
+  }
+
+  styles.turret_xp_inventory_core_table_cell = {
+    type = "horizontal_flow_style",
+    left_padding = 4,
+    right_padding = 4,
+    top_padding = 0,
+    bottom_padding = 0,
+    horizontal_spacing = 0,
+    vertical_align = "center",
+  }
+
+  styles.turret_xp_inventory_core_table_action_cell = {
+    type = "horizontal_flow_style",
+    parent = "turret_xp_inventory_core_table_cell",
+    horizontal_align = "center",
+  }
+
+  styles.turret_xp_inventory_core_table_separator = {
+    type = "empty_widget_style",
+    width = 1,
+    graphical_set = {
+      base = {
+        center = { position = { 76, 8 }, size = { 1, 1 } },
+      },
+    },
+  }
+
+  styles.turret_xp_inventory_core_table_header_divider = {
+    type = "empty_widget_style",
+    height = 2,
+    graphical_set = {
+      base = {
+        center = { position = { 76, 8 }, size = { 1, 1 } },
+      },
     },
   }
 

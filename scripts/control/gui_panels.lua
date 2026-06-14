@@ -128,6 +128,7 @@ return function(M)
         get_remembered_turret = get_remembered_turret,
         get_player_core_options = get_player_core_options,
         get_player_core_options_model = get_player_core_options_model,
+        get_last_extracted_core = get_last_extracted_core,
         get_core_picker_sort = get_core_picker_sort,
         get_core_picker_filters = get_core_picker_filters,
         core_picker_filters_key = core_picker_filters_key,

@@ -81,9 +81,10 @@ local layout = {
   core_panel_padding = 16,
   inventory_core_frame_padding = 32,
   inventory_core_scrollbar_width = 20,
-  inventory_core_table_grid_inset = 8,
+  inventory_core_table_grid_inset = 0,
   inventory_core_table_spacing = 0,
-  inventory_core_table_column_count = 7,
+  inventory_core_table_data_column_count = 7,
+  inventory_core_table_separator_width = 1,
   inventory_core_table_cell_horizontal_padding = 4,
   inventory_core_sort_arrow_slot_width = 12,
   inventory_core_table_header_height = 24,
@@ -106,16 +107,15 @@ layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12
 layout.inventory_core_picker_width = layout.left_column_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.inventory_core_detail_width = layout.inventory_core_picker_width - layout.inventory_core_scrollbar_width - 112
-layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding
+layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.empty_inventory_core_picker_height = layout.evolution_outer_height - 190
 layout.empty_inventory_core_table_width = layout.empty_inventory_core_picker_width
   - layout.inventory_core_scrollbar_width
   - layout.inventory_core_table_grid_inset
-layout.empty_inventory_core_table_cell_padding_width = layout.inventory_core_table_column_count
-  * layout.inventory_core_table_cell_horizontal_padding
-  * 2
+layout.empty_inventory_core_table_cell_padding_width = 0
 layout.empty_inventory_core_table_content_width = layout.empty_inventory_core_table_width
-  - layout.empty_inventory_core_table_cell_padding_width
+layout.inventory_core_table_separator_count = layout.inventory_core_table_data_column_count - 1
+layout.inventory_core_table_column_count = layout.inventory_core_table_data_column_count + layout.inventory_core_table_separator_count
 layout.inventory_core_sample_slot_size = 32
 layout.empty_inventory_core_specialization_width = 250
 layout.empty_inventory_core_level_width = 64
@@ -129,6 +129,7 @@ layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_level_widt
   + layout.empty_inventory_core_attack_width
   + layout.empty_inventory_core_stat_width
   + layout.empty_inventory_core_action_width
+  + (layout.inventory_core_table_separator_count * layout.inventory_core_table_separator_width)
   + ((layout.inventory_core_table_column_count - 1) * layout.inventory_core_table_spacing)
 layout.empty_inventory_core_name_width = layout.empty_inventory_core_table_content_width - layout.empty_inventory_core_fixed_width
 layout.empty_inventory_core_detail_width = layout.empty_inventory_core_name_width

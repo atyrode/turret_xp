@@ -113,6 +113,7 @@ return function(M)
   get_core_options_from_inventory = inventory_service.get_core_options_from_inventory
   get_player_core_options = inventory_service.get_player_core_options
   get_player_core_options_model = inventory_service.get_player_core_options_model
+  find_core_option_by_chip_id = inventory_service.find_core_option_by_chip_id
   remove_one_chip_stack = inventory_service.remove_one_chip_stack
   insert_chip_item = inventory_service.insert_chip_item
   can_insert_chip_inventory = inventory_service.can_insert_chip_inventory

@@ -61,11 +61,12 @@ function tests.run_layout_constants_test()
     + layout.empty_inventory_core_attack_width
     + layout.empty_inventory_core_stat_width
     + layout.empty_inventory_core_action_width
+    + (layout.inventory_core_table_separator_count * layout.inventory_core_table_separator_width)
     + ((layout.inventory_core_table_column_count - 1) * layout.inventory_core_table_spacing)
     + layout.empty_inventory_core_table_cell_padding_width
   assert_true(
     wide_table_width <= layout.empty_inventory_core_table_width,
-    "wide inventory core table columns plus native cell padding must fit inside the reserved table viewport"
+    "wide inventory core table columns, separators, and spacing must fit inside the reserved table viewport"
   )
   assert_eq(
     layout.empty_inventory_core_name_width + layout.empty_inventory_core_fixed_width,
@@ -228,6 +229,26 @@ function tests.run_inventory_core_picker_test(surface)
   assert_eq(#sample.remaining_names, 3, "inventory core picker action did not remove one selected inventory core")
   assert_eq(sample.remaining_names[1], "Mid", "remaining inventory cores were not still sorted after install")
   assert_eq(sample.remaining_names[3], "", "remaining inventory cores lost the unnamed core")
+end
+
+function tests.run_last_extracted_core_reinstall_test(surface)
+  local turret = create_turret(surface, { 12, 0 }, 10)
+  local sample = call("last_extracted_core_reinstall_sample", turret)
+
+  assert_true(sample ~= nil, "last extracted core reinstall sample returned nothing")
+  assert_true(sample.before ~= nil, "sample did not install the initial core")
+  assert_eq(sample.before.custom_name, "Undo", "sample initial core name was wrong")
+  assert_eq(sample.after_extract.installed, nil, "extracting the core did not empty the turret")
+  assert_eq(sample.after_extract.record_chip_id, sample.before.chip_id, "extracting the core did not remember the extracted chip id")
+  assert_eq(sample.after_extract.option_name, "Undo", "remembered extracted core did not resolve from inventory")
+  assert_true(sample.after_extract.option_slot ~= nil, "remembered extracted core did not expose an inventory slot")
+  assert_true(sample.after_reinstall ~= nil, "reinstalling the remembered core did not restore a turret core")
+  assert_eq(sample.after_reinstall.chip_id, sample.before.chip_id, "reinstalling the remembered core changed its chip id")
+  assert_eq(sample.after_reinstall.custom_name, "Undo", "reinstalling the remembered core lost its name")
+  assert_eq(sample.record_after_reinstall, nil, "successful reinstall did not clear the last extracted core record")
+  assert_eq(sample.second_record_chip_id, sample.before.chip_id, "second extraction did not remember the core again")
+  assert_eq(sample.after_missing_reinstall, nil, "reinstalling after the remembered core left inventory should not install a core")
+  assert_eq(sample.record_after_missing, nil, "missing remembered core did not clear the undo record")
 end
 
 return tests

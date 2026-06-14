@@ -11,6 +11,7 @@ function core_panel_module.new(deps)
   local get_remembered_turret = deps.get_remembered_turret
   local get_player_core_options = deps.get_player_core_options
   local get_player_core_options_model = deps.get_player_core_options_model
+  local get_last_extracted_core = deps.get_last_extracted_core
   local get_core_picker_sort = deps.get_core_picker_sort
   local get_core_picker_filters = deps.get_core_picker_filters
   local core_picker_filters_key = deps.core_picker_filters_key
@@ -129,19 +130,47 @@ function core_panel_module.new(deps)
     return table.concat(parts, "|")
   end
 
-  local function build_empty_core_picker_model(player)
+  local function find_option_by_chip_id(options, chip_id)
+    if not chip_id then
+      return nil
+    end
+
+    for _, option in ipairs(options or {}) do
+      local profile = option.profile or {}
+      if profile.chip_id == chip_id then
+        return option
+      end
+    end
+
+    return nil
+  end
+
+  local function build_empty_core_picker_model(player, entity)
     local sort_mode = get_core_picker_sort(player)
     local core_filters = get_core_picker_filters(player)
     local inventory_model = get_player_core_options_model(player, sort_mode, core_filters)
     local all_inventory_core_options = inventory_model.all_options or {}
     local inventory_core_options = inventory_model.options or {}
+    local last_extracted_core = get_last_extracted_core and get_last_extracted_core(player, entity) or nil
+    local last_extracted_option = last_extracted_core and find_option_by_chip_id(all_inventory_core_options, last_extracted_core.chip_id)
+      or nil
 
     local model = {
       sort_mode = sort_mode,
       filters = core_filters,
       all_options = all_inventory_core_options,
       options = inventory_core_options,
+      last_extracted_core = last_extracted_core,
+      last_extracted_option = last_extracted_option,
     }
+    model.last_extracted_key = last_extracted_option
+        and table.concat({
+          tostring(last_extracted_core.chip_id or ""),
+          tostring(last_extracted_option.quality or ""),
+          tostring((last_extracted_option.profile or {}).level or 0),
+          tostring((last_extracted_option.profile or {}).custom_name or ""),
+        }, "/")
+      or ""
     model.key = table.concat({
       sort_mode,
       "filters",
@@ -175,7 +204,7 @@ function core_panel_module.new(deps)
       }, ":")
     end
 
-    empty_picker_model = build_empty_core_picker_model(player)
+    empty_picker_model = build_empty_core_picker_model(player, entity)
     local picker_key = "picker:"
       .. empty_picker_model.key
       .. ":quality:"
@@ -187,6 +216,7 @@ function core_panel_module.new(deps)
       tostring(dev_controls_enabled(player)),
       tostring(platform_inventory_present),
       tostring(platform_core_count),
+      tostring(empty_picker_model.last_extracted_key or ""),
     }, ":")
     return base_key .. ":" .. picker_key, empty_picker_model, base_key, picker_key
   end
@@ -676,9 +706,9 @@ function core_panel_module.new(deps)
     local scroll = frame.add({
       type = "scroll-pane",
       direction = "vertical",
-      style = "flib_naked_scroll_pane",
+      style = wide and "flib_naked_scroll_pane_no_padding" or "flib_naked_scroll_pane",
     })
-    scroll.vertical_scroll_policy = "auto-and-reserve-space"
+    scroll.vertical_scroll_policy = wide and "always" or "auto-and-reserve-space"
     scroll.horizontal_scroll_policy = "never"
     set_style(scroll, "top_margin", 4)
     set_style(scroll, "height", picker_height)
@@ -737,15 +767,12 @@ function core_panel_module.new(deps)
 
   local function add_inventory_core_picker(core_panel, player, entity, options)
     options = options or {}
-    local wide = options.wide == true
     local frame_definition = {
-      type = wide and "flow" or "frame",
+      type = "frame",
       name = GUI.inventory_cores,
       direction = "vertical",
+      style = "inside_shallow_frame_with_padding",
     }
-    if not wide then
-      frame_definition.style = "inside_shallow_frame_with_padding"
-    end
 
     local frame = core_panel.add(frame_definition)
     set_style(frame, "top_margin", 6)
@@ -1091,6 +1118,9 @@ function core_panel_module.new(deps)
     set_element_style(icon, "slot_button")
     set_style(icon, "size", 40)
 
+    local last_extracted_option = (not state and empty_picker_model and empty_picker_model.last_extracted_option) or nil
+    local last_extracted_profile = last_extracted_option and last_extracted_option.profile or nil
+
     local label = top.add({
       type = "label",
       name = GUI.core_status,
@@ -1099,13 +1129,32 @@ function core_panel_module.new(deps)
     })
     set_style(label, "font", "default-bold")
     set_style(label, "single_line", false)
-    set_style(label, "maximal_width", state and 180 or LAYOUT.empty_panel_width - 136)
+    set_style(label, "maximal_width", state and 180 or last_extracted_option and 300 or LAYOUT.empty_panel_width - 136)
 
-    if state then
+    if state or last_extracted_option then
       top.add({
         type = "empty-widget",
         style = "flib_horizontal_pusher",
       })
+    end
+
+    if last_extracted_option then
+      local reinstall = top.add({
+        type = "button",
+        caption = { "turret-xp.reinstall-last-core" },
+        tooltip = {
+          "turret-xp.reinstall-last-core-tooltip",
+          core_display_name(last_extracted_profile),
+          rich_value((last_extracted_profile and last_extracted_profile.level) or 0),
+        },
+        tags = {
+          turret_xp_action = "reinstall-last-core",
+        },
+      })
+      set_style(reinstall, "minimal_width", 132)
+    end
+
+    if state then
       widgets.add_tool_button(top, {
         sprite = "utility/export_slot",
         tooltip = { "turret-xp.extract-core-button-tooltip" },
