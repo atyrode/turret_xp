@@ -1,30 +1,45 @@
 local core_label_controls_module = {}
 
 local LABEL_LAYOUT = {
-  textfield_min_width = 220,
+  form_label_width = 70,
+  textfield_min_width = 180,
   swatch_size = 22,
   color_button_min_width = 112,
 }
 
 function core_label_controls_module.new(deps)
   local GUI = deps.GUI
+  local COLOR = deps.COLOR
   local set_style = deps.set_style
   local find_matching_label_color_preset = deps.find_matching_label_color_preset
 
   local service = {}
 
-  local function add_color_controls(parent, state)
+  local function add_row_label(parent, caption)
+    local label = parent.add({
+      type = "label",
+      caption = caption,
+      style = "caption_label",
+    })
+    set_style(label, "font_color", COLOR.caption)
+    set_style(label, "width", LABEL_LAYOUT.form_label_width)
+    set_style(label, "minimal_width", LABEL_LAYOUT.form_label_width)
+    set_style(label, "maximal_width", LABEL_LAYOUT.form_label_width)
+    return label
+  end
+
+  local function add_color_controls(frame, state)
     local preset = find_matching_label_color_preset(state)
     local label_color = state.label_color or { 1, 0.86, 0.46 }
 
-    local preset_flow = parent.add({
+    local preset_flow = frame.add({
       type = "flow",
       direction = "horizontal",
     })
-    set_style(preset_flow, "top_margin", 4)
     set_style(preset_flow, "horizontally_stretchable", true)
     set_style(preset_flow, "horizontal_spacing", 6)
     set_style(preset_flow, "vertical_align", "center")
+    add_row_label(preset_flow, { "turret-xp.label-color-title" })
 
     local swatch = preset_flow.add({
       type = "progressbar",
@@ -51,13 +66,11 @@ function core_label_controls_module.new(deps)
     set_style(color_button, "font_color", label_color)
     set_style(color_button, "minimal_width", LABEL_LAYOUT.color_button_min_width)
 
-    local label_options = parent.add({
-      type = "flow",
-      direction = "horizontal",
+    preset_flow.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
     })
-    set_style(label_options, "top_margin", 4)
-    set_style(label_options, "horizontally_stretchable", true)
-    label_options.add({
+    preset_flow.add({
       type = "checkbox",
       name = GUI.core_name_level_visible,
       caption = { "turret-xp.label-level" },
@@ -69,20 +82,23 @@ function core_label_controls_module.new(deps)
   end
 
   function service.add(parent, state)
-    local name_flow = parent.add({
+    local frame = parent.add({
+      type = "frame",
+      direction = "vertical",
+      style = "inside_shallow_frame_with_padding",
+    })
+    set_style(frame, "top_margin", 6)
+    set_style(frame, "horizontally_stretchable", true)
+    set_style(frame, "vertical_spacing", 4)
+
+    local name_flow = frame.add({
       type = "flow",
       direction = "horizontal",
     })
-    set_style(name_flow, "top_margin", 4)
     set_style(name_flow, "vertical_align", "center")
     set_style(name_flow, "horizontally_stretchable", true)
     set_style(name_flow, "horizontal_spacing", 8)
-
-    name_flow.add({
-      type = "label",
-      caption = { "turret-xp.core-name" },
-      style = "caption_label",
-    })
+    add_row_label(name_flow, { "turret-xp.core-name" })
 
     local textfield = name_flow.add({
       type = "textfield",
@@ -105,7 +121,7 @@ function core_label_controls_module.new(deps)
     })
 
     if state.show_name_label == true then
-      add_color_controls(parent, state)
+      add_color_controls(frame, state)
     end
   end
 

@@ -117,6 +117,7 @@ return function(M)
     if not core_label_controls_service then
       core_label_controls_service = gui_core_label_controls.new({
         GUI = GUI,
+        COLOR = COLOR,
         set_style = set_style,
         find_matching_label_color_preset = find_matching_label_color_preset,
       })
