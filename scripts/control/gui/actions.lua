@@ -51,10 +51,6 @@ function gui_actions_module.new(deps)
       set_core_picker_sort(player, tags.sort)
       refresh_open_turret(player, get_remembered_turret(player))
     end,
-    ["set-core-filter"] = function(player, event, tags)
-      set_core_picker_filter(player, tags.filter, tags.enabled == true)
-      refresh_open_turret(player, get_remembered_turret(player))
-    end,
     ["bind-turret"] = function(player)
       set_bound_turret(player, true)
     end,

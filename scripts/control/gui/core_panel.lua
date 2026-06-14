@@ -283,13 +283,11 @@ function core_panel_module.new(deps)
         id = "all",
         caption = { "turret-xp.inventory-core-filter-all" },
         tooltip = { "turret-xp.inventory-core-filter-all-tooltip" },
-        color = COLOR.caption,
       },
       {
         id = "base",
         caption = { "turret-xp.inventory-core-filter-base" },
         tooltip = { "turret-xp.inventory-core-filter-base-tooltip" },
-        color = COLOR.specialization.base,
       },
     }
     for _, specialization in ipairs(SPECIALIZATIONS or {}) do
@@ -297,7 +295,6 @@ function core_panel_module.new(deps)
         id = specialization.id,
         caption = specialization.name,
         tooltip = { "turret-xp.inventory-core-filter-specialization-tooltip", specialization.name },
-        color = COLOR.specialization[specialization.id] or COLOR.caption,
       }
     end
     return modes
@@ -339,22 +336,17 @@ function core_panel_module.new(deps)
     set_style(label, "right_margin", 2)
 
     for _, mode in ipairs(core_filter_modes()) do
-      local active = filter_checkbox_state(current_filters, mode.id)
-      local button = filter_flow.add({
-        type = "button",
+      local checkbox = filter_flow.add({
+        type = "checkbox",
         caption = filter_caption(mode),
         tooltip = mode.tooltip,
-        mouse_button_filter = { "left" },
+        state = filter_checkbox_state(current_filters, mode.id),
         tags = {
           turret_xp_action = "set-core-filter",
           filter = mode.id,
-          enabled = not active,
         },
       })
-      set_style(button, "font", active and "default-bold" or "default")
-      set_style(button, "font_color", active and mode.color or COLOR.muted)
-      set_style(button, "height", 24)
-      set_style(button, "padding", { 4, 4, 0, 0 })
+      set_style(checkbox, "font", "default")
     end
   end
 
