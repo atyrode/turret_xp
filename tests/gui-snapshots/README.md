@@ -1,0 +1,42 @@
+# GUI Snapshots
+
+This folder holds graphical-client screenshots used to review the Turret XP GUI during development. The snapshot harness is intentionally not part of normal gameplay or the packaged mod.
+
+## Capture Workflow
+
+1. Install the local mod package and snapshot companion:
+
+   ```sh
+   scripts/gui-snapshots.sh install
+   ```
+
+2. Start Factorio normally with `turret_xp`, `flib`, and `turret_xp_gui_snapshots` enabled.
+
+3. In a disposable or development save, run:
+
+   ```text
+   /turret-xp-snapshots
+   ```
+
+   The command briefly moves the player to a temporary fixture surface, opens the real Turret XP GUI for each scene, captures screenshots with `game.take_screenshot(show_gui=true)`, then restores the player position and removes the temporary scene entities and sample Veteran Cores.
+
+4. Copy the images from Factorio `script-output` into the repo:
+
+   ```sh
+   scripts/gui-snapshots.sh collect
+   ```
+
+The copied files land in `tests/gui-snapshots/current/`. They are regular repo files so they can be inspected by Codex, compared manually, or promoted later for documentation.
+
+## Scenes
+
+- `empty-picker`: empty turret plus sample Veteran Cores in the player inventory.
+- `installed-basic`: named installed core with label controls and bound state.
+- `evolution-choices`: high-level core with unspent progression choices.
+- `evolution-progress`: specialized elemental core with augments and material progress.
+
+Capture only one scene by passing its id:
+
+```text
+/turret-xp-snapshots evolution-progress
+```

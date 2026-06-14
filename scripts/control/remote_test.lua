@@ -450,6 +450,15 @@ return function(M)
 
   -- GUI, compatibility, and prototype inspection fixtures.
   turret_xp_test_register_methods(turret_xp_test_remote_methods, {
+    open_gui = function(player, entity)
+      if not player or not player.valid or not is_gun_turret(entity) then
+        return false
+      end
+
+      player.opened = entity
+      build_turret_gui(player, entity)
+      return true
+    end,
     dispatch_cycle_label_color = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then

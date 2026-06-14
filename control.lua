@@ -180,7 +180,7 @@ M.handle_gui_text_changed_event = M.gui_actions.on_gui_text_changed
 
 require("scripts.control.combat_effects")(M)
 require("scripts.control.events")(M)
-if script.active_mods["turret_xp_headless_tests"] then
+if script.active_mods["turret_xp_headless_tests"] or script.active_mods["turret_xp_gui_snapshots"] then
   require("scripts.control.remote_test")(M)
 end
 

@@ -193,6 +193,7 @@ Do not add a second broad GUI framework for the #42 GUI split unless it replaces
 - The panel updates named elements in place every 60 ticks; new GUI work should preserve stable hover/read behavior.
 - `flib` adds a dependency, but it is common, already required, and handled by the in-game dependency manager.
 - The next custom GUI pass can become large enough to require visual iteration and manual validation. Keep the implementation staged by ownership so it does not mix layout polish, localization decisions, state migrations, and gameplay behavior in one unreviewable change.
+- GUI screenshot automation must run through a graphical Factorio client. `LuaGameScript::take_screenshot` can include GUI when `show_gui=true`, but it does nothing in headless mode, so Turret XP uses a local companion mod plus `scripts/gui-snapshots.sh` instead of trying to fold visual screenshots into the headless suite. The companion creates temporary fixture scenes and writes screenshots under Factorio `script-output`; the repo script copies them into `tests/gui-snapshots/current/` for review.
 - `entity-gui-lib` is promising for full GUI replacement, but it would be a larger dependency and ownership shift than the current relative-panel polish needs.
 - `entity-gui-lib` may still be useful for non-profile inventories or a full GUI replacement, but do not use its current inventory transfer helper for `item-with-tags` Veteran Cores unless tag preservation is added or wrapped.
 - The website can become stale if it stays hand-maintained; keep generation from mod metadata/docs on the roadmap before the site grows.
@@ -204,6 +205,7 @@ Do not add a second broad GUI framework for the #42 GUI split unless it replaces
 - Run `docker compose run --rm lua-tools` for strict local Lua syntax, StyLua, and Luacheck validation without mutating the host.
 - Run `scripts/package.sh`.
 - Run `scripts/test-headless.sh`. It packages the current mod, assembles an isolated mod directory with flib and `tests/headless/turret_xp_headless_tests`, creates a save, benchmark-runs it for deterministic ticks, and fails if the test mod does not log `PASS`. It then runs `tests/headless/turret_xp_remote_policy_tests` separately to verify the private `turret_xp_test` remote interface is absent without the companion suite.
+- For GUI layout changes, run `scripts/gui-snapshots.sh install`, capture with `/turret-xp-snapshots` in the graphical client, then run `scripts/gui-snapshots.sh collect` so the latest images are available in `tests/gui-snapshots/current/` for visual inspection.
 - In GitHub Actions, CI runs package validation on pull requests and `main`. The headless job runs when `FACTORIO_SERVICE_USERNAME` and `FACTORIO_SERVICE_TOKEN` secrets are available; release publishing requires those download credentials plus `FACTORIO_MOD_PORTAL_API_KEY`.
 - Inspect the zip layout.
 - If a local Factorio binary is available, run a headless load smoke test.

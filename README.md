@@ -60,6 +60,20 @@ scripts/test-headless.sh
 
 `scripts/check.sh` is host-friendly and skips optional Lua tools that are not installed. The Docker command is the strict Lua syntax, StyLua, and Luacheck path used by CI. `scripts/test-headless.sh` packages the current mod and runs the Factorio headless regression suite when `factorio` is available or `FACTORIO_BIN=/path/to/factorio` is set.
 
+GUI screenshot review uses a graphical Factorio client because Factorio does not write GUI screenshots in headless mode:
+
+```sh
+scripts/gui-snapshots.sh install
+```
+
+Then start Factorio, load a disposable development save, run `/turret-xp-snapshots`, and collect the images:
+
+```sh
+scripts/gui-snapshots.sh collect
+```
+
+The captured PNGs and generated index are copied into `tests/gui-snapshots/current/` for visual review and future documentation reuse.
+
 Public website, release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and [docs/public-copy.json](docs/public-copy.json):
 
 ```sh

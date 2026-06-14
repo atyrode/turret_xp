@@ -18,6 +18,8 @@
 - `.stylua.toml`, `.luacheckrc`, `compose.yaml`, and `tools/lua/Dockerfile`: Lua format/lint configuration and the optional local strict-tooling container.
 - `tests/headless/turret_xp_headless_tests/`: temporary Factorio test mod used by `scripts/test-headless.sh`; `control.lua` owns runner lifecycle, `support.lua` owns shared assertions/helpers, `suite.lua` owns orchestration, and subsystem `*_tests.lua` modules own behavior checks.
 - `tests/headless/turret_xp_remote_policy_tests/`: separate headless smoke-test mod used by `scripts/test-headless.sh` to verify private test remotes are absent when the companion suite is not active.
+- `tests/gui-snapshots/turret_xp_gui_snapshots/`: local graphical-client companion mod used only by `scripts/gui-snapshots.sh`. It enables the private test remote, creates temporary GUI fixture scenes, opens the real Turret XP panel, and captures PNGs through Factorio's screenshot API.
+- `tests/gui-snapshots/current/`: latest copied GUI screenshot artifacts for local review. These are generated files that may later be promoted into docs or visual baselines.
 - `docs/`: project context, playtest guidance, shared public copy, and the generated GitHub Pages homepage.
 
 ## Runtime State
@@ -201,6 +203,8 @@ storage.turret_xp = {
   }
 }
 ```
+
+The private `turret_xp_test` remote interface is registered only when `turret_xp_headless_tests` or `turret_xp_gui_snapshots` is active. Normal gameplay loads and packaged releases must not expose it.
 
 ## Runtime Responsibilities
 
