@@ -53,42 +53,16 @@ local SCENES = {
     description = "High-level unspent core showing available Evolution choices.",
     variants = {
       {
-        id = "core",
-        description = "Core upgrade tab with unspent points.",
-        tab = "core",
+        id = "top",
+        description = "Top of the Evolution column with unspent points.",
       },
       {
-        id = "specialization",
-        description = "Specialization tab with pickable stat effects.",
-        tab = "specialization",
-      },
-      {
-        id = "specialization-bottom",
-        description = "Specialization tab scrolled to the lower choices.",
-        tab = "specialization",
+        id = "evolution-bottom",
+        description = "Evolution column scrolled to the lower choices.",
         scroll = {
           target = "evolution",
           position = "bottom",
         },
-      },
-      {
-        id = "elements",
-        description = "Element tab with unpicked element choices.",
-        tab = "elements",
-      },
-      {
-        id = "elements-bottom",
-        description = "Element tab scrolled to the lower choices.",
-        tab = "elements",
-        scroll = {
-          target = "evolution",
-          position = "bottom",
-        },
-      },
-      {
-        id = "augments",
-        description = "Augment tab with unspent augment points.",
-        tab = "augments",
       },
     },
     profile = {
@@ -103,33 +77,16 @@ local SCENES = {
     description = "Specialized core with elements, augments, and material progress.",
     variants = {
       {
-        id = "core",
-        description = "Core upgrade tab after progression choices.",
-        tab = "core",
+        id = "top",
+        description = "Top of the Evolution column after progression choices.",
       },
       {
-        id = "specialization",
-        description = "Specialization tab with chosen branches.",
-        tab = "specialization",
-      },
-      {
-        id = "elements",
-        description = "Element tab with active element mastery progress.",
-        tab = "elements",
-      },
-      {
-        id = "elements-bottom",
-        description = "Element tab scrolled to the lower mastery details.",
-        tab = "elements",
+        id = "evolution-bottom",
+        description = "Evolution column scrolled to the lower mastery details.",
         scroll = {
           target = "evolution",
           position = "bottom",
         },
-      },
-      {
-        id = "augments",
-        description = "Augment tab after progression choices.",
-        tab = "augments",
       },
     },
     profile = {
@@ -589,25 +546,8 @@ local function setup_next_scene(session)
 
   session.current_capture = capture
   session.current_frame = nil
-  session.step = "variant"
-  session.wait = 20
-end
-
-local function apply_current_variant(session)
-  local player = game.get_player(session.player_index)
-  if not player or not player.valid then
-    storage.turret_xp_gui_snapshots.session = nil
-    return
-  end
-
-  local capture = session.current_capture
-  local variant = capture and capture.variant or nil
-  if variant and variant.tab and remote.interfaces[IFACE] and remote.interfaces[IFACE].set_gui_snapshot_evolution_tab then
-    pcall(remote.call, IFACE, "set_gui_snapshot_evolution_tab", player, variant.tab)
-  end
-
   session.step = "center"
-  session.wait = 6
+  session.wait = 20
 end
 
 local function center_current_scene(session)
@@ -682,7 +622,6 @@ local function capture_current_scene(session)
     variant = variant and variant.id or nil,
     file = file_name,
     description = capture.description,
-    tab = variant and variant.tab or nil,
     scroll = variant and variant.scroll or nil,
     frame = frame,
   }
@@ -706,9 +645,7 @@ script.on_event(defines.events.on_tick, function()
     return
   end
 
-  if session.step == "variant" then
-    apply_current_variant(session)
-  elseif session.step == "center" then
+  if session.step == "center" then
     center_current_scene(session)
   elseif session.step == "scroll" then
     scroll_current_scene(session)

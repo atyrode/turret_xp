@@ -18,7 +18,7 @@ This folder holds graphical-client screenshots used to review the Turret XP GUI 
    /turret-xp-snapshots
    ```
 
-   The command briefly moves the player to a temporary fixture surface, opens the real Turret XP GUI as a centered standalone screen frame for each configured view, selects the requested Evolution tab or scroll position, records that frame's bounds, captures screenshots with `game.take_screenshot(show_gui=true)`, then restores the player position and removes the temporary scene entities and sample Veteran Cores.
+   The command briefly moves the player to a temporary fixture surface, opens the real Turret XP GUI as a centered standalone screen frame for each configured view, selects the requested scroll position, records that frame's bounds, captures screenshots with `game.take_screenshot(show_gui=true)`, then restores the player position and removes the temporary scene entities and sample Veteran Cores.
 
 4. Copy the images from Factorio `script-output` into the repo:
 
@@ -32,8 +32,8 @@ The collected files land in `tests/gui-snapshots/current/`. The `ui/` directory 
 
 - `empty-picker`: empty turret plus sample Veteran Cores in the player inventory.
 - `installed-basic`: named installed core with label controls and bound state, including a stats-bottom scroll view.
-- `evolution-choices`: high-level core with unspent progression choices, captured once per Evolution tab.
-- `evolution-progress`: specialized elemental core with augments and material progress, captured once per Evolution tab.
+- `evolution-choices`: high-level core with unspent progression choices, including top and bottom Evolution scroll views.
+- `evolution-progress`: specialized elemental core with augments and material progress, including top and bottom Evolution scroll views.
 
 Capture only one scene by passing its id:
 

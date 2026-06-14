@@ -2,7 +2,6 @@ return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
   local DEFAULT_CORE_PICKER_SORT = "level:desc"
-  local DEFAULT_EVOLUTION_TAB = "core"
 
   function ensure_storage()
     storage.turret_xp = storage.turret_xp or {}
@@ -80,26 +79,6 @@ return function(M)
     end
 
     return player_state
-  end
-
-  function normalize_evolution_tab(tab_id)
-    tab_id = tostring(tab_id or "")
-    if tab_id == "core" or tab_id == "specialization" or tab_id == "elements" or tab_id == "augments" then
-      return tab_id
-    end
-
-    return DEFAULT_EVOLUTION_TAB
-  end
-
-  function get_evolution_tab(player)
-    local settings_table = ensure_player_settings(player)
-    return normalize_evolution_tab(settings_table.evolution_tab)
-  end
-
-  function set_evolution_tab(player, tab_id)
-    local settings_table = ensure_player_settings(player)
-    settings_table.evolution_tab = normalize_evolution_tab(tab_id)
-    return settings_table.evolution_tab
   end
 
   function normalize_core_picker_sort(sort_mode)

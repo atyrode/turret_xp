@@ -607,18 +607,6 @@ return function(M)
     center_gui_snapshot_frame = function(player)
       return gui_snapshot_frame_for_player(player, true)
     end,
-    set_gui_snapshot_evolution_tab = function(player, tab)
-      if not player or not player.valid then
-        return false
-      end
-
-      set_evolution_tab(player, tab)
-      local entity = get_remembered_turret(player)
-      if entity and entity.valid then
-        refresh_open_turret(player, entity)
-      end
-      return true
-    end,
     set_gui_snapshot_scroll = function(player, target, position)
       return scroll_gui_snapshot(player, target, position)
     end,
@@ -627,7 +615,7 @@ return function(M)
         panel_width = LAYOUT.panel_max_width,
         panel_body_width = LAYOUT.left_column_width,
         evolution_column_width = LAYOUT.evolution_column_width,
-        panel_height = LAYOUT.evolution_outer_height + LAYOUT.stats_height + LAYOUT.stats_header_height + 120,
+        panel_height = LAYOUT.evolution_outer_height + 72,
         fallback_crop = "center",
       }
     end,

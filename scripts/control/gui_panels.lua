@@ -316,7 +316,6 @@ return function(M)
         get_sub_specialization = get_sub_specialization,
         get_available_skill_points = get_available_skill_points,
         get_available_augment_points = get_available_augment_points,
-        get_evolution_tab = get_evolution_tab,
         get_base_rank = get_base_rank,
         get_augment_rank = get_augment_rank,
         get_element_progress = get_element_progress,
@@ -578,8 +577,8 @@ return function(M)
     return get_evolution_panel_service().has_level(state, level)
   end
 
-  function update_evolution_panel(panel, player, entity, state, ammo_name, anchor_name)
-    return get_evolution_panel_service().update_evolution_panel(panel, player, entity, state, ammo_name, anchor_name)
+  function update_evolution_panel(panel, entity, state, ammo_name, anchor_name)
+    return get_evolution_panel_service().update_evolution_panel(panel, entity, state, ammo_name, anchor_name)
   end
 
   function update_turret_gui_stats(player, entity)

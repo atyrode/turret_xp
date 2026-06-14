@@ -204,6 +204,7 @@ function stats_panel.new(deps)
       scroll_width = LAYOUT.stats_scroll_width,
       scroll_height = LAYOUT.stats_height,
       scroll_padding = { 6, 6, 6, 6 },
+      top_margin = 8,
     })
 
     return make_stats_table(scroll, GUI.stats)

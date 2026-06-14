@@ -15,12 +15,12 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 ## Current UX Direction
 
 - Keep the vanilla turret GUI as the main interaction.
-- Attach Turret XP as a bounded panel beside the vanilla turret GUI. Installed cores use a two-row layout: the top row keeps Veteran Core identity, XP, and local controls on the left with Stats on the right, while the lower row gives Evolution the full panel width. Empty turrets use one full-width Veteran Core picker instead of a split dashboard.
+- Attach Turret XP as a bounded panel beside the vanilla turret GUI. Installed cores use a two-column layout: Veteran Core identity, naming, XP, dev controls, and Stats on the left; Evolution on the right. Empty turrets use one full-width Veteran Core picker instead of a split dashboard.
 - Treat the 0.11 GUI glowup as an anchored custom interface, not a move away from the vanilla turret GUI unless the relative GUI API blocks a required interaction. The panel should keep living beside the opened turret while adopting the hierarchy, icon language, spacing, and action discoverability shown by mature utility mods such as Factory Planner.
 - Use a Factorio-style header plus shallow content panes as the default frame language: the Turret XP shell owns the anchored frame and top-level columns, while section modules own their local content.
-- Keep Evolution stable: a fixed summary header, tabbed Core/Specialization/Elements/Augments pages, section widths derived from the full lower-row viewport, and no content rendering under the scrollbar.
-- Present Core upgrades as three full-width columns: Offense for damage and crits, Defense for durability, and Support for ammo productivity or future economy/utility upgrades. The Core tab should fit the current upgrade set without needing vertical scrolling.
-- Keep specialization and sub-specialization decision stats visible before picking. The full-width Evolution tab should use readable cards with prose and technical effects, while lower-stakes element options can stay as compact selectable rows.
+- Keep Evolution stable inside the right column: a fixed summary header, one scrollable section body, section widths derived from the right-column viewport, and no content rendering under the scrollbar.
+- Present Core upgrades as readable rank-allocation rows until a stronger narrow-column grouping pattern emerges. Future Offense/Defense/Support grouping can return only if it improves scanability without forcing the whole panel into a two-row shell.
+- Keep specialization and sub-specialization decision stats visible before picking. Choice cards can show prose and technical effects, while lower-stakes element options can stay as compact selectable rows.
 - Keep locked Evolution sections scannable by showing the section name and level gate in the same header rhythm as unlocked sections.
 - Keep the Stats pane visually parallel to Evolution: a fixed header and a bounded scroll body with distinct native subheader strips for identity, defense, offense, ammo, history, and active effects.
 - Use direct labels, compact controls, restrained rich text markers, and vanilla-like layout rhythm.
