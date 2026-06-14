@@ -893,28 +893,8 @@ function evolution_panel_module.new(deps)
   end
 
   return {
-    add_specialization_effect_table = add_specialization_effect_table,
     add_evolution_panel = add_evolution_panel,
     has_level = has_level,
-    update_evolution_summary = update_evolution_summary,
-    add_section = add_section,
-    add_choice_delimiter = add_choice_delimiter,
-    add_row = add_row,
-    add_element_choice_card = add_element_choice_card,
-    add_rank_allocation_row = add_rank_allocation_row,
-    add_base_allocation_row = add_base_allocation_row,
-    add_augment_allocation_row = add_augment_allocation_row,
-    add_element_mastery_panel = add_element_mastery_panel,
-    add_base_section = add_base_section,
-    add_element_choices = add_element_choices,
-    add_first_element_section = add_first_element_section,
-    add_specialization_choice_card = add_specialization_choice_card,
-    add_specialization_option = add_specialization_option,
-    add_specialization_section = add_specialization_section,
-    add_sub_specialization_option = add_sub_specialization_option,
-    add_sub_specialization_section = add_sub_specialization_section,
-    add_augments_section = add_augments_section,
-    add_second_element_section = add_second_element_section,
     update_evolution_panel = update_evolution_panel,
   }
 end

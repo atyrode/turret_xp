@@ -523,68 +523,8 @@ return function(M)
     return get_core_panel_service().update_core_panel(root, player, entity, state)
   end
 
-  function render_ammo_productivity(parent, state)
-    return get_stats_panel_service().render_ammo_productivity(parent, state)
-  end
-
-  function render_magazine_stack_flow(flow, ammo_name, ammo_count, ammo_quality)
-    return get_stats_panel_service().render_magazine_stack_flow(flow, ammo_name, ammo_count, ammo_quality)
-  end
-
-  function render_current_ammo_flow(flow, ammo_in_magazine, ammo_magazine_size)
-    return get_stats_panel_service().render_current_ammo_flow(flow, ammo_in_magazine, ammo_magazine_size)
-  end
-
-  function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality, ammo_in_magazine, ammo_magazine_size, state)
-    return get_stats_panel_service().update_ammo_row(
-      panel,
-      ammo_name,
-      ammo_count,
-      ammo_quality,
-      ammo_in_magazine,
-      ammo_magazine_size,
-      state
-    )
-  end
-
   function add_stats_panel(parent)
     return get_stats_panel_service().add_stats_panel(parent)
-  end
-
-  function add_stat_value(stats, label, value, tooltip)
-    return get_stats_panel_service().add_stat_value(stats, label, value, tooltip)
-  end
-
-  function add_custom_stat(stats, label, value, tooltip)
-    return get_stats_panel_service().add_custom_stat(stats, label, value, tooltip)
-  end
-
-  function stat_formula_tooltip(description, formula)
-    return get_stats_panel_service().stat_formula_tooltip(description, formula)
-  end
-
-  function add_stat_value_with_quality_marker(stats, label, value, info_tooltip, quality_tooltip)
-    return get_stats_panel_service().add_stat_value_with_quality_marker(stats, label, value, info_tooltip, quality_tooltip)
-  end
-
-  function format_final_stat_value(total, base, suffix, decimals)
-    return get_stats_panel_service().format_final_stat_value(total, base, suffix, decimals)
-  end
-
-  function formula_total_caption(values, suffix, decimals)
-    return get_stats_panel_service().formula_total_caption(values, suffix, decimals)
-  end
-
-  function add_base_crit_stats(stats, state)
-    return get_stats_panel_service().add_base_crit_stats(stats, state)
-  end
-
-  function format_bonus_value_with_multiplier(value, multiplier, suffix, decimals, numeric_suffix)
-    return get_stats_panel_service().format_bonus_value_with_multiplier(value, multiplier, suffix, decimals, numeric_suffix)
-  end
-
-  function add_active_custom_stats(stats, state, entity)
-    return get_stats_panel_service().add_active_custom_stats(stats, state, entity)
   end
 
   function update_stats_panel(
@@ -615,85 +555,12 @@ return function(M)
     )
   end
 
-  function add_specialization_effect_table(parent, entries)
-    return get_evolution_panel_service().add_specialization_effect_table(parent, entries)
-  end
-
   function add_evolution_panel(parent)
     return get_evolution_panel_service().add_evolution_panel(parent)
   end
 
   function has_level(state, level)
     return get_evolution_panel_service().has_level(state, level)
-  end
-
-  function update_evolution_summary(panel, state)
-    return get_evolution_panel_service().update_evolution_summary(panel, state)
-  end
-
-  function add_element_choice_card(parent, element, state, slot)
-    return get_evolution_panel_service().add_element_choice_card(parent, element, state, slot)
-  end
-
-  function add_base_allocation_row(parent, upgrade, rank, can_increase)
-    return get_evolution_panel_service().add_base_allocation_row(parent, upgrade, rank, can_increase)
-  end
-
-  function add_augment_allocation_row(parent, augment, rank, available, at_max)
-    return get_evolution_panel_service().add_augment_allocation_row(parent, augment, rank, available, at_max)
-  end
-
-  function add_element_mastery_panel(parent, state, element_id)
-    return get_evolution_panel_service().add_element_mastery_panel(parent, state, element_id)
-  end
-
-  function add_base_section(parent, state)
-    return get_evolution_panel_service().add_base_section(parent, state)
-  end
-
-  function add_element_choices(section, state, slot)
-    return get_evolution_panel_service().add_element_choices(section, state, slot)
-  end
-
-  function add_first_element_section(parent, state)
-    return get_evolution_panel_service().add_first_element_section(parent, state)
-  end
-
-  function add_specialization_choice_card(parent, anchor_name, sprite, name, description, effects, selected, action_tags)
-    return get_evolution_panel_service().add_specialization_choice_card(
-      parent,
-      anchor_name,
-      sprite,
-      name,
-      description,
-      effects,
-      selected,
-      action_tags
-    )
-  end
-
-  function add_specialization_option(parent, specialization, selected, entity, state, ammo_name)
-    return get_evolution_panel_service().add_specialization_option(parent, specialization, selected, entity, state, ammo_name)
-  end
-
-  function add_specialization_section(parent, state, entity, ammo_name)
-    return get_evolution_panel_service().add_specialization_section(parent, state, entity, ammo_name)
-  end
-
-  function add_sub_specialization_option(parent, sub_specialization, selected, entity, state, ammo_name)
-    return get_evolution_panel_service().add_sub_specialization_option(parent, sub_specialization, selected, entity, state, ammo_name)
-  end
-
-  function add_sub_specialization_section(parent, state, entity, ammo_name)
-    return get_evolution_panel_service().add_sub_specialization_section(parent, state, entity, ammo_name)
-  end
-
-  function add_augments_section(parent, state)
-    return get_evolution_panel_service().add_augments_section(parent, state)
-  end
-
-  function add_second_element_section(parent, state)
-    return get_evolution_panel_service().add_second_element_section(parent, state)
   end
 
   function update_evolution_panel(panel, entity, state, ammo_name, anchor_name)

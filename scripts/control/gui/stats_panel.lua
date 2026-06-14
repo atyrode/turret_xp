@@ -193,56 +193,6 @@ function stats_panel.new(deps)
     set_style(label, "single_line", true)
   end
 
-  local function update_ammo_row(panel, ammo_name, ammo_count, ammo_quality, ammo_in_magazine, ammo_magazine_size, state)
-    local magazine_flow = find_gui_element(panel, GUI.magazine)
-    local ammo_flow = find_gui_element(panel, GUI.ammo)
-    if not ammo_flow and not magazine_flow then
-      return
-    end
-
-    local current_tags = (magazine_flow and magazine_flow.tags) or (ammo_flow and ammo_flow.tags) or {}
-    local productivity_progress = state and (state.ammo_productivity_progress or state.ammo_regen_progress) or 0
-    local productivity_fraction = state and get_ammo_productivity_fraction(state) or 0
-    local effective_productivity_fraction = state and get_effective_ammo_productivity_fraction(state) or 0
-    if
-      current_tags.ammo_name == (ammo_name or "")
-      and current_tags.ammo_count == (ammo_count or 0)
-      and current_tags.ammo_quality == (ammo_quality or "")
-      and current_tags.ammo_in_magazine == (ammo_in_magazine or -1)
-      and current_tags.ammo_magazine_size == (ammo_magazine_size or -1)
-      and current_tags.ammo_productivity_progress == productivity_progress
-      and current_tags.ammo_productivity_fraction == productivity_fraction
-      and current_tags.effective_ammo_productivity_fraction == effective_productivity_fraction
-    then
-      return
-    end
-
-    local tags = {
-      ammo_name = ammo_name or "",
-      ammo_count = ammo_count or 0,
-      ammo_quality = ammo_quality or "",
-      ammo_in_magazine = ammo_in_magazine or -1,
-      ammo_magazine_size = ammo_magazine_size or -1,
-      ammo_productivity_progress = productivity_progress,
-      ammo_productivity_fraction = productivity_fraction,
-      effective_ammo_productivity_fraction = effective_productivity_fraction,
-    }
-
-    if magazine_flow then
-      magazine_flow.tags = tags
-      render_magazine_stack_flow(magazine_flow, ammo_name, ammo_count, ammo_quality)
-    end
-    if ammo_flow then
-      ammo_flow.tags = tags
-      render_current_ammo_flow(ammo_flow, ammo_in_magazine, ammo_magazine_size)
-    end
-
-    local productivity_flow = find_gui_element(panel, GUI.ammo_productivity)
-    if productivity_flow then
-      render_ammo_productivity(productivity_flow, state)
-    end
-  end
-
   local function add_stats_panel(parent)
     local _, _, scroll = add_content_pane(parent, {
       top_margin = 8,
@@ -727,20 +677,7 @@ function stats_panel.new(deps)
   end
 
   return {
-    render_ammo_productivity = render_ammo_productivity,
-    render_magazine_stack_flow = render_magazine_stack_flow,
-    render_current_ammo_flow = render_current_ammo_flow,
-    update_ammo_row = update_ammo_row,
     add_stats_panel = add_stats_panel,
-    add_stat_value = add_stat_value,
-    add_custom_stat = add_custom_stat,
-    stat_formula_tooltip = stat_formula_tooltip,
-    add_stat_value_with_quality_marker = add_stat_value_with_quality_marker,
-    format_final_stat_value = format_final_stat_value,
-    formula_total_caption = formula_total_caption,
-    add_base_crit_stats = add_base_crit_stats,
-    format_bonus_value_with_multiplier = format_bonus_value_with_multiplier,
-    add_active_custom_stats = add_active_custom_stats,
     update_stats_panel = update_stats_panel,
   }
 end
