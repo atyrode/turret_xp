@@ -67,7 +67,8 @@ function core_picker_table_module.new(deps)
   end
 
   local function add_header_label_cell(parent, caption, width, align)
-    local cell = add_cell(parent, width, LAYOUT.inventory_core_table_header_height, align or "right")
+    local cell =
+      add_cell(parent, width, LAYOUT.inventory_core_table_header_height, align or "right", "turret_xp_inventory_core_table_header_cell")
     local label = cell.add({
       type = "label",
       caption = caption,
@@ -88,7 +89,8 @@ function core_picker_table_module.new(deps)
     local arrow_width = LAYOUT.inventory_core_sort_arrow_slot_width
     local button_width = math.max(12, cell_content_width(width) - arrow_width - 2)
 
-    local cell = add_cell(parent, width, LAYOUT.inventory_core_table_header_height, align or "left")
+    local cell =
+      add_cell(parent, width, LAYOUT.inventory_core_table_header_height, align or "left", "turret_xp_inventory_core_table_header_cell")
     set_style(cell, "horizontal_spacing", 2)
 
     local button = cell.add({
@@ -174,38 +176,6 @@ function core_picker_table_module.new(deps)
     return sort_mode_by_id(id)
   end
 
-  local function configure_table(table_element)
-    set_style(table_element, "horizontally_stretchable", true)
-    set_cell_width(table_element, LAYOUT.empty_inventory_core_table_width)
-    set_style(table_element, "horizontal_spacing", LAYOUT.inventory_core_table_spacing)
-    set_style(table_element, "vertical_spacing", 0)
-    pcall(function()
-      for index = 1, LAYOUT.inventory_core_table_column_count do
-        table_element.style.column_alignments[index] = "center"
-      end
-      table_element.style.column_alignments[1] = "left"
-      table_element.style.column_alignments[2] = "left"
-      table_element.style.column_alignments[3] = "left"
-      table_element.style.column_alignments[4] = "right"
-      table_element.style.column_alignments[5] = "right"
-      table_element.style.column_alignments[6] = "right"
-      table_element.style.column_alignments[LAYOUT.inventory_core_table_column_count] = "center"
-      table_element.draw_horizontal_lines = true
-      table_element.draw_horizontal_line_after_headers = true
-      table_element.draw_vertical_lines = true
-    end)
-  end
-
-  local function add_table(parent)
-    local table_element = parent.add({
-      type = "table",
-      column_count = LAYOUT.inventory_core_table_column_count,
-      style = "turret_xp_inventory_core_table",
-    })
-    configure_table(table_element)
-    return table_element
-  end
-
   function service.add(parent, current_sort)
     local container = parent.add({
       type = "flow",
@@ -216,26 +186,53 @@ function core_picker_table_module.new(deps)
     set_style(container, "right_margin", LAYOUT.inventory_core_table_side_margin)
     set_style(container, "vertical_spacing", 0)
 
-    local table_element = add_table(container)
+    local header = container.add({
+      type = "flow",
+      direction = "horizontal",
+      style = "turret_xp_inventory_core_table_header_row",
+    })
+    set_cell_width(header, LAYOUT.empty_inventory_core_table_width)
+    set_style(header, "height", LAYOUT.inventory_core_table_header_height)
+    set_style(header, "horizontal_spacing", LAYOUT.inventory_core_table_spacing)
 
-    add_sort_header_cell(table_element, sort_mode_by_id("level"), current_sort, LAYOUT.empty_inventory_core_level_width, "left")
-    add_sort_header_cell(table_element, sort_mode_by_id("name"), current_sort, LAYOUT.empty_inventory_core_name_width, "left")
-    add_sort_header_cell(
-      table_element,
-      sort_mode_by_id("specialization"),
-      current_sort,
-      LAYOUT.empty_inventory_core_specialization_width,
-      "left"
-    )
-    add_sort_header_cell(table_element, sort_mode_by_id("hp"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
-    add_sort_header_cell(table_element, sort_mode_by_id("attack"), current_sort, LAYOUT.empty_inventory_core_attack_width, "right")
-    add_sort_header_cell(table_element, sort_mode_by_id("range"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
-    add_header_label_cell(table_element, "", LAYOUT.empty_inventory_core_action_width)
+    add_sort_header_cell(header, sort_mode_by_id("level"), current_sort, LAYOUT.empty_inventory_core_level_width, "left")
+    add_sort_header_cell(header, sort_mode_by_id("name"), current_sort, LAYOUT.empty_inventory_core_name_width, "left")
+    add_sort_header_cell(header, sort_mode_by_id("specialization"), current_sort, LAYOUT.empty_inventory_core_specialization_width, "left")
+    add_sort_header_cell(header, sort_mode_by_id("hp"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
+    add_sort_header_cell(header, sort_mode_by_id("attack"), current_sort, LAYOUT.empty_inventory_core_attack_width, "right")
+    add_sort_header_cell(header, sort_mode_by_id("range"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
+    add_header_label_cell(header, "", LAYOUT.empty_inventory_core_action_width)
 
-    return table_element
+    local divider = container.add({
+      type = "empty-widget",
+      style = "turret_xp_inventory_core_table_header_divider",
+    })
+    set_cell_width(divider, LAYOUT.empty_inventory_core_table_width)
+    set_style(divider, "height", 1)
+
+    local body = container.add({
+      type = "flow",
+      direction = "vertical",
+      style = "turret_xp_inventory_core_table_body",
+    })
+    set_cell_width(body, LAYOUT.empty_inventory_core_table_width)
+    set_style(body, "vertical_spacing", 0)
+
+    return body
   end
 
   function service.add_row(parent, row)
+    local row_index = #(parent.children or {}) + 1
+    local row_flow = parent.add({
+      type = "frame",
+      direction = "horizontal",
+      style = row_index % 2 == 1 and "turret_xp_inventory_core_table_row_odd" or "turret_xp_inventory_core_table_row_even",
+    })
+    set_cell_width(row_flow, LAYOUT.empty_inventory_core_table_width)
+    set_style(row_flow, "height", LAYOUT.inventory_core_table_row_height)
+    set_style(row_flow, "horizontal_spacing", LAYOUT.inventory_core_table_spacing)
+
+    parent = row_flow
     add_value_cell(parent, row.level_caption, LAYOUT.empty_inventory_core_level_width, "left")
 
     local name_cell = add_cell(parent, LAYOUT.empty_inventory_core_name_width, LAYOUT.inventory_core_table_row_height, "left")

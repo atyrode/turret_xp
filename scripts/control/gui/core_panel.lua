@@ -530,6 +530,10 @@ function core_panel_module.new(deps)
   end
 
   local function wide_inventory_core_row_data(option, profile, stats)
+    local function value_caption(value, suffix)
+      return tostring(value or "-") .. tostring(suffix or "")
+    end
+
     return {
       install_tooltip = { "turret-xp.inventory-core-install-tooltip" },
       install_tags = {
@@ -538,10 +542,10 @@ function core_panel_module.new(deps)
       },
       name_caption = core_display_name(profile),
       specialization_caption = specialization_caption(profile),
-      level_caption = rich_value(profile.level or 0),
-      hp_caption = rich_value(stats.health),
-      attack_caption = rich_value(stats.speed, "/s"),
-      range_caption = rich_value(stats.range),
+      level_caption = value_caption(profile.level or 0),
+      hp_caption = value_caption(stats.health),
+      attack_caption = value_caption(stats.speed, "/s"),
+      range_caption = value_caption(stats.range),
     }
   end
 
