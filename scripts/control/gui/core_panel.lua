@@ -283,11 +283,13 @@ function core_panel_module.new(deps)
         id = "all",
         caption = { "turret-xp.inventory-core-filter-all" },
         tooltip = { "turret-xp.inventory-core-filter-all-tooltip" },
+        color = COLOR.caption,
       },
       {
         id = "base",
         caption = { "turret-xp.inventory-core-filter-base" },
         tooltip = { "turret-xp.inventory-core-filter-base-tooltip" },
+        color = COLOR.specialization.base,
       },
     }
     for _, specialization in ipairs(SPECIALIZATIONS or {}) do
@@ -295,6 +297,7 @@ function core_panel_module.new(deps)
         id = specialization.id,
         caption = specialization.name,
         tooltip = { "turret-xp.inventory-core-filter-specialization-tooltip", specialization.name },
+        color = COLOR.specialization[specialization.id] or COLOR.caption,
       }
     end
     return modes
@@ -336,17 +339,22 @@ function core_panel_module.new(deps)
     set_style(label, "right_margin", 2)
 
     for _, mode in ipairs(core_filter_modes()) do
-      local checkbox = filter_flow.add({
-        type = "checkbox",
+      local active = filter_checkbox_state(current_filters, mode.id)
+      local button = filter_flow.add({
+        type = "button",
         caption = filter_caption(mode),
         tooltip = mode.tooltip,
-        state = filter_checkbox_state(current_filters, mode.id),
+        mouse_button_filter = { "left" },
         tags = {
           turret_xp_action = "set-core-filter",
           filter = mode.id,
+          enabled = not active,
         },
       })
-      set_style(checkbox, "font", "default")
+      set_style(button, "font", active and "default-bold" or "default")
+      set_style(button, "font_color", active and mode.color or COLOR.muted)
+      set_style(button, "height", 24)
+      set_style(button, "padding", { 4, 4, 0, 0 })
     end
   end
 
@@ -593,6 +601,13 @@ function core_panel_module.new(deps)
     local picker_width = wide and LAYOUT.empty_inventory_core_picker_width or LAYOUT.inventory_core_picker_width
     local picker_height = wide and LAYOUT.empty_inventory_core_picker_height or LAYOUT.inventory_core_picker_height
     local detail_width = wide and LAYOUT.empty_inventory_core_detail_width or LAYOUT.inventory_core_detail_width
+    if wide then
+      local visible_rows = math.min(#core_options, LAYOUT.empty_inventory_core_picker_max_rows)
+      visible_rows = math.max(LAYOUT.empty_inventory_core_picker_min_rows, visible_rows)
+      picker_height = LAYOUT.inventory_core_table_header_height
+        + (LAYOUT.inventory_core_table_row_height * visible_rows)
+        + LAYOUT.empty_inventory_core_picker_vertical_padding
+    end
 
     frame.clear()
     frame.tags = {
@@ -654,7 +669,8 @@ function core_panel_module.new(deps)
       direction = "vertical",
       style = wide and "flib_naked_scroll_pane_no_padding" or "flib_naked_scroll_pane",
     })
-    scroll.vertical_scroll_policy = wide and "always" or "auto-and-reserve-space"
+    scroll.vertical_scroll_policy = wide and (#core_options > LAYOUT.empty_inventory_core_picker_max_rows and "always" or "auto-and-reserve-space")
+      or "auto-and-reserve-space"
     scroll.horizontal_scroll_policy = "never"
     set_style(scroll, "top_margin", 4)
     set_style(scroll, "height", picker_height)

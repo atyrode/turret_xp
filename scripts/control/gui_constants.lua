@@ -91,7 +91,7 @@ local layout = {
   inventory_core_table_row_height = 30,
   core_identity_slot_size = 40,
   core_identity_tool_button_size = 28,
-  core_identity_action_button_width = 64,
+  core_identity_action_button_width = 82,
   core_identity_action_spacing = 4,
   platform_core_icon_size = 34,
   label_color_picker_min_width = 300,
@@ -106,13 +106,16 @@ local layout = {
   evolution_card_icon_size = 28,
   evolution_card_action_width = 64,
   evolution_effect_table_spacing = 8,
-  rank_stepper_button_size = 32,
-  rank_stepper_label_width = 28,
+  rank_stepper_button_size = 30,
+  rank_stepper_label_width = 24,
   rank_stepper_spacing = 4,
   rank_allocation_icon_size = 28,
-  rank_allocation_value_width = 112,
+  rank_allocation_value_width = 96,
   rank_allocation_horizontal_spacing = 8,
   inventory_core_picker_height = 230,
+  empty_inventory_core_picker_min_rows = 4,
+  empty_inventory_core_picker_max_rows = 6,
+  empty_inventory_core_picker_vertical_padding = 10,
 }
 
 layout.panel_width = layout.left_column_width + layout.evolution_column_width + layout.column_spacing
@@ -143,7 +146,9 @@ layout.stats_label_width = layout.stats_content_width - layout.stats_value_width
 layout.inventory_core_picker_width = layout.left_column_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.inventory_core_detail_width = layout.inventory_core_picker_width - layout.inventory_core_scrollbar_width - 112
 layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding - layout.inventory_core_frame_padding
-layout.empty_inventory_core_picker_height = layout.evolution_outer_height - 190
+layout.empty_inventory_core_picker_height = layout.inventory_core_table_header_height
+  + (layout.inventory_core_table_row_height * layout.empty_inventory_core_picker_max_rows)
+  + layout.empty_inventory_core_picker_vertical_padding
 layout.empty_inventory_core_table_width = layout.empty_inventory_core_picker_width
   - layout.inventory_core_scrollbar_width
   - (layout.inventory_core_table_side_margin * 2)

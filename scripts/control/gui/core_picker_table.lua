@@ -201,7 +201,7 @@ function core_picker_table_module.new(deps)
     add_sort_header_cell(header, sort_mode_by_id("hp"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
     add_sort_header_cell(header, sort_mode_by_id("attack"), current_sort, LAYOUT.empty_inventory_core_attack_width, "right")
     add_sort_header_cell(header, sort_mode_by_id("range"), current_sort, LAYOUT.empty_inventory_core_stat_width, "right")
-    add_header_label_cell(header, "", LAYOUT.empty_inventory_core_action_width)
+    add_header_label_cell(header, "+", LAYOUT.empty_inventory_core_action_width, "center")
 
     local divider = container.add({
       type = "empty-widget",

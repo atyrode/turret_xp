@@ -68,8 +68,19 @@ function tests.run_layout_constants_test()
     "empty core picker should expand beyond the left column"
   )
   assert_true(
-    layout.empty_inventory_core_picker_height > layout.inventory_core_picker_height,
-    "empty core picker should reserve a tall viewport"
+    layout.empty_inventory_core_picker_max_rows > layout.empty_inventory_core_picker_min_rows,
+    "empty core picker should expose a bounded adaptive row range"
+  )
+  assert_eq(
+    layout.empty_inventory_core_picker_height,
+    layout.inventory_core_table_header_height
+      + (layout.inventory_core_table_row_height * layout.empty_inventory_core_picker_max_rows)
+      + layout.empty_inventory_core_picker_vertical_padding,
+    "empty core picker height must derive from capped table rows"
+  )
+  assert_true(
+    layout.empty_inventory_core_picker_height < layout.evolution_outer_height,
+    "empty core picker should not reserve the full Evolution-column height"
   )
   assert_true(
     layout.inventory_core_detail_width < layout.inventory_core_picker_width,

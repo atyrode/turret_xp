@@ -29,6 +29,15 @@ return function(M)
   local widgets_service = nil
   local core_picker_table_service = nil
 
+  local function gui_dev_controls_enabled(player)
+    local panel = get_gui_panel and get_gui_panel(player) or nil
+    if panel and panel.valid and panel.tags and panel.tags.turret_xp_snapshot == true then
+      return false
+    end
+
+    return dev_controls_enabled(player)
+  end
+
   local function get_shell_service()
     if not shell_service then
       shell_service = gui_shell.new({
@@ -106,7 +115,7 @@ return function(M)
         CHIP_NAME = CHIP_NAME,
         set_style = set_style,
         set_element_style = set_element_style,
-        dev_controls_enabled = dev_controls_enabled,
+        dev_controls_enabled = gui_dev_controls_enabled,
         widgets = get_gui_widgets_service(),
       })
     end
@@ -170,7 +179,7 @@ return function(M)
         get_platform_core_options = get_platform_core_options,
         get_platform_hub_inventory = get_platform_hub_inventory,
         create_blank_profile = create_blank_profile,
-        dev_controls_enabled = dev_controls_enabled,
+        dev_controls_enabled = gui_dev_controls_enabled,
         update_name_render = update_name_render,
         ensure_evolution_state = ensure_evolution_state,
         get_specialization = get_specialization,

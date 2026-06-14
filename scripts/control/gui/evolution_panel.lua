@@ -212,15 +212,16 @@ function evolution_panel_module.new(deps)
     )
 
     local reset = header.add({
-      type = "button",
-      caption = { "turret-xp.evolution-reset" },
+      type = "sprite-button",
+      sprite = "utility/reset",
+      style = "tool_button",
       tooltip = { "turret-xp.evolution-reset-tooltip" },
       tags = {
         turret_xp_action = "reset-evolution",
       },
     })
     set_style(reset, "left_margin", 8)
-    set_style(reset, "minimal_width", 56)
+    set_style(reset, "size", 28)
   end
 
   local function add_section(
@@ -255,52 +256,24 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_element_choice_card(parent, element, state, slot)
-    local row = add_choice_card(parent, evolution_anchor_name("element", element.id, slot), 4)
-    add_card_title_row(row, element.sprite, element.name, {
+    local detail = { "turret-xp.element-card-effect", get_element_effect_summary_for_rank(state, element.id, 1, true) or "" }
+    local row = add_row(parent, element.sprite, element.name, detail, { "turret-xp.evolution-action-pick" }, {
       turret_xp_action = "start-element",
       element = element.id,
       slot = slot,
-    })
-
-    local description = row.add({
-      type = "label",
-      caption = element.description,
-      style = "caption_label",
-    })
-    set_style(description, "font_color", COLOR.muted)
-    set_card_text_width(description)
-
-    local effect = row.add({
-      type = "label",
-      caption = { "turret-xp.element-card-effect", get_element_effect_summary_for_rank(state, element.id, 1, true) or "" },
-      style = "caption_label",
-    })
-    set_card_text_width(effect)
-
-    local technical_separator = row.add({
-      type = "line",
-      direction = "horizontal",
-    })
-    set_evolution_card_child_width(technical_separator)
-    set_style(technical_separator, "top_margin", 2)
-    set_style(technical_separator, "bottom_margin", 2)
-
-    local cost = row.add({
-      type = "label",
-      caption = { "turret-xp.element-card-unlock", { "turret-xp.element-unlock-free" } },
-      style = "caption_label",
-    })
-    set_card_text_width(cost)
-    set_style(cost, "single_line", false)
+    }, true, evolution_anchor_name("element", element.id, slot))
 
     local evolution = ensure_evolution_state(state)
     if slot == 2 and evolution.elements[1] then
-      local combo = row.add({
+      local combo = parent.add({
         type = "label",
         caption = { "turret-xp.element-card-combo", get_combo_caption_for_pair(evolution.elements[1], element.id) },
         style = "caption_label",
       })
-      set_card_text_width(combo)
+      set_style(combo, "font_color", COLOR.muted)
+      set_style(combo, "single_line", false)
+      set_style(combo, "maximal_width", LAYOUT.evolution_inner_width)
+      set_style(combo, "top_margin", 2)
     end
 
     return row
@@ -607,6 +580,23 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_specialization_option(parent, specialization, selected, entity, state, ammo_name)
+    if not selected then
+      add_row(
+        parent,
+        specialization.sprite,
+        specialization.name,
+        specialization.description,
+        { "turret-xp.evolution-action-pick" },
+        {
+          turret_xp_action = "choose-specialization",
+          specialization = specialization.id,
+        },
+        true,
+        evolution_anchor_name("specialization", specialization.id)
+      )
+      return
+    end
+
     add_specialization_choice_card(
       parent,
       evolution_anchor_name("specialization", specialization.id),
@@ -656,6 +646,23 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_sub_specialization_option(parent, sub_specialization, selected, entity, state, ammo_name)
+    if not selected then
+      add_row(
+        parent,
+        sub_specialization.sprite,
+        sub_specialization.name,
+        sub_specialization.description,
+        { "turret-xp.evolution-action-pick" },
+        {
+          turret_xp_action = "choose-sub-specialization",
+          sub_specialization = sub_specialization.id,
+        },
+        true,
+        evolution_anchor_name("sub-specialization", sub_specialization.id)
+      )
+      return
+    end
+
     add_specialization_choice_card(
       parent,
       evolution_anchor_name("sub-specialization", sub_specialization.id),

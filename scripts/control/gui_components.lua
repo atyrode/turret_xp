@@ -259,7 +259,7 @@ function gui_components.new(deps)
     local caption = {
       "",
       title,
-      ": ",
+      " ",
       formatted_value,
     }
     local label = parent.add({
@@ -442,6 +442,7 @@ function gui_components.new(deps)
       style = "caption_label",
     })
     deps.set_style(title_label, "font", "default-bold")
+    deps.set_style(title_label, "font_color", deps.COLOR.section_header)
 
     header.add({
       type = "empty-widget",
