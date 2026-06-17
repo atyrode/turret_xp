@@ -572,6 +572,41 @@ return function(M)
     return name
   end
 
+  local function make_fake_gui_element(definition)
+    definition = definition or {}
+    local element = {
+      valid = true,
+      type = definition.type or "flow",
+      name = definition.name or "",
+      caption = definition.caption,
+      tooltip = definition.tooltip,
+      tags = definition.tags,
+      direction = definition.direction,
+      style = {},
+      style_name = definition.style,
+      children = {},
+    }
+
+    element.add = function(child_definition)
+      local child = make_fake_gui_element(child_definition)
+      element.children[#element.children + 1] = child
+      return child
+    end
+
+    element.clear = function()
+      for _, child in ipairs(element.children) do
+        child.valid = false
+      end
+      element.children = {}
+    end
+
+    element.destroy = function()
+      element.valid = false
+    end
+
+    return element
+  end
+
   local function stats_row_layout_summary(row)
     local children = row and row.children or {}
     local label = children[1]
@@ -682,23 +717,41 @@ return function(M)
       }
     end,
     stats_panel_layout_sample = function(entity)
-      local player = nil
-      for _, candidate in pairs(game.players) do
-        if candidate and candidate.valid then
-          player = candidate
-          break
-        end
-      end
-
-      if not player or not is_gun_turret(entity) then
+      if not is_gun_turret(entity) then
         return {
           available = false,
         }
       end
 
-      local ok, shell = pcall(build_turret_gui_screen, player, entity)
-      local panel = ok and shell and get_gui_panel(player) or nil
-      local stats = panel and find_gui_element(panel, GUI.stats) or nil
+      local state = get_turret_state(entity)
+      if not state then
+        return {
+          available = false,
+        }
+      end
+
+      local panel = make_fake_gui_element({
+        type = "flow",
+        name = GUI.panel,
+        direction = "vertical",
+      })
+      panel.add({
+        type = "flow",
+        name = GUI.stats,
+        direction = "vertical",
+      })
+
+      local max_health = safe_read(entity, "max_health") or 400
+      local health = safe_read(entity, "health") or max_health
+      local ok, err = pcall(update_stats_panel, panel, entity, state, "firearm-magazine", 20, "normal", 7, 10, "normal", max_health, health)
+      if not ok then
+        return {
+          available = false,
+          error = tostring(err),
+        }
+      end
+
+      local stats = find_gui_element(panel, GUI.stats)
       local sample = {
         available = stats ~= nil,
         rows = {},
@@ -722,8 +775,6 @@ return function(M)
         end
       end
 
-      destroy_gui(player)
-      forget_open_turret(player)
       return sample
     end,
     dispatch_cycle_label_color = function(entity)

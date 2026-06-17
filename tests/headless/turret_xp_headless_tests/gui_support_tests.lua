@@ -212,7 +212,10 @@ function tests.run_stats_panel_alignment_test(surface)
   assert_true(summary ~= nil, "failed to set evolution state for stats panel alignment test")
 
   local sample = call("stats_panel_layout_sample", turret)
-  assert_true(sample ~= nil and sample.available == true, "stats panel layout sample was unavailable")
+  assert_true(
+    sample ~= nil and sample.available == true,
+    "stats panel layout sample was unavailable: " .. tostring(sample and sample.error or "no error")
+  )
   assert_true(#(sample.rows or {}) >= 10, "stats panel layout sample did not include the expected stat rows")
 
   for index, row in ipairs(sample.rows or {}) do
