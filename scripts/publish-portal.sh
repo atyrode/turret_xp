@@ -50,8 +50,8 @@ trap cleanup EXIT
 write_auth_config() {
   curl_config_dir="$(mktemp -d)"
   auth_config_path="${curl_config_dir}/mod-portal-auth.curl"
-  chmod 600 "$auth_config_path"
   printf 'header = "Authorization: Bearer %s"\n' "$api_key" >"$auth_config_path"
+  chmod 600 "$auth_config_path"
   unset api_key FACTORIO_MOD_PORTAL_API_KEY FACTORIO_API_KEY
 }
 
