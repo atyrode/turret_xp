@@ -44,6 +44,7 @@ files["scripts/control/gui_base.lua"] = legacy_control_module
 files["scripts/control/gui_panels.lua"] = legacy_control_module
 files["scripts/control/profiles.lua"] = legacy_control_module
 files["scripts/control/progression.lua"] = legacy_control_module
+files["scripts/control/remote_screenshot.lua"] = legacy_control_module
 files["scripts/control/remote_test.lua"] = legacy_control_module
 files["scripts/control/storage.lua"] = legacy_control_module
 files["scripts/control/turret_bodies.lua"] = legacy_control_module

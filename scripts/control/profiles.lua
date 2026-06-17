@@ -94,6 +94,8 @@ return function(M)
     get_entity_inventory = feeder_get_entity_inventory,
     make_chip_item_stack = make_chip_item_stack,
     read_profile_from_chip_stack = read_profile_from_chip_stack,
+    ensure_evolution_state = ensure_evolution_state,
+    specialization_by_id = SPECIALIZATION_BY_ID,
   })
   quality_name_from_stack = inventory_service.quality_name_from_stack
   quality_name_from_entity = inventory_service.quality_name_from_entity
@@ -107,6 +109,10 @@ return function(M)
   reconcile_preloaded_turret_ammo = inventory_service.reconcile_preloaded_turret_ammo
   restore_turret_item_state = inventory_service.restore_turret_item_state
   find_carried_chip_stack = inventory_service.find_carried_chip_stack
+  find_best_carried_chip_stack = inventory_service.find_best_carried_chip_stack
+  get_core_options_from_inventory = inventory_service.get_core_options_from_inventory
+  get_player_core_options = inventory_service.get_player_core_options
+  get_player_core_options_model = inventory_service.get_player_core_options_model
   remove_one_chip_stack = inventory_service.remove_one_chip_stack
   insert_chip_item = inventory_service.insert_chip_item
   can_insert_chip_inventory = inventory_service.can_insert_chip_inventory

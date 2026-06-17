@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.11.0
+Date: 2026-06-17
+  Changes:
+    - Rebuilt the Turret XP GUI around an anchored Factorio-native `flib.gui` shell with focused services for shell ownership, runtime refresh, actions, core identity, label controls, platform controls, Stats, Evolution, widgets, and the Veteran Core picker table.
+    - Reworked empty turrets into a full-width Veteran Core picker with sortable headers, Base/Sniper/Machine gun/Bulwark/Brawler filters, persisted sort/filter preferences, neutral preview stats, and exact-slot install actions.
+    - Reworked installed-core controls with a compact identity/action row, explicit extract and Bind/Unbind actions, platform hub core rows, a label-color swatch, and a draggable Turret XP color popup with presets and RGB sliders.
+    - Gave Stats and Evolution matching fixed-header shallow panes with bounded scroll bodies, native section headers, named layout constants, stable row budgets, and regression guards for layout contracts.
+    - Added dev-only GUI snapshot tooling for graphical review of fixture scenes, plus headless and script-level GUI contract tests for the picker, Stats layout, action dispatch, and layout constants.
+    - Added Dockerized Lua formatting/linting workflows and a pre-commit hook so local Lua formatting and strict checks match CI without installing Lua tools on the host.
+  Bugfixes:
+    - Fixed interface-scale-sensitive Evolution icons by rendering decorative sprites in fixed cells so they no longer overflow into labels or action controls at smaller or automatic UI scales.
+    - Fixed Ammo-section stat alignment so Magazine, Ammo, and Ammo Productivity values are pinned to the same right-side value column as the rest of the Stats panel.
+    - Reduced GUI refresh churn by preserving stable interactive controls and using narrower refresh keys for picker and open-turret updates where practical.
+
 ---------------------------------------------------------------------------------------------------
 Version: 0.10.4
 Date: 2026-06-12

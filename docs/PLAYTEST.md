@@ -4,7 +4,7 @@ This guide is split by depth. Run the smoke path for ordinary feedback, the regr
 
 ## Install
 
-Current development package target: `0.10.4`.
+Current development package target: `0.11.0`.
 
 Preferred once published:
 
@@ -59,6 +59,26 @@ Use this path before merging gameplay, GUI, persistence, feeder, combat, or rele
 6. Hover stat-name info markers and confirm formulas live there. HP and Range quality breakdowns should live on the quality diamond.
 7. Confirm stats reserve scrollbar space and values do not render under the scrollbar.
 8. Confirm numeric rich text colors only numbers; units and prose stay neutral.
+
+### GUI Snapshot Review
+
+Use this when iterating on GUI layout and you want shareable images for debugging.
+
+1. Install the local snapshot harness:
+
+   ```sh
+   scripts/gui-snapshots.sh install
+   ```
+
+2. Start Factorio with `turret_xp`, `flib`, and `turret_xp_gui_snapshots` enabled.
+3. Load a disposable development save and run `/turret-xp-snapshots`.
+4. After the in-game command reports completion, copy the images into the repo:
+
+   ```sh
+   scripts/gui-snapshots.sh collect
+   ```
+
+5. Review `tests/gui-snapshots/current/index.md` and the cropped PNGs in `tests/gui-snapshots/current/ui/` for wrapping, alignment, missing sprites, and section hierarchy. Use `tests/gui-snapshots/current/full/` only when the full game-window context matters.
 
 ### Combat And Stats
 

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+needs_lua_check=0
+staged_lua_files=()
+while IFS= read -r -d '' file; do
+  case "$file" in
+    *.lua|.luacheckrc|.stylua.toml|compose.yaml|tools/lua/*|scripts/format-lua.sh|scripts/install-git-hooks.sh|scripts/lint-lua.sh|scripts/lua-files.sh|scripts/git-hooks/*)
+      needs_lua_check=1
+      case "$file" in
+        *.lua)
+          staged_lua_files+=("$file")
+          ;;
+      esac
+      ;;
+  esac
+done < <(git diff --cached --name-only -z --diff-filter=ACMR)
+
+if [ "$needs_lua_check" != "1" ]; then
+  exit 0
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "Docker is required for the Lua pre-commit hook." >&2
+  echo "Install Docker, or bypass intentionally with git commit --no-verify." >&2
+  exit 2
+fi
+
+if ! docker compose version >/dev/null 2>&1; then
+  echo "Docker Compose is required for the Lua pre-commit hook." >&2
+  echo "Install the Docker Compose plugin, or bypass intentionally with git commit --no-verify." >&2
+  exit 2
+fi
+
+if [ "${#staged_lua_files[@]}" -gt 0 ]; then
+  echo "Formatting staged Lua files in Docker..."
+  docker compose run --rm lua-format scripts/format-lua.sh "${staged_lua_files[@]}"
+  git add -- "${staged_lua_files[@]}"
+fi
+
+echo "Running strict Lua tooling in Docker..."
+if ! docker compose run --rm lua-tools; then
+  echo >&2
+  echo "Lua validation failed." >&2
+  echo "Run docker compose run --rm lua-format, stage any formatting changes, then commit again." >&2
+  exit 1
+fi

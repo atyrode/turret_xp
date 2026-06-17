@@ -13,7 +13,9 @@ return function(M)
 
   function refresh_open_turret(player, entity, evolution_anchor)
     if entity and entity.valid then
-      update_turret_gui(player, entity, evolution_anchor)
+      if not update_turret_gui(player, entity, evolution_anchor) then
+        build_turret_gui(player, entity, evolution_anchor)
+      end
     end
   end
 
@@ -33,6 +35,29 @@ return function(M)
     return name
   end
 
+  function show_core_slot_warning(player, message)
+    if not player then
+      return
+    end
+
+    local shown = compat.try("core slot local flying text", function()
+      if type(player.create_local_flying_text) ~= "function" then
+        return false
+      end
+      player.create_local_flying_text({
+        create_at_cursor = true,
+        text = message,
+        color = { r = 1, g = 1, b = 1 },
+        time_to_live = 90,
+      })
+      return true
+    end, false)
+
+    if not shown and type(player.print) == "function" then
+      player.print(message)
+    end
+  end
+
   function install_core(player)
     local entity = get_remembered_turret(player)
     if not entity or player.opened ~= entity then
@@ -40,13 +65,14 @@ return function(M)
     end
 
     if get_turret_state(entity) then
+      show_core_slot_warning(player, { "turret-xp.core-already-installed" })
       refresh_open_turret(player, entity)
       return
     end
 
-    local stack = find_carried_chip_stack(player)
+    local stack = find_best_carried_chip_stack(player)
     if not stack then
-      player.print({ "turret-xp.no-core-to-install" })
+      show_core_slot_warning(player, { "turret-xp.no-core-to-install" })
       refresh_open_turret(player, entity)
       return
     end
@@ -67,6 +93,49 @@ return function(M)
     refresh_open_turret(player, entity)
   end
 
+  function install_core_from_inventory(player, slot)
+    slot = math.floor(tonumber(slot) or 0)
+    if slot <= 0 then
+      return
+    end
+
+    local entity, existing = get_open_turret_state(player)
+    if not entity then
+      return
+    end
+    if existing then
+      show_core_slot_warning(player, { "turret-xp.core-already-installed" })
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local inventory = type(player.get_main_inventory) == "function" and player.get_main_inventory() or nil
+    local stack = inventory and inventory.valid and inventory[slot] or nil
+    if not stack or not stack.valid_for_read or stack.name ~= CHIP_NAME then
+      show_core_slot_warning(player, { "turret-xp.inventory-core-missing" })
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local profile = read_profile_from_chip_stack(stack) or create_blank_profile()
+    if not remove_one_chip_stack(stack) then
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    local installed = install_profile_on_turret(entity, profile)
+    if not installed then
+      compat.try("return inventory core after failed install", function()
+        inventory.insert(make_chip_item_stack(profile))
+      end)
+      refresh_open_turret(player, entity)
+      return
+    end
+
+    combat.mark_turret_body_sync_pending(installed)
+    refresh_open_turret(player, entity)
+  end
+
   function extract_core(player)
     local entity, state = get_open_turret_state(player)
     if not state then
@@ -79,7 +148,7 @@ return function(M)
     end, false)
 
     if not can_insert then
-      player.print({ "turret-xp.no-room-for-core" })
+      show_core_slot_warning(player, { "turret-xp.no-room-for-core" })
       refresh_open_turret(player, entity)
       return
     end
@@ -92,7 +161,7 @@ return function(M)
 
     if not insert_chip_item(player, profile) then
       install_profile_on_turret(entity, profile)
-      player.print({ "turret-xp.no-room-for-core" })
+      show_core_slot_warning(player, { "turret-xp.no-room-for-core" })
       refresh_open_turret(player, entity)
       return
     end
@@ -109,6 +178,9 @@ return function(M)
 
     local entity, existing = get_open_turret_state(player)
     if not entity or existing then
+      if existing then
+        show_core_slot_warning(player, { "turret-xp.core-already-installed" })
+      end
       refresh_open_turret(player, entity)
       return
     end
@@ -148,7 +220,7 @@ return function(M)
 
     local inventory = get_platform_hub_inventory(entity)
     if not inventory or not can_insert_chip_inventory(inventory, state) then
-      player.print({ "turret-xp.platform-core-no-room" })
+      show_core_slot_warning(player, { "turret-xp.platform-core-no-room" })
       refresh_open_turret(player, entity)
       return
     end
@@ -164,7 +236,7 @@ return function(M)
     end, 0)
     if not inserted or inserted <= 0 then
       install_profile_on_turret(entity, profile)
-      player.print({ "turret-xp.platform-core-no-room" })
+      show_core_slot_warning(player, { "turret-xp.platform-core-no-room" })
       refresh_open_turret(player, entity)
       return
     end
@@ -195,7 +267,7 @@ return function(M)
     if state then
       if cursor_has_stack then
         if cursor.name ~= CHIP_NAME then
-          player.print({ "turret-xp.core-slot-reject" })
+          show_core_slot_warning(player, { "turret-xp.core-slot-reject" })
           refresh_open_turret(player, entity)
           return
         end
@@ -232,7 +304,7 @@ return function(M)
         cursor.set_stack(stack)
       end)
       if not ok or not cursor.valid_for_read then
-        player.print({ "turret-xp.no-room-for-core" })
+        show_core_slot_warning(player, { "turret-xp.no-room-for-core" })
         refresh_open_turret(player, entity)
         return
       end
@@ -251,7 +323,7 @@ return function(M)
 
     if cursor_has_stack then
       if cursor.name ~= CHIP_NAME then
-        player.print({ "turret-xp.core-slot-reject" })
+        show_core_slot_warning(player, { "turret-xp.core-slot-reject" })
         refresh_open_turret(player, entity)
         return
       end
@@ -278,7 +350,7 @@ return function(M)
     if event.shift or event.control then
       install_core(player)
     else
-      player.print({ "turret-xp.no-core-to-install" })
+      show_core_slot_warning(player, { "turret-xp.no-core-to-install" })
       refresh_open_turret(player, entity)
     end
   end

@@ -9,5 +9,6 @@ python_bin="${PYTHON:-python3}"
 "$python_bin" -m json.tool docs/public-copy.json >/dev/null
 scripts/generate-public-assets.py --check
 scripts/lint-lua.sh
+bash scripts/check-gui-contracts.sh
 
 echo "Basic checks passed."

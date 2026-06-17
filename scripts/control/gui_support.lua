@@ -20,8 +20,30 @@ function gui_support.new(deps)
     return "[color=" .. color .. "]" .. tostring(text) .. "[/color]"
   end
 
+  function service.rich_color_caption(color, caption)
+    return {
+      "",
+      "[color=" .. service.color_to_rich_string(color) .. "]",
+      caption,
+      "[/color]",
+    }
+  end
+
   function service.rich_number(text, color)
     return service.rich_color(service.color_to_rich_string(color or deps.COLOR.bonus), text)
+  end
+
+  function service.rich_value(value, suffix, color)
+    return service.rich_number(tostring(value or "-") .. tostring(suffix or ""), color)
+  end
+
+  function service.rich_metric(label, value, suffix, color)
+    return {
+      "",
+      label,
+      " ",
+      service.rich_value(value, suffix, color),
+    }
   end
 
   function service.rich_stat_text(text, color)
@@ -33,6 +55,15 @@ function gui_support.new(deps)
     return string.gsub(text, "([%+%-]?x?%d+%.?%d*%%?)", function(token)
       return service.rich_color(color_string, token)
     end)
+  end
+
+  function service.specialization_color(specialization_id)
+    local colors = deps.COLOR.specialization or {}
+    return colors[specialization_id or "base"] or colors.base or deps.COLOR.muted
+  end
+
+  function service.rich_specialization_caption(specialization_id, caption)
+    return service.rich_color_caption(service.specialization_color(specialization_id), caption)
   end
 
   function service.set_evolution_content_width(element, inner)

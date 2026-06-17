@@ -107,6 +107,7 @@ local actions = require("scripts.control.actions")
 M.actions = actions.new({
   GUI = M.GUI,
   COLOR = M.COLOR,
+  LAYOUT = M.LAYOUT,
   GATES = M.GATES,
   BASE_UPGRADE_BY_ID = M.BASE_UPGRADE_BY_ID,
   ELEMENT_BY_ID = M.ELEMENT_BY_ID,
@@ -149,9 +150,37 @@ for name, handler in pairs(M.actions) do
   M[name] = handler
 end
 
+local gui_actions = require("scripts.control.gui.actions")
+M.gui_actions = gui_actions.new({
+  actions = M.actions,
+  get_player = function(player_index)
+    return game.get_player(player_index)
+  end,
+  handle_core_slot_click = M.handle_core_slot_click,
+  install_core = M.install_core,
+  extract_core = M.extract_core,
+  install_core_from_inventory = M.install_core_from_inventory,
+  install_core_from_platform = M.install_core_from_platform,
+  send_core_to_platform = M.send_core_to_platform,
+  set_bound_turret = M.set_bound_turret,
+  set_core_picker_sort = M.set_core_picker_sort,
+  set_core_picker_filter = M.set_core_picker_filter,
+  get_remembered_turret = M.get_remembered_turret,
+  refresh_open_turret = M.refresh_open_turret,
+  update_name_render = M.update_name_render,
+})
+M.dispatch_gui_click_action = M.gui_actions.dispatch_click_action
+M.dispatch_gui_checked_state_action = M.gui_actions.dispatch_checked_state_action
+M.dispatch_gui_value_changed_action = M.gui_actions.dispatch_value_changed_action
+M.dispatch_gui_text_changed_action = M.gui_actions.dispatch_text_changed_action
+M.handle_gui_click_event = M.gui_actions.on_gui_click
+M.handle_gui_checked_state_changed_event = M.gui_actions.on_gui_checked_state_changed
+M.handle_gui_value_changed_event = M.gui_actions.on_gui_value_changed
+M.handle_gui_text_changed_event = M.gui_actions.on_gui_text_changed
+
 require("scripts.control.combat_effects")(M)
 require("scripts.control.events")(M)
-if script.active_mods["turret_xp_headless_tests"] then
+if script.active_mods["turret_xp_headless_tests"] or script.active_mods["turret_xp_gui_snapshots"] then
   require("scripts.control.remote_test")(M)
 end
 

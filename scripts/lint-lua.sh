@@ -8,7 +8,10 @@ luac_bin="${LUAC:-luac}"
 stylua_bin="${STYLUA:-stylua}"
 luacheck_bin="${LUACHECK:-luacheck}"
 
-mapfile -t lua_files < <(scripts/lua-files.sh)
+lua_files=()
+while IFS= read -r file; do
+  lua_files+=("$file")
+done < <(scripts/lua-files.sh)
 
 missing_tool() {
   local tool="$1"
