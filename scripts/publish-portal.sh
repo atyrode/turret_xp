@@ -117,48 +117,69 @@ scripts/generate-public-assets.py --check
 scripts/generate-public-assets.py --portal-description "$description_path" --portal-metadata "$metadata_path"
 . "$metadata_path"
 
-if [ "${SKIP_HEADLESS_TESTS:-}" = "1" ]; then
-  echo "Skipping headless tests because SKIP_HEADLESS_TESTS=1."
-else
-  scripts/test-headless.sh
-fi
-
-package_path="$(scripts/package.sh | tail -n 1)"
-
-if curl -fsS "https://mods.factorio.com/api/mods/${mod_name}" >/dev/null 2>&1; then
-  init_url="https://mods.factorio.com/api/v2/mods/releases/init_upload"
+mod_response=""
+release_exists="0"
+if mod_response="$(curl -fsS "https://mods.factorio.com/api/mods/${mod_name}/full")"; then
   mode="release"
+  release_exists="$(
+    printf '%s' "$mod_response" | "$python_bin" -c '
+import json
+import sys
+
+version = sys.argv[1]
+data = json.load(sys.stdin)
+exists = any(release.get("version") == version for release in data.get("releases", []))
+print("1" if exists else "0")
+' "$version"
+  )"
 else
-  init_url="https://mods.factorio.com/api/v2/mods/init_publish"
   mode="publish"
 fi
 
-init_response="$(
-  curl_mod_portal_auth "Initializing Mod Portal ${mode} upload" \
-    --data-urlencode "mod=${mod_name}" \
-    "$init_url"
-)"
-
-upload_url="$(
-  printf '%s' "$init_response" | "$python_bin" -c 'import json, sys; data=json.load(sys.stdin); print(data["upload_url"])'
-)"
-
-if [ "$mode" = "publish" ]; then
-  upload_response="$(
-    curl_mod_portal_url "Publishing ${mod_name} ${version}" "$upload_url" \
-      -F "file=@${package_path}" \
-      -F "description=<${description_path}" \
-      -F "category=${MOD_PORTAL_CATEGORY}" \
-      -F "source_url=${MOD_PORTAL_SOURCE_URL}"
-  )"
+if [ "$release_exists" = "1" ]; then
+  echo "${mod_name} ${version} already exists on the Factorio Mod Portal; skipping package upload."
 else
-  upload_response="$(
-    curl_mod_portal_url "Uploading ${mod_name} ${version}" "$upload_url" \
-      -F "file=@${package_path}"
-  )"
-fi
+  if [ "${SKIP_HEADLESS_TESTS:-}" = "1" ]; then
+    echo "Skipping headless tests because SKIP_HEADLESS_TESTS=1."
+  else
+    scripts/test-headless.sh
+  fi
 
-printf '%s\n' "$upload_response" | "$python_bin" -m json.tool
+  package_path="$(scripts/package.sh | tail -n 1)"
+
+  if [ "$mode" = "release" ]; then
+    init_url="https://mods.factorio.com/api/v2/mods/releases/init_upload"
+  else
+    init_url="https://mods.factorio.com/api/v2/mods/init_publish"
+  fi
+
+  init_response="$(
+    curl_mod_portal_auth "Initializing Mod Portal ${mode} upload" \
+      --data-urlencode "mod=${mod_name}" \
+      "$init_url"
+  )"
+
+  upload_url="$(
+    printf '%s' "$init_response" | "$python_bin" -c 'import json, sys; data=json.load(sys.stdin); print(data["upload_url"])'
+  )"
+
+  if [ "$mode" = "publish" ]; then
+    upload_response="$(
+      curl_mod_portal_url "Publishing ${mod_name} ${version}" "$upload_url" \
+        -F "file=@${package_path}" \
+        -F "description=<${description_path}" \
+        -F "category=${MOD_PORTAL_CATEGORY}" \
+        -F "source_url=${MOD_PORTAL_SOURCE_URL}"
+    )"
+  else
+    upload_response="$(
+      curl_mod_portal_url "Uploading ${mod_name} ${version}" "$upload_url" \
+        -F "file=@${package_path}"
+    )"
+  fi
+
+  printf '%s\n' "$upload_response" | "$python_bin" -m json.tool
+fi
 
 if edit_response="$(
   curl_mod_portal_auth "Editing ${mod_name} Mod Portal details" \
@@ -177,4 +198,8 @@ else
   echo "Uploaded ${mod_name} ${version}, but editing portal details failed. Check the API key has ModPortal: Edit Mods." >&2
 fi
 
-echo "Published ${mod_name} ${version} to the Factorio Mod Portal."
+if [ "$release_exists" = "1" ]; then
+  echo "Updated ${mod_name} ${version} details on the Factorio Mod Portal."
+else
+  echo "Published ${mod_name} ${version} to the Factorio Mod Portal."
+fi
