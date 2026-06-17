@@ -39,7 +39,7 @@ is_headless_runtime_path() {
 
 is_validation_infra_path() {
   case "$1" in
-    .github/workflows/*|compose.yaml|tools/lua/*|scripts/check.sh|scripts/lint-lua.sh|scripts/lua-files.sh|scripts/package.py|scripts/package.sh|scripts/release-preflight.sh|scripts/release.sh|scripts/publish-portal.sh|scripts/test-headless.sh|scripts/download-mod-dependencies.py)
+    .github/workflows/*|compose.yaml|tools/lua/*|scripts/check.sh|scripts/format-lua.sh|scripts/install-git-hooks.sh|scripts/lint-lua.sh|scripts/lua-files.sh|scripts/git-hooks/*|scripts/package.py|scripts/package.sh|scripts/release-preflight.sh|scripts/release.sh|scripts/publish-portal.sh|scripts/test-headless.sh|scripts/download-mod-dependencies.py)
       return 0
       ;;
   esac
@@ -49,7 +49,7 @@ is_validation_infra_path() {
 
 is_lua_validation_path() {
   case "$1" in
-    *.lua|.luacheckrc|.stylua.toml|compose.yaml|tools/lua/*|scripts/lint-lua.sh|scripts/lua-files.sh)
+    *.lua|.luacheckrc|.stylua.toml|compose.yaml|tools/lua/*|scripts/format-lua.sh|scripts/lint-lua.sh|scripts/lua-files.sh)
       return 0
       ;;
   esac

@@ -518,7 +518,10 @@ local function setup_next_scene(session)
   session.capture_index = (session.capture_index or 0) + 1
   local capture = session.captures[session.capture_index]
   if not capture then
-    finish_session(session, "Captured " .. tostring(#(session.manifest_scenes or {})) .. " GUI snapshots. Run scripts/gui-snapshots.sh collect from the repo.")
+    finish_session(
+      session,
+      "Captured " .. tostring(#(session.manifest_scenes or {})) .. " GUI snapshots. Run scripts/gui-snapshots.sh collect from the repo."
+    )
     return
   end
   local scene = capture.scene
@@ -572,14 +575,7 @@ local function scroll_current_scene(session)
   local capture = session.current_capture
   local variant = capture and capture.variant or nil
   if variant and variant.scroll and remote.interfaces[IFACE] and remote.interfaces[IFACE].set_gui_snapshot_scroll then
-    pcall(
-      remote.call,
-      IFACE,
-      "set_gui_snapshot_scroll",
-      player,
-      variant.scroll.target or "evolution",
-      variant.scroll.position or "bottom"
-    )
+    pcall(remote.call, IFACE, "set_gui_snapshot_scroll", player, variant.scroll.target or "evolution", variant.scroll.position or "bottom")
     session.current_frame = snapshot_frame(player) or session.current_frame
   end
 

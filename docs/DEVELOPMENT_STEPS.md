@@ -8,6 +8,8 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Stable branch policy: short-lived issue branches into protected `main`; releases are GitHub Releases/tags named `v<info.json version>`.
 - Required local lightweight check: `scripts/check.sh`.
 - Strict local Lua tooling without host installs: `docker compose run --rm lua-tools`.
+- Lua formatting without host installs: `docker compose run --rm lua-format`.
+- Optional local Git hooks: `scripts/install-git-hooks.sh` configures this clone to run Dockerized strict Lua tooling before commits that stage Lua or Lua-tooling changes.
 - Lua validation file discovery follows Git ignore rules, so tracked files and untracked non-ignored Lua files are checked while ignored local research/build corpora are excluded.
 - Package build: `scripts/package.sh`.
 - Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
@@ -65,7 +67,7 @@ Use the narrowest meaningful checks for each change:
 - Internal documentation-only changes: `scripts/check.sh`, `git diff --check`.
 - Root `README.md`, `changelog.txt`, or `thumbnail.png` changes: `scripts/check.sh`, `scripts/package.sh`, `git diff --check`.
 - Public copy, version, changelog, or homepage changes: `scripts/generate-public-assets.py`, `scripts/generate-public-assets.py --check`, `git diff --check`.
-- Lua/runtime/tooling changes: `scripts/check.sh`, `docker compose run --rm lua-tools`, `scripts/package.sh`.
+- Lua/runtime/tooling changes: `scripts/check.sh`, `docker compose run --rm lua-format`, `docker compose run --rm lua-tools`, `scripts/package.sh`.
 - Gameplay, migration, feeder, combat, profile, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
 - GUI layout changes: all Lua/runtime checks plus manual in-game visual review; state the remaining manual visual-review risk when local playtesting is not performed.
 - GUI screenshot review: `scripts/gui-snapshots.sh install`, `/turret-xp-snapshots` in a graphical development save, then `scripts/gui-snapshots.sh collect`. Use the cropped `tests/gui-snapshots/current/ui/` images for layout review before asking for another manual pass.

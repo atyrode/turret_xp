@@ -661,7 +661,8 @@ function core_panel_module.new(deps)
       direction = "vertical",
       style = wide and "flib_naked_scroll_pane_no_padding" or "flib_naked_scroll_pane",
     })
-    scroll.vertical_scroll_policy = wide and (#core_options > LAYOUT.empty_inventory_core_picker_max_rows and "always" or "auto-and-reserve-space")
+    scroll.vertical_scroll_policy = wide
+        and (#core_options > LAYOUT.empty_inventory_core_picker_max_rows and "always" or "auto-and-reserve-space")
       or "auto-and-reserve-space"
     scroll.horizontal_scroll_policy = "never"
     set_style(scroll, "top_margin", 4)

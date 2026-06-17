@@ -182,14 +182,10 @@ layout.evolution_card_title_width = layout.evolution_card_inner_width
   - layout.evolution_card_action_width
   - 24
 layout.evolution_card_title_full_width = layout.evolution_card_inner_width - layout.evolution_card_icon_size - 12
-layout.evolution_effect_column_width = math.floor(
-  (layout.evolution_card_inner_width - layout.evolution_effect_table_spacing) / 2
-)
+layout.evolution_effect_column_width = math.floor((layout.evolution_card_inner_width - layout.evolution_effect_table_spacing) / 2)
 layout.evolution_detail_width = layout.evolution_inner_width - 96
 layout.evolution_effect_width = layout.evolution_inner_width - 64
-layout.rank_stepper_width = (layout.rank_stepper_button_size * 2)
-  + layout.rank_stepper_label_width
-  + (layout.rank_stepper_spacing * 2)
+layout.rank_stepper_width = (layout.rank_stepper_button_size * 2) + layout.rank_stepper_label_width + (layout.rank_stepper_spacing * 2)
 layout.rank_allocation_spacing_width = layout.rank_allocation_horizontal_spacing * 3
 layout.rank_allocation_detail_width = layout.evolution_inner_width
   - layout.rank_allocation_icon_size

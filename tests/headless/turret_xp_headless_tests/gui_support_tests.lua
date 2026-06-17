@@ -152,10 +152,7 @@ function tests.run_layout_constants_test()
     "rank allocation row columns must derive from the Evolution inner width"
   )
   assert_true(layout.rank_allocation_detail_width > 0, "rank allocation detail text must retain a positive width")
-  assert_true(
-    layout.rank_stepper_width < layout.evolution_inner_width,
-    "rank stepper controls must fit inside Evolution rows"
-  )
+  assert_true(layout.rank_stepper_width < layout.evolution_inner_width, "rank stepper controls must fit inside Evolution rows")
   assert_true(
     layout.empty_inventory_core_name_width < layout.empty_inventory_core_specialization_width,
     "wide inventory core table should favor specialization readability over long names"
