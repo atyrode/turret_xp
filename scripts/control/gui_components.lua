@@ -194,6 +194,7 @@ function gui_components.new(deps)
       style = "caption_label",
     })
     deps.set_style(label_element, "font_color", deps.COLOR.caption)
+    deps.set_style(label_element, "horizontal_align", "left")
     deps.set_style(label_element, "single_line", false)
     deps.set_style(label_element, "maximal_width", deps.LAYOUT.stats_label_width)
 

@@ -58,8 +58,23 @@ function stats_panel.new(deps)
   local get_estimated_dps_values = deps.get_estimated_dps_values
   local format_estimated_dps_formula = deps.format_estimated_dps_formula
 
+  local function prepare_right_aligned_value_flow(flow, spacing)
+    flow.clear()
+    set_style(flow, "width", LAYOUT.stats_value_width)
+    set_style(flow, "minimal_width", LAYOUT.stats_value_width)
+    set_style(flow, "maximal_width", LAYOUT.stats_value_width)
+    set_style(flow, "horizontal_align", "right")
+    set_style(flow, "horizontal_spacing", spacing or 0)
+    set_style(flow, "vertical_align", "center")
+    flow.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
+    })
+    return flow
+  end
+
   local function render_ammo_productivity(parent, state)
-    parent.clear()
+    prepare_right_aligned_value_flow(parent, 5)
     if not state or get_base_rank(state, "ammo_regen") <= 0 then
       return
     end
@@ -76,20 +91,9 @@ function stats_panel.new(deps)
       format_percent(progress, 0),
     }
 
-    local row = parent.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(row, "width", LAYOUT.stats_value_width)
-    set_style(row, "minimal_width", LAYOUT.stats_value_width)
-    set_style(row, "maximal_width", LAYOUT.stats_value_width)
-    set_style(row, "top_margin", 3)
-    set_style(row, "horizontal_spacing", 5)
-    set_style(row, "vertical_align", "center")
-    set_style(row, "horizontally_stretchable", true)
-    set_style(row, "horizontal_align", "right")
+    set_style(parent, "top_margin", 3)
 
-    local bar = row.add({
+    local bar = parent.add({
       type = "progressbar",
       name = GUI.ammo_productivity_bar,
       style = "turret_xp_ammo_productivity_progressbar",
@@ -101,7 +105,7 @@ function stats_panel.new(deps)
     set_style(bar, "minimal_width", 130)
     set_style(bar, "maximal_width", 130)
 
-    local label = row.add({
+    local label = parent.add({
       type = "label",
       name = GUI.ammo_productivity_label,
       caption = rich_number(caption, { 0.72, 0.33, 0.95 }),
@@ -113,18 +117,7 @@ function stats_panel.new(deps)
   end
 
   local function render_magazine_stack_flow(flow, ammo_name, ammo_count, ammo_quality)
-    flow.clear()
-    local slot_row = flow.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(slot_row, "width", LAYOUT.stats_value_width)
-    set_style(slot_row, "minimal_width", LAYOUT.stats_value_width)
-    set_style(slot_row, "maximal_width", LAYOUT.stats_value_width)
-    set_style(slot_row, "horizontal_align", "right")
-    set_style(slot_row, "horizontally_stretchable", true)
-    set_style(slot_row, "horizontal_spacing", 6)
-    set_style(slot_row, "vertical_align", "center")
+    local slot_row = prepare_right_aligned_value_flow(flow, 6)
 
     if not ammo_name then
       slot_row.add({
@@ -171,17 +164,7 @@ function stats_panel.new(deps)
   end
 
   local function render_current_ammo_flow(flow, ammo_in_magazine, ammo_magazine_size)
-    flow.clear()
-    local row = flow.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(row, "width", LAYOUT.stats_value_width)
-    set_style(row, "minimal_width", LAYOUT.stats_value_width)
-    set_style(row, "maximal_width", LAYOUT.stats_value_width)
-    set_style(row, "horizontal_align", "right")
-    set_style(row, "horizontally_stretchable", true)
-    set_style(row, "vertical_align", "center")
+    local row = prepare_right_aligned_value_flow(flow, 0)
 
     if ammo_in_magazine == nil or not ammo_magazine_size or ammo_magazine_size <= 0 then
       local label = row.add({

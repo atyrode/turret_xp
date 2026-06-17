@@ -543,6 +543,68 @@ return function(M)
     return nil
   end
 
+  local function gui_style_property(element, property)
+    if not element or not element.valid or not element.style then
+      return nil
+    end
+
+    local ok, value = pcall(function()
+      return element.style[property]
+    end)
+    if not ok then
+      return nil
+    end
+
+    local value_type = type(value)
+    if value_type == "string" or value_type == "number" or value_type == "boolean" then
+      return value
+    end
+
+    return nil
+  end
+
+  local function gui_element_name(element)
+    local name = element and element.valid and element.name or nil
+    if name == "" then
+      return nil
+    end
+
+    return name
+  end
+
+  local function stats_row_layout_summary(row)
+    local children = row and row.children or {}
+    local label = children[1]
+    local spacer = children[2]
+    local value = children[3]
+    local summary = {
+      label_type = label and label.valid and label.type or nil,
+      label_horizontal_align = gui_style_property(label, "horizontal_align"),
+      label_maximal_width = gui_style_property(label, "maximal_width"),
+      spacer_type = spacer and spacer.valid and spacer.type or nil,
+      value_type = value and value.valid and value.type or nil,
+      value_name = gui_element_name(value),
+      value_horizontal_align = gui_style_property(value, "horizontal_align"),
+      value_width = gui_style_property(value, "width"),
+      value_minimal_width = gui_style_property(value, "minimal_width"),
+      value_maximal_width = gui_style_property(value, "maximal_width"),
+      value_children = {},
+    }
+
+    for _, child in ipairs(value and value.children or {}) do
+      summary.value_children[#summary.value_children + 1] = {
+        type = child and child.valid and child.type or nil,
+        name = gui_element_name(child),
+      }
+    end
+
+    local first_child = summary.value_children[1]
+    summary.value_first_child_type = first_child and first_child.type or nil
+    summary.value_first_child_name = first_child and first_child.name or nil
+
+    return summary
+  end
+
   local function gui_snapshot_scroll_target(panel, target)
     if target == "stats" then
       return find_gui_element(panel, GUI.stats_scroll)
@@ -618,6 +680,51 @@ return function(M)
         panel_height = LAYOUT.evolution_outer_height + 72,
         fallback_crop = "center",
       }
+    end,
+    stats_panel_layout_sample = function(entity)
+      local player = nil
+      for _, candidate in pairs(game.players) do
+        if candidate and candidate.valid then
+          player = candidate
+          break
+        end
+      end
+
+      if not player or not is_gun_turret(entity) then
+        return {
+          available = false,
+        }
+      end
+
+      local ok, shell = pcall(build_turret_gui_screen, player, entity)
+      local panel = ok and shell and get_gui_panel(player) or nil
+      local stats = panel and find_gui_element(panel, GUI.stats) or nil
+      local sample = {
+        available = stats ~= nil,
+        rows = {},
+        named_rows = {},
+      }
+
+      if stats then
+        for _, row in ipairs(stats.children or {}) do
+          if row.valid and row.type == "flow" then
+            local summary = stats_row_layout_summary(row)
+            sample.rows[#sample.rows + 1] = summary
+
+            if summary.value_name == GUI.magazine then
+              sample.named_rows.magazine = summary
+            elseif summary.value_name == GUI.ammo then
+              sample.named_rows.ammo = summary
+            elseif summary.value_name == GUI.ammo_productivity then
+              sample.named_rows.ammo_productivity = summary
+            end
+          end
+        end
+      end
+
+      destroy_gui(player)
+      forget_open_turret(player)
+      return sample
     end,
     dispatch_cycle_label_color = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil

@@ -189,6 +189,51 @@ function tests.run_gui_support_samples_test()
   )
 end
 
+function tests.run_stats_panel_alignment_test(surface)
+  local layout = call("layout")
+  local turret = create_turret(surface, { 2, 0 }, 20)
+  local summary = call("install_core", turret, {
+    level = 30,
+    kills = 8,
+    damage = 1200,
+  })
+  assert_true(summary ~= nil, "failed to install core for stats panel alignment test")
+
+  summary = call("set_evolution", turret, {
+    base = {
+      ammo_regen = 4,
+      damage = 3,
+      crit_chance = 2,
+    },
+    augments = {
+      luck = 1,
+    },
+  })
+  assert_true(summary ~= nil, "failed to set evolution state for stats panel alignment test")
+
+  local sample = call("stats_panel_layout_sample", turret)
+  assert_true(sample ~= nil and sample.available == true, "stats panel layout sample was unavailable")
+  assert_true(#(sample.rows or {}) >= 10, "stats panel layout sample did not include the expected stat rows")
+
+  for index, row in ipairs(sample.rows or {}) do
+    assert_eq(row.label_type, "label", "stat row " .. index .. " must start with the left label")
+    assert_eq(row.label_horizontal_align, "left", "stat row " .. index .. " label must be left-aligned")
+    assert_eq(row.label_maximal_width, layout.stats_label_width, "stat row " .. index .. " label width drifted")
+    assert_eq(row.spacer_type, "empty-widget", "stat row " .. index .. " must separate label and value with a pusher")
+    assert_eq(row.value_type, "flow", "stat row " .. index .. " must end with a fixed value flow")
+    assert_eq(row.value_horizontal_align, "right", "stat row " .. index .. " value flow must be right-aligned")
+    assert_eq(row.value_width, layout.stats_value_width, "stat row " .. index .. " value flow width drifted")
+    assert_eq(row.value_minimal_width, layout.stats_value_width, "stat row " .. index .. " value minimum width drifted")
+    assert_eq(row.value_maximal_width, layout.stats_value_width, "stat row " .. index .. " value maximum width drifted")
+  end
+
+  for _, row_name in ipairs({ "magazine", "ammo", "ammo_productivity" }) do
+    local row = sample.named_rows and sample.named_rows[row_name] or nil
+    assert_true(row ~= nil, "stats panel layout sample missed Ammo row " .. row_name)
+    assert_eq(row.value_first_child_type, "empty-widget", "Ammo row " .. row_name .. " must push custom content right")
+  end
+end
+
 function tests.run_profile_label_test(surface)
   local turret = create_turret(surface, { 0, 0 }, 10)
   local summary = call("install_core", turret, {

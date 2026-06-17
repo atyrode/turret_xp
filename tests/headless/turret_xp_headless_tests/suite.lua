@@ -17,6 +17,7 @@ local function run_immediate_tests()
 
   gui_support_tests.run_layout_constants_test()
   gui_support_tests.run_gui_support_samples_test()
+  gui_support_tests.run_stats_panel_alignment_test(surface)
   compat_tests.run_compat_samples_test(surface)
   combat_tests.run_combat_budget_samples_test(surface)
   migration_tests.run_legacy_migration_test()
