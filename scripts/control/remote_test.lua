@@ -633,9 +633,19 @@ return function(M)
       }
     end
 
-    local first_child = summary.value_children[1]
+    local first_child = value and value.children and value.children[1] or nil
     summary.value_first_child_type = first_child and first_child.type or nil
-    summary.value_first_child_name = first_child and first_child.name or nil
+    summary.value_first_child_name = gui_element_name(first_child)
+    summary.value_first_child_width = gui_style_property(first_child, "width")
+    summary.value_first_child_minimal_width = gui_style_property(first_child, "minimal_width")
+    summary.value_first_child_maximal_width = gui_style_property(first_child, "maximal_width")
+    summary.value_first_child_left_margin = gui_style_property(first_child, "left_margin")
+    summary.value_first_child_horizontal_align = gui_style_property(first_child, "horizontal_align")
+
+    local first_grandchild = first_child and first_child.children and first_child.children[1] or nil
+    summary.value_first_grandchild_type = first_grandchild and first_grandchild.valid and first_grandchild.type or nil
+    summary.value_first_grandchild_name = gui_element_name(first_grandchild)
+    summary.value_first_grandchild_width = gui_style_property(first_grandchild, "width")
 
     return summary
   end

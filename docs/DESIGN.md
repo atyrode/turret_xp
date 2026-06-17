@@ -23,7 +23,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep specialization and sub-specialization decision stats visible before picking. Choice cards can show prose and technical effects, while lower-stakes element options can stay as compact selectable rows.
 - Keep locked Evolution sections scannable by showing the section name and level gate in the same header rhythm as unlocked sections.
 - Keep the Stats pane visually parallel to Evolution: a fixed header and a bounded scroll body with distinct native subheader strips for identity, defense, offense, ammo, history, and active effects.
-- Keep Stats rows on the shared two-column contract: stat names remain left-aligned, values occupy the fixed right-aligned value column, and custom Ammo controls must add an explicit pusher inside that value column before rendering icons, counters, or progress bars.
+- Keep Stats rows on the shared two-column contract: stat names remain left-aligned, values occupy the fixed right-aligned value column, and custom Ammo controls must use explicit fixed-width right cells or full-width right-aligned labels rather than relying on flow alignment hints.
 - Use direct labels, compact controls, restrained rich text markers, and vanilla-like layout rhythm.
 - Keep decorative Evolution icons in fixed cells with stretched sprites so Factorio interface scale changes cannot let icon artwork collide with adjacent labels or action controls.
 - Keep Evolution rank allocation controls as consistent compact steppers: normal click changes one rank, Shift-click changes up to ten, and Ctrl-click spends or refunds the whole applicable amount.

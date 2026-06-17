@@ -100,6 +100,10 @@ local layout = {
   stats_header_height = 34,
   stats_height = 360,
   stats_value_width = 190,
+  stats_ammo_slot_size = 36,
+  stats_ammo_productivity_bar_width = 128,
+  stats_ammo_productivity_label_width = 57,
+  stats_ammo_productivity_spacing = 5,
   stats_section_header_height = 24,
   stats_section_header_top_margin = 8,
   stats_section_header_bottom_margin = 3,
@@ -149,6 +153,9 @@ layout.platform_core_row_detail_width = layout.left_column_width
 layout.stats_scroll_width = layout.left_column_width - 16
 layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12
+layout.stats_ammo_productivity_width = layout.stats_ammo_productivity_bar_width
+  + layout.stats_ammo_productivity_label_width
+  + layout.stats_ammo_productivity_spacing
 layout.inventory_core_picker_width = layout.left_column_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.inventory_core_detail_width = layout.inventory_core_picker_width - layout.inventory_core_scrollbar_width - 112
 layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding - layout.inventory_core_frame_padding

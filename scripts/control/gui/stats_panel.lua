@@ -58,23 +58,49 @@ function stats_panel.new(deps)
   local get_estimated_dps_values = deps.get_estimated_dps_values
   local format_estimated_dps_formula = deps.format_estimated_dps_formula
 
-  local function prepare_right_aligned_value_flow(flow, spacing)
+  local function set_fixed_width(element, width)
+    set_style(element, "width", width)
+    set_style(element, "minimal_width", width)
+    set_style(element, "maximal_width", width)
+  end
+
+  local function prepare_value_flow(flow, spacing)
     flow.clear()
-    set_style(flow, "width", LAYOUT.stats_value_width)
-    set_style(flow, "minimal_width", LAYOUT.stats_value_width)
-    set_style(flow, "maximal_width", LAYOUT.stats_value_width)
+    set_fixed_width(flow, LAYOUT.stats_value_width)
     set_style(flow, "horizontal_align", "right")
     set_style(flow, "horizontal_spacing", spacing or 0)
     set_style(flow, "vertical_align", "center")
-    flow.add({
-      type = "empty-widget",
-      style = "flib_horizontal_pusher",
-    })
     return flow
   end
 
+  local function add_right_value_cell(flow, width, spacing)
+    local cell = flow.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_fixed_width(cell, width)
+    set_style(cell, "left_margin", math.max(0, LAYOUT.stats_value_width - width))
+    set_style(cell, "horizontal_align", "right")
+    set_style(cell, "horizontal_spacing", spacing or 0)
+    set_style(cell, "vertical_align", "center")
+    return cell
+  end
+
+  local function add_right_value_label(flow, caption, style)
+    prepare_value_flow(flow, 0)
+    local label = flow.add({
+      type = "label",
+      caption = caption,
+      style = style or "label",
+    })
+    set_fixed_width(label, LAYOUT.stats_value_width)
+    set_style(label, "horizontal_align", "right")
+    set_style(label, "single_line", true)
+    return label
+  end
+
   local function render_ammo_productivity(parent, state)
-    prepare_right_aligned_value_flow(parent, 5)
+    prepare_value_flow(parent, 0)
     if not state or get_base_rank(state, "ammo_regen") <= 0 then
       return
     end
@@ -92,8 +118,9 @@ function stats_panel.new(deps)
     }
 
     set_style(parent, "top_margin", 3)
+    local row = add_right_value_cell(parent, LAYOUT.stats_ammo_productivity_width, LAYOUT.stats_ammo_productivity_spacing)
 
-    local bar = parent.add({
+    local bar = row.add({
       type = "progressbar",
       name = GUI.ammo_productivity_bar,
       style = "turret_xp_ammo_productivity_progressbar",
@@ -101,23 +128,24 @@ function stats_panel.new(deps)
       tooltip = tooltip,
     })
     set_style(bar, "height", 10)
-    set_style(bar, "width", 130)
-    set_style(bar, "minimal_width", 130)
-    set_style(bar, "maximal_width", 130)
+    set_fixed_width(bar, LAYOUT.stats_ammo_productivity_bar_width)
 
-    local label = parent.add({
+    local label = row.add({
       type = "label",
       name = GUI.ammo_productivity_label,
       caption = rich_number(caption, { 0.72, 0.33, 0.95 }),
       tooltip = tooltip,
       style = "caption_label",
     })
+    set_fixed_width(label, LAYOUT.stats_ammo_productivity_label_width)
+    set_style(label, "horizontal_align", "right")
     set_style(label, "single_line", true)
     set_style(label, "font_color", COLOR.muted)
   end
 
   local function render_magazine_stack_flow(flow, ammo_name, ammo_count, ammo_quality)
-    local slot_row = prepare_right_aligned_value_flow(flow, 6)
+    prepare_value_flow(flow, 0)
+    local slot_row = add_right_value_cell(flow, LAYOUT.stats_ammo_slot_size, 0)
 
     if not ammo_name then
       slot_row.add({
@@ -150,39 +178,25 @@ function stats_panel.new(deps)
 
     if ok and button then
       set_element_style(button, "flib_slot_button_green")
-      set_style(button, "size", 36)
+      set_style(button, "size", LAYOUT.stats_ammo_slot_size)
     end
 
     if ok and button then
       return
     end
 
-    slot_row.add({
-      type = "label",
-      caption = string.format("[item=%s] x%d", ammo_name, ammo_count),
-    })
+    flow.clear()
+    add_right_value_label(flow, string.format("[item=%s] x%d", ammo_name, ammo_count), "label")
   end
 
   local function render_current_ammo_flow(flow, ammo_in_magazine, ammo_magazine_size)
-    local row = prepare_right_aligned_value_flow(flow, 0)
-
     if ammo_in_magazine == nil or not ammo_magazine_size or ammo_magazine_size <= 0 then
-      local label = row.add({
-        type = "label",
-        caption = "-",
-        style = "caption_label",
-      })
+      local label = add_right_value_label(flow, "-", "caption_label")
       set_style(label, "font_color", COLOR.muted)
-      set_style(label, "single_line", true)
       return
     end
 
-    local label = row.add({
-      type = "label",
-      caption = format_number(ammo_in_magazine, 0) .. " / " .. format_number(ammo_magazine_size, 0),
-      style = "label",
-    })
-    set_style(label, "single_line", true)
+    add_right_value_label(flow, format_number(ammo_in_magazine, 0) .. " / " .. format_number(ammo_magazine_size, 0), "label")
   end
 
   local function add_stats_panel(parent)

@@ -113,6 +113,15 @@ function tests.run_layout_constants_test()
     layout.stats_content_width,
     "stats label/value widths must derive from the scroll content width"
   )
+  assert_eq(
+    layout.stats_ammo_productivity_bar_width + layout.stats_ammo_productivity_label_width + layout.stats_ammo_productivity_spacing,
+    layout.stats_ammo_productivity_width,
+    "Ammo productivity value cell must derive from bar, label, and spacing widths"
+  )
+  assert_true(
+    layout.stats_ammo_productivity_width <= layout.stats_value_width,
+    "Ammo productivity value cell must fit inside the fixed stat value column"
+  )
   local wide_table_width = layout.empty_inventory_core_level_width
     + layout.empty_inventory_core_name_width
     + layout.empty_inventory_core_specialization_width
@@ -233,8 +242,37 @@ function tests.run_stats_panel_alignment_test(surface)
   for _, row_name in ipairs({ "magazine", "ammo", "ammo_productivity" }) do
     local row = sample.named_rows and sample.named_rows[row_name] or nil
     assert_true(row ~= nil, "stats panel layout sample missed Ammo row " .. row_name)
-    assert_eq(row.value_first_child_type, "empty-widget", "Ammo row " .. row_name .. " must push custom content right")
   end
+
+  local magazine = sample.named_rows.magazine
+  assert_eq(magazine.value_first_child_type, "flow", "Magazine value must render inside a fixed right-side cell")
+  assert_eq(magazine.value_first_child_width, layout.stats_ammo_slot_size, "Magazine value cell width drifted")
+  assert_eq(
+    magazine.value_first_child_left_margin,
+    layout.stats_value_width - layout.stats_ammo_slot_size,
+    "Magazine value cell must be pinned to the right edge"
+  )
+  assert_eq(magazine.value_first_grandchild_type, "sprite-button", "Magazine value cell must contain the ammo slot button")
+
+  local ammo = sample.named_rows.ammo
+  assert_eq(ammo.value_first_child_type, "label", "Ammo value must render as a full-width label")
+  assert_eq(ammo.value_first_child_width, layout.stats_value_width, "Ammo value label width drifted")
+  assert_eq(ammo.value_first_child_horizontal_align, "right", "Ammo value label must be right-aligned")
+
+  local productivity = sample.named_rows.ammo_productivity
+  assert_eq(productivity.value_first_child_type, "flow", "Ammo productivity must render inside a fixed right-side cell")
+  assert_eq(productivity.value_first_child_width, layout.stats_ammo_productivity_width, "Ammo productivity cell width drifted")
+  assert_eq(
+    productivity.value_first_child_left_margin,
+    layout.stats_value_width - layout.stats_ammo_productivity_width,
+    "Ammo productivity cell must be pinned to the right edge"
+  )
+  assert_eq(productivity.value_first_grandchild_type, "progressbar", "Ammo productivity cell must start with the progress bar")
+  assert_eq(
+    productivity.value_first_grandchild_width,
+    layout.stats_ammo_productivity_bar_width,
+    "Ammo productivity progress bar width drifted"
+  )
 end
 
 function tests.run_profile_label_test(surface)
