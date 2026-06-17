@@ -80,6 +80,9 @@ function stats_panel.new(deps)
       type = "flow",
       direction = "horizontal",
     })
+    set_style(row, "width", LAYOUT.stats_value_width)
+    set_style(row, "minimal_width", LAYOUT.stats_value_width)
+    set_style(row, "maximal_width", LAYOUT.stats_value_width)
     set_style(row, "top_margin", 3)
     set_style(row, "horizontal_spacing", 5)
     set_style(row, "vertical_align", "center")
@@ -115,6 +118,9 @@ function stats_panel.new(deps)
       type = "flow",
       direction = "horizontal",
     })
+    set_style(slot_row, "width", LAYOUT.stats_value_width)
+    set_style(slot_row, "minimal_width", LAYOUT.stats_value_width)
+    set_style(slot_row, "maximal_width", LAYOUT.stats_value_width)
     set_style(slot_row, "horizontal_align", "right")
     set_style(slot_row, "horizontally_stretchable", true)
     set_style(slot_row, "horizontal_spacing", 6)
@@ -170,6 +176,9 @@ function stats_panel.new(deps)
       type = "flow",
       direction = "horizontal",
     })
+    set_style(row, "width", LAYOUT.stats_value_width)
+    set_style(row, "minimal_width", LAYOUT.stats_value_width)
+    set_style(row, "maximal_width", LAYOUT.stats_value_width)
     set_style(row, "horizontal_align", "right")
     set_style(row, "horizontally_stretchable", true)
     set_style(row, "vertical_align", "center")

@@ -44,6 +44,19 @@ function tests.run_layout_constants_test()
   )
   assert_true(layout.evolution_inner_width < layout.evolution_scroll_width, "Evolution rows must stay inside the scroll viewport")
   assert_true(layout.evolution_detail_width < layout.evolution_inner_width, "Evolution text details must stay capped inside inner rows")
+  assert_eq(
+    layout.evolution_choice_detail_width
+      + layout.evolution_choice_icon_cell_width
+      + layout.evolution_choice_action_width
+      + (layout.evolution_choice_horizontal_spacing * 2),
+    layout.evolution_inner_width,
+    "Evolution choice rows must reserve fixed icon/action cells and keep text inside the row budget"
+  )
+  assert_eq(
+    layout.evolution_card_title_width + layout.evolution_card_icon_cell_width + layout.evolution_card_action_width + 24,
+    layout.evolution_card_inner_width,
+    "Evolution card title rows must reserve a fixed icon cell and action cell"
+  )
   assert_true(layout.stats_header_height > 0, "Stats pane must reserve a visible subheader")
   assert_true(layout.stats_section_header_height > 0, "Stats groups must reserve visible section headers")
   assert_true(layout.stats_section_header_top_margin > 0, "Stats group headers after the first must have separation")
@@ -144,7 +157,7 @@ function tests.run_layout_constants_test()
   )
   assert_eq(
     layout.rank_allocation_detail_width
-      + layout.rank_allocation_icon_size
+      + layout.rank_allocation_icon_cell_width
       + layout.rank_allocation_value_width
       + layout.rank_stepper_width
       + layout.rank_allocation_spacing_width,

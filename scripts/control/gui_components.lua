@@ -3,6 +3,34 @@ local gui_components = {}
 function gui_components.new(deps)
   local service = {}
 
+  local function set_fixed_size(element, width, height)
+    height = height or width
+    deps.set_style(element, "width", width)
+    deps.set_style(element, "height", height)
+    deps.set_style(element, "minimal_width", width)
+    deps.set_style(element, "minimal_height", height)
+    deps.set_style(element, "maximal_width", width)
+    deps.set_style(element, "maximal_height", height)
+  end
+
+  local function add_fixed_sprite(parent, sprite, size, cell_width)
+    local cell = parent.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_fixed_size(cell, cell_width or size, size)
+    deps.set_style(cell, "horizontal_align", "center")
+    deps.set_style(cell, "vertical_align", "center")
+
+    local icon = cell.add({
+      type = "sprite",
+      sprite = sprite,
+    })
+    set_fixed_size(icon, size)
+    deps.set_style(icon, "stretch_image_to_widget_size", true)
+    return icon, cell
+  end
+
   function service.add_content_pane(parent, options)
     options = options or {}
 
@@ -294,7 +322,7 @@ function gui_components.new(deps)
     end
     local row = parent.add(row_definition)
     deps.set_evolution_content_width(row, true)
-    deps.set_style(row, "horizontal_spacing", 8)
+    deps.set_style(row, "horizontal_spacing", deps.LAYOUT.evolution_choice_horizontal_spacing)
     deps.set_style(row, "vertical_spacing", 2)
     pcall(function()
       row.style.column_alignments[1] = "left"
@@ -302,17 +330,15 @@ function gui_components.new(deps)
       row.style.column_alignments[3] = "right"
     end)
 
-    local icon = row.add({
-      type = "sprite",
-      sprite = sprite,
-    })
-    deps.set_style(icon, "size", 28)
+    add_fixed_sprite(row, sprite, deps.LAYOUT.evolution_choice_icon_size, deps.LAYOUT.evolution_choice_icon_cell_width)
 
     local details = row.add({
       type = "flow",
       direction = "vertical",
     })
-    deps.set_style(details, "horizontally_stretchable", true)
+    deps.set_style(details, "width", deps.LAYOUT.evolution_choice_detail_width)
+    deps.set_style(details, "minimal_width", deps.LAYOUT.evolution_choice_detail_width)
+    deps.set_style(details, "maximal_width", deps.LAYOUT.evolution_choice_detail_width)
 
     local title = details.add({
       type = "label",
@@ -329,7 +355,7 @@ function gui_components.new(deps)
       })
       deps.set_style(desc, "font_color", deps.COLOR.muted)
       deps.set_style(desc, "single_line", false)
-      deps.set_style(desc, "maximal_width", deps.LAYOUT.evolution_detail_width)
+      deps.set_style(desc, "maximal_width", deps.LAYOUT.evolution_choice_detail_width)
     end
 
     if tags then
@@ -339,7 +365,9 @@ function gui_components.new(deps)
         tags = tags,
         enabled = enabled,
       })
-      deps.set_style(button, "minimal_width", 72)
+      deps.set_style(button, "width", deps.LAYOUT.evolution_choice_action_width)
+      deps.set_style(button, "minimal_width", deps.LAYOUT.evolution_choice_action_width)
+      deps.set_style(button, "maximal_width", deps.LAYOUT.evolution_choice_action_width)
       return button
     end
 
@@ -349,6 +377,10 @@ function gui_components.new(deps)
       style = "caption_label",
     })
     deps.set_style(value, "font_color", deps.COLOR.muted)
+    deps.set_style(value, "horizontal_align", "right")
+    deps.set_style(value, "width", deps.LAYOUT.evolution_choice_action_width)
+    deps.set_style(value, "minimal_width", deps.LAYOUT.evolution_choice_action_width)
+    deps.set_style(value, "maximal_width", deps.LAYOUT.evolution_choice_action_width)
     return value
   end
 

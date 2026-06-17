@@ -104,12 +104,18 @@ local layout = {
   stats_section_header_top_margin = 8,
   stats_section_header_bottom_margin = 3,
   evolution_card_icon_size = 28,
+  evolution_card_icon_cell_width = 28,
+  evolution_choice_icon_size = 28,
+  evolution_choice_icon_cell_width = 28,
+  evolution_choice_action_width = 72,
+  evolution_choice_horizontal_spacing = 8,
   evolution_card_action_width = 64,
   evolution_effect_table_spacing = 8,
   rank_stepper_button_size = 30,
   rank_stepper_label_width = 24,
   rank_stepper_spacing = 4,
   rank_allocation_icon_size = 28,
+  rank_allocation_icon_cell_width = 28,
   rank_allocation_value_width = 96,
   rank_allocation_horizontal_spacing = 8,
   inventory_core_picker_height = 230,
@@ -178,17 +184,21 @@ layout.evolution_section_width = layout.evolution_content_width - (layout.evolut
 layout.evolution_inner_width = layout.evolution_section_width - 16
 layout.evolution_card_inner_width = layout.evolution_inner_width - 28
 layout.evolution_card_title_width = layout.evolution_card_inner_width
-  - layout.evolution_card_icon_size
+  - layout.evolution_card_icon_cell_width
   - layout.evolution_card_action_width
   - 24
-layout.evolution_card_title_full_width = layout.evolution_card_inner_width - layout.evolution_card_icon_size - 12
+layout.evolution_card_title_full_width = layout.evolution_card_inner_width - layout.evolution_card_icon_cell_width - 12
+layout.evolution_choice_detail_width = layout.evolution_inner_width
+  - layout.evolution_choice_icon_cell_width
+  - layout.evolution_choice_action_width
+  - (layout.evolution_choice_horizontal_spacing * 2)
 layout.evolution_effect_column_width = math.floor((layout.evolution_card_inner_width - layout.evolution_effect_table_spacing) / 2)
 layout.evolution_detail_width = layout.evolution_inner_width - 96
 layout.evolution_effect_width = layout.evolution_inner_width - 64
 layout.rank_stepper_width = (layout.rank_stepper_button_size * 2) + layout.rank_stepper_label_width + (layout.rank_stepper_spacing * 2)
 layout.rank_allocation_spacing_width = layout.rank_allocation_horizontal_spacing * 3
 layout.rank_allocation_detail_width = layout.evolution_inner_width
-  - layout.rank_allocation_icon_size
+  - layout.rank_allocation_icon_cell_width
   - layout.rank_allocation_value_width
   - layout.rank_stepper_width
   - layout.rank_allocation_spacing_width

@@ -24,6 +24,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep locked Evolution sections scannable by showing the section name and level gate in the same header rhythm as unlocked sections.
 - Keep the Stats pane visually parallel to Evolution: a fixed header and a bounded scroll body with distinct native subheader strips for identity, defense, offense, ammo, history, and active effects.
 - Use direct labels, compact controls, restrained rich text markers, and vanilla-like layout rhythm.
+- Keep decorative Evolution icons in fixed cells with stretched sprites so Factorio interface scale changes cannot let icon artwork collide with adjacent labels or action controls.
 - Keep Evolution rank allocation controls as consistent compact steppers: normal click changes one rank, Shift-click changes up to ten, and Ctrl-click spends or refunds the whole applicable amount.
 - Keep stat rows scannable: show final values in the panel, put formulas in the stat-name info hover, and reserve the quality diamond for quality-specific HP/range breakdowns.
 - Keep dev controls hidden by default and toggled through `/turret-xp-dev`.

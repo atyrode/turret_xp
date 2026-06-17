@@ -113,6 +113,34 @@ function evolution_panel_module.new(deps)
     return button
   end
 
+  local function set_fixed_size(element, width, height)
+    height = height or width
+    set_style(element, "width", width)
+    set_style(element, "height", height)
+    set_style(element, "minimal_width", width)
+    set_style(element, "minimal_height", height)
+    set_style(element, "maximal_width", width)
+    set_style(element, "maximal_height", height)
+  end
+
+  local function add_fixed_sprite(parent, sprite, size, cell_width)
+    local cell = parent.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_fixed_size(cell, cell_width or size, size)
+    set_style(cell, "horizontal_align", "center")
+    set_style(cell, "vertical_align", "center")
+
+    local icon = cell.add({
+      type = "sprite",
+      sprite = sprite,
+    })
+    set_fixed_size(icon, size)
+    set_style(icon, "stretch_image_to_widget_size", true)
+    return icon, cell
+  end
+
   local function add_card_title_row(parent, sprite, name, action_tags)
     local title_row = parent.add({
       type = "flow",
@@ -122,11 +150,7 @@ function evolution_panel_module.new(deps)
     set_style(title_row, "horizontal_spacing", 8)
     set_style(title_row, "vertical_align", "center")
 
-    local icon = title_row.add({
-      type = "sprite",
-      sprite = sprite,
-    })
-    set_style(icon, "size", LAYOUT.evolution_card_icon_size)
+    add_fixed_sprite(title_row, sprite, LAYOUT.evolution_card_icon_size, LAYOUT.evolution_card_icon_cell_width)
 
     local title = title_row.add({
       type = "label",
@@ -299,11 +323,7 @@ function evolution_panel_module.new(deps)
       row.style.column_alignments[4] = "right"
     end)
 
-    local icon = row.add({
-      type = "sprite",
-      sprite = options.sprite,
-    })
-    set_style(icon, "size", LAYOUT.rank_allocation_icon_size)
+    add_fixed_sprite(row, options.sprite, LAYOUT.rank_allocation_icon_size, LAYOUT.rank_allocation_icon_cell_width)
 
     local details = row.add({
       type = "flow",
