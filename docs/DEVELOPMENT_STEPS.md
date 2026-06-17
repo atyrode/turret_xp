@@ -13,7 +13,8 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Lua validation file discovery follows Git ignore rules, so tracked files and untracked non-ignored Lua files are checked while ignored local research/build corpora are excluded.
 - Package build: `scripts/package.sh`.
 - Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
-- Externally visible publish scripts: `scripts/release.sh` for GitHub Releases and `scripts/publish-portal.sh` for the stable Mod Portal path; both require release preflight on clean, up-to-date `main`.
+- Externally visible release helper: `scripts/release.sh` creates or updates the signed GitHub Release/tag after release preflight on clean, up-to-date `main`.
+- Mod Portal releases are not published from local checkouts. The GitHub Release workflow publishes the exact GitHub Release package asset to the Mod Portal behind the `factorio-mod-portal` environment gate.
 - CI runs strict Lua tooling and packaging for package-impacting changes, and headless Factorio tests when Mod Portal download credentials are configured.
 - Package-impacting changes are root `README.md`, `changelog.txt`, `thumbnail.png`, package source, package scripts, and validation infrastructure; internal `docs/` and generated public-site files are not mod package payload.
 
@@ -73,7 +74,7 @@ Use the narrowest meaningful checks for each change:
 - GUI screenshot review: `scripts/gui-snapshots.sh install`, `/turret-xp-snapshots` in a graphical development save, then `scripts/gui-snapshots.sh collect`. Use the cropped `tests/gui-snapshots/current/ui/` images for layout review before asking for another manual pass.
 - Runtime bug fixes: add or extend the narrowest deterministic headless or pure Lua regression test in the owning subsystem, or state why the behavior needs manual GUI/playtest validation instead.
 - Release changes: local script smoke checks where practical, CI on the release branch, and the GitHub Release workflow before Mod Portal publication.
-- Release preflight changes: `bash -n scripts/release-preflight.sh scripts/release.sh scripts/publish-portal.sh`, synthetic git-state checks, `scripts/check.sh`, `scripts/package.sh`, and `git diff --check`.
+- Release preflight changes: `bash -n scripts/release-preflight.sh scripts/release.sh scripts/publish-mod-portal-release.sh`, synthetic git-state checks, `scripts/check.sh`, `scripts/package.sh`, and `git diff --check`.
 - Website changes: inspect generated `docs/index.html` locally or in the built GitHub Pages output, and confirm public links point to current docs.
 
 ## Playtest Focus

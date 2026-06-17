@@ -3,42 +3,73 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-scripts/release-preflight.sh "Mod Portal publish"
-
-if [ -f .env ]; then
-  set -a
-  . ./.env
-  set +a
-fi
-
-api_key="${FACTORIO_MOD_PORTAL_API_KEY:-${FACTORIO_API_KEY:-}}"
-if [ -z "$api_key" ]; then
+if [ "${GITHUB_ACTIONS:-}" != "true" ]; then
   cat >&2 <<'EOF'
-Missing FACTORIO_MOD_PORTAL_API_KEY or FACTORIO_API_KEY.
+scripts/publish-mod-portal-release.sh is CI-only.
 
-Create an API key at https://factorio.com/profile with these usages:
-- ModPortal: Publish Mods
-- ModPortal: Upload Mods
-- ModPortal: Edit Mods
-
-Then run:
-  FACTORIO_MOD_PORTAL_API_KEY=<your-api-key> scripts/publish-portal.sh
-
-Or put this in an ignored .env file:
-  FACTORIO_API_KEY=<your-api-key>
-
-Do not commit the key or paste it into chat.
+Publish releases by creating a GitHub Release named v<info.json version>.
+The Release workflow builds and attaches the package, then publishes that
+exact GitHub Release package to the Factorio Mod Portal.
 EOF
   exit 2
 fi
 
+if [ "$#" -ne 3 ]; then
+  echo "Usage: scripts/publish-mod-portal-release.sh <release-package.zip> <mod-portal-description.md> <mod-portal-metadata.env>" >&2
+  exit 2
+fi
+
+package_path="$1"
+description_path="$2"
+metadata_path="$3"
+if [ ! -f "$package_path" ]; then
+  echo "Release package was not found: $package_path" >&2
+  exit 2
+fi
+if [ ! -f "$description_path" ]; then
+  echo "Generated Mod Portal description was not found: $description_path" >&2
+  exit 2
+fi
+if [ ! -f "$metadata_path" ]; then
+  echo "Generated Mod Portal metadata was not found: $metadata_path" >&2
+  exit 2
+fi
+
+api_key="${FACTORIO_MOD_PORTAL_API_KEY:-}"
+if [ -z "$api_key" ]; then
+  echo "Missing FACTORIO_MOD_PORTAL_API_KEY secret for Mod Portal publishing." >&2
+  exit 2
+fi
+
 python_bin="${PYTHON:-python3}"
-mod_name="$("$python_bin" -c 'import json; print(json.load(open("info.json"))["name"])')"
-version="$("$python_bin" -c 'import json; print(json.load(open("info.json"))["version"])')"
-description_path="dist/mod-portal-description.md"
-metadata_path="dist/mod-portal-metadata.env"
+mod_name="${MOD_NAME:-}"
+version="${MOD_VERSION:-}"
+release_tag="${RELEASE_TAG:-}"
+actual_package_name="$(basename "$package_path")"
 curl_config_dir=""
 auth_config_path=""
+
+if [ -z "$mod_name" ] || [ -z "$version" ]; then
+  echo "Missing MOD_NAME or MOD_VERSION from the Release workflow." >&2
+  exit 2
+fi
+
+if [ -z "$release_tag" ]; then
+  echo "Missing RELEASE_TAG from the Release workflow." >&2
+  exit 2
+fi
+
+expected_tag="v${version}"
+expected_package_name="${mod_name}_${version}.zip"
+if [ "$release_tag" != "$expected_tag" ]; then
+  echo "Release tag $release_tag does not match release version $version." >&2
+  exit 1
+fi
+
+if [ "$actual_package_name" != "$expected_package_name" ]; then
+  echo "Release package $actual_package_name does not match expected package $expected_package_name." >&2
+  exit 1
+fi
 
 cleanup() {
   if [ -n "$curl_config_dir" ]; then
@@ -52,7 +83,7 @@ write_auth_config() {
   auth_config_path="${curl_config_dir}/mod-portal-auth.curl"
   printf 'header = "Authorization: Bearer %s"\n' "$api_key" >"$auth_config_path"
   chmod 600 "$auth_config_path"
-  unset api_key FACTORIO_MOD_PORTAL_API_KEY FACTORIO_API_KEY
+  unset api_key FACTORIO_MOD_PORTAL_API_KEY
 }
 
 print_response_body() {
@@ -105,48 +136,49 @@ curl_mod_portal_url() {
 
   local url_config_path
   url_config_path="$(mktemp "${curl_config_dir}/mod-portal-url.XXXXXX")"
-  chmod 600 "$url_config_path"
   printf 'url = "%s"\n' "$url" >"$url_config_path"
+  chmod 600 "$url_config_path"
 
   curl_mod_portal "$label" --config "$url_config_path" "$@"
 }
 
 write_auth_config
 
-scripts/generate-public-assets.py --check
-scripts/generate-public-assets.py --portal-description "$description_path" --portal-metadata "$metadata_path"
 . "$metadata_path"
 
+package_sha1="$(sha1sum "$package_path" | awk '{print $1}')"
 mod_response=""
-release_exists="0"
+release_sha1=""
 if mod_response="$(curl -fsS "https://mods.factorio.com/api/mods/${mod_name}/full")"; then
   mode="release"
-  release_exists="$(
+  release_sha1="$(
     printf '%s' "$mod_response" | "$python_bin" -c '
 import json
 import sys
 
 version = sys.argv[1]
 data = json.load(sys.stdin)
-exists = any(release.get("version") == version for release in data.get("releases", []))
-print("1" if exists else "0")
+for release in data.get("releases", []):
+    if release.get("version") == version:
+        print(release.get("sha1", ""))
+        break
 ' "$version"
   )"
 else
   mode="publish"
 fi
 
-if [ "$release_exists" = "1" ]; then
-  echo "${mod_name} ${version} already exists on the Factorio Mod Portal; skipping package upload."
-else
-  if [ "${SKIP_HEADLESS_TESTS:-}" = "1" ]; then
-    echo "Skipping headless tests because SKIP_HEADLESS_TESTS=1."
-  else
-    scripts/test-headless.sh
+if [ -n "$release_sha1" ]; then
+  if [ "$release_sha1" != "$package_sha1" ]; then
+    cat >&2 <<EOF
+${mod_name} ${version} already exists on the Factorio Mod Portal with sha1 ${release_sha1}.
+The GitHub Release package sha1 is ${package_sha1}; refusing to publish mismatched artifacts.
+EOF
+    exit 1
   fi
 
-  package_path="$(scripts/package.sh | tail -n 1)"
-
+  echo "${mod_name} ${version} already exists on the Factorio Mod Portal with matching package sha1; skipping package upload."
+else
   if [ "$mode" = "release" ]; then
     init_url="https://mods.factorio.com/api/v2/mods/releases/init_upload"
   else
@@ -195,11 +227,7 @@ if edit_response="$(
 )"; then
   printf '%s\n' "$edit_response" | "$python_bin" -m json.tool
 else
-  echo "Uploaded ${mod_name} ${version}, but editing portal details failed. Check the API key has ModPortal: Edit Mods." >&2
+  echo "Package state is valid, but editing portal details failed. Check the API key has ModPortal: Edit Mods." >&2
 fi
 
-if [ "$release_exists" = "1" ]; then
-  echo "Updated ${mod_name} ${version} details on the Factorio Mod Portal."
-else
-  echo "Published ${mod_name} ${version} to the Factorio Mod Portal."
-fi
+echo "Published ${mod_name} ${version} from GitHub Release package ${actual_package_name}."
