@@ -4,7 +4,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 ## Current Baseline
 
-- Main development line: `0.10.4`.
+- Main development line: `0.11.0`.
 - Stable branch policy: short-lived issue branches into protected `main`; releases are GitHub Releases/tags named `v<info.json version>`.
 - Required local lightweight check: `scripts/check.sh`.
 - Strict local Lua tooling without host installs: `docker compose run --rm lua-tools`.

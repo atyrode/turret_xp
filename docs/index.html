@@ -56,25 +56,24 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.10.4</h2>
-          <p>2026-06-12</p>
+          <h2 id="current-title">Version 0.11.0</h2>
+          <p>2026-06-17</p>
         </div>
         <div class="release-notes">
           <h3>Changes</h3>
           <ul>
-            <li>Replaced the prototype-backed Max HP augment with a scripted Shield core upgrade. Shield adds 10 shield per rank, absorbs incoming damage before turret HP, displays a nine-pip blue in-world Shield bar under the native HP bar while relevant, recharges in small increments after a short delay without incoming damage, and no longer refills current shield when capacity changes.</li>
-            <li>Removed the Range augment for now. Specialization and sub-specialization range modifiers remain prototype-backed.</li>
-            <li>Moved Regeneration into the augment section and rebalanced it to 1% max HP per second per augment rank.</li>
-            <li>Replaced the old general Lifesteal upgrade with a Shield on Hit augment that grants shield from gun-turret damage dealt, while Brawler now lists 10% Lifesteal as an innate specialization stat with a stats-panel info tooltip.</li>
-            <li>Replaced passive Ammo Recovery with Ammo Productivity: raw productivity now has diminishing returns for refill progress, spent ammo fills a purple stat-row bar after Ammo, and a full bar restores +1 ammo inside the current loaded magazine without overfilling it, creating full ammo items, or reaching free ammo.</li>
-            <li>Cleaned up the stats panel so formulas live in stat-name info hovers, HP/Range quality breakdowns live on the quality diamond, Magazine and Ammo are separate rows, Bullet Bounce is split into chance and damage rows, the scrollbar lane is reserved before scrolling starts, and visible values use calmer neutral/bonus/penalty coloring.</li>
-            <li>Reduced the generated hidden turret prototype budget by removing Range/Max HP variant axes from body and bound-preview generation.</li>
-            <li>Added a prototype migration that collapses old Range/Max HP hidden bodies and old range-preview bound items/placeholders onto the new specialization-only prototypes.</li>
+            <li>Rebuilt the Turret XP GUI around an anchored Factorio-native <code>flib.gui</code> shell with focused services for shell ownership, runtime refresh, actions, core identity, label controls, platform controls, Stats, Evolution, widgets, and the Veteran Core picker table.</li>
+            <li>Reworked empty turrets into a full-width Veteran Core picker with sortable headers, Base/Sniper/Machine gun/Bulwark/Brawler filters, persisted sort/filter preferences, neutral preview stats, and exact-slot install actions.</li>
+            <li>Reworked installed-core controls with a compact identity/action row, explicit extract and Bind/Unbind actions, platform hub core rows, a label-color swatch, and a draggable Turret XP color popup with presets and RGB sliders.</li>
+            <li>Gave Stats and Evolution matching fixed-header shallow panes with bounded scroll bodies, native section headers, named layout constants, stable row budgets, and regression guards for layout contracts.</li>
+            <li>Added dev-only GUI snapshot tooling for graphical review of fixture scenes, plus headless and script-level GUI contract tests for the picker, Stats layout, action dispatch, and layout constants.</li>
+            <li>Added Dockerized Lua formatting/linting workflows and a pre-commit hook so local Lua formatting and strict checks match CI without installing Lua tools on the host.</li>
           </ul>
           <h3>Bugfixes</h3>
           <ul>
-            <li>Retired saved Range and Max HP augment ranks during profile normalization so old Veteran Core and bound turret item tags no longer keep dead upgrade state.</li>
-            <li>Migrated old XP-gain skill ranks into Veteran Training instead of preserving them as a dead base XP rank, and stopped writing legacy skill/project fields into newly serialized Veteran Core profiles.</li>
+            <li>Fixed interface-scale-sensitive Evolution icons by rendering decorative sprites in fixed cells so they no longer overflow into labels or action controls at smaller or automatic UI scales.</li>
+            <li>Fixed Ammo-section stat alignment so Magazine, Ammo, and Ammo Productivity values are pinned to the same right-side value column as the rest of the Stats panel.</li>
+            <li>Reduced GUI refresh churn by preserving stable interactive controls and using narrower refresh keys for picker and open-turret updates where practical.</li>
           </ul>
         </div>
       </section>

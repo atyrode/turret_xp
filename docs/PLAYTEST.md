@@ -4,7 +4,7 @@ This guide is split by depth. Run the smoke path for ordinary feedback, the regr
 
 ## Install
 
-Current development package target: `0.10.4`.
+Current development package target: `0.11.0`.
 
 Preferred once published:
 
