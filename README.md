@@ -98,21 +98,15 @@ Standard path:
 2. Confirm CI passes.
 3. Merge the PR into `main`.
 4. Publish a GitHub Release named `v<info.json version>`.
-5. Let the Release workflow build/test the package, attach the zip, wait for the `factorio-mod-portal` environment approval when configured, and publish the same version to the Factorio Mod Portal.
+5. Let the Release workflow build/test the package, attach the zip to the GitHub Release, wait for the `factorio-mod-portal` environment approval when configured, and publish that exact release package to the Factorio Mod Portal.
 
-Local GitHub Release helper:
+Local GitHub Release helper. This creates or updates only the GitHub Release object and signed tag; the workflow owns package attachment and Mod Portal publication.
 
 ```sh
 scripts/release.sh
 ```
 
-Local Mod Portal helper:
-
-```sh
-FACTORIO_MOD_PORTAL_API_KEY=<your-api-key> scripts/publish-portal.sh
-```
-
-Both release helpers run release preflight and require clean, up-to-date `main`. Do not commit secrets, paste tokens into chat, or put real credentials in tracked files. Use ignored local env files, GitHub Secrets, and operator-run secret setup workflows.
+Do not publish Mod Portal releases from a local checkout. The only supported Mod Portal deployment path is the GitHub Release workflow, using `FACTORIO_MOD_PORTAL_API_KEY` from GitHub Secrets and the `factorio-mod-portal` environment gate. Do not commit secrets, paste tokens into chat, or put real credentials in tracked files.
 
 ## Documents
 

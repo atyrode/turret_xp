@@ -5,6 +5,7 @@ import zipfile
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
 
 def load_info():
@@ -42,7 +43,11 @@ def main():
 
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for relative in package_files():
-            archive.write(ROOT / relative, f"{package_root}/{relative}")
+            archive_path = f"{package_root}/{relative}"
+            info = zipfile.ZipInfo(archive_path, date_time=ZIP_TIMESTAMP)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            archive.writestr(info, (ROOT / relative).read_bytes())
 
     print(output)
 

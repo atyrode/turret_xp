@@ -29,6 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      mod_name: ${{ steps.metadata.outputs.mod_name }}
+      version: ${{ steps.metadata.outputs.version }}
     env:
       FACTORIO_SERVICE_USERNAME: ${{ secrets.FACTORIO_SERVICE_USERNAME }}
       FACTORIO_SERVICE_TOKEN: ${{ secrets.FACTORIO_SERVICE_TOKEN }}
@@ -79,17 +83,28 @@ jobs:
           REQUIRE_LUA_TOOLS: "1"
         run: scripts/lint-lua.sh
 
-      - name: Verify tag matches info.json
+      - name: Read release metadata
+        id: metadata
         run: |
+          mod_name="$(python3 -c 'import json; print(json.load(open("info.json"))["name"])')"
           version="$(python3 -c 'import json; print(json.load(open("info.json"))["version"])')"
           expected_tag="v${version}"
           if [ "${expected_tag}" != "${{ steps.release.outputs.tag }}" ]; then
             echo "Release tag ${{ steps.release.outputs.tag }} does not match info.json version ${version}." >&2
             exit 1
           fi
+          echo "mod_name=${mod_name}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
       - name: Verify generated public assets
         run: scripts/generate-public-assets.py --check
+
+      - name: Generate release notes
+        run: |
+          scripts/generate-public-assets.py \
+            --release-notes "dist/release-notes.md" \
+            --portal-description "dist/mod-portal-description.md" \
+            --portal-metadata "dist/mod-portal-metadata.env"
 
       - name: Require Mod Portal download credentials
         run: |
@@ -149,6 +164,21 @@ jobs:
           path: ${{ steps.package.outputs.package_path }}
           if-no-files-found: error
 
+      - name: Upload release public assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: turret-xp-public-assets-${{ steps.release.outputs.tag }}
+          path: |
+            dist/release-notes.md
+            dist/mod-portal-description.md
+            dist/mod-portal-metadata.env
+          if-no-files-found: error
+
+      - name: Update GitHub Release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "${{ steps.release.outputs.tag }}" --notes-file "dist/release-notes.md"
+
       - name: Attach package to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -165,45 +195,15 @@ jobs:
       FACTORIO_MOD_PORTAL_API_KEY: ${{ secrets.FACTORIO_MOD_PORTAL_API_KEY }}
 
     steps:
-      - name: Resolve release tag
-        id: release
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_TAG: ${{ inputs.tag }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
-            tag="${INPUT_TAG}"
-          else
-            tag="${RELEASE_TAG}"
-          fi
-          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
-
-      - name: Check out release tag
+      - name: Check out workflow scripts
         uses: actions/checkout@v6
         with:
-          ref: ${{ steps.release.outputs.tag }}
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
-
-      - name: Install Lua tooling
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lua-check lua5.2
-
-          stylua_dir="${RUNNER_TEMP}/stylua"
-          stylua_archive="${RUNNER_TEMP}/stylua.zip"
-          mkdir -p "${stylua_dir}"
-          curl -fsSL \
-            -o "${stylua_archive}" \
-            "https://github.com/JohnnyMorganz/StyLua/releases/download/v${STYLUA_VERSION}/stylua-linux-x86_64.zip"
-          echo "${STYLUA_SHA256}  ${stylua_archive}" | sha256sum -c -
-          python3 -m zipfile -e "${stylua_archive}" "${stylua_dir}"
-          chmod +x "${stylua_dir}/stylua"
-          echo "${stylua_dir}" >> "${GITHUB_PATH}"
 
       - name: Require Mod Portal publish key
         run: |
@@ -212,7 +212,33 @@ jobs:
             exit 1
           fi
 
+      - name: Download GitHub Release package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist/release-package
+          gh release download "${{ needs.build-test-attach.outputs.tag }}" --pattern "turret_xp_*.zip" --dir dist/release-package
+
+      - name: Download generated public assets
+        uses: actions/download-artifact@v7
+        with:
+          name: turret-xp-public-assets-${{ needs.build-test-attach.outputs.tag }}
+          path: dist/release-public-assets
+
       - name: Publish to Factorio Mod Portal
         env:
-          SKIP_HEADLESS_TESTS: "1"
-        run: scripts/publish-portal.sh
+          RELEASE_TAG: ${{ needs.build-test-attach.outputs.tag }}
+          MOD_NAME: ${{ needs.build-test-attach.outputs.mod_name }}
+          MOD_VERSION: ${{ needs.build-test-attach.outputs.version }}
+        run: |
+          package_count="$(find dist/release-package -maxdepth 1 -type f -name 'turret_xp_*.zip' | wc -l)"
+          if [ "$package_count" -ne 1 ]; then
+            echo "Expected exactly one GitHub Release package, found ${package_count}." >&2
+            find dist/release-package -maxdepth 1 -type f >&2
+            exit 1
+          fi
+          package_path="$(find dist/release-package -maxdepth 1 -type f -name 'turret_xp_*.zip' | head -n 1)"
+          scripts/publish-mod-portal-release.sh \
+            "$package_path" \
+            "dist/release-public-assets/mod-portal-description.md" \
+            "dist/release-public-assets/mod-portal-metadata.env"
