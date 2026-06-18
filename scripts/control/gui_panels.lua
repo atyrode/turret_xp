@@ -257,6 +257,7 @@ return function(M)
         format_number = format_number,
         profile_automation = profile_automation,
         get_turret_host = get_turret_host,
+        get_platform_hub_inventory = get_platform_hub_inventory,
         core_requester = core_requester,
         widgets = get_gui_widgets_service(),
       })

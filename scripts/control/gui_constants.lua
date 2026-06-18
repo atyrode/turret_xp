@@ -107,7 +107,7 @@ local layout = {
   column_spacing = 8,
   left_column_width = 380,
   focused_panel_width = 760,
-  focused_content_height = 560,
+  focused_content_height = 320,
   focused_status_icon_size = 40,
   focused_status_action_width = 78,
   focused_nav_button_width = 112,
@@ -163,7 +163,7 @@ local layout = {
   rank_allocation_value_width = 96,
   rank_allocation_horizontal_spacing = 8,
   inventory_core_picker_height = 230,
-  empty_inventory_core_picker_min_rows = 4,
+  empty_inventory_core_picker_min_rows = 2,
   empty_inventory_core_picker_max_rows = 6,
   empty_inventory_core_picker_vertical_padding = 10,
 }

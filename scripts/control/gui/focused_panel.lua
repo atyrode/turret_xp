@@ -17,6 +17,7 @@ function focused_panel_module.new(deps)
   local format_number = deps.format_number
   local profile_automation = deps.profile_automation
   local get_turret_host = deps.get_turret_host
+  local get_platform_hub_inventory = deps.get_platform_hub_inventory
   local core_requester = deps.core_requester
   local widgets = deps.widgets
 
@@ -292,7 +293,7 @@ function focused_panel_module.new(deps)
     return views[1]
   end
 
-  local function add_placeholder_content(parent, view_id)
+  local function add_content_shell(parent, view_id)
     local view = find_view(view_id)
     local content = parent.add({
       type = "frame",
@@ -308,6 +309,87 @@ function focused_panel_module.new(deps)
     set_style(content, "height", LAYOUT.focused_content_height)
     set_style(content, "maximal_height", LAYOUT.focused_content_height)
     set_style(content, "vertical_spacing", 8)
+    return content, view
+  end
+
+  local function add_overview_card(parent, title_caption, body_caption)
+    local card = parent.add({
+      type = "frame",
+      direction = "vertical",
+      style = "inside_shallow_frame_with_padding",
+    })
+    set_style(card, "width", 350)
+    set_style(card, "minimal_width", 350)
+    set_style(card, "maximal_width", 350)
+    set_style(card, "vertical_spacing", 4)
+
+    local title = card.add({
+      type = "label",
+      caption = title_caption,
+      style = "caption_label",
+    })
+    set_style(title, "font", "default-bold")
+    set_style(title, "font_color", COLOR.section_header)
+
+    local body = card.add({
+      type = "label",
+      caption = body_caption,
+      style = "caption_label",
+    })
+    set_style(body, "font_color", COLOR.muted)
+    set_style(body, "single_line", false)
+    set_style(body, "maximal_width", 330)
+    return card
+  end
+
+  local function on_off_caption(value)
+    return value and { "turret-xp.overview-label-on" } or { "turret-xp.overview-label-off" }
+  end
+
+  local function add_overview_content(content, state)
+    local title = content.add({
+      type = "label",
+      caption = { "turret-xp.view-overview" },
+      style = "heading_2_label",
+    })
+    set_style(title, "font", "default-bold")
+
+    local rows = content.add({
+      type = "table",
+      column_count = 2,
+    })
+    set_style(rows, "horizontal_spacing", 8)
+    set_style(rows, "vertical_spacing", 8)
+
+    add_overview_card(rows, { "turret-xp.overview-progress" }, {
+      "",
+      { "turret-xp.level", state.level or 0 },
+      "\n",
+      { "turret-xp.status-unspent", get_available_skill_points(state) or 0, get_available_augment_points(state) or 0 },
+      "\n",
+      profile_automation.build_mode_active(state) and { "turret-xp.overview-next-build" } or { "turret-xp.overview-next-live" },
+    })
+    add_overview_card(rows, { "turret-xp.overview-role" }, {
+      "",
+      role_caption(state),
+      "\n",
+      build_status_caption(state),
+    })
+    add_overview_card(rows, { "turret-xp.overview-build" }, build_status_caption(state))
+    add_overview_card(rows, { "turret-xp.overview-labels" }, {
+      "turret-xp.overview-label-summary",
+      on_off_caption(state.show_name_label == true),
+      on_off_caption(state.show_label_level == true),
+      on_off_caption(state.show_unspent_label == true),
+    })
+  end
+
+  local function add_placeholder_content(parent, view_id, state)
+    local content, view = add_content_shell(parent, view_id)
+    if view.id == "overview" then
+      add_overview_content(content, state)
+      return content
+    end
 
     local inner = content.add({
       type = "flow",
@@ -357,13 +439,14 @@ function focused_panel_module.new(deps)
     local selected_view = get_focused_gui_view(player)
     add_status_strip(parent, state)
     add_view_nav(parent, selected_view)
-    add_placeholder_content(parent, selected_view)
+    add_placeholder_content(parent, selected_view, state)
   end
 
   function service.add_empty_panel(parent, player, entity, add_inventory_core_picker, add_platform_core_list)
     local host = get_turret_host and get_turret_host(entity, false) or nil
     local request_status = core_requester and core_requester.status(entity) or {}
     local pending_core = (host and host.request_core == true) or request_status.delivered == true
+    local has_platform_source = get_platform_hub_inventory and get_platform_hub_inventory(entity) ~= nil
     local panel = parent.add({
       type = "flow",
       name = GUI.empty_picker,
@@ -421,22 +504,24 @@ function focused_panel_module.new(deps)
     })
     set_style(summary, "font_color", COLOR.muted)
 
-    local nav = panel.add({
-      type = "flow",
-      name = GUI.empty_source_nav,
-      direction = "horizontal",
-    })
-    set_style(nav, "horizontal_spacing", 4)
-    for _, source in ipairs({
-      { "inventory", { "turret-xp.empty-source-inventory" } },
-      { "platform", { "turret-xp.empty-source-platform" } },
-    }) do
-      local button = nav.add({
-        type = "button",
-        caption = source[2],
-        style = source[1] == "inventory" and "turret_xp_view_tab_button_selected" or "turret_xp_view_tab_button",
+    if has_platform_source then
+      local nav = panel.add({
+        type = "flow",
+        name = GUI.empty_source_nav,
+        direction = "horizontal",
       })
-      set_fixed_width(button, LAYOUT.focused_nav_button_width)
+      set_style(nav, "horizontal_spacing", 4)
+      for _, source in ipairs({
+        { "inventory", { "turret-xp.empty-source-inventory" } },
+        { "platform", { "turret-xp.empty-source-platform" } },
+      }) do
+        local button = nav.add({
+          type = "button",
+          caption = source[2],
+          style = source[1] == "inventory" and "turret_xp_view_tab_button_selected" or "turret_xp_view_tab_button",
+        })
+        set_fixed_width(button, LAYOUT.focused_nav_button_width)
+      end
     end
 
     local content = panel.add({
