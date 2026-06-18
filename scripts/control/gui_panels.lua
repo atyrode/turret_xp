@@ -222,6 +222,7 @@ return function(M)
         core_identity = get_core_identity_service(),
         core_label_controls = get_core_label_controls_service(),
         core_automation_controls = get_core_automation_controls_service(),
+        profile_automation = profile_automation,
         components = get_gui_components_service(),
         core_platform_controls = gui_core_platform_controls,
         get_turret_host = get_turret_host,
@@ -368,6 +369,8 @@ return function(M)
         set_gui_progress = set_gui_progress,
         format_number = format_number,
         get_gui_xp_modifier_summary = get_gui_xp_modifier_summary,
+        profile_automation = profile_automation,
+        set_element_style = set_element_style,
         update_core_panel = function(...)
           return update_core_panel(...)
         end,

@@ -36,7 +36,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep the installed Veteran Core header focused on the core's name, level, and bound/unbound state, with extract and full-width Bind/Unbind grouped as the right-side action toolbar because bound turret movement is an opt-in quick-move mode for that core/turret pair.
 - Expose installed-core extraction both through the scripted slot interaction and through a clear compact action that moves the core to the player inventory when there is room.
 - Render installed-core naming and floating-label controls as a compact shallow form: the custom-name field stays separate from independent `Name`, `Level`, and `Unspent` display toggles, and the conditional label-color row keeps a small square swatch plus color-picker trigger. The trigger opens Turret XP's own draggable `player.gui.screen` popup for presets and RGB sliders. The native train/player color picker is not exposed to runtime mod GUIs, so Turret XP should mimic the swatch-plus-picker interaction without implying the engine popup is available.
-- Keep automation explicit and Factorio-native: presets can be selected, applied once, or left on Auto, but copied/blueprinted target builds are the primary automation path for repeated defenses. Native blueprints should act as the build library; a copied turret target can request a fresh core and spend toward the source build over time without cloning XP, history, names, or exact identity.
+- Keep automation explicit and Factorio-native: Build mode previews a target path, Auto follows that path, and copied/blueprinted target builds are the primary automation path for repeated defenses. Native blueprints should act as the build library; a copied turret target can request a fresh core and spend toward the source build over time without cloning XP, history, names, or exact identity.
 - Do not let copied target builds silently overwrite manual specialization, sub-specialization, or element identity choices that conflict with the target. Surface the conflict and continue spending only the compatible parts of the build.
 - Let empty turrets request a Veteran Core through logistics in the same spirit as vanilla requester-driven machine setup, but present it as a Turret XP setup request rather than a native turret inventory slot. The hidden requester should stay invisible, narrow, and cleanup-safe.
 - Keep numeric value coloring precise: unchanged values stay neutral, beneficial deltas use muted green, harmful deltas use muted red, units/prose stay neutral, and element colors are reserved for elemental damage numbers.
@@ -46,14 +46,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 
 ## Progression Direction
 
-The long-term progression design is captured in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md). The current playable draft uses a level-gated Evolution list:
-
-- Core upgrades are available immediately once a Veteran Core is installed.
-- Specialization unlocks at level 10.
-- First element unlocks at level 20.
-- Augments unlock at level 30.
-- Sub-specialization unlocks at level 40.
-- Second element and combo identity unlock at level 50.
+The long-term progression design is captured in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md). The current playable draft uses a level-gated Evolution list. Core upgrades are available immediately once a Veteran Core is installed. Specialization, first element, augments, sub-specialization, and second element/combo unlock gates are defined once in `scripts/domain.lua` as `domain.gates`.
 
 Combat XP grants levels and points. Materials express industrial commitment: selected elements expose their next material rank and accept passive inserter-fed progress through the hidden turret-tile input.
 
@@ -66,7 +59,7 @@ New progression-system scope is frozen while the current playable loop is harden
 - Kill credit should be based on damage contribution so final-hit stealing does not erase turret progress.
 - Space-platform combat and asteroid defense should not passively overlevel cores.
 - Strong roles should carry tradeoffs: range for fire rate, fire rate for damage per shot, survivability for peak damage, XP gain for immediate power.
-- Automation presets are setup convenience, not a new balance layer. They spend the same point economy a player can spend manually.
+- Build mode automation is setup convenience, not a new balance layer. It spends the same point economy a player can spend manually.
 - Native stat identity should stay limited to specialization and sub-specialization bodies. Repeatable Range or Max HP prototype axes, quality-backed chassis rewrites, and range-band rewrites are out of scope for the current direction.
 - Scripted effects such as bounce, chain arcs, status damage, and visuals need explicit performance and readability budgets before they grow.
 

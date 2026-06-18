@@ -60,7 +60,11 @@ end
 
 function tests.run_feeder_material_progress_test(surface)
   local turret = create_turret(surface, { 16, 0 }, 10)
-  local summary = call("install_core", turret, { level = 20 })
+  local summary = call("install_core", turret, {
+    level = call("target_required_level", {
+      elements = { "explosive" },
+    }),
+  })
   assert_true(summary ~= nil, "failed to install core for feeder test")
 
   summary = call("pick_element", turret, 1, "explosive")
@@ -105,7 +109,11 @@ end
 function tests.run_feeder_contract_test(surface)
   local turret_position = { x = 28, y = 12 }
   local turret = create_turret(surface, turret_position, 10)
-  local summary = call("install_core", turret, { level = 20 })
+  local summary = call("install_core", turret, {
+    level = call("target_required_level", {
+      elements = { "fire" },
+    }),
+  })
   assert_true(summary ~= nil, "failed to install core for feeder contract test")
   assert_eq(summary.feeder.valid, false, "a core with no selected element should not create an invisible feeder")
   assert_eq(summary.feeder.needs_input, false, "a core with no selected element should not need material input")
@@ -201,7 +209,11 @@ end
 
 function tests.run_dual_element_feeder_test(surface)
   local turret = create_turret(surface, { 20, 8 }, 10)
-  local summary = call("install_core", turret, { level = 55 })
+  local summary = call("install_core", turret, {
+    level = call("target_required_level", {
+      elements = { "fire", "explosive" },
+    }),
+  })
   assert_true(summary ~= nil, "failed to install core for dual-element feeder test")
 
   summary = call("set_evolution", turret, {

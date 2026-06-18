@@ -59,10 +59,10 @@ Use this path before merging gameplay, GUI, persistence, feeder, combat, or rele
 6. Hover stat-name info markers and confirm formulas live there. HP and Range quality breakdowns should live on the quality diamond.
 7. Confirm stats reserve scrollbar space and values do not render under the scrollbar.
 8. Confirm numeric rich text colors only numbers; units and prose stay neutral.
-9. Select each automation preset, use `Apply`, and confirm it spends available points without enabling Auto.
-10. Enable Auto on a non-manual preset, then add levels and confirm newly available points are spent by the preset.
-11. Set a manual specialization, then enable a conflicting preset and confirm the manual specialization is not overwritten.
-12. Copy/paste settings from a configured veteran turret to an empty turret and confirm label visibility, label color, automation, and core request policy copy without copying the source name, XP, level, kills, or damage.
+9. Enter Build mode, plan core ranks, augments, specialization, elements, and a Ctrl-click forever priority, then confirm the UI tint and target level make it clear that this is a preview path.
+10. Enable Auto on that build path, add levels, and confirm finite targets are spent toward while forever priorities keep Auto enabled.
+11. Set a manual specialization, paste a conflicting copied build, and confirm the manual specialization is not overwritten while the conflict is surfaced.
+12. Copy/paste settings from a configured veteran turret to an empty turret and confirm label visibility, label color, copied build target, Auto state, and core request policy copy without copying the source name, XP, level, kills, or damage.
 
 ### Logistics And Setup Policy
 
@@ -160,7 +160,7 @@ Most useful feedback:
 - Did the core slot feel close enough to an inventory slot, especially cursor transfer and swap?
 - Did label color and level visibility cover the customization needed for now?
 - Did independent Name/Level/Unspent label controls feel clear?
-- Did automation presets save setup time without feeling like they stole manual choices?
+- Did Build mode and Auto save setup time without feeling like they stole manual choices?
 - Did logistic Veteran Core requests behave like a useful setup convenience for empty turrets?
 - Did the hidden turret-tile input feel reliable and readable enough?
 - Did passive material progress feel like a clear material goal?

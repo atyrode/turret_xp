@@ -43,6 +43,9 @@ function actions_module.new(deps)
   local xp_required = deps.xp_required
   local profile_automation = deps.profile_automation
   local core_requester = deps.core_requester
+  local get_turret_host = deps.get_turret_host
+
+  local BUILD_FOREVER_AMOUNT = 1000000
 
   local function opened_turret_action(player, mutator)
     local entity, state = get_open_turret_state(player)
@@ -101,35 +104,47 @@ function actions_module.new(deps)
     end
 
     core_requester.set_request(entity, enabled == true)
+    if enabled ~= true and get_turret_host then
+      local host = get_turret_host(entity, false)
+      if host then
+        host.pending_policy = nil
+      end
+    end
     refresh_open_turret(player, entity)
   end
 
-  local function set_automation_preset(player, preset_id)
+  local function set_build_mode(player, enabled)
+    opened_turret_action(player, function(_, state)
+      profile_automation.set_build_mode(state, enabled == true)
+      return nil, true
+    end)
+  end
+
+  local function set_build_auto(player, enabled)
     opened_turret_action(player, function(entity, state)
-      state.automation_preset = profile_automation.preset_by_id(preset_id).id
-      state.automation_target = nil
-      if state.automation_preset == "manual" then
-        state.automation_enabled = false
+      local target = profile_automation.ensure_build_target(state)
+      state.automation_target = profile_automation.normalize_target(target, true)
+      state.automation_enabled = enabled == true and profile_automation.target_has_content(state.automation_target)
+      if state.automation_enabled == true then
+        profile_automation.apply_to_profile(entity, state, { force = true })
       end
-      profile_automation.apply_to_profile(entity, state, { force = state.automation_enabled == true })
       return nil, true
     end)
   end
 
-  local function set_automation_enabled(player, enabled)
-    opened_turret_action(player, function(entity, state)
-      state.automation_enabled = enabled == true
-        and (state.automation_preset ~= "manual" or profile_automation.target_has_content(state.automation_target))
-      profile_automation.apply_to_profile(entity, state, { force = state.automation_enabled == true })
-      return nil, true
-    end)
-  end
+  local function update_build_target(state, mutator)
+    if not profile_automation.build_mode_active(state) then
+      return false
+    end
 
-  local function apply_automation_now(player)
-    opened_turret_action(player, function(entity, state)
-      profile_automation.apply_to_profile(entity, state, { force = true })
-      return nil, true
-    end)
+    if state.automation_enabled == true then
+      return true
+    end
+
+    local target = profile_automation.ensure_build_target(state)
+    mutator(target)
+    state.automation_target = profile_automation.normalize_target(target, true) or profile_automation.empty_target()
+    return true
   end
 
   local function update_label_color_preview(player, state)
@@ -441,6 +456,27 @@ function actions_module.new(deps)
       return
     end
 
+    if
+      update_build_target(state, function(target)
+        target.base = target.base or {}
+        target.base_infinite = target.base_infinite or {}
+        if amount >= BUILD_FOREVER_AMOUNT then
+          target.base_infinite[upgrade_id] = true
+          return
+        end
+
+        local rank = target.base[upgrade_id] or 0
+        local next_rank = rank + amount
+        if upgrade.max_rank then
+          next_rank = math.min(next_rank, upgrade.max_rank)
+        end
+        target.base[upgrade_id] = math.max(1, next_rank)
+      end)
+    then
+      refresh_open_turret(player, entity, anchor)
+      return
+    end
+
     local available = get_available_skill_points(state)
     if available < 1 then
       refresh_open_turret(player, entity, anchor)
@@ -481,6 +517,28 @@ function actions_module.new(deps)
 
     local entity, state = get_open_turret_state(player)
     if not state then
+      return
+    end
+
+    if
+      update_build_target(state, function(target)
+        target.base = target.base or {}
+        target.base_infinite = target.base_infinite or {}
+        if amount >= BUILD_FOREVER_AMOUNT then
+          if target.base_infinite[upgrade_id] == true then
+            target.base_infinite[upgrade_id] = nil
+          else
+            target.base[upgrade_id] = nil
+          end
+          return
+        end
+
+        local rank = target.base[upgrade_id] or 0
+        local new_rank = math.max(0, rank - math.min(amount, rank))
+        target.base[upgrade_id] = new_rank > 0 and new_rank or nil
+      end)
+    then
+      refresh_open_turret(player, entity, anchor)
       return
     end
 
@@ -629,6 +687,13 @@ function actions_module.new(deps)
 
   local function reset_base_upgrades(player)
     opened_turret_action(player, function(_, state)
+      if update_build_target(state, function(target)
+        target.base = {}
+        target.base_infinite = {}
+      end) then
+        return evolution_anchor_name("base", "damage")
+      end
+
       reset_base_upgrades_state(state)
       return evolution_anchor_name("base", "damage")
     end)
@@ -642,6 +707,16 @@ function actions_module.new(deps)
 
     local entity, state = get_open_turret_state(player)
     if not state then
+      return
+    end
+
+    if
+      update_build_target(state, function(target)
+        target.specialization = specialization_id
+        target.sub_specialization = nil
+      end)
+    then
+      refresh_open_turret(player, entity, anchor)
       return
     end
 
@@ -674,6 +749,18 @@ function actions_module.new(deps)
       return
     end
 
+    if
+      update_build_target(state, function(target)
+        target.specialization = target.specialization or sub_specialization.parent
+        if target.specialization == sub_specialization.parent then
+          target.sub_specialization = sub_specialization_id
+        end
+      end)
+    then
+      refresh_open_turret(player, entity, anchor)
+      return
+    end
+
     if not has_level(state, GATES.sub_specialization) then
       refresh_open_turret(player, entity, anchor)
       return
@@ -692,6 +779,12 @@ function actions_module.new(deps)
 
   local function reset_sub_specialization(player)
     opened_turret_action(player, function(_, state)
+      if update_build_target(state, function(target)
+        target.sub_specialization = nil
+      end) then
+        return evolution_anchor_name("sub-specialization", "choice")
+      end
+
       ensure_evolution_state(state).sub_specialization = nil
       combat.mark_turret_body_sync_pending(state)
       return evolution_anchor_name("sub-specialization", "choice")
@@ -700,6 +793,15 @@ function actions_module.new(deps)
 
   local function reset_specialization(player)
     opened_turret_action(player, function(_, state)
+      if
+        update_build_target(state, function(target)
+          target.specialization = nil
+          target.sub_specialization = nil
+        end)
+      then
+        return evolution_anchor_name("specialization", "sniper")
+      end
+
       reset_specialization_state(state)
       return evolution_anchor_name("specialization", "sniper")
     end)
@@ -715,6 +817,27 @@ function actions_module.new(deps)
 
     local entity, state = get_open_turret_state(player)
     if not state then
+      return
+    end
+
+    if
+      update_build_target(state, function(target)
+        target.augments = target.augments or {}
+        target.augment_infinite = target.augment_infinite or {}
+        if amount >= BUILD_FOREVER_AMOUNT then
+          target.augment_infinite[augment_id] = true
+          return
+        end
+
+        local rank = target.augments[augment_id] or 0
+        local next_rank = rank + amount
+        if augment.max_rank then
+          next_rank = math.min(next_rank, augment.max_rank)
+        end
+        target.augments[augment_id] = math.max(1, next_rank)
+      end)
+    then
+      refresh_open_turret(player, entity, anchor)
       return
     end
 
@@ -755,6 +878,28 @@ function actions_module.new(deps)
       return
     end
 
+    if
+      update_build_target(state, function(target)
+        target.augments = target.augments or {}
+        target.augment_infinite = target.augment_infinite or {}
+        if amount >= BUILD_FOREVER_AMOUNT then
+          if target.augment_infinite[augment_id] == true then
+            target.augment_infinite[augment_id] = nil
+          else
+            target.augments[augment_id] = nil
+          end
+          return
+        end
+
+        local rank = target.augments[augment_id] or 0
+        local new_rank = math.max(0, rank - math.min(amount, rank))
+        target.augments[augment_id] = new_rank > 0 and new_rank or nil
+      end)
+    then
+      refresh_open_turret(player, entity, anchor)
+      return
+    end
+
     local evolution = ensure_evolution_state(state)
     local rank = evolution.augments[augment_id] or 0
     if rank <= 0 then
@@ -774,6 +919,13 @@ function actions_module.new(deps)
 
   local function reset_augments(player)
     opened_turret_action(player, function(_, state)
+      if update_build_target(state, function(target)
+        target.augments = {}
+        target.augment_infinite = {}
+      end) then
+        return evolution_anchor_name("augment", "bounce")
+      end
+
       reset_augments_state(state)
       return evolution_anchor_name("augment", "bounce")
     end)
@@ -793,7 +945,7 @@ function actions_module.new(deps)
     evolution.element_mastery = {}
     evolution.element_project = nil
     state.automation_target = nil
-    state.automation_enabled = state.automation_preset ~= "manual" and state.automation_enabled == true
+    state.automation_enabled = false
 
     feeder.destroy(state, entity and entity.position or nil, spill == true)
     ensure_evolution_state(state)
@@ -806,6 +958,21 @@ function actions_module.new(deps)
 
   local function reset_evolution(player)
     opened_turret_action(player, function(entity, state)
+      if
+        update_build_target(state, function(target)
+          target.base = {}
+          target.base_infinite = {}
+          target.augments = {}
+          target.augment_infinite = {}
+          target.specialization = nil
+          target.sub_specialization = nil
+          target.elements = {}
+          target.element_mastery = {}
+        end)
+      then
+        return nil, true
+      end
+
       reset_evolution_state(entity, state, true)
     end)
   end
@@ -818,6 +985,30 @@ function actions_module.new(deps)
 
     local entity, state = get_open_turret_state(player)
     if not state then
+      return
+    end
+
+    if
+      update_build_target(state, function(target)
+        target.elements = target.elements or {}
+        target.element_mastery = target.element_mastery or {}
+        if slot == 1 then
+          target.elements = {}
+          target.element_mastery = {}
+        else
+          local removed = target.elements[2]
+          target.elements[2] = nil
+          if removed then
+            target.element_mastery[removed] = nil
+          end
+        end
+      end)
+    then
+      refresh_open_turret(
+        player,
+        entity,
+        evolution_anchor_name("element", slot == 1 and "explosive" or (ensure_evolution_state(state).elements[1] or "explosive"), slot)
+      )
       return
     end
 
@@ -839,6 +1030,25 @@ function actions_module.new(deps)
 
     local entity, state = get_open_turret_state(player)
     if not state then
+      return
+    end
+
+    if
+      update_build_target(state, function(target)
+        target.elements = target.elements or {}
+        target.element_mastery = target.element_mastery or {}
+        if slot == 1 then
+          target.elements[1] = element_id
+          if target.elements[2] == element_id then
+            target.elements[2] = nil
+          end
+        elseif target.elements[1] then
+          target.elements[2] = element_id
+        end
+        target.element_mastery[element_id] = target.element_mastery[element_id] or { rank = ELEMENT_FREE_RANK }
+      end)
+    then
+      refresh_open_turret(player, entity, anchor)
       return
     end
 
@@ -981,9 +1191,8 @@ function actions_module.new(deps)
     update_label_color_preview = update_label_color_preview,
     set_label_color_channel = set_label_color_channel,
     set_core_request_enabled = set_core_request_enabled,
-    set_automation_preset = set_automation_preset,
-    set_automation_enabled = set_automation_enabled,
-    apply_automation_now = apply_automation_now,
+    set_build_mode = set_build_mode,
+    set_build_auto = set_build_auto,
     cycle_label_color = cycle_label_color,
     open_label_color_picker = open_label_color_picker,
     close_label_color_picker = destroy_label_color_picker,

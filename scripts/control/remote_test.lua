@@ -186,10 +186,10 @@ return function(M)
       label_color = copy_serializable(state.label_color or {}),
       label_entity_valid = state.label_entity and state.label_entity.valid or false,
       name_render_valid = state.name_render and state.name_render.valid or false,
-      automation_preset = state.automation_preset or "manual",
       automation_enabled = state.automation_enabled == true,
       automation_target = copy_serializable(state.automation_target),
       automation_target_model = profile_automation.target_model(state),
+      build_mode = state.build_mode == true,
       automation_conflict = state.automation_conflict == true,
       automation_last_spent = state.automation_last_spent or 0,
       shield_bar_valid = shield_bar_valid,
@@ -276,10 +276,10 @@ return function(M)
       show_unspent_label = profile.show_unspent_label == true,
       label_text = get_profile_label_text(profile),
       label_display_schema = profile.label_display_schema,
-      automation_preset = profile.automation_preset or "manual",
       automation_enabled = profile.automation_enabled == true,
       automation_target = copy_serializable(profile.automation_target),
       automation_target_model = profile_automation.target_model(profile),
+      build_mode = profile.build_mode == true,
       skills = copy_serializable(profile.skills or {}),
       evolution = {
         base = copy_serializable(evolution.base or {}),
@@ -293,6 +293,8 @@ return function(M)
         specialization = evolution.specialization,
         sub_specialization = evolution.sub_specialization,
         element_project = copy_serializable(evolution.element_project),
+        available_core_points = get_available_skill_points(profile),
+        available_augment_points = get_available_augment_points(profile),
         migrated_legacy_skills = evolution.migrated_legacy_skills == true,
       },
     }
@@ -312,7 +314,6 @@ return function(M)
       "show_unspent_label",
       "label_color",
       "label_color_preset",
-      "automation_preset",
       "automation_enabled",
       "automation_target",
       "bound_turret",
@@ -354,6 +355,12 @@ return function(M)
 
   -- Core/profile fixtures.
   turret_xp_test_register_methods(turret_xp_test_remote_methods, {
+    progression_gates = function()
+      return copy_serializable(GATES)
+    end,
+    target_required_level = function(target)
+      return profile_automation.required_level_for_target(target)
+    end,
     install_core = function(entity, fields)
       local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields)
       local installed = install_profile_on_turret(entity, profile)
@@ -520,33 +527,20 @@ return function(M)
     return status
   end
 
-  -- Automation, copy-policy, and logistic request fixtures.
+  -- Build-mode, copy-policy, and logistic request fixtures.
   turret_xp_test_register_methods(turret_xp_test_remote_methods, {
-    automation_presets = function()
-      local ids = {}
-      for _, preset in ipairs(profile_automation.presets()) do
-        ids[#ids + 1] = preset.id
-      end
-      return ids
-    end,
-    apply_automation = function(entity, preset_id, enabled, force)
+    apply_build_target = function(entity, force)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
         return nil
       end
 
-      if preset_id ~= nil then
-        state.automation_preset = profile_automation.preset_by_id(preset_id).id
-      end
-      if enabled ~= nil then
-        state.automation_enabled = enabled == true and state.automation_preset ~= "manual"
-      end
       local result = profile_automation.apply_to_profile(entity, state, {
         force = force == true,
       })
       local synced = combat.sync_turret_body_when_idle(entity, state)
       local summary = turret_xp_test_state_summary(synced or entity)
-      summary.automation_result = result
+      summary.build_result = result
       return summary
     end,
     set_core_request = function(entity, enabled)
@@ -952,9 +946,13 @@ return function(M)
       add_core_panel(root, "empty")
       update_core_panel(root, player, entity, nil)
       local panel = find_gui_element(root, GUI.core)
+      local status = panel and find_gui_element(panel, GUI.core_status) or nil
       local summary = {
         opened = panel and panel.valid == true or false,
         key = panel and panel.tags and panel.tags.key or nil,
+        core_status_caption = status and copy_serializable(status.caption) or nil,
+        has_inventory_picker = panel and find_gui_element(panel, GUI.inventory_cores) ~= nil or false,
+        has_core_request_checkbox = panel and find_gui_element(panel, GUI.core_request_enabled) ~= nil or false,
       }
       if storage and storage.turret_xp then
         storage.turret_xp.players[player.index] = nil
@@ -1135,32 +1133,15 @@ return function(M)
 
       return turret_xp_test_core_request_status(entity)
     end,
-    dispatch_select_automation = function(entity, preset_id)
+    dispatch_click_action = function(entity, tags, event)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
         return nil
       end
 
-      local presets = {}
-      local selected_index = 1
-      for index, preset in ipairs(profile_automation.presets()) do
-        presets[index] = preset.id
-        if preset.id == preset_id then
-          selected_index = index
-        end
-      end
-
       local player = make_fake_dispatch_player(entity)
       remember_open_turret(player, entity)
-      dispatch_gui_selection_state_action(player, {
-        element = {
-          valid = true,
-          selected_index = selected_index,
-        },
-      }, {
-        turret_xp_action = "set-automation-preset",
-        presets = presets,
-      })
+      dispatch_gui_click_action(player, event or {}, tags or {})
 
       forget_open_turret(player)
 
@@ -1168,7 +1149,7 @@ return function(M)
       local summary = turret_xp_test_state_summary(synced or entity)
       return summary
     end,
-    dispatch_toggle_automation = function(entity, visible)
+    dispatch_checked_action = function(entity, tags, visible)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
         return nil
@@ -1181,27 +1162,7 @@ return function(M)
           valid = true,
           state = visible == true,
         },
-      }, {
-        turret_xp_action = "toggle-automation",
-      })
-
-      forget_open_turret(player)
-
-      local synced = combat.sync_turret_body_when_idle(entity, state)
-      local summary = turret_xp_test_state_summary(synced or entity)
-      return summary
-    end,
-    dispatch_apply_automation = function(entity)
-      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
-      if not state then
-        return nil
-      end
-
-      local player = make_fake_dispatch_player(entity)
-      remember_open_turret(player, entity)
-      dispatch_gui_click_action(player, {}, {
-        turret_xp_action = "apply-automation",
-      })
+      }, tags or {})
 
       forget_open_turret(player)
 

@@ -235,11 +235,12 @@ function gui_components.new(deps)
 
   function service.add_stats_section_header(parent, caption)
     local has_previous_content = #(parent.children or {}) > 0
+    local build_mode = parent.tags and parent.tags.turret_xp_build_mode == true
 
     local header = parent.add({
       type = "frame",
       direction = "horizontal",
-      style = "subheader_frame",
+      style = build_mode and "turret_xp_build_mode_subheader_frame" or "subheader_frame",
     })
     deps.set_style(header, "horizontally_stretchable", true)
     deps.set_style(header, "vertical_align", "center")
@@ -258,7 +259,7 @@ function gui_components.new(deps)
       style = "heading_2_label",
     })
     deps.set_style(label, "font", "default-bold")
-    deps.set_style(label, "font_color", deps.COLOR.section_header)
+    deps.set_style(label, "font_color", build_mode and deps.COLOR.build_mode or deps.COLOR.section_header)
     deps.set_style(label, "single_line", true)
 
     header.add({
@@ -434,11 +435,15 @@ function gui_components.new(deps)
 
   function service.add_evolution_section(parent, options)
     options = options or {}
+    local build_mode = parent.tags and parent.tags.turret_xp_build_mode == true
     local section = parent.add({
       type = "frame",
       direction = "vertical",
-      style = "deep_frame_in_shallow_frame",
+      style = build_mode and "turret_xp_build_mode_deep_frame" or "deep_frame_in_shallow_frame",
     })
+    section.tags = {
+      turret_xp_build_mode = build_mode,
+    }
     deps.set_evolution_content_width(section)
     deps.set_style(section, "top_margin", 6)
     deps.set_style(section, "bottom_margin", 6)
@@ -475,7 +480,7 @@ function gui_components.new(deps)
       style = "caption_label",
     })
     deps.set_style(title_label, "font", "default-bold")
-    deps.set_style(title_label, "font_color", deps.COLOR.section_header)
+    deps.set_style(title_label, "font_color", build_mode and deps.COLOR.build_mode or deps.COLOR.section_header)
 
     header.add({
       type = "empty-widget",

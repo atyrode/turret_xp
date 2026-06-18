@@ -39,6 +39,7 @@ function core_panel_module.new(deps)
   local core_identity = deps.core_identity
   local core_label_controls = deps.core_label_controls
   local core_automation_controls = deps.core_automation_controls
+  local profile_automation = deps.profile_automation
   local core_platform_controls_module = deps.core_platform_controls
   local get_turret_host = deps.get_turret_host
   local core_requester = deps.core_requester
@@ -47,6 +48,7 @@ function core_panel_module.new(deps)
   local function add_xp_panel(parent)
     local xp_panel = parent.add({
       type = "frame",
+      name = GUI.xp_panel,
       direction = "vertical",
       style = "deep_frame_in_shallow_frame",
     })
@@ -180,6 +182,7 @@ function core_panel_module.new(deps)
     local platform_inventory_present = get_platform_hub_inventory(entity) ~= nil
     if state then
       local color = state.label_color or {}
+      local target = profile_automation.target_model(state) or {}
       return table.concat({
         "installed",
         tostring(state.chip_id or ""),
@@ -195,14 +198,22 @@ function core_panel_module.new(deps)
         tostring(color[1] or ""),
         tostring(color[2] or ""),
         tostring(color[3] or ""),
-        tostring(state.automation_preset or "manual"),
         tostring(state.automation_enabled == true),
+        tostring(profile_automation.build_mode_active(state)),
+        tostring(target.level or ""),
+        tostring(target.core or ""),
+        tostring(target.core_infinite or ""),
+        tostring(target.augments or ""),
+        tostring(target.augment_infinite or ""),
+        tostring(target.choice or ""),
+        tostring(target.elements or ""),
       }, ":")
     end
 
     empty_picker_model = build_empty_core_picker_model(player, entity)
     local host = get_turret_host(entity, false)
     local request_status = core_requester.status(entity)
+    local target = profile_automation.target_model(host and host.pending_policy or nil) or {}
     local picker_key = "picker:"
       .. empty_picker_model.key
       .. ":quality:"
@@ -218,6 +229,12 @@ function core_panel_module.new(deps)
       tostring(request_status.requester_valid == true),
       tostring(request_status.delivered == true),
       tostring(request_status.network == true),
+      tostring(host and type(host.pending_policy) == "table"),
+      tostring(target.level or ""),
+      tostring(target.core or ""),
+      tostring(target.augments or ""),
+      tostring(target.choice or ""),
+      tostring(target.elements or ""),
     }, ":")
     return base_key .. ":" .. picker_key, empty_picker_model, base_key, picker_key
   end
@@ -825,6 +842,40 @@ function core_panel_module.new(deps)
     set_style(label, "font_color", status.enabled and COLOR.muted or COLOR.caption)
   end
 
+  local function add_pending_build_request(core_panel, entity)
+    add_core_request_controls(core_panel, entity)
+
+    local host = get_turret_host(entity, false)
+    local target = profile_automation.target_model(host and host.pending_policy or nil)
+    if not target then
+      return
+    end
+
+    local frame = components.add_section_frame(core_panel, {
+      style = "turret_xp_build_mode_frame",
+      top_margin = 6,
+      vertical_spacing = 4,
+    })
+
+    local title = frame.add({
+      type = "label",
+      caption = { "turret-xp.pending-build-title" },
+      style = "caption_label",
+    })
+    set_style(title, "font", "default-bold")
+    set_style(title, "font_color", COLOR.build_mode)
+
+    local summary = frame.add({
+      type = "label",
+      caption = { "turret-xp.pending-build-summary", target.level or 0 },
+      tooltip = target.tooltip,
+      style = "caption_label",
+    })
+    set_style(summary, "single_line", false)
+    set_style(summary, "font_color", COLOR.build_mode_muted)
+    set_style(summary, "maximal_width", LAYOUT.empty_panel_width - 36)
+  end
+
   local function add_dev_controls_panel(parent, player)
     if not dev_controls_enabled(player) then
       return nil
@@ -936,6 +987,11 @@ function core_panel_module.new(deps)
       return
     end
 
+    set_element_style(
+      core_panel,
+      state and profile_automation.build_mode_active(state) and "turret_xp_build_mode_deep_frame" or "deep_frame_in_shallow_frame"
+    )
+
     local key, empty_picker_model, base_key, picker_key = core_panel_key_and_model(player, state, entity)
     local tags = core_panel.tags or {}
     if tags.key == key then
@@ -963,9 +1019,18 @@ function core_panel_module.new(deps)
       picker_key = picker_key,
     }
 
-    core_identity.add_header(core_panel, player, state)
+    local host = not state and get_turret_host(entity, false) or nil
+    local pending_build = not state and host and type(host.pending_policy) == "table" and host.request_core == true
+    core_identity.add_header(core_panel, player, state, {
+      pending_core = pending_build,
+    })
 
     if not state then
+      if pending_build then
+        add_pending_build_request(core_panel, entity)
+        return
+      end
+
       local note = core_panel.add({
         type = "label",
         caption = { "turret-xp.no-core-note" },

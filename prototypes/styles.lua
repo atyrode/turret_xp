@@ -1,5 +1,15 @@
 return function()
   local styles = data.raw["gui-style"]["default"]
+  local build_mode_graphical_set = {
+    base = {
+      center = {
+        filename = "__core__/graphics/gui-new.png",
+        position = { 472, 25 },
+        size = 1,
+        tint = { 0.16, 0.24, 0.34, 1 },
+      },
+    },
+  }
 
   styles.turret_xp_xp_progressbar = {
     type = "progressbar_style",
@@ -19,6 +29,24 @@ return function()
     height = 10,
     bar_width = 8,
     embed_text_in_bar = false,
+  }
+
+  styles.turret_xp_build_mode_deep_frame = {
+    type = "frame_style",
+    parent = "deep_frame_in_shallow_frame",
+    graphical_set = build_mode_graphical_set,
+  }
+
+  styles.turret_xp_build_mode_frame = {
+    type = "frame_style",
+    parent = "inside_shallow_frame_with_padding",
+    graphical_set = build_mode_graphical_set,
+  }
+
+  styles.turret_xp_build_mode_subheader_frame = {
+    type = "frame_style",
+    parent = "subheader_frame",
+    graphical_set = build_mode_graphical_set,
   }
 
   styles.turret_xp_inventory_core_table_header_row = {

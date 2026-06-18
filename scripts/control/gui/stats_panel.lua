@@ -490,6 +490,9 @@ function stats_panel.new(deps)
     end
 
     stats.clear()
+    stats.tags = {
+      turret_xp_build_mode = state and state._build_mode_preview == true or false,
+    }
 
     if state then
       local identity_section = add_stats_section(stats, { "turret-xp.stats-section-identity" })

@@ -31,9 +31,9 @@ function profile_schema.new(deps)
       label_color = default_label_color(),
       label_color_preset = "gold",
       label_scale = 2,
-      automation_preset = "manual",
       automation_enabled = false,
       automation_target = nil,
+      build_mode = false,
       bound_turret = false,
       last_ammo = nil,
       ammo_productivity_progress = 0,
@@ -66,8 +66,9 @@ function profile_schema.new(deps)
     end
     profile.show_unspent_label = profile.show_unspent_label == true
     profile.label_display_schema = LABEL_DISPLAY_SCHEMA
-    profile.automation_preset = tostring(profile.automation_preset or "manual")
     profile.automation_enabled = profile.automation_enabled == true
+    profile.build_mode = profile.build_mode == true or profile._build_mode == true
+    profile._build_mode = nil
     if type(profile.automation_target) ~= "table" then
       profile.automation_target = nil
     else
@@ -138,9 +139,9 @@ function profile_schema.new(deps)
       label_color = service.copy_serializable(profile.label_color or default_label_color()),
       label_color_preset = profile.label_color_preset or "custom",
       label_scale = profile.label_scale or 2,
-      automation_preset = profile.automation_preset or "manual",
       automation_enabled = profile.automation_enabled == true,
       automation_target = service.copy_serializable(profile.automation_target),
+      build_mode = profile.build_mode == true,
       xp = profile.xp or 0,
       total_xp = profile.total_xp or 0,
       level = profile.level or 0,
@@ -182,9 +183,9 @@ function profile_schema.new(deps)
       profile.label_color = service.copy_serializable(data.label_color or default_label_color())
       profile.label_color_preset = data.label_color_preset or nil
       profile.label_scale = data.label_scale or 2
-      profile.automation_preset = data.automation_preset or "manual"
       profile.automation_enabled = data.automation_enabled == true
       profile.automation_target = service.copy_serializable(data.automation_target)
+      profile.build_mode = data.build_mode == true
       profile.xp = data.xp or 0
       profile.total_xp = data.total_xp or 0
       profile.level = data.level or 0

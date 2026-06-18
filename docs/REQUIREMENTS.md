@@ -11,10 +11,10 @@
 - Veteran Core profile compatibility must be maintained for Mod Portal-published versions where practical, including tagged item profiles that may exist outside live `storage`.
 - An installed Veteran Core must be able to opt into a bound quick-move mode where mining returns one tagged placeable turret item that restores the turret and core together when placed.
 - Unbinding must return the turret to the default separate turret item plus Veteran Core movement behavior.
-- Installed Veteran Cores must support deterministic automation presets that can spend currently available points once or continue spending future points when Auto is enabled, without overwriting existing conflicting manual specialization, sub-specialization, or element choices.
+- Installed Veteran Cores must support a deterministic Build mode that lets players plan core ranks, augment ranks, specialization, sub-specialization, elements, and forever priorities without spending live points. Auto must follow that build path, avoid overwriting conflicting manual specialization, sub-specialization, or element choices, remain enabled for open-ended forever priorities, and disable itself once a finite path is satisfied.
 - Empty turrets must support an optional Veteran Core request state that creates a hidden logistic requester helper for one Veteran Core and installs the delivered core profile onto that turret.
 - Veteran Core request helpers must be hidden, bounded in refresh work, cleaned up when cancelled or when the turret/core is removed, and must spill delivered core contents instead of deleting them during teardown.
-- Blueprint tags and entity-settings copy/paste must be able to carry Turret XP setup policy for labels, label color, automation, and empty-turret Veteran Core requests, while never cloning XP, level, kills, damage, or custom names as build policy.
+- Blueprint tags and entity-settings copy/paste must be able to carry Turret XP setup policy for labels, label color, build targets, Build-mode Auto state, and empty-turret Veteran Core requests, while never cloning XP, level, kills, damage, or custom names as build policy.
 - On space platforms, the attached turret panel must allow selecting a specific Veteran Core from the platform hub inventory and sending an installed core back to the hub when there is room.
 - Gun turret damage against non-friendly entities must add lifetime damage and damage-derived XP only when the attacking turret has an installed core.
 - Gun turret combat on space-platform surfaces must add reduced damage-derived and kill-credit-derived XP while preserving raw displayed damage and kill-credit totals.
@@ -95,7 +95,7 @@
 - Reserve stats-scrollbar space before scrolling is needed so stat values do not shift or render underneath the scrollbar when additional rows make the panel scrollable.
 - Color numeric fragments only in stat, upgrade, augment, specialization, sub-specialization, element, and material-count values. Units and descriptive text must remain neutral, and elemental damage amounts should color the number with the corresponding element color.
 - Show a compact installed-core naming form with a core naming field plus independent `Name`, `Level`, and `Unspent` floating-label toggles. Show a square color swatch and color-picker trigger only when at least one floating-label component is enabled. The trigger opens Turret XP's draggable runtime color popup with presets and RGB sliders.
-- Show installed-core automation controls with preset selection, one-shot Apply, and Auto toggle.
+- Show installed-core Build mode controls with Enter/Exit, target summary, Auto toggle, finite planned ranks, forever priorities, and clear visual tinting while previewing a build.
 - Show empty-turret Veteran Core request controls and a short request status when the turret has no installed core.
 - Custom RGB floating-label colors should apply directly to the in-world rendered label without requiring generated label-color prototypes or palette quantization.
 - Preserve Evolution list context after point allocation so the panel does not jump back to the top, prevent GUI refreshes from resizing the attached panel in ways that move the vanilla turret GUI, and avoid timer refreshes that destroy unchanged interactive controls.

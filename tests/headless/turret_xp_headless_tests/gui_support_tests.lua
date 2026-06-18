@@ -202,14 +202,7 @@ end
 function tests.run_stats_panel_alignment_test(surface)
   local layout = call("layout")
   local turret = create_turret(surface, { 2, 0 }, 20)
-  local summary = call("install_core", turret, {
-    level = 30,
-    kills = 8,
-    damage = 1200,
-  })
-  assert_true(summary ~= nil, "failed to install core for stats panel alignment test")
-
-  summary = call("set_evolution", turret, {
+  local evolution = {
     base = {
       ammo_regen = 4,
       damage = 3,
@@ -218,7 +211,15 @@ function tests.run_stats_panel_alignment_test(surface)
     augments = {
       luck = 1,
     },
+  }
+  local summary = call("install_core", turret, {
+    level = call("target_required_level", evolution),
+    kills = 8,
+    damage = 1200,
   })
+  assert_true(summary ~= nil, "failed to install core for stats panel alignment test")
+
+  summary = call("set_evolution", turret, evolution)
   assert_true(summary ~= nil, "failed to set evolution state for stats panel alignment test")
 
   local sample = call("stats_panel_layout_sample", turret)
@@ -348,19 +349,31 @@ function tests.run_gui_action_dispatch_test(surface)
   assert_eq(summary.show_label_level, true, "GUI checked-state dispatch did not restore the level suffix")
 
   local rank_turret = create_turret(surface, { 6, 0 }, 10)
-  summary = call("install_core", rank_turret, { level = 40 })
+  summary = call("install_core", rank_turret, {
+    level = call("target_required_level", {
+      augments = {
+        luck = 2,
+      },
+    }),
+  })
   assert_true(summary ~= nil, "failed to install core for GUI rank modifier dispatch test")
+  local available_core_points = summary.evolution.available_core_points
+  local available_augment_points = summary.evolution.available_augment_points
 
   local rank_sample = call("dispatch_rank_modifier_sample", rank_turret)
   assert_true(rank_sample ~= nil, "GUI rank modifier dispatch did not return a sample")
-  assert_eq(rank_sample.base_after_ctrl_add, 40, "Ctrl-click did not spend all available core points")
+  assert_eq(rank_sample.base_after_ctrl_add, available_core_points, "Ctrl-click did not spend all available core points")
   assert_eq(rank_sample.base_available_after_ctrl_add, 0, "Ctrl-click core allocation left available points")
   assert_eq(rank_sample.base_after_ctrl_remove, 0, "Ctrl-click did not remove all core ranks")
-  assert_eq(rank_sample.base_available_after_ctrl_remove, 40, "Ctrl-click core removal did not refund all points")
-  assert_eq(rank_sample.augment_after_ctrl_add, 2, "Ctrl-click did not spend all available augment points")
+  assert_eq(rank_sample.base_available_after_ctrl_remove, available_core_points, "Ctrl-click core removal did not refund all points")
+  assert_eq(rank_sample.augment_after_ctrl_add, available_augment_points, "Ctrl-click did not spend all available augment points")
   assert_eq(rank_sample.augment_available_after_ctrl_add, 0, "Ctrl-click augment allocation left available points")
   assert_eq(rank_sample.augment_after_ctrl_remove, 0, "Ctrl-click did not remove all augment ranks")
-  assert_eq(rank_sample.augment_available_after_ctrl_remove, 2, "Ctrl-click augment removal did not refund all points")
+  assert_eq(
+    rank_sample.augment_available_after_ctrl_remove,
+    available_augment_points,
+    "Ctrl-click augment removal did not refund all points"
+  )
 end
 
 function tests.run_inventory_core_picker_test(surface)

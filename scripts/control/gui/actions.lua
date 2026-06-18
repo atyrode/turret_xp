@@ -69,8 +69,11 @@ function gui_actions_module.new(deps)
     ["cycle-label-color"] = function(player)
       actions.cycle_label_color(player)
     end,
-    ["apply-automation"] = function(player)
-      actions.apply_automation_now(player)
+    ["enter-build-mode"] = function(player)
+      actions.set_build_mode(player, true)
+    end,
+    ["exit-build-mode"] = function(player)
+      actions.set_build_mode(player, false)
     end,
     ["dev-create-core"] = function(player)
       actions.dev_create_core(player)
@@ -191,8 +194,8 @@ function gui_actions_module.new(deps)
       return true
     end
 
-    if action == "toggle-automation" then
-      actions.set_automation_enabled(player, element and element.state == true)
+    if action == "toggle-build-auto" then
+      actions.set_build_auto(player, element and element.state == true)
       return true
     end
 
@@ -226,16 +229,8 @@ function gui_actions_module.new(deps)
     return true
   end
 
-  function service.dispatch_selection_state_action(player, event, tags)
-    tags = tags or {}
-    if tags.turret_xp_action ~= "set-automation-preset" then
-      return false
-    end
-
-    local element = event and event.element or nil
-    local presets = tags.presets or {}
-    actions.set_automation_preset(player, presets[element and element.selected_index or 1])
-    return true
+  function service.dispatch_selection_state_action()
+    return false
   end
 
   function service.on_gui_click(event)

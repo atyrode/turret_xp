@@ -215,6 +215,7 @@ M.actions = actions.new({
   xp_required = M.xp_required,
   profile_automation = M.profile_automation,
   core_requester = M.core_requester,
+  get_turret_host = M.get_turret_host,
 })
 for name, handler in pairs(M.actions) do
   M[name] = handler

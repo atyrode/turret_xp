@@ -84,7 +84,13 @@ end
 
 function tests.run_modded_base_range_variant_test(surface)
   local turret = create_turret(surface, { 12, -8 }, 20)
-  local summary = call("install_core", turret, { level = 40 })
+  local summary = call("install_core", turret, {
+    level = call("target_required_level", {
+      augments = {
+        repair = 1,
+      },
+    }),
+  })
   assert_eq(summary.attack_range, 25, "headless data-updates range patch did not affect the base gun turret")
 
   summary = call("set_evolution", turret, {

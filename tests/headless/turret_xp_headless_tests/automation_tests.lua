@@ -4,7 +4,6 @@ local assert_true = support.assert_true
 local assert_eq = support.assert_eq
 local assert_ge = support.assert_ge
 local assert_le = support.assert_le
-local assert_contains = support.assert_contains
 local create_turret = support.create_turret
 local require_turret_near = support.require_turret_near
 local call = support.call
@@ -32,6 +31,27 @@ local function cleanup_turret(turret)
   end
 end
 
+local function table_sum(values)
+  local total = 0
+  for _, value in pairs(values or {}) do
+    total = total + math.max(0, math.floor(tonumber(value) or 0))
+  end
+  return total
+end
+
+local function unspent_label_for_profile(profile)
+  local evolution = profile and profile.evolution or {}
+  local core = evolution.available_core_points or 0
+  local augments = evolution.available_augment_points or 0
+  if core <= 0 and augments <= 0 then
+    return nil
+  end
+  if augments > 0 then
+    return "Core +" .. core .. " / Aug +" .. augments
+  end
+  return "Core +" .. core
+end
+
 function tests.run_label_display_policy_test(surface)
   local name_only = call("label_text_sample", {
     custom_name = "Alpha",
@@ -57,20 +77,29 @@ function tests.run_label_display_policy_test(surface)
   })
   assert_eq(name_and_level.text, "Alpha (Lvl 12)", "name plus level should keep the compact legacy label shape")
 
+  local unspent_level = call("target_required_level", {
+    augments = {
+      repair = 2,
+    },
+  })
   local unspent_only = call("label_text_sample", {
-    level = 40,
+    level = unspent_level,
     show_unspent_label = true,
   })
-  assert_eq(unspent_only.text, "Core +40 / Aug +2", "unspent-only label should summarize both point pools")
+  assert_eq(unspent_only.text, unspent_label_for_profile(unspent_only.profile), "unspent-only label should summarize both point pools")
 
   local combined = call("label_text_sample", {
     custom_name = "Alpha",
-    level = 40,
+    level = unspent_level,
     show_name_label = true,
     show_label_level = true,
     show_unspent_label = true,
   })
-  assert_eq(combined.text, "Alpha - Lvl 40 - Core +40 / Aug +2", "three-part labels should remain deterministic and readable")
+  assert_eq(
+    combined.text,
+    "Alpha - Lvl " .. unspent_level .. " - " .. unspent_label_for_profile(combined.profile),
+    "three-part labels should remain deterministic and readable"
+  )
 
   local no_visible_points = call("label_text_sample", {
     level = 0,
@@ -115,58 +144,119 @@ function tests.run_label_display_policy_test(surface)
   cleanup_turret(turret)
 end
 
-function tests.run_automation_preset_test(surface)
-  local presets = call("automation_presets")
-  assert_contains(presets, "manual", "automation preset list should include Manual")
-  assert_contains(presets, "balanced", "automation preset list should include Balanced")
-  assert_contains(presets, "sniper", "automation preset list should include Sniper")
-  assert_contains(presets, "machine_gun", "automation preset list should include Machine gun")
-  assert_contains(presets, "bulwark", "automation preset list should include Bulwark")
-  assert_contains(presets, "brawler", "automation preset list should include Brawler")
-
+function tests.run_build_mode_planning_test(surface)
+  local gates = call("progression_gates")
   local turret = create_turret(surface, { 14, 0 }, 10)
   local summary = call("install_core", turret, {
-    level = 50,
+    level = 0,
   })
-  assert_true(summary ~= nil, "failed to install a core for automation preset testing")
+  assert_true(summary ~= nil, "failed to install a core for build-mode planning")
 
-  local apply_summary = call("apply_automation", turret, "sniper", true, true)
-  assert_true(apply_summary ~= nil, "automation apply did not return a summary")
-  turret = refresh_turret(surface, { 14, 0 })
-  summary = call("get_state", turret)
-  assert_eq(summary.automation_preset, "sniper", "automation preset should persist on the profile")
-  assert_eq(summary.automation_enabled, true, "automation enabled flag should persist on the profile")
-  assert_eq(summary.automation_conflict, false, "first automation pass should not report a conflict")
-  assert_eq(summary.evolution.specialization, "sniper", "sniper preset should pick the sniper specialization")
-  assert_eq(summary.evolution.sub_specialization, "sniper_deadeye", "sniper preset should pick its sub-specialization")
-  assert_eq(summary.evolution.elements[1], "explosive", "sniper preset should choose the first configured element")
-  assert_eq(summary.evolution.elements[2], "fire", "sniper preset should choose the second configured element")
-  assert_eq(summary.evolution.available_core_points, 0, "automation should spend all currently available base points")
-  assert_eq(summary.evolution.available_augment_points, 0, "automation should spend all currently available augment points")
-  assert_ge(summary.evolution.base.damage or 0, 1, "sniper preset should invest in damage")
-  assert_ge(summary.evolution.augments.luck or 0, 1, "sniper preset should invest in luck first")
-  assert_ge(summary.evolution.augments.veteran_training or 0, 1, "sniper preset should invest in veteran training second")
-
-  local conflict_turret = create_turret(surface, { 16, 0 }, 10)
-  summary = call("install_core", conflict_turret, {
-    level = 40,
+  summary = call("dispatch_click_action", turret, {
+    turret_xp_action = "enter-build-mode",
   })
-  assert_true(summary ~= nil, "failed to install a core for automation conflict testing")
-  summary = call("set_evolution", conflict_turret, {
-    specialization = "bulwark",
-  })
-  assert_eq(summary.evolution.specialization, "bulwark", "test setup failed to choose the conflicting specialization")
+  assert_eq(summary.build_mode, true, "entering Build mode should mark the profile for preview")
+  assert_eq(summary.automation_enabled, false, "entering Build mode should not enable Auto by itself")
 
-  conflict_turret = refresh_turret(surface, { 16, 0 })
-  apply_summary = call("apply_automation", conflict_turret, "sniper", true, true)
-  assert_true(apply_summary ~= nil, "conflicting automation apply did not return a summary")
-  conflict_turret = refresh_turret(surface, { 16, 0 })
-  summary = call("get_state", conflict_turret)
-  assert_eq(summary.evolution.specialization, "bulwark", "automation must not overwrite a manual specialization")
-  assert_eq(summary.automation_conflict, true, "automation should surface a conflict when it preserves manual choices")
-  assert_eq(summary.evolution.available_core_points, 0, "automation should still spend non-conflicting base points")
+  summary = call("dispatch_click_action", turret, {
+    turret_xp_action = "allocate-base",
+    upgrade = "damage",
+  })
+  assert_eq(summary.evolution.base.damage, 0, "Build mode point planning must not spend live ranks")
+  assert_eq(summary.automation_target.base.damage, 1, "Build mode should record planned core ranks")
+  assert_eq(summary.automation_target.level, 1, "planned core rank should recalculate required level")
+
+  summary = call("dispatch_click_action", turret, {
+    turret_xp_action = "allocate-base",
+    upgrade = "shield",
+  }, {
+    control = true,
+  })
+  assert_eq(summary.automation_target.base_infinite.shield, true, "Ctrl-click should mark a core upgrade as forever")
+  assert_eq(summary.automation_target_model.open_ended, true, "forever targets should make the build open-ended")
+
+  summary = call("dispatch_click_action", turret, {
+    turret_xp_action = "choose-specialization",
+    specialization = "sniper",
+  })
+  assert_eq(summary.evolution.specialization, nil, "Build mode should not pick the live specialization before level gates")
+  assert_eq(summary.automation_target.specialization, "sniper", "Build mode should plan specialization choices")
+  assert_ge(summary.automation_target.level, gates.specialization, "planned specialization should raise required build level")
+
+  summary = call("dispatch_click_action", turret, {
+    turret_xp_action = "start-element",
+    element = "explosive",
+    slot = 1,
+  })
+  assert_eq(summary.evolution.elements[1], nil, "Build mode should not pick live elements before level gates")
+  assert_eq(summary.automation_target.elements[1], "explosive", "Build mode should plan the first element")
+
+  summary = call("dispatch_click_action", turret, {
+    turret_xp_action = "allocate-augment",
+    augment = "veteran_training",
+  })
+  assert_eq(summary.evolution.augments.veteran_training, 0, "Build mode should not spend live augment ranks")
+  assert_eq(summary.automation_target.augments.veteran_training, 1, "Build mode should plan augment ranks")
+  assert_ge(summary.automation_target.level, gates.augments, "planned augment rank should raise required build level")
+
+  summary = call("dispatch_checked_action", turret, {
+    turret_xp_action = "toggle-build-auto",
+  }, true)
+  assert_eq(summary.automation_enabled, true, "Auto should enable when a build path exists")
+  local planned_damage = summary.automation_target.base.damage
+
+  summary = call("dispatch_click_action", turret, {
+    turret_xp_action = "allocate-base",
+    upgrade = "damage",
+  })
+  assert_eq(summary.automation_target.base.damage, planned_damage, "Auto should make Build mode controls read-only")
+
+  summary = call("dispatch_checked_action", turret, {
+    turret_xp_action = "toggle-build-auto",
+  }, false)
+  assert_eq(summary.automation_enabled, false, "Auto should be manually disableable before editing")
+  summary = call("dispatch_click_action", turret, {
+    turret_xp_action = "allocate-base",
+    upgrade = "damage",
+  })
+  assert_eq(summary.automation_target.base.damage, planned_damage + 1, "disabling Auto should allow build edits again")
+
+  summary = call("set_profile", turret, {
+    level = 5,
+  })
+  assert_eq(summary.level, 5, "test setup should raise the core enough to apply planned core ranks")
+  summary = call("dispatch_checked_action", turret, {
+    turret_xp_action = "toggle-build-auto",
+  }, true)
+  assert_eq(summary.automation_enabled, true, "open-ended forever targets should keep Auto enabled")
+  assert_ge(summary.evolution.base.damage or 0, 1, "Auto should spend toward finite planned ranks")
+  assert_ge(summary.evolution.base.shield or 0, 1, "Auto should spend toward forever priorities")
+
+  local finite_turret = create_turret(surface, { 16, 0 }, 10)
+  summary = call("install_core", finite_turret, {
+    level = 0,
+  })
+  assert_true(summary ~= nil, "failed to install finite build test core")
+  call("dispatch_click_action", finite_turret, {
+    turret_xp_action = "enter-build-mode",
+  })
+  call("dispatch_click_action", finite_turret, {
+    turret_xp_action = "allocate-base",
+    upgrade = "damage",
+  })
+  call("dispatch_checked_action", finite_turret, {
+    turret_xp_action = "toggle-build-auto",
+  }, true)
+  summary = call("set_profile", finite_turret, {
+    level = 1,
+  })
+  assert_eq(summary.automation_enabled, true, "finite build should keep Auto on until the target can be applied")
+  summary = call("apply_build_target", finite_turret)
+  assert_eq(summary.evolution.base.damage, 1, "Auto should spend the finite planned rank")
+  assert_eq(summary.automation_enabled, false, "Auto should untick itself once a finite build path is satisfied")
+
   cleanup_turret(turret)
-  cleanup_turret(conflict_turret)
+  cleanup_turret(finite_turret)
 end
 
 function tests.run_core_request_lifecycle_test(surface)
@@ -232,6 +322,7 @@ function tests.run_empty_turret_gui_open_test(surface)
   local summary = call("open_gui_contract", turret)
   assert_true(summary.opened, "opening a pristine empty turret GUI should not crash")
   assert_true(summary.key ~= nil, "pristine vanilla turret core panel should receive a stable refresh key")
+  assert_eq(summary.has_inventory_picker, true, "pristine empty turret should show the core picker")
   cleanup_turret(turret)
 end
 
@@ -265,15 +356,8 @@ function tests.run_core_request_pressure_test(surface)
 end
 
 function tests.run_target_build_policy_test(surface)
-  local source_position = { 12, 12 }
-  local source = create_turret(surface, source_position, 10)
-  local summary = call("install_core", source, {
-    custom_name = "Source Build",
-    level = 50,
-    show_label_level = true,
-  })
-  assert_true(summary ~= nil, "failed to install source core for target build testing")
-  summary = call("set_evolution", source, {
+  local gates = call("progression_gates")
+  local source_build = {
     base = {
       damage = 8,
       shield = 4,
@@ -293,7 +377,17 @@ function tests.run_target_build_policy_test(surface)
     },
     specialization = "sniper",
     sub_specialization = "sniper_deadeye",
+  }
+  local expected_target_level = call("target_required_level", source_build)
+  local source_position = { 12, 12 }
+  local source = create_turret(surface, source_position, 10)
+  local summary = call("install_core", source, {
+    custom_name = "Source Build",
+    level = expected_target_level,
+    show_label_level = true,
   })
+  assert_true(summary ~= nil, "failed to install source core for target build testing")
+  summary = call("set_evolution", source, source_build)
   assert_eq(summary.evolution.specialization, "sniper", "test setup should give the source a specialization")
   source = refresh_turret(surface, source_position)
 
@@ -303,7 +397,7 @@ function tests.run_target_build_policy_test(surface)
   assert_eq(policy.level, nil, "copied target build must not clone source level as destination XP")
   assert_true(type(policy.automation_target) == "table", "copied policy should include an explicit target build")
   assert_eq(policy.automation_enabled, true, "copied target build should enable future auto-follow")
-  assert_eq(policy.automation_target.level, 50, "target build should record the source build level")
+  assert_eq(policy.automation_target.level, expected_target_level, "target build should record the recalculated required build level")
   assert_eq(policy.automation_target.base.damage, 8, "target build should record source Damage rank")
   assert_eq(policy.automation_target.base.shield, 4, "target build should record source Shield rank")
   assert_eq(policy.automation_target.augments.repair, 2, "target build should record source augment ranks")
@@ -320,7 +414,11 @@ function tests.run_target_build_policy_test(surface)
   assert_eq(blueprint_policy.request_core, true, "blueprint setup event should request a fresh core for empty copies")
   assert_eq(blueprint_policy.custom_name, nil, "blueprint setup event must not clone the source custom name")
   assert_eq(blueprint_policy.level, nil, "blueprint setup event must not clone source level as destination XP")
-  assert_eq(blueprint_policy.automation_target.level, 50, "blueprint setup event should preserve the copied target level")
+  assert_eq(
+    blueprint_policy.automation_target.level,
+    expected_target_level,
+    "blueprint setup event should preserve the recalculated target level"
+  )
   assert_eq(blueprint_policy.automation_target.specialization, "sniper", "blueprint setup event should preserve target specialization")
 
   local direct_blueprint = call("blueprint_setup_event_policy", source, true)
@@ -332,31 +430,49 @@ function tests.run_target_build_policy_test(surface)
   assert_eq(pasted.applied, true, "target policy should paste to an empty destination turret")
   assert_eq(pasted.request.enabled, true, "target policy should request a core on the empty destination")
   assert_eq(pasted.request.has_pending_policy, true, "target policy should wait on the destination until a core is delivered")
+  local gui = call("open_gui_contract", destination)
+  assert_true(gui.opened, "empty pasted target build GUI should open without crashing")
+  assert_eq(gui.core_status_caption[1], "turret-xp.core-requested", "empty pasted target build should show a requested core slot")
+  assert_eq(gui.has_core_request_checkbox, true, "empty pasted target build should keep the request checkbox visible")
+  assert_eq(gui.has_inventory_picker, false, "empty pasted target build should not show the core picker")
 
+  local pre_specialization_level = math.max(0, (gates.specialization or 0) - 1)
   call("insert_requested_core", destination, {
     custom_name = "Fresh Copy",
-    level = 9,
+    level = pre_specialization_level,
   })
   local refresh = call("process_core_requests", 64)
   assert_eq(refresh.installed, 1, "target policy destination should install a delivered core")
   destination = refresh_turret(surface, destination_position)
   summary = call("get_state", destination)
   assert_eq(summary.custom_name, "Fresh Copy", "target policy must preserve delivered core identity")
-  assert_eq(summary.level, 9, "target policy must preserve delivered core level")
+  assert_eq(summary.level, pre_specialization_level, "target policy must preserve delivered core level")
   assert_eq(summary.automation_enabled, true, "delivered core should follow the copied target")
   assert_true(type(summary.automation_target) == "table", "delivered core should store the copied target")
-  assert_eq(summary.automation_target.level, 50, "delivered core should retain the copied target level")
-  assert_eq(summary.evolution.specialization, nil, "level 9 core should not receive the level 10 specialization early")
-  assert_eq(summary.evolution.base.damage, 3, "level 9 core should spend toward target Damage")
-  assert_eq(summary.evolution.base.shield, 3, "level 9 core should spend toward target Shield")
-  assert_eq(summary.evolution.base.ammo_regen, 3, "level 9 core should spread points across copied target ranks")
-  assert_eq(summary.evolution.available_core_points, 0, "level 9 target follower should spend every available point toward the target")
+  assert_eq(summary.automation_target.level, expected_target_level, "delivered core should retain the copied required target level")
+  if pre_specialization_level < gates.specialization then
+    assert_eq(summary.evolution.specialization, nil, "pre-gate core should not receive the specialization early")
+  else
+    assert_eq(summary.evolution.specialization, "sniper", "gate-zero specialization should apply immediately")
+  end
+  assert_le(summary.evolution.base.damage or 0, policy.automation_target.base.damage, "target follower must not overrun Damage")
+  assert_le(summary.evolution.base.shield or 0, policy.automation_target.base.shield, "target follower must not overrun Shield")
+  assert_le(
+    summary.evolution.base.ammo_regen or 0,
+    policy.automation_target.base.ammo_regen,
+    "target follower must not overrun Ammo Productivity"
+  )
+  assert_eq(
+    table_sum(summary.evolution.base),
+    math.min(pre_specialization_level, table_sum(policy.automation_target.base)),
+    "pre-gate target follower should spend available core points toward copied target ranks"
+  )
 
   summary = call("set_profile", destination, {
-    level = 50,
+    level = expected_target_level,
   })
-  assert_eq(summary.level, 50, "test level update should raise the delivered core")
-  local apply_summary = call("apply_automation", destination)
+  assert_eq(summary.level, expected_target_level, "test level update should raise the delivered core")
+  local apply_summary = call("apply_build_target", destination)
   assert_true(apply_summary ~= nil, "target follower should apply after gaining levels")
   destination = refresh_turret(surface, destination_position)
   summary = call("get_state", destination)
@@ -374,11 +490,12 @@ function tests.run_target_build_policy_test(surface)
   assert_eq(summary.evolution.augments.repair, 2, "target follower should reach target Regeneration rank")
   assert_eq(summary.evolution.augments.veteran_training, 1, "target follower should reach target Veteran Training rank")
   assert_ge(summary.evolution.available_core_points, 1, "target follower should stop spending once target core ranks are reached")
+  assert_eq(summary.automation_enabled, false, "finite target follower should untick Auto after satisfying the copied build")
   assert_true(summary.automation_target_model ~= nil, "target follower should expose a GUI-ready target model")
 
   local conflict_turret = create_turret(surface, { 16, 12 }, 10)
   summary = call("install_core", conflict_turret, {
-    level = 50,
+    level = expected_target_level,
   })
   assert_true(summary ~= nil, "failed to install conflict test core")
   summary = call("set_evolution", conflict_turret, {
@@ -398,11 +515,23 @@ function tests.run_target_build_policy_test(surface)
 end
 
 function tests.run_copy_policy_test(surface)
+  local copied_build = {
+    base = {
+      damage = 6,
+      ammo_regen = 4,
+    },
+    augments = {
+      double_shot = 1,
+    },
+    specialization = "machine_gun",
+    sub_specialization = "machine_sustained",
+  }
+  local copied_build_level = call("target_required_level", copied_build)
   local source_position = { 12, 4 }
   local source = create_turret(surface, source_position, 10)
   local summary = call("install_core", source, {
     custom_name = "Source",
-    level = 40,
+    level = copied_build_level,
     show_name_label = true,
     show_label_level = true,
     show_unspent_label = true,
@@ -410,13 +539,15 @@ function tests.run_copy_policy_test(surface)
     label_color_preset = "custom",
   })
   assert_true(summary ~= nil, "failed to install a source core for policy copy testing")
-  call("apply_automation", source, "machine_gun", true, true)
+  summary = call("set_evolution", source, copied_build)
+  assert_eq(summary.evolution.specialization, "machine_gun", "test setup should give the source an explicit build")
   source = refresh_turret(surface, source_position)
 
   local policy = call("policy_from_entity", source)
   assert_eq(policy.request_core, true, "policy copied from an installed turret should request a core for empty copies")
-  assert_eq(policy.automation_preset, "machine_gun", "policy should include automation preset")
   assert_eq(policy.automation_enabled, true, "policy should include automation enabled state")
+  assert_eq(policy.automation_target.specialization, "machine_gun", "policy should include the copied specialization target")
+  assert_eq(policy.automation_target.base.damage, 6, "policy should include copied core rank targets")
   assert_eq(policy.show_name_label, true, "policy should include name-label visibility")
   assert_eq(policy.show_label_level, true, "policy should include level-label visibility")
   assert_eq(policy.show_unspent_label, true, "policy should include unspent-label visibility")
@@ -432,7 +563,7 @@ function tests.run_copy_policy_test(surface)
   assert_eq(pasted.request.has_pending_policy, true, "empty destination should retain policy until a core is delivered")
   call("insert_requested_core", destination, {
     custom_name = "Delivered Copy",
-    level = 40,
+    level = copied_build_level,
   })
   local refresh = call("process_core_requests", 64)
   assert_eq(refresh.installed, 1, "pending policy destination should install the delivered core")
@@ -442,11 +573,11 @@ function tests.run_copy_policy_test(surface)
   assert_eq(summary.show_name_label, true, "pending policy should apply name-label visibility to the delivered core")
   assert_eq(summary.show_label_level, true, "pending policy should apply level-label visibility to the delivered core")
   assert_eq(summary.show_unspent_label, true, "pending policy should apply unspent-label visibility to the delivered core")
-  assert_eq(summary.automation_preset, "machine_gun", "pending policy should apply automation preset to the delivered core")
-  assert_eq(summary.automation_enabled, true, "pending policy should apply automation enabled state to the delivered core")
-  assert_eq(summary.evolution.specialization, "machine_gun", "pending policy should apply automation to the delivered core")
-  assert_eq(summary.evolution.sub_specialization, "machine_sustained", "pending policy should choose the preset sub-specialization")
-  assert_eq(summary.evolution.available_core_points, 0, "pending policy automation should spend delivered core points")
+  assert_eq(summary.automation_enabled, false, "satisfied finite copied build should untick Auto after delivery")
+  assert_eq(summary.evolution.specialization, "machine_gun", "pending policy should apply copied build specialization")
+  assert_eq(summary.evolution.sub_specialization, "machine_sustained", "pending policy should apply copied build sub-specialization")
+  assert_eq(summary.evolution.base.damage, 6, "pending policy should spend copied core rank targets")
+  assert_eq(summary.evolution.base.ammo_regen, 4, "pending policy should spend every copied core rank target")
 
   local installed_destination = create_turret(surface, { 16, 4 }, 10)
   summary = call("install_core", installed_destination, {
@@ -468,43 +599,61 @@ function tests.run_copy_policy_test(surface)
 end
 
 function tests.run_gui_dispatch_contract_test(surface)
+  local unspent_level = call("target_required_level", {
+    augments = {
+      repair = 2,
+    },
+  })
   local apply_turret = create_turret(surface, { 18, 4 }, 10)
   local summary = call("install_core", apply_turret, {
-    level = 40,
+    level = unspent_level,
   })
   assert_true(summary ~= nil, "failed to install a core for automation GUI dispatch testing")
 
   summary = call("dispatch_toggle_label_unspent", apply_turret, true)
   assert_eq(summary.show_unspent_label, true, "GUI unspent-label toggle should update the profile")
-  assert_eq(summary.label_text, "Core +40 / Aug +2", "GUI unspent-label toggle should refresh label text")
+  assert_eq(summary.label_text, unspent_label_for_profile(summary), "GUI unspent-label toggle should refresh label text")
 
-  summary = call("dispatch_select_automation", apply_turret, "balanced")
-  assert_eq(summary.automation_preset, "balanced", "GUI automation dropdown should store the selected preset")
-  assert_eq(summary.automation_enabled, false, "choosing a preset should not enable Auto by itself")
-  assert_eq(summary.evolution.available_core_points, 40, "choosing a preset without Auto should not spend points")
-
-  summary = call("dispatch_apply_automation", apply_turret)
-  assert_eq(summary.automation_preset, "balanced", "GUI Apply should keep the selected preset")
-  assert_eq(summary.automation_enabled, false, "GUI Apply should remain a one-shot action when Auto is off")
-  assert_eq(summary.evolution.available_core_points, 0, "GUI Apply should spend currently available base points")
-  assert_eq(summary.evolution.available_augment_points, 0, "GUI Apply should spend currently available augment points")
+  summary = call("dispatch_click_action", apply_turret, {
+    turret_xp_action = "enter-build-mode",
+  })
+  assert_eq(summary.build_mode, true, "GUI Enter button should enter Build mode")
+  summary = call("dispatch_click_action", apply_turret, {
+    turret_xp_action = "allocate-base",
+    upgrade = "damage",
+  })
+  assert_eq(summary.automation_target.base.damage, 1, "GUI rank button should edit the build path in Build mode")
+  summary = call("dispatch_checked_action", apply_turret, {
+    turret_xp_action = "toggle-build-auto",
+  }, true)
+  assert_eq(summary.evolution.base.damage, 1, "GUI Auto checkbox should apply the planned finite rank")
+  assert_eq(summary.automation_enabled, false, "GUI Auto checkbox should untick after satisfying a finite build path")
   cleanup_turret(apply_turret)
 
   local auto_position = { 20, 4 }
   local auto_turret = create_turret(surface, auto_position, 10)
   summary = call("install_core", auto_turret, {
-    level = 40,
+    level = unspent_level,
   })
   assert_true(summary ~= nil, "failed to install a core for automation Auto GUI dispatch testing")
-  summary = call("dispatch_select_automation", auto_turret, "bulwark")
-  assert_eq(summary.automation_preset, "bulwark", "GUI automation dropdown should select Bulwark")
-  local auto_summary = call("dispatch_toggle_automation", auto_turret, true)
+  call("dispatch_click_action", auto_turret, {
+    turret_xp_action = "enter-build-mode",
+  })
+  call("dispatch_click_action", auto_turret, {
+    turret_xp_action = "allocate-base",
+    upgrade = "shield",
+  }, {
+    control = true,
+  })
+  local auto_summary = call("dispatch_checked_action", auto_turret, {
+    turret_xp_action = "toggle-build-auto",
+  }, true)
   assert_true(auto_summary ~= nil, "GUI Auto checkbox dispatch did not return a summary")
   auto_turret = refresh_turret(surface, auto_position)
   summary = call("get_state", auto_turret)
-  assert_eq(summary.automation_enabled, true, "GUI Auto checkbox should enable automation for non-manual presets")
-  assert_eq(summary.evolution.specialization, "bulwark", "GUI Auto checkbox should apply the selected preset")
-  assert_eq(summary.evolution.available_core_points, 0, "GUI Auto checkbox should spend available points immediately")
+  assert_eq(summary.automation_enabled, true, "GUI Auto checkbox should stay enabled for open-ended builds")
+  assert_eq(summary.automation_target.base_infinite.shield, true, "GUI Ctrl-click should preserve forever targets")
+  assert_ge(summary.evolution.base.shield or 0, 1, "GUI Auto checkbox should spend toward forever targets")
   cleanup_turret(auto_turret)
 
   local request_turret = create_turret(surface, { 22, 4 }, 10)

@@ -90,21 +90,37 @@ function evolution_panel_module.new(deps)
   end
 
   local function add_choice_card(parent, anchor_name, top_margin)
+    local build_mode = parent.tags and parent.tags.turret_xp_build_mode == true
     local row = parent.add({
       type = "frame",
       name = anchor_name,
       direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
+      style = build_mode and "turret_xp_build_mode_frame" or "inside_shallow_frame_with_padding",
     })
     set_evolution_content_width(row, true)
     set_style(row, "top_margin", top_margin or 6)
     return row
   end
 
-  local function add_card_pick_button(parent, tags)
+  local function is_build_mode(state)
+    return state and state._build_mode_preview == true
+  end
+
+  local function is_build_auto(state)
+    return is_build_mode(state) and state._build_auto == true
+  end
+
+  local function is_infinite_target(state, group, id)
+    local groups = state and state._build_infinite or nil
+    local targets = groups and groups[group] or nil
+    return targets and targets[id] == true
+  end
+
+  local function add_card_pick_button(parent, tags, enabled)
     local button = parent.add({
       type = "button",
       caption = { "turret-xp.evolution-action-pick" },
+      enabled = enabled ~= false,
       tags = tags,
     })
     set_style(button, "width", LAYOUT.evolution_card_action_width)
@@ -141,7 +157,7 @@ function evolution_panel_module.new(deps)
     return icon, cell
   end
 
-  local function add_card_title_row(parent, sprite, name, action_tags)
+  local function add_card_title_row(parent, sprite, name, action_tags, action_enabled)
     local title_row = parent.add({
       type = "flow",
       direction = "horizontal",
@@ -166,7 +182,7 @@ function evolution_panel_module.new(deps)
         type = "empty-widget",
         style = "flib_horizontal_pusher",
       })
-      add_card_pick_button(title_row, action_tags)
+      add_card_pick_button(title_row, action_tags, action_enabled)
     end
 
     return title_row
@@ -187,7 +203,7 @@ function evolution_panel_module.new(deps)
   end
 
   local function has_level(state, level)
-    return (state.level or 0) >= level
+    return is_build_mode(state) or (state.level or 0) >= level
   end
 
   local function add_summary_label(parent, title, value, value_color)
@@ -226,13 +242,25 @@ function evolution_panel_module.new(deps)
     if specialization and sub_specialization then
       specialization_caption = specialization.name .. "/" .. sub_specialization.name
     end
-    add_summary_label(header, { "turret-xp.evolution-summary-core" }, tostring(get_available_skill_points(state)), "0.58,0.82,0.38")
-    add_summary_label(header, { "turret-xp.evolution-summary-aug" }, tostring(get_available_augment_points(state)), "0.35,0.75,1")
+    local build_mode = is_build_mode(state)
+    local build_auto = is_build_auto(state)
+    add_summary_label(
+      header,
+      build_mode and { "turret-xp.evolution-summary-build-core" } or { "turret-xp.evolution-summary-core" },
+      tostring(get_available_skill_points(state)),
+      build_mode and "0.62,0.82,1" or "0.58,0.82,0.38"
+    )
+    add_summary_label(
+      header,
+      build_mode and { "turret-xp.evolution-summary-build-aug" } or { "turret-xp.evolution-summary-aug" },
+      tostring(get_available_augment_points(state)),
+      build_mode and "0.62,0.82,1" or "0.35,0.75,1"
+    )
     add_summary_label(
       header,
       { "turret-xp.evolution-summary-spec" },
       specialization_caption,
-      specialization and "1,0.86,0.46" or "0.74,0.74,0.74"
+      build_mode and "0.62,0.82,1" or (specialization and "1,0.86,0.46" or "0.74,0.74,0.74")
     )
 
     local reset = header.add({
@@ -240,6 +268,7 @@ function evolution_panel_module.new(deps)
       sprite = "utility/reset",
       style = "tool_button",
       tooltip = { "turret-xp.evolution-reset-tooltip" },
+      enabled = not build_auto,
       tags = {
         turret_xp_action = "reset-evolution",
       },
@@ -285,7 +314,7 @@ function evolution_panel_module.new(deps)
       turret_xp_action = "start-element",
       element = element.id,
       slot = slot,
-    }, true, evolution_anchor_name("element", element.id, slot))
+    }, not is_build_auto(state), evolution_anchor_name("element", element.id, slot))
 
     local evolution = ensure_evolution_state(state)
     if slot == 2 and evolution.elements[1] then
@@ -377,9 +406,23 @@ function evolution_panel_module.new(deps)
     return row
   end
 
-  local function add_base_allocation_row(parent, upgrade, rank, can_increase)
-    local rank_caption = upgrade.max_rank and { "turret-xp.rank-caption-with-max", rank, upgrade.max_rank }
-      or { "turret-xp.rank-caption", rank }
+  local function add_base_allocation_row(parent, upgrade, rank, can_increase, state)
+    local build_mode = is_build_mode(state)
+    local build_auto = is_build_auto(state)
+    local infinite = is_infinite_target(state, "base", upgrade.id)
+    local rank_caption = infinite
+        and (upgrade.max_rank and {
+          "turret-xp.rank-caption-with-max-forever",
+          rank,
+          upgrade.max_rank,
+        } or { "turret-xp.rank-caption-forever", rank })
+      or (
+        upgrade.max_rank and {
+          "turret-xp.rank-caption-with-max",
+          rank,
+          upgrade.max_rank,
+        } or { "turret-xp.rank-caption", rank }
+      )
     add_rank_allocation_row(parent, {
       row_name = evolution_anchor_name("base", upgrade.id),
       sprite = upgrade.sprite,
@@ -387,10 +430,17 @@ function evolution_panel_module.new(deps)
       rank = rank,
       rank_caption = rank_caption,
       value_caption = rich_stat_text(upgrade.value),
-      can_decrease = rank > 0,
-      can_increase = can_increase,
-      decrease_tooltip = { "turret-xp.rank-remove-tooltip", upgrade.name },
-      increase_tooltip = {
+      can_decrease = not build_auto and (rank > 0 or infinite),
+      can_increase = not build_auto and ((build_mode and not (upgrade.max_rank and rank >= upgrade.max_rank)) or can_increase),
+      decrease_tooltip = build_mode and { "turret-xp.build-rank-remove-tooltip", upgrade.name }
+        or { "turret-xp.rank-remove-tooltip", upgrade.name },
+      increase_tooltip = build_mode and {
+        "turret-xp.build-base-rank-add-tooltip",
+        upgrade.name,
+        rich_stat_text(upgrade.value),
+        tostring(rank),
+        tostring(rank + 1),
+      } or {
         "turret-xp.base-rank-add-tooltip",
         upgrade.name,
         rich_stat_text(upgrade.value),
@@ -408,9 +458,23 @@ function evolution_panel_module.new(deps)
     })
   end
 
-  local function add_augment_allocation_row(parent, augment, rank, available, at_max)
-    local rank_caption = augment.max_rank and { "turret-xp.rank-caption-with-max", rank, augment.max_rank }
-      or { "turret-xp.rank-caption", rank }
+  local function add_augment_allocation_row(parent, augment, rank, available, at_max, state)
+    local build_mode = is_build_mode(state)
+    local build_auto = is_build_auto(state)
+    local infinite = is_infinite_target(state, "augments", augment.id)
+    local rank_caption = infinite
+        and (augment.max_rank and {
+          "turret-xp.rank-caption-with-max-forever",
+          rank,
+          augment.max_rank,
+        } or { "turret-xp.rank-caption-forever", rank })
+      or (
+        augment.max_rank and {
+          "turret-xp.rank-caption-with-max",
+          rank,
+          augment.max_rank,
+        } or { "turret-xp.rank-caption", rank }
+      )
     add_rank_allocation_row(parent, {
       row_name = evolution_anchor_name("augment", augment.id),
       sprite = augment.sprite,
@@ -418,8 +482,8 @@ function evolution_panel_module.new(deps)
       rank = rank,
       rank_caption = rank_caption,
       value_caption = at_max and { "turret-xp.rank-max" } or rich_stat_text(augment.value),
-      can_decrease = rank > 0,
-      can_increase = available >= 1 and not at_max,
+      can_decrease = not build_auto and (rank > 0 or infinite),
+      can_increase = not build_auto and ((build_mode and not at_max) or (available >= 1 and not at_max)),
       decrease_tags = {
         turret_xp_action = "deallocate-augment",
         augment = augment.id,
@@ -428,8 +492,15 @@ function evolution_panel_module.new(deps)
         turret_xp_action = "allocate-augment",
         augment = augment.id,
       },
-      decrease_tooltip = { "turret-xp.rank-remove-tooltip", augment.name },
-      increase_tooltip = {
+      decrease_tooltip = build_mode and { "turret-xp.build-rank-remove-tooltip", augment.name }
+        or { "turret-xp.rank-remove-tooltip", augment.name },
+      increase_tooltip = build_mode and {
+        "turret-xp.build-augment-rank-add-tooltip",
+        augment.name,
+        rich_stat_text(augment.description),
+        tostring(rank),
+        tostring(at_max and rank or (rank + 1)),
+      } or {
         "turret-xp.augment-rank-add-tooltip",
         augment.name,
         rich_stat_text(augment.description),
@@ -456,11 +527,12 @@ function evolution_panel_module.new(deps)
     local delivered, required, element_requirement = get_element_progress(state, element_id)
     local progress = required > 0 and math.min(1, delivered / required) or 0
 
+    local build_mode = parent.tags and parent.tags.turret_xp_build_mode == true
     local frame = parent.add({
       type = "frame",
       name = evolution_anchor_name("element-mastery", element_id),
       direction = "vertical",
-      style = "inside_shallow_frame_with_padding",
+      style = build_mode and "turret_xp_build_mode_frame" or "inside_shallow_frame_with_padding",
     })
     set_evolution_content_width(frame, true)
     set_style(frame, "top_margin", 6)
@@ -546,7 +618,7 @@ function evolution_panel_module.new(deps)
       end
       local rank = get_base_rank(state, upgrade.id)
       local at_max = upgrade.max_rank and rank >= upgrade.max_rank
-      add_base_allocation_row(section, upgrade, rank, available >= 1 and not at_max)
+      add_base_allocation_row(section, upgrade, rank, available >= 1 and not at_max, state)
     end
   end
 
@@ -575,15 +647,25 @@ function evolution_panel_module.new(deps)
     } or nil, has_element and {
       turret_xp_action = "reset-element-slot",
       slot = 1,
-    } or nil, { "turret-xp.first-element-reset-tooltip" })
+    } or nil, { "turret-xp.first-element-reset-tooltip" }, not is_build_auto(state))
     if unlocked then
       add_element_choices(section, state, 1)
     end
   end
 
-  local function add_specialization_choice_card(parent, anchor_name, sprite, name, description, effects, selected, action_tags)
+  local function add_specialization_choice_card(
+    parent,
+    anchor_name,
+    sprite,
+    name,
+    description,
+    effects,
+    selected,
+    action_tags,
+    action_enabled
+  )
     local row = add_choice_card(parent, anchor_name, 6)
-    add_card_title_row(row, sprite, name, (not selected) and action_tags or nil)
+    add_card_title_row(row, sprite, name, (not selected) and action_tags or nil, action_enabled)
 
     local description_label = row.add({
       type = "label",
@@ -611,7 +693,8 @@ function evolution_panel_module.new(deps)
       {
         turret_xp_action = "choose-specialization",
         specialization = specialization.id,
-      }
+      },
+      not is_build_auto(state)
     )
   end
 
@@ -628,7 +711,8 @@ function evolution_panel_module.new(deps)
       evolution.specialization and {
         turret_xp_action = "reset-specialization",
       } or nil,
-      { "turret-xp.specialization-reset-tooltip" }
+      { "turret-xp.specialization-reset-tooltip" },
+      not is_build_auto(state)
     )
     if not unlocked then
       return
@@ -660,7 +744,8 @@ function evolution_panel_module.new(deps)
       {
         turret_xp_action = "choose-sub-specialization",
         sub_specialization = sub_specialization.id,
-      }
+      },
+      not is_build_auto(state)
     )
   end
 
@@ -677,7 +762,8 @@ function evolution_panel_module.new(deps)
       evolution.sub_specialization and {
         turret_xp_action = "reset-sub-specialization",
       } or nil,
-      { "turret-xp.sub-specialization-reset-tooltip" }
+      { "turret-xp.sub-specialization-reset-tooltip" },
+      not is_build_auto(state)
     )
     if not unlocked then
       return
@@ -726,7 +812,7 @@ function evolution_panel_module.new(deps)
       end
       local rank = get_augment_rank(state, augment.id)
       local at_max = augment.max_rank and rank >= augment.max_rank
-      add_augment_allocation_row(section, augment, rank, available, at_max)
+      add_augment_allocation_row(section, augment, rank, available, at_max, state)
     end
   end
 
@@ -739,7 +825,7 @@ function evolution_panel_module.new(deps)
     } or nil, has_element and {
       turret_xp_action = "reset-element-slot",
       slot = 2,
-    } or nil, { "turret-xp.second-element-reset-tooltip" })
+    } or nil, { "turret-xp.second-element-reset-tooltip" }, not is_build_auto(state))
     if not unlocked then
       return
     end
@@ -786,13 +872,17 @@ function evolution_panel_module.new(deps)
       tostring(evolution.sub_specialization or ""),
       tostring(evolution.elements and evolution.elements[1] or ""),
       tostring(evolution.elements and evolution.elements[2] or ""),
+      tostring(state._build_mode_preview == true),
+      tostring(state._build_auto == true),
     }
 
     for _, upgrade in ipairs(BASE_UPGRADES) do
       parts[#parts + 1] = tostring(evolution.base and evolution.base[upgrade.id] or 0)
+      parts[#parts + 1] = tostring(is_infinite_target(state, "base", upgrade.id))
     end
     for _, augment in ipairs(AUGMENTS) do
       parts[#parts + 1] = tostring(evolution.augments and evolution.augments[augment.id] or 0)
+      parts[#parts + 1] = tostring(is_infinite_target(state, "augments", augment.id))
     end
     for _, element in ipairs(ELEMENTS) do
       local mastery = evolution.element_mastery and evolution.element_mastery[element.id] or nil
@@ -809,6 +899,7 @@ function evolution_panel_module.new(deps)
       return
     end
 
+    local build_mode = is_build_mode(state)
     local key = evolution_panel_key(state, ammo_name)
     if (evolution_panel.tags or {}).key == key then
       scroll_evolution_to_anchor(panel, anchor_name)
@@ -817,6 +908,7 @@ function evolution_panel_module.new(deps)
 
     evolution_panel.tags = {
       key = key,
+      turret_xp_build_mode = build_mode,
     }
     update_evolution_summary(panel, state)
     evolution_panel.clear()

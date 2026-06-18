@@ -1,63 +1,5 @@
 local profile_automation = {}
 
-local PRESETS = {
-  {
-    id = "manual",
-    locale = "turret-xp.automation-preset-manual",
-    base = {},
-    augments = {},
-  },
-  {
-    id = "balanced",
-    locale = "turret-xp.automation-preset-balanced",
-    base = { "damage", "shield", "ammo_regen", "resistance", "crit_chance", "crit_damage" },
-    augments = { "repair", "siphon", "luck", "veteran_training", "double_shot", "bounce" },
-    elements = { "explosive", "electric" },
-  },
-  {
-    id = "sniper",
-    locale = "turret-xp.automation-preset-sniper",
-    specialization = "sniper",
-    sub_specialization = "sniper_deadeye",
-    base = { "damage", "crit_damage", "crit_chance", "shield", "resistance", "ammo_regen" },
-    augments = { "luck", "veteran_training", "double_shot", "repair", "siphon", "bounce" },
-    elements = { "explosive", "fire" },
-  },
-  {
-    id = "machine_gun",
-    locale = "turret-xp.automation-preset-machine-gun",
-    specialization = "machine_gun",
-    sub_specialization = "machine_sustained",
-    base = { "ammo_regen", "damage", "crit_chance", "shield", "resistance", "crit_damage" },
-    augments = { "double_shot", "bounce", "luck", "veteran_training", "repair", "siphon" },
-    elements = { "electric", "toxic" },
-  },
-  {
-    id = "bulwark",
-    locale = "turret-xp.automation-preset-bulwark",
-    specialization = "bulwark",
-    sub_specialization = "bulwark_bastion",
-    base = { "shield", "resistance", "damage", "ammo_regen", "crit_chance", "crit_damage" },
-    augments = { "repair", "siphon", "veteran_training", "luck", "double_shot", "bounce" },
-    elements = { "electric", "fire" },
-  },
-  {
-    id = "brawler",
-    locale = "turret-xp.automation-preset-brawler",
-    specialization = "brawler",
-    sub_specialization = "brawler_vampire",
-    base = { "damage", "shield", "resistance", "crit_chance", "crit_damage", "ammo_regen" },
-    augments = { "repair", "siphon", "double_shot", "luck", "veteran_training", "bounce" },
-    elements = { "toxic", "fire" },
-  },
-}
-
-local PRESET_BY_ID = {}
-for index, preset in ipairs(PRESETS) do
-  preset.index = index
-  PRESET_BY_ID[preset.id] = preset
-end
-
 local function copy_serializable(value)
   if type(value) ~= "table" then
     return value
@@ -97,7 +39,6 @@ local function copy_policy(policy)
   end
 
   return {
-    automation_preset = policy.automation_preset,
     automation_enabled = policy.automation_enabled == true,
     automation_target = copy_serializable(policy.automation_target),
     show_name_label = policy.show_name_label == true,
@@ -146,6 +87,20 @@ function profile_automation.new(deps)
     return result
   end
 
+  local function copy_infinite_targets(source, by_id)
+    if type(source) ~= "table" then
+      return {}
+    end
+
+    local result = {}
+    for id, value in pairs(source) do
+      if by_id[id] and value == true then
+        result[id] = true
+      end
+    end
+    return result
+  end
+
   local function copy_element_target(source)
     if type(source) ~= "table" then
       return {}
@@ -185,14 +140,69 @@ function profile_automation.new(deps)
       and (
         positive_rank(target.level) > 0
         or table_has_content(target.base)
+        or table_has_content(target.base_infinite)
         or table_has_content(target.augments)
+        or table_has_content(target.augment_infinite)
         or table_has_content(target.elements)
         or target.specialization ~= nil
         or target.sub_specialization ~= nil
       )
   end
 
-  local function normalize_target(target)
+  local function total_ranks(definitions, ranks)
+    local total = 0
+    ranks = type(ranks) == "table" and ranks or {}
+    for _, definition in ipairs(definitions or {}) do
+      total = total + positive_rank(ranks[definition.id])
+    end
+    return total
+  end
+
+  local function level_for_augment_points(points)
+    points = positive_rank(points)
+    if points <= 0 then
+      return 0
+    end
+
+    return deps.gates.augments + ((points - 1) * 10)
+  end
+
+  local function augment_points_for_level(level)
+    level = positive_rank(level)
+    if level < deps.gates.augments then
+      return 0
+    end
+
+    return 1 + math.floor((level - deps.gates.augments) / 10)
+  end
+
+  local function has_infinite_targets(target)
+    return table_has_content(target and target.base_infinite) or table_has_content(target and target.augment_infinite)
+  end
+
+  local function required_level_for_target(target)
+    if type(target) ~= "table" then
+      return 0
+    end
+
+    local level = total_ranks(deps.base_upgrades, target.base)
+    level = math.max(level, level_for_augment_points(total_ranks(deps.augments, target.augments)))
+    if target.specialization then
+      level = math.max(level, deps.gates.specialization)
+    end
+    if target.sub_specialization then
+      level = math.max(level, deps.gates.sub_specialization)
+    end
+    if target.elements and target.elements[1] then
+      level = math.max(level, deps.gates.first_element)
+    end
+    if target.elements and target.elements[2] then
+      level = math.max(level, deps.gates.second_element)
+    end
+    return level
+  end
+
+  local function normalize_target(target, allow_empty)
     if type(target) ~= "table" then
       return nil
     end
@@ -212,45 +222,72 @@ function profile_automation.new(deps)
       schema = 1,
       level = positive_rank(target.level),
       base = copy_rank_targets(target.base, base_by_id),
+      base_infinite = copy_infinite_targets(target.base_infinite, base_by_id),
       augments = copy_rank_targets(target.augments, augment_by_id),
+      augment_infinite = copy_infinite_targets(target.augment_infinite, augment_by_id),
       elements = elements,
       element_mastery = copy_element_rank_targets(target.element_mastery, elements),
       specialization = specialization,
       sub_specialization = sub_specialization,
     }
+    normalized.level = required_level_for_target(normalized)
 
-    return target_has_content(normalized) and normalized or nil
+    return (allow_empty == true or target_has_content(normalized)) and normalized or nil
   end
 
-  local function target_from_profile(profile)
+  local function empty_target()
+    return normalize_target({
+      base = {},
+      base_infinite = {},
+      augments = {},
+      augment_infinite = {},
+      elements = {},
+      element_mastery = {},
+    }, true)
+  end
+
+  local function target_from_profile(profile, allow_empty)
     profile = deps.normalize_profile(profile)
     local evolution = deps.ensure_evolution_state(profile)
     return normalize_target({
-      level = profile.level or 0,
       base = evolution.base or {},
+      base_infinite = profile.automation_target and profile.automation_target.base_infinite or {},
       augments = evolution.augments or {},
+      augment_infinite = profile.automation_target and profile.automation_target.augment_infinite or {},
       elements = evolution.elements or {},
       element_mastery = evolution.element_mastery or {},
       specialization = evolution.specialization,
       sub_specialization = evolution.sub_specialization,
-    })
+    }, allow_empty)
   end
 
-  function service.presets()
-    return PRESETS
-  end
+  local function target_to_preview_profile(profile, target)
+    target = normalize_target(target, true)
+    if not profile or not target then
+      return nil
+    end
 
-  function service.preset_by_id(id)
-    return PRESET_BY_ID[id] or PRESET_BY_ID.manual
-  end
-
-  function service.preset_index(id)
-    return service.preset_by_id(id).index
-  end
-
-  function service.preset_id_by_index(index)
-    index = math.max(1, math.floor(tonumber(index) or 1))
-    return (PRESETS[index] or PRESETS[1]).id
+    local preview = deps.normalize_profile(copy_serializable(profile))
+    local evolution = deps.ensure_evolution_state(preview)
+    evolution.base = copy_serializable(target.base or {})
+    evolution.augments = copy_serializable(target.augments or {})
+    evolution.elements = copy_serializable(target.elements or {})
+    evolution.element_mastery = copy_serializable(target.element_mastery or {})
+    evolution.specialization = target.specialization
+    evolution.sub_specialization = target.sub_specialization
+    evolution.element_project = nil
+    preview.level = target.level or 0
+    preview.xp = 0
+    preview.required_xp = 0
+    preview._build_mode_preview = true
+    preview._build_infinite = {
+      base = copy_serializable(target.base_infinite or {}),
+      augments = copy_serializable(target.augment_infinite or {}),
+    }
+    preview._build_auto = profile.automation_enabled == true
+    preview.automation_target = copy_serializable(target)
+    preview.automation_enabled = profile.automation_enabled == true
+    return preview
   end
 
   function service.normalize_profile(profile)
@@ -258,17 +295,70 @@ function profile_automation.new(deps)
       return nil
     end
 
-    if not PRESET_BY_ID[profile.automation_preset] then
-      profile.automation_preset = "manual"
+    local target_can_be_empty = profile.automation_enabled == true or profile.build_mode == true
+    profile.automation_target = normalize_target(profile.automation_target, target_can_be_empty)
+    if profile.build_mode == true then
+      profile.automation_target = profile.automation_target or empty_target()
     end
-    profile.automation_target = normalize_target(profile.automation_target)
-    profile.automation_enabled = profile.automation_enabled == true
-      and (profile.automation_preset ~= "manual" or profile.automation_target ~= nil)
+    profile.automation_enabled = profile.automation_enabled == true and target_has_content(profile.automation_target)
     return profile
   end
 
   function service.target_from_profile(profile)
     return target_from_profile(profile)
+  end
+
+  function service.empty_target()
+    return empty_target()
+  end
+
+  function service.normalize_target(target, allow_empty)
+    return normalize_target(target, allow_empty)
+  end
+
+  function service.required_level_for_target(target)
+    return required_level_for_target(normalize_target(target, true))
+  end
+
+  function service.set_build_mode(profile, enabled)
+    if not profile then
+      return nil
+    end
+
+    if enabled == true then
+      profile.build_mode = true
+      profile.automation_target = normalize_target(profile.automation_target, true) or target_from_profile(profile, true) or empty_target()
+    else
+      profile.build_mode = false
+      profile.automation_target = normalize_target(profile.automation_target, true)
+      if not target_has_content(profile.automation_target) then
+        profile.automation_target = nil
+        profile.automation_enabled = false
+      end
+    end
+
+    return profile.automation_target
+  end
+
+  function service.ensure_build_target(profile)
+    if not profile then
+      return nil
+    end
+
+    profile.automation_target = normalize_target(profile.automation_target, true) or target_from_profile(profile, true) or empty_target()
+    return profile.automation_target
+  end
+
+  function service.build_mode_active(profile)
+    return profile and profile.build_mode == true and normalize_target(profile.automation_target, true) ~= nil
+  end
+
+  function service.build_preview_profile(profile)
+    if not service.build_mode_active(profile) then
+      return nil
+    end
+
+    return target_to_preview_profile(profile, profile.automation_target)
   end
 
   function service.target_has_content(target)
@@ -282,6 +372,17 @@ function profile_automation.new(deps)
       local rank = positive_rank(ranks[definition.id])
       if rank > 0 then
         parts[#parts + 1] = definition.name .. " " .. rank
+      end
+    end
+    return table.concat(parts, ", ")
+  end
+
+  local function infinite_rank_list(definitions, ranks)
+    ranks = type(ranks) == "table" and ranks or {}
+    local parts = {}
+    for _, definition in ipairs(definitions or {}) do
+      if ranks[definition.id] == true then
+        parts[#parts + 1] = definition.name
       end
     end
     return table.concat(parts, ", ")
@@ -319,32 +420,47 @@ function profile_automation.new(deps)
   end
 
   function service.target_model(profile)
-    local target = normalize_target(profile and profile.automation_target)
+    local target = normalize_target(profile and profile.automation_target, profile and profile.build_mode == true)
     if not target then
       return nil
     end
 
     local core = rank_list(deps.base_upgrades, target.base)
     local augments = rank_list(deps.augments, target.augments)
+    local core_infinite = infinite_rank_list(deps.base_upgrades, target.base_infinite)
+    local augment_infinite = infinite_rank_list(deps.augments, target.augment_infinite)
     local choice = target_choice_name(target)
     local elements = target_elements_name(target)
-    local tooltip = { "turret-xp.automation-target-tooltip-header" }
+    local tooltip = { "turret-xp.build-target-tooltip-header" }
 
     if choice and choice ~= "" then
-      tooltip = { "", tooltip, "\n", { "turret-xp.automation-target-tooltip-specialization", choice } }
+      tooltip = { "", tooltip, "\n", { "turret-xp.build-target-tooltip-specialization", choice } }
     end
     if elements and elements ~= "" then
-      tooltip = { "", tooltip, "\n", { "turret-xp.automation-target-tooltip-elements", elements } }
+      tooltip = { "", tooltip, "\n", { "turret-xp.build-target-tooltip-elements", elements } }
     end
     if core and core ~= "" then
-      tooltip = { "", tooltip, "\n", { "turret-xp.automation-target-tooltip-core", core } }
+      tooltip = { "", tooltip, "\n", { "turret-xp.build-target-tooltip-core", core } }
+    end
+    if core_infinite and core_infinite ~= "" then
+      tooltip = { "", tooltip, "\n", { "turret-xp.build-target-tooltip-core-forever", core_infinite } }
     end
     if augments and augments ~= "" then
-      tooltip = { "", tooltip, "\n", { "turret-xp.automation-target-tooltip-augments", augments } }
+      tooltip = { "", tooltip, "\n", { "turret-xp.build-target-tooltip-augments", augments } }
+    end
+    if augment_infinite and augment_infinite ~= "" then
+      tooltip = { "", tooltip, "\n", { "turret-xp.build-target-tooltip-augments-forever", augment_infinite } }
     end
 
     return {
       level = target.level or 0,
+      open_ended = has_infinite_targets(target),
+      core_points = total_ranks(deps.base_upgrades, target.base),
+      core_total = target.level or 0,
+      augment_points = total_ranks(deps.augments, target.augments),
+      augment_total = augment_points_for_level(target.level or 0),
+      core_infinite = core_infinite,
+      augment_infinite = augment_infinite,
       choice = choice,
       elements = elements,
       core = core,
@@ -355,9 +471,9 @@ function profile_automation.new(deps)
 
   function service.policy_from_profile(profile)
     profile = service.normalize_profile(deps.normalize_profile(profile))
-    local target = target_from_profile(profile)
+    local planned_target = normalize_target(profile.automation_target)
+    local target = planned_target or target_from_profile(profile)
     return copy_policy({
-      automation_preset = profile.automation_preset or "manual",
       automation_enabled = profile.automation_enabled == true or target ~= nil,
       automation_target = target,
       show_name_label = profile.show_name_label == true,
@@ -400,25 +516,23 @@ function profile_automation.new(deps)
     return true
   end
 
-  local function spend_rank(state, definitions, ranks, available, ids, target_ranks)
+  local function spend_target_ranks(state, definitions, ranks, available, target_ranks, infinite_targets)
     local changed = false
     local spent = 0
-    local by_id = {}
-    for _, definition in ipairs(definitions or {}) do
-      by_id[definition.id] = definition
-    end
+    target_ranks = type(target_ranks) == "table" and target_ranks or {}
+    infinite_targets = type(infinite_targets) == "table" and infinite_targets or {}
 
     while available > 0 do
       local spent_this_pass = false
-      for _, id in ipairs(ids or {}) do
-        local definition = by_id[id]
-        if definition then
+      for _, definition in ipairs(definitions or {}) do
+        local id = definition.id
+        local finite_target = positive_rank(target_ranks[id])
+        local infinite = infinite_targets[id] == true
+        if finite_target > 0 or infinite then
           local rank = math.max(0, math.floor(tonumber(ranks[id]) or 0))
           local max_rank = definition.max_rank or math.huge
-          if target_ranks then
-            max_rank = math.min(max_rank, positive_rank(target_ranks[id]))
-          end
-          if rank < max_rank then
+          local target_cap = infinite and max_rank or math.min(max_rank, finite_target)
+          if rank < target_cap then
             ranks[id] = rank + 1
             available = available - 1
             spent = spent + 1
@@ -430,6 +544,7 @@ function profile_automation.new(deps)
           end
         end
       end
+
       if not spent_this_pass then
         break
       end
@@ -438,21 +553,53 @@ function profile_automation.new(deps)
     return changed, spent
   end
 
-  local function target_rank_ids(definitions, ranks)
-    local ids = {}
-    ranks = type(ranks) == "table" and ranks or {}
-    for _, definition in ipairs(definitions or {}) do
-      if positive_rank(ranks[definition.id]) > 0 then
-        ids[#ids + 1] = definition.id
+  local function target_satisfied(profile, target)
+    target = normalize_target(target)
+    if not target then
+      return true
+    end
+    if has_infinite_targets(target) then
+      return false
+    end
+
+    local evolution = deps.ensure_evolution_state(profile)
+    local function ranks_satisfied(definitions, live_ranks, target_ranks)
+      live_ranks = type(live_ranks) == "table" and live_ranks or {}
+      target_ranks = type(target_ranks) == "table" and target_ranks or {}
+      for _, definition in ipairs(definitions or {}) do
+        local id = definition.id
+        if positive_rank(live_ranks[id]) < positive_rank(target_ranks[id]) then
+          return false
+        end
+      end
+      return true
+    end
+
+    if not ranks_satisfied(deps.base_upgrades, evolution.base, target.base) then
+      return false
+    end
+    if not ranks_satisfied(deps.augments, evolution.augments, target.augments) then
+      return false
+    end
+    if target.specialization and evolution.specialization ~= target.specialization then
+      return false
+    end
+    if target.sub_specialization and evolution.sub_specialization ~= target.sub_specialization then
+      return false
+    end
+    for slot, element_id in ipairs(target.elements or {}) do
+      if element_id and evolution.elements[slot] ~= element_id then
+        return false
       end
     end
-    return ids
+
+    return true
   end
 
   local function apply_target_to_profile(entity, profile, target)
     target = normalize_target(target)
     if not target then
-      return { changed = false, conflict = false, spent = 0 }
+      return { changed = false, conflict = false, spent = 0, satisfied = true }
     end
 
     local changed = false
@@ -484,16 +631,26 @@ function profile_automation.new(deps)
       end
     end
 
-    local base_ids = target_rank_ids(deps.base_upgrades, target.base)
-    local base_changed, base_spent =
-      spend_rank(profile, deps.base_upgrades, evolution.base, deps.get_available_skill_points(profile), base_ids, target.base)
+    local base_changed, base_spent = spend_target_ranks(
+      profile,
+      deps.base_upgrades,
+      evolution.base,
+      deps.get_available_skill_points(profile),
+      target.base,
+      target.base_infinite
+    )
     changed = changed or base_changed
     spent = spent + base_spent
 
     if deps.has_level(profile, deps.gates.augments) then
-      local augment_ids = target_rank_ids(deps.augments, target.augments)
-      local augment_changed, augment_spent =
-        spend_rank(profile, deps.augments, evolution.augments, deps.get_available_augment_points(profile), augment_ids, target.augments)
+      local augment_changed, augment_spent = spend_target_ranks(
+        profile,
+        deps.augments,
+        evolution.augments,
+        deps.get_available_augment_points(profile),
+        target.augments,
+        target.augment_infinite
+      )
       changed = changed or augment_changed
       spent = spent + augment_spent
     end
@@ -521,6 +678,7 @@ function profile_automation.new(deps)
       changed = changed,
       conflict = conflict,
       spent = spent,
+      satisfied = target_satisfied(profile, target),
     }
   end
 
@@ -535,81 +693,13 @@ function profile_automation.new(deps)
       local target_result = apply_target_to_profile(entity, profile, profile.automation_target)
       profile.automation_conflict = target_result.conflict == true
       profile.automation_last_spent = target_result.spent or 0
+      if profile.automation_enabled == true and target_result.satisfied == true then
+        profile.automation_enabled = false
+      end
       return target_result
     end
 
-    local preset = service.preset_by_id(profile.automation_preset)
-    if preset.id == "manual" then
-      return { changed = false, conflict = false, spent = 0 }
-    end
-
-    local changed = false
-    local conflict = false
-    local spent = 0
-    local evolution = deps.ensure_evolution_state(profile)
-
-    if preset.specialization and deps.has_level(profile, deps.gates.specialization) then
-      if not evolution.specialization then
-        evolution.specialization = preset.specialization
-        evolution.sub_specialization = nil
-        changed = true
-        deps.mark_turret_body_sync_pending(profile)
-      elseif evolution.specialization ~= preset.specialization then
-        conflict = true
-      end
-    end
-
-    if preset.sub_specialization and deps.has_level(profile, deps.gates.sub_specialization) then
-      local sub = deps.sub_specialization_by_id[preset.sub_specialization]
-      if sub and evolution.specialization == sub.parent then
-        if not evolution.sub_specialization then
-          evolution.sub_specialization = preset.sub_specialization
-          changed = true
-          deps.mark_turret_body_sync_pending(profile)
-        elseif evolution.sub_specialization ~= preset.sub_specialization then
-          conflict = true
-        end
-      end
-    end
-
-    local base_changed, base_spent =
-      spend_rank(profile, deps.base_upgrades, evolution.base, deps.get_available_skill_points(profile), preset.base)
-    changed = changed or base_changed
-    spent = spent + base_spent
-
-    if deps.has_level(profile, deps.gates.augments) then
-      local augment_changed, augment_spent =
-        spend_rank(profile, deps.augments, evolution.augments, deps.get_available_augment_points(profile), preset.augments)
-      changed = changed or augment_changed
-      spent = spent + augment_spent
-    end
-
-    for slot, element_id in ipairs(preset.elements or {}) do
-      local gate = slot == 1 and deps.gates.first_element or deps.gates.second_element
-      if deps.has_level(profile, gate) and (slot == 1 or evolution.elements[1]) then
-        local element_changed, element_conflict = assign_element_rank(profile, slot, element_id)
-        changed = changed or element_changed
-        conflict = conflict or element_conflict == true
-      end
-    end
-
-    if changed then
-      deps.normalize_shield_state(profile, false)
-      deps.sync_turret_progression(profile)
-      if deps.is_gun_turret(entity) then
-        deps.ensure_feeder(entity, profile)
-        deps.update_name_render(entity, profile)
-        deps.update_shield_bar_render(entity, profile, false)
-      end
-    end
-
-    profile.automation_conflict = conflict == true
-    profile.automation_last_spent = spent
-    return {
-      changed = changed,
-      conflict = conflict,
-      spent = spent,
-    }
+    return { changed = false, conflict = false, spent = 0 }
   end
 
   function service.apply_policy_to_profile(entity, profile, policy)
@@ -618,16 +708,14 @@ function profile_automation.new(deps)
     end
 
     local visual_changed = false
-    if policy.automation_preset and PRESET_BY_ID[policy.automation_preset] then
-      profile.automation_preset = policy.automation_preset
-    end
     local target = normalize_target(policy.automation_target)
     if target then
       profile.automation_target = target
       profile.automation_enabled = policy.automation_enabled ~= false
+      profile.build_mode = true
     else
       profile.automation_target = nil
-      profile.automation_enabled = policy.automation_enabled == true and profile.automation_preset ~= "manual"
+      profile.automation_enabled = false
     end
     if policy.show_name_label ~= nil then
       profile.show_name_label = policy.show_name_label == true
