@@ -64,7 +64,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 - Harden the current playable loop before adding progression scope. Balance/readability fixes, GUI quality, validation, and bug fixes are in scope; new branches, elements, mastery loops, quality-backed chassis work, range-band rewrites, repeatable HP/Range axes, or other prototype-backed stat axes need separate approved issues.
 - Keep documentation edits ownership-based: move facts to the owning document, replace duplicates with cross-references, and delete stale planning prose once the current decision is represented elsewhere.
-- Continue the 0.11 GUI glowup as a foundation-first PR, not a sequence of isolated visual tweaks. Acceptance criteria for this branch: GUI surfaces live under focused `scripts/control/gui/` services, table/action/header sizing comes from `gui_constants.lua` or a component-owned layout model, reusable controls move into local widgets/components before they are repeated, refresh keys avoid rebuilding unchanged interactive controls, and docs/PR tracking stay updated with every GUI ownership decision. Do not mix that work with balance or progression-system expansion.
+- Restart the next major GUI pass as spec-first work tracked by issue #96. The active redesign path is: write and review the GUI spec factory, produce the Turret XP GUI spec, build a static shell from that spec, capture screenshots, then wire behavior only after the static shell passes visual review. The failed focused-tabs branch and the old two-column glowup are historical references, not layout sources for the next implementation.
 
 ## Validation Checklist
 
