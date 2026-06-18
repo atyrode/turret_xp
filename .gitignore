@@ -1,4 +1,5 @@
 dist/
+.factorio-ci/
 *.tmp
 .env
 .codex_tmp/

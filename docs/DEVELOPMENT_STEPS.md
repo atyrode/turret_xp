@@ -4,13 +4,13 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 ## Current Baseline
 
-- Main development line: `0.11.0`.
+- Main development line: `0.11.2`.
 - Stable branch policy: short-lived issue branches into protected `main`; releases are GitHub Releases/tags named `v<info.json version>`.
 - Required local lightweight check: `scripts/check.sh`.
 - Strict local Lua tooling without host installs: `docker compose run --rm lua-tools`.
 - Lua formatting without host installs: `docker compose run --rm lua-format`.
 - Optional local Git hooks: `scripts/install-git-hooks.sh` configures this clone to run Dockerized strict Lua tooling before commits that stage Lua or Lua-tooling changes.
-- Lua validation file discovery follows Git ignore rules, so tracked files and untracked non-ignored Lua files are checked while ignored local research/build corpora are excluded.
+- Lua validation file discovery checks tracked source plus untracked non-ignored Lua source, explicitly excludes local build/runtime caches such as `.factorio-ci/`, `dist/`, `.codex_tmp/`, and `case_study/`, and has a regression check in `scripts/check.sh` so downloaded Factorio data cannot be linted as mod source.
 - Package build: `scripts/package.sh`.
 - Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
 - Externally visible release helper: `scripts/release.sh` creates or updates the signed GitHub Release/tag after release preflight on clean, up-to-date `main`.

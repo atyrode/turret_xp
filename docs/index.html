@@ -56,13 +56,14 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.11.1</h2>
+          <h2 id="current-title">Version 0.11.2</h2>
           <p>2026-06-18</p>
         </div>
         <div class="release-notes">
           <h3>Bugfixes</h3>
           <ul>
-            <li>Fixed a 0.11.0 performance regression for saves with many named Veteran Cores by avoiding repeated no-op render-object updates for unchanged in-world core name labels and Shield bars.</li>
+            <li>Hardened release validation so local and CI Factorio runtime caches are kept outside Lua source discovery, preventing downloaded Factorio data files from breaking package and Mod Portal publishing checks.</li>
+            <li>Includes the 0.11.1 performance fix for saves with many named Veteran Cores.</li>
           </ul>
         </div>
       </section>
