@@ -7,6 +7,7 @@ Date: 2026-06-18
     - Added a Veteran Core request control for empty turrets. Logistic bots can deliver one Veteran Core into a hidden requester helper, and the mod installs it on the turret while preserving the delivered core profile.
     - Blueprint and entity-settings copy/paste now carry Turret XP setup policy for label visibility, label color, automation preset/Auto mode, and empty-turret Veteran Core requests without cloning XP, level, kills, damage, or custom names.
   Bugfixes:
+    - Fixed opening a pristine empty vanilla turret so the new Veteran Core request checkbox always has an explicit off state instead of crashing GUI construction.
     - Fixed copied label-only policies on installed cores so rendered floating labels refresh immediately after paste.
     - Bounded Veteran Core request refresh work and added headless coverage for requester delivery, cancellation, teardown spills, copy policy, GUI dispatch, and large-requester pressure cases.
     - `scripts/test-headless.sh` now prints Factorio benchmark timing plus process CPU/max-RSS metrics when `/usr/bin/time` is available, making performance drift easier to spot in CI logs.

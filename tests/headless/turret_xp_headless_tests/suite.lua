@@ -66,7 +66,9 @@ return {
   test_prefix = support.TEST_PREFIX,
   run_immediate_tests = run_immediate_tests,
   check_deferred_tests = function()
-    combat_tests.check_combat_test(support.get_surface())
-    combat_tests.check_status_damage_test(support.get_surface())
+    local surface = support.get_surface()
+    combat_tests.check_combat_test(surface)
+    combat_tests.check_status_damage_test(surface)
+    automation_tests.run_empty_turret_gui_open_test(surface)
   end,
 }

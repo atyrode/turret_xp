@@ -782,7 +782,6 @@ function core_panel_module.new(deps)
   end
 
   local function add_core_request_controls(core_panel, entity)
-    local host = get_turret_host(entity, false)
     local status = core_requester.status(entity)
     local frame = components.add_section_frame(core_panel, {
       top_margin = 6,
@@ -802,7 +801,7 @@ function core_panel_module.new(deps)
       name = GUI.core_request_enabled,
       caption = { "turret-xp.core-request-enable" },
       tooltip = { "turret-xp.core-request-tooltip" },
-      state = host and host.request_core == true,
+      state = status.enabled == true,
       tags = {
         turret_xp_action = "toggle-core-request",
       },

@@ -726,6 +726,10 @@ return function(M)
 
   local function make_fake_gui_element(definition)
     definition = definition or {}
+    if definition.type == "checkbox" and type(definition.state) ~= "boolean" then
+      error("fake GUI checkbox requires boolean state", 2)
+    end
+
     local element = {
       valid = true,
       type = definition.type or "flow",
@@ -734,6 +738,12 @@ return function(M)
       tooltip = definition.tooltip,
       tags = definition.tags,
       direction = definition.direction,
+      state = definition.state,
+      value = definition.value,
+      selected_index = definition.selected_index,
+      items = definition.items,
+      visible = definition.visible ~= false,
+      enabled = definition.enabled ~= false,
       style = {},
       style_name = definition.style,
       children = {},
@@ -743,6 +753,10 @@ return function(M)
       local child = make_fake_gui_element(child_definition)
       element.children[#element.children + 1] = child
       return child
+    end
+
+    for _, child_definition in ipairs(definition.children or {}) do
+      element.add(child_definition)
     end
 
     element.clear = function()
@@ -756,11 +770,26 @@ return function(M)
       element.valid = false
     end
 
+    setmetatable(element, {
+      __index = function(parent, key)
+        if type(key) ~= "string" then
+          return nil
+        end
+        for _, child in ipairs(parent.children or {}) do
+          if child.name == key then
+            return child
+          end
+        end
+        return nil
+      end,
+    })
+
     return element
   end
 
   local function make_fake_dispatch_player(entity)
     return {
+      valid = true,
       index = 65536,
       opened = entity,
       gui = {
@@ -873,6 +902,28 @@ return function(M)
       destroy_gui(player)
       forget_open_turret(player)
       return true
+    end,
+    open_gui_contract = function(entity)
+      if not is_gun_turret(entity) then
+        return {
+          opened = false,
+        }
+      end
+
+      local player = make_fake_dispatch_player(entity)
+      local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
+      add_core_panel(root, "empty")
+      update_core_panel(root, player, entity, nil)
+      local panel = find_gui_element(root, GUI.core)
+      local summary = {
+        opened = panel and panel.valid == true or false,
+        key = panel and panel.tags and panel.tags.key or nil,
+      }
+      if storage and storage.turret_xp then
+        storage.turret_xp.players[player.index] = nil
+        storage.turret_xp.player_settings[player.index] = nil
+      end
+      return summary
     end,
     gui_snapshot_frame = function(player)
       return gui_snapshot_frame_for_player(player, false)

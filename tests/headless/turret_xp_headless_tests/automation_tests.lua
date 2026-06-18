@@ -227,6 +227,14 @@ function tests.run_core_request_lifecycle_test(surface)
   cleanup_turret(removed_turret)
 end
 
+function tests.run_empty_turret_gui_open_test(surface)
+  local turret = create_turret(surface, { 18, 8 }, 10)
+  local summary = call("open_gui_contract", turret)
+  assert_true(summary.opened, "opening a pristine empty turret GUI should not crash")
+  assert_true(summary.key ~= nil, "pristine vanilla turret core panel should receive a stable refresh key")
+  cleanup_turret(turret)
+end
+
 function tests.run_core_request_pressure_test(surface)
   local turrets = {}
   for index = 1, 80 do

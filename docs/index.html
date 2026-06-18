@@ -69,6 +69,7 @@
           </ul>
           <h3>Bugfixes</h3>
           <ul>
+            <li>Fixed opening a pristine empty vanilla turret so the new Veteran Core request checkbox always has an explicit off state instead of crashing GUI construction.</li>
             <li>Fixed copied label-only policies on installed cores so rendered floating labels refresh immediately after paste.</li>
             <li>Bounded Veteran Core request refresh work and added headless coverage for requester delivery, cancellation, teardown spills, copy policy, GUI dispatch, and large-requester pressure cases.</li>
             <li><code>scripts/test-headless.sh</code> now prints Factorio benchmark timing plus process CPU/max-RSS metrics when <code>/usr/bin/time</code> is available, making performance drift easier to spot in CI logs.</li>
