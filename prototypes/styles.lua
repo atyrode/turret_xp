@@ -61,6 +61,36 @@ return function()
     graphical_set = build_mode_graphical_set,
   }
 
+  styles.turret_xp_focused_status_frame = {
+    type = "frame_style",
+    parent = "inside_shallow_frame_with_padding",
+    padding = 8,
+  }
+
+  styles.turret_xp_focused_content_frame = {
+    type = "frame_style",
+    parent = "inside_shallow_frame_with_padding",
+    padding = 10,
+  }
+
+  styles.turret_xp_view_tab_button = {
+    type = "button_style",
+    parent = "button",
+    font = "default-bold",
+    left_padding = 8,
+    right_padding = 8,
+    top_padding = 4,
+    bottom_padding = 4,
+  }
+
+  styles.turret_xp_view_tab_button_selected = {
+    type = "button_style",
+    parent = "turret_xp_view_tab_button",
+    default_font_color = { 1, 0.86, 0.46 },
+    hovered_font_color = { 1, 0.86, 0.46 },
+    clicked_font_color = { 1, 0.86, 0.46 },
+  }
+
   styles.turret_xp_pending_core_slot_button = {
     type = "button_style",
     parent = "slot_button",

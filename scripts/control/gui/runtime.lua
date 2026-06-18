@@ -1,7 +1,6 @@
 local gui_runtime_module = {}
 
 function gui_runtime_module.new(deps)
-  local GUI = deps.GUI
   local get_gui_panel = deps.get_gui_panel
   local get_turret_state = deps.get_turret_state
   local sync_turret_progression = deps.sync_turret_progression
@@ -9,18 +8,9 @@ function gui_runtime_module.new(deps)
   local get_entity_quality_name = deps.get_entity_quality_name
   local safe_read = deps.safe_read
   local get_max_health_for_quality = deps.get_max_health_for_quality
-  local find_gui_element = deps.find_gui_element
-  local set_gui_caption = deps.set_gui_caption
-  local set_gui_progress = deps.set_gui_progress
-  local format_number = deps.format_number
-  local get_gui_xp_modifier_summary = deps.get_gui_xp_modifier_summary
-  local update_core_panel = deps.update_core_panel
-  local update_build_panel = deps.update_build_panel
-  local update_stats_panel = deps.update_stats_panel
-  local update_evolution_panel = deps.update_evolution_panel
+  local update_focused_panel = deps.update_focused_panel
   local update_shield_bar_render = deps.update_shield_bar_render
   local profile_automation = deps.profile_automation
-  local set_element_style = deps.set_element_style
 
   local service = {}
 
@@ -77,79 +67,19 @@ function gui_runtime_module.new(deps)
       quality_name = quality_name,
       max_health = max_health,
       health = health,
+      player = nil,
     }
   end
 
-  local function apply_build_mode_styles(panel, build_mode)
-    set_element_style(
-      find_gui_element(panel, GUI.xp_panel),
-      build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame"
-    )
-    set_element_style(find_gui_element(panel, GUI.stats_header), "subheader_frame")
-    set_element_style(find_gui_element(panel, GUI.evolution_summary), "subheader_frame")
-  end
-
-  local function update_xp_modifier_summary(panel, entity, state)
-    local modifiers = find_gui_element(panel, GUI.xp_modifiers)
-    if not modifiers then
-      return
+  local function update_focused_turret_gui(panel, player, entity, context)
+    context.player = player
+    if not update_focused_panel(panel, player, entity, context) then
+      return false
     end
-
-    local summary = state and get_gui_xp_modifier_summary(entity, state) or nil
-    modifiers.visible = summary and summary.visible == true or false
-    modifiers.caption = summary and summary.caption or ""
-    modifiers.tooltip = summary and summary.tooltip or nil
-  end
-
-  local function update_turret_gui_progress_and_stats(panel, entity, context)
-    local state = context.state
-    apply_build_mode_styles(panel, context.build_mode == true)
-    if state then
-      if context.build_mode then
-        set_gui_caption(panel, GUI.level, { "turret-xp.level", context.progression.level })
-        set_gui_caption(
-          panel,
-          GUI.xp,
-          context.build_target and context.build_target.open_ended and { "turret-xp.build-xp-open-ended", context.required }
-            or { "turret-xp.build-xp", context.required }
-        )
-        set_gui_caption(panel, GUI.xp_percent, "")
-      else
-        set_gui_caption(panel, GUI.level, { "turret-xp.level", context.progression.level })
-        set_gui_caption(
-          panel,
-          GUI.xp,
-          { "turret-xp.xp-progress", format_number(context.progression.xp, 0), format_number(context.required, 0) }
-        )
-        set_gui_caption(panel, GUI.xp_percent, {
-          "turret-xp.level-progress-suffix",
-          format_number(context.progress * 100, 0),
-        })
-      end
-    else
-      set_gui_caption(panel, GUI.level, { "turret-xp.no-core-level" })
-      set_gui_caption(panel, GUI.xp, { "turret-xp.no-core-xp" })
-      set_gui_caption(panel, GUI.xp_percent, "")
-    end
-    set_gui_progress(panel, GUI.xp_bar, context.progress)
-    update_xp_modifier_summary(panel, entity, state)
-
-    update_stats_panel(
-      panel,
-      entity,
-      state,
-      context.ammo_name,
-      context.ammo_count,
-      context.ammo_quality,
-      context.ammo_in_magazine,
-      context.ammo_magazine_size,
-      context.quality_name,
-      context.max_health,
-      context.health
-    )
     if context.live_state and not context.build_mode then
       update_shield_bar_render(entity, context.live_state, true)
     end
+    return true
   end
 
   function service.update_turret_gui_stats(player, entity)
@@ -163,11 +93,10 @@ function gui_runtime_module.new(deps)
       return panel_mode(panel) == "empty"
     end
 
-    update_turret_gui_progress_and_stats(panel, entity, context)
-    return true
+    return update_focused_turret_gui(panel, player, entity, context)
   end
 
-  function service.update_turret_gui(player, entity, evolution_anchor)
+  function service.update_turret_gui(player, entity, _evolution_anchor)
     local panel = get_gui_panel(player)
     if not panel then
       return false
@@ -178,16 +107,11 @@ function gui_runtime_module.new(deps)
       return false
     end
 
-    update_core_panel(panel, player, entity, context.live_state)
-    update_build_panel(panel, context.live_state)
     if not context.live_state then
       return true
     end
 
-    update_turret_gui_progress_and_stats(panel, entity, context)
-    update_evolution_panel(panel, entity, context.state, context.ammo_name, evolution_anchor)
-
-    return true
+    return update_focused_turret_gui(panel, player, entity, context)
   end
 
   return service

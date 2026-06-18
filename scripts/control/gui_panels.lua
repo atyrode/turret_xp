@@ -6,6 +6,7 @@ local gui_core_identity = require("scripts.control.gui.core_identity")
 local gui_core_label_controls = require("scripts.control.gui.core_label_controls")
 local gui_core_automation_controls = require("scripts.control.gui.core_automation_controls")
 local gui_core_platform_controls = require("scripts.control.gui.core_platform_controls")
+local gui_focused_panel = require("scripts.control.gui.focused_panel")
 local gui_stats_panel = require("scripts.control.gui.stats_panel")
 local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
 local gui_shell = require("scripts.control.gui.shell")
@@ -24,6 +25,7 @@ return function(M)
   local core_identity_service = nil
   local core_label_controls_service = nil
   local core_automation_controls_service = nil
+  local focused_panel_service = nil
   local stats_panel_service = nil
   local evolution_panel_service = nil
   local shell_service = nil
@@ -234,6 +236,35 @@ return function(M)
     return core_panel_service
   end
 
+  local function get_focused_panel_service()
+    if not focused_panel_service then
+      focused_panel_service = gui_focused_panel.new({
+        GUI = GUI,
+        COLOR = COLOR,
+        LAYOUT = LAYOUT,
+        CHIP_NAME = CHIP_NAME,
+        set_style = set_style,
+        set_element_style = set_element_style,
+        find_gui_element = find_gui_element,
+        get_focused_gui_view = get_focused_gui_view,
+        get_specialization = get_specialization,
+        get_sub_specialization = get_sub_specialization,
+        get_available_skill_points = get_available_skill_points,
+        get_available_augment_points = get_available_augment_points,
+        rich_specialization_caption = function(specialization_id, caption)
+          return get_gui_support_service().rich_specialization_caption(specialization_id, caption)
+        end,
+        format_number = format_number,
+        profile_automation = profile_automation,
+        get_turret_host = get_turret_host,
+        core_requester = core_requester,
+        widgets = get_gui_widgets_service(),
+      })
+    end
+
+    return focused_panel_service
+  end
+
   local function get_stats_panel_service()
     if not stats_panel_service then
       stats_panel_service = gui_stats_panel.new({
@@ -372,6 +403,9 @@ return function(M)
         get_gui_xp_modifier_summary = get_gui_xp_modifier_summary,
         profile_automation = profile_automation,
         set_element_style = set_element_style,
+        update_focused_panel = function(...)
+          return update_focused_panel(...)
+        end,
         update_core_panel = function(...)
           return update_core_panel(...)
         end,
@@ -527,6 +561,22 @@ return function(M)
 
   function add_xp_panel(parent)
     return get_core_panel_service().add_xp_panel(parent)
+  end
+
+  function add_focused_installed_panel(parent, player, _entity, state)
+    return get_focused_panel_service().add_installed_panel(parent, player, state)
+  end
+
+  function add_focused_empty_panel(parent, player, entity)
+    return get_focused_panel_service().add_empty_panel(parent, player, entity, function(...)
+      return add_inventory_core_picker(...)
+    end, function(...)
+      return add_platform_core_list(...)
+    end)
+  end
+
+  function update_focused_panel(panel, player, entity, context)
+    return get_focused_panel_service().update_status(panel, context)
   end
 
   function build_gui_shell(player, mode)

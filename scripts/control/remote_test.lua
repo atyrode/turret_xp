@@ -745,26 +745,6 @@ return function(M)
     return nil
   end
 
-  local function find_gui_caption_key(parent, caption_key)
-    if not parent or not parent.valid then
-      return nil
-    end
-
-    local caption = parent.caption
-    if type(caption) == "table" and caption[1] == caption_key then
-      return parent
-    end
-
-    for _, child in pairs(parent.children or {}) do
-      local found = find_gui_caption_key(child, caption_key)
-      if found then
-        return found
-      end
-    end
-
-    return nil
-  end
-
   local function gui_style_property(element, property)
     if not element or not element.valid or not element.style then
       return nil
@@ -999,22 +979,25 @@ return function(M)
 
       local player = make_fake_dispatch_player(entity)
       local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
-      add_core_panel(root, "empty")
-      update_core_panel(root, player, entity, nil)
-      local panel = find_gui_element(root, GUI.core)
-      local status = panel and find_gui_element(panel, GUI.core_status) or nil
-      local slot = panel and find_gui_element(panel, GUI.core_slot) or nil
+      add_focused_empty_panel(root, player, entity)
+      local panel = find_gui_element(root, GUI.empty_picker)
+      local status = find_gui_element(root, GUI.empty_status)
+      local slot = status and find_gui_element(status, GUI.core_slot) or nil
+      local content = find_gui_element(root, GUI.focused_content)
       local slot_style = slot and (type(slot.style) == "string" and slot.style or slot.style_name) or nil
       local summary = {
         opened = panel and panel.valid == true or false,
-        key = panel and panel.tags and panel.tags.key or nil,
-        core_status_caption = status and copy_serializable(status.caption) or nil,
+        mode = "empty",
+        has_empty_picker = panel and panel.valid == true or false,
+        has_empty_status = status and status.valid == true or false,
+        has_source_nav = find_gui_element(root, GUI.empty_source_nav) ~= nil,
+        active_view = content and content.tags and content.tags.turret_xp_active_view or nil,
         core_slot_enabled = slot and slot.enabled == true or false,
         core_slot_sprite = slot and slot.sprite or nil,
         core_slot_toggled = slot and slot.toggled == true or false,
         core_slot_style = slot_style,
-        has_inventory_picker = panel and find_gui_element(panel, GUI.inventory_cores) ~= nil or false,
-        has_core_request_checkbox = panel and find_gui_action(panel, "toggle-core-request") ~= nil or false,
+        has_inventory_picker = find_gui_element(root, GUI.inventory_cores) ~= nil,
+        has_installed_dashboard = find_gui_element(root, GUI.focused_status) ~= nil or find_gui_element(root, GUI.evolution) ~= nil,
       }
       if storage and storage.turret_xp then
         storage.turret_xp.players[player.index] = nil
@@ -1022,7 +1005,7 @@ return function(M)
       end
       return summary
     end,
-    installed_gui_contract = function(entity)
+    focused_gui_contract = function(entity, view)
       if not is_gun_turret(entity) then
         return {
           opened = false,
@@ -1037,67 +1020,66 @@ return function(M)
       end
 
       local player = make_fake_dispatch_player(entity)
+      if view then
+        set_focused_gui_view(player, view)
+      end
       local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
-      add_core_panel(root, "installed")
-      add_build_panel(root)
-      add_evolution_panel(root)
-      update_core_panel(root, player, entity, state)
-      update_build_panel(root, state)
-      local display_state = profile_automation.build_preview_profile(state) or state
-      update_evolution_panel(root, entity, display_state, "firearm-magazine")
+      add_focused_installed_panel(root, player, entity, state)
 
-      local panel = find_gui_element(root, GUI.core)
-      local core_header = panel and find_gui_element(panel, GUI.core_header) or nil
-      local label_controls = panel and find_gui_element(panel, GUI.core_label_controls) or nil
-      local build_container = find_gui_element(root, GUI.core_build_controls_container)
-      local auto = build_container and find_gui_element(build_container, GUI.core_automation_enabled) or nil
-      local build_controls = build_container and find_gui_element(build_container, GUI.core_build_controls) or nil
-      local build_details = build_container and find_gui_element(build_container, GUI.core_build_details) or nil
-      local evolution = find_gui_element(root, GUI.evolution)
-      local allocate_damage = find_gui_action(evolution, "allocate-base", "upgrade", "damage")
-      local forever_damage = find_gui_action(evolution, "toggle-base-forever", "upgrade", "damage")
-      local build_level = find_gui_caption_key(build_container, "turret-xp.build-mode-level")
-      local build_core = find_gui_caption_key(build_container, "turret-xp.build-mode-core")
-      local build_augments = find_gui_caption_key(build_container, "turret-xp.build-mode-augments")
-      local build_core_forever = find_gui_caption_key(build_container, "turret-xp.build-mode-core-forever")
-      local build_augment_forever = find_gui_caption_key(build_container, "turret-xp.build-mode-augment-forever")
+      local status = find_gui_element(root, GUI.focused_status)
+      local nav = find_gui_element(root, GUI.focused_nav)
+      local content = find_gui_element(root, GUI.focused_content)
+      local active_view = content and content.tags and content.tags.turret_xp_active_view or nil
+      local enter_build = status and find_gui_action(status, "enter-build-mode") or nil
+      local exit_build = status and find_gui_action(status, "exit-build-mode") or nil
+      local extract = status and find_gui_action(status, "extract-core") or nil
+      local bind = status and find_gui_action(status, "bind-turret") or nil
+      local unbind = status and find_gui_action(status, "unbind-turret") or nil
+      local nav_count = 0
+      for _, child in ipairs(nav and nav.children or {}) do
+        if child.type == "button" then
+          nav_count = nav_count + 1
+        end
+      end
 
       local summary = {
-        opened = panel and panel.valid == true or false,
-        build_container_type = build_container and build_container.type or nil,
-        build_controls_inside_core = panel and find_gui_element(panel, GUI.core_build_controls) ~= nil or false,
-        core_header_type = core_header and core_header.type or nil,
-        core_header_style = gui_style_name(core_header),
-        label_controls_type = label_controls and label_controls.type or nil,
-        label_controls_style = gui_style_name(label_controls),
-        label_controls_bottom_margin = gui_style_property(label_controls, "bottom_margin"),
+        opened = status and status.valid == true and content and content.valid == true,
+        mode = "installed",
+        selected_view = active_view,
+        status_type = status and status.type or nil,
+        status_style = gui_style_name(status),
+        nav_type = nav and nav.type or nil,
+        nav_button_count = nav_count,
+        content_type = content and content.type or nil,
+        content_style = gui_style_name(content),
+        has_active_content = content and content.valid == true or false,
+        has_overview = find_gui_element(root, GUI.focused_overview) ~= nil,
+        has_progression = find_gui_element(root, GUI.focused_progression) ~= nil,
+        has_stats_view = find_gui_element(root, GUI.focused_stats) ~= nil,
+        has_automation_view = find_gui_element(root, GUI.focused_automation) ~= nil,
+        has_old_core_panel = find_gui_element(root, GUI.core) ~= nil,
+        has_old_build_panel = find_gui_element(root, GUI.core_build_controls_container) ~= nil,
+        has_old_stats_panel = find_gui_element(root, GUI.stats_scroll) ~= nil,
+        has_old_evolution_panel = find_gui_element(root, GUI.evolution) ~= nil,
+        stats_visible_in_overview = active_view == "overview" and find_gui_element(content, GUI.stats_scroll) ~= nil,
+        automation_detail_visible_in_overview = active_view == "overview"
+          and (find_gui_action(content, "toggle-build-auto") ~= nil or find_gui_element(content, GUI.core_build_details) ~= nil),
+        has_extract_action = extract ~= nil,
+        has_bind_action = bind ~= nil,
+        has_unbind_action = unbind ~= nil,
+        has_enter_build_action = enter_build ~= nil,
+        has_exit_build_action = exit_build ~= nil,
         build_mode = state.build_mode == true,
         automation_enabled = state.automation_enabled == true,
-        build_controls_type = build_controls and build_controls.type or nil,
-        build_controls_style = gui_style_name(build_controls),
-        build_details_type = build_details and build_details.type or nil,
-        build_details_style = gui_style_name(build_details),
-        has_auto_checkbox = auto ~= nil,
-        auto_state = auto and auto.state == true or false,
-        auto_enabled = auto and auto.enabled == true or false,
-        allocate_damage_enabled = allocate_damage and allocate_damage.enabled == true or false,
-        allocate_damage_tooltip = allocate_damage and copy_serializable(allocate_damage.tooltip) or nil,
-        has_damage_forever_checkbox = forever_damage ~= nil,
-        damage_forever_state = forever_damage and forever_damage.state == true or false,
-        damage_forever_enabled = forever_damage and forever_damage.enabled == true or false,
-        damage_forever_caption = forever_damage and copy_serializable(forever_damage.caption) or nil,
-        damage_forever_tooltip = forever_damage and copy_serializable(forever_damage.tooltip) or nil,
-        has_build_level_summary = build_level ~= nil,
-        has_build_core_summary = build_core ~= nil,
-        has_build_augment_summary = build_augments ~= nil,
-        has_build_core_forever_summary = build_core_forever ~= nil,
-        has_build_augment_forever_summary = build_augment_forever ~= nil,
       }
       if storage and storage.turret_xp then
         storage.turret_xp.players[player.index] = nil
         storage.turret_xp.player_settings[player.index] = nil
       end
       return summary
+    end,
+    installed_gui_contract = function(entity)
+      return turret_xp_test_remote_methods.focused_gui_contract(entity)
     end,
     gui_snapshot_frame = function(player)
       return gui_snapshot_frame_for_player(player, false)
@@ -1111,11 +1093,80 @@ return function(M)
     gui_snapshot_layout = function()
       return {
         panel_width = LAYOUT.panel_max_width,
-        panel_body_width = LAYOUT.left_column_width,
-        evolution_column_width = LAYOUT.evolution_column_width,
-        panel_height = LAYOUT.evolution_outer_height + 72,
+        panel_body_width = LAYOUT.focused_panel_width,
+        evolution_column_width = 0,
+        panel_height = LAYOUT.focused_content_height + 160,
         fallback_crop = "center",
       }
+    end,
+    focused_shell_layout_sample = function(entity, view)
+      if not is_gun_turret(entity) then
+        return {
+          available = false,
+        }
+      end
+
+      local state = get_turret_state(entity)
+      if not state then
+        return {
+          available = false,
+        }
+      end
+
+      local player = make_fake_dispatch_player(entity)
+      if view then
+        set_focused_gui_view(player, view)
+      end
+      local shell = build_gui_shell_screen(player, "installed")
+      if not shell or not shell.body then
+        return {
+          available = false,
+        }
+      end
+
+      add_focused_installed_panel(shell.body, player, entity, state)
+
+      local status = find_gui_element(shell.frame, GUI.focused_status)
+      local nav = find_gui_element(shell.frame, GUI.focused_nav)
+      local content = find_gui_element(shell.frame, GUI.focused_content)
+      local nav_buttons = 0
+      for _, child in ipairs(nav and nav.children or {}) do
+        if child.type == "button" then
+          nav_buttons = nav_buttons + 1
+        end
+      end
+
+      local sample = {
+        available = true,
+        body = {
+          type = shell.body.type,
+          style = gui_style_name(shell.body),
+          width = gui_style_property(shell.body, "width"),
+          vertical_spacing = gui_style_property(shell.body, "vertical_spacing"),
+        },
+        status = {
+          type = status and status.type or nil,
+          style = gui_style_name(status),
+          focused_status = status and status.tags and status.tags.turret_xp_focused_status == true or false,
+        },
+        nav = {
+          type = nav and nav.type or nil,
+          button_count = nav_buttons,
+          focused_nav = nav and nav.tags and nav.tags.turret_xp_focused_nav == true or false,
+        },
+        content = {
+          type = content and content.type or nil,
+          style = gui_style_name(content),
+          active_content = content and content.tags and content.tags.turret_xp_active_content == true or false,
+          active_view = content and content.tags and content.tags.turret_xp_active_view or nil,
+          height = gui_style_property(content, "height"),
+        },
+      }
+      if storage and storage.turret_xp then
+        storage.turret_xp.players[player.index] = nil
+        storage.turret_xp.player_settings[player.index] = nil
+      end
+      return sample
     end,
     left_column_layout_sample = function(entity, build_mode)
       if not is_gun_turret(entity) then

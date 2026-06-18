@@ -10,66 +10,14 @@ local tests = {}
 function tests.run_layout_constants_test()
   local layout = call("layout")
   assert_true(type(layout) == "table", "layout constants were not exposed to the headless suite")
-  assert_eq(
-    layout.left_column_width + layout.evolution_column_width + layout.column_spacing,
-    layout.panel_width,
-    "panel width must derive from the column model"
-  )
-  assert_eq(
-    layout.left_section_width,
-    layout.left_column_width - (layout.left_section_side_margin * 2),
-    "left section width must derive from the left-column inset"
-  )
-  assert_eq(
-    layout.empty_left_section_width,
-    layout.empty_panel_width - (layout.left_section_side_margin * 2),
-    "empty-panel section width must derive from the full-width body inset"
-  )
-  assert_true(layout.left_section_spacing > 0, "left column sections must have shell-owned vertical spacing")
-  assert_true(layout.left_section_padding > 0, "left column sections must have shared section padding")
-  assert_eq(layout.evolution_scroll_width, layout.evolution_column_width, "Evolution scroll pane should own the full right-column viewport")
-  assert_eq(
-    layout.evolution_content_width,
-    layout.evolution_scroll_width - 28,
-    "Evolution content width must reserve the default scrollbar lane"
-  )
-  assert_eq(
-    layout.evolution_scroll_height,
-    layout.evolution_outer_height - layout.evolution_header_height,
-    "Evolution scroll height must leave room for the fixed summary header"
-  )
-  assert_eq(
-    layout.evolution_section_width,
-    layout.evolution_content_width - (layout.evolution_section_margin * 2),
-    "Evolution section width must reserve visible side margins"
-  )
-  assert_eq(layout.evolution_inner_width, layout.evolution_section_width - 16, "Evolution inner rows must derive from section width")
-  assert_eq(layout.evolution_card_inner_width, layout.evolution_inner_width - 28, "Element-card child rows must account for card padding")
-  assert_true(layout.evolution_card_title_width > 0, "Evolution card titles must retain a positive action-row width")
-  assert_true(
-    layout.evolution_card_title_full_width > layout.evolution_card_title_width,
-    "Evolution card titles should expand when no action button is present"
-  )
-  assert_eq(
-    (layout.evolution_effect_column_width * 2) + layout.evolution_effect_table_spacing,
-    layout.evolution_card_inner_width,
-    "Evolution effect table columns must derive from the card content width"
-  )
-  assert_true(layout.evolution_inner_width < layout.evolution_scroll_width, "Evolution rows must stay inside the scroll viewport")
-  assert_true(layout.evolution_detail_width < layout.evolution_inner_width, "Evolution text details must stay capped inside inner rows")
-  assert_eq(
-    layout.evolution_choice_detail_width
-      + layout.evolution_choice_icon_cell_width
-      + layout.evolution_choice_action_width
-      + (layout.evolution_choice_horizontal_spacing * 2),
-    layout.evolution_inner_width,
-    "Evolution choice rows must reserve fixed icon/action cells and keep text inside the row budget"
-  )
-  assert_eq(
-    layout.evolution_card_title_width + layout.evolution_card_icon_cell_width + layout.evolution_card_action_width + 24,
-    layout.evolution_card_inner_width,
-    "Evolution card title rows must reserve a fixed icon cell and action cell"
-  )
+  assert_eq(layout.panel_width, layout.focused_panel_width, "panel width must follow the focused shell width")
+  assert_eq(layout.panel_max_width, layout.focused_panel_width + 24, "panel max width must wrap the focused shell")
+  assert_eq(layout.empty_panel_width, layout.focused_panel_width, "empty picker should share the focused shell width")
+  assert_true(layout.focused_content_height > 0, "focused content must reserve a stable active pane height")
+  assert_true(layout.focused_status_icon_size > 0, "focused status strip must have an explicit core icon size")
+  assert_true(layout.focused_status_action_width > 0, "focused status action buttons must have an explicit width")
+  assert_true(layout.focused_nav_button_width > 0, "focused navigation buttons must have an explicit width")
+  assert_true(layout.focused_view_spacing > 0, "focused shell spacing must be shell-owned")
   assert_true(layout.stats_header_height > 0, "Stats pane must reserve a visible subheader")
   assert_true(layout.stats_section_header_height > 0, "Stats groups must reserve visible section headers")
   assert_true(layout.stats_section_header_top_margin > 0, "Stats group headers after the first must have separation")
@@ -91,11 +39,8 @@ function tests.run_layout_constants_test()
     layout.platform_core_row_detail_width < layout.left_column_width,
     "platform core row details must stay inside the left-column panel"
   )
-  assert_eq(layout.stats_scroll_width, layout.left_section_width, "Stats pane must share the left-column section width")
-  assert_true(layout.stats_live_height > layout.stats_build_mode_height, "live Stats pane must be taller than Build-mode Stats")
-  assert_eq(layout.stats_height, layout.stats_live_height, "legacy Stats height alias must match the live height")
   assert_true(layout.inventory_core_picker_width < layout.left_section_width, "inventory core picker must stay inside a left section")
-  assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full two-column shell width")
+  assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full focused shell width")
   assert_true(
     layout.empty_inventory_core_picker_width > layout.inventory_core_picker_width,
     "empty core picker should expand beyond the left column"
@@ -172,92 +117,39 @@ function tests.run_layout_constants_test()
     layout.inventory_core_sort_arrow_slot_width < layout.empty_inventory_core_level_width,
     "wide inventory core sort arrow slot must fit inside compact stat headers"
   )
-  assert_true(layout.rank_stepper_button_size > 0, "rank stepper buttons must have an explicit layout size")
-  assert_true(layout.rank_stepper_label_width > 0, "rank stepper label must have an explicit layout width")
-  assert_eq(
-    layout.rank_stepper_width,
-    (layout.rank_stepper_button_size * 2) + layout.rank_stepper_label_width + (layout.rank_stepper_spacing * 2),
-    "rank stepper total width must derive from button, label, and spacing budgets"
-  )
-  assert_eq(
-    layout.rank_allocation_detail_width
-      + layout.rank_allocation_icon_cell_width
-      + layout.rank_allocation_value_width
-      + layout.rank_stepper_width
-      + layout.rank_allocation_spacing_width,
-    layout.evolution_inner_width,
-    "rank allocation row columns must derive from the Evolution inner width without reserving inline loop controls"
-  )
-  assert_true(layout.rank_allocation_detail_width > 0, "rank allocation detail text must retain a positive width")
-  assert_true(layout.rank_stepper_width < layout.evolution_inner_width, "rank stepper controls must fit inside Evolution rows")
   assert_true(
     layout.empty_inventory_core_name_width < layout.empty_inventory_core_specialization_width,
     "wide inventory core table should favor specialization readability over long names"
   )
 end
 
-local function assert_left_section_contract(entry, layout, expected_style, label, build_mode)
-  assert_true(entry ~= nil, label .. " section was missing from the layout sample")
-  assert_eq(entry.type, "frame", label .. " section must be a frame")
-  assert_eq(entry.style, expected_style, label .. " section style drifted")
-  assert_eq(entry.width, layout.left_section_width, label .. " section width drifted")
-  assert_eq(entry.minimal_width, layout.left_section_width, label .. " section minimum width drifted")
-  assert_eq(entry.maximal_width, layout.left_section_width, label .. " section maximum width drifted")
-  assert_eq(entry.left_section, true, label .. " section must keep the left-section tag")
-  assert_eq(entry.build_mode_section, build_mode == true, label .. " section build-mode tag drifted")
-  assert_eq(entry.top_margin, nil, label .. " section must not use local top margin")
-  assert_eq(entry.bottom_margin, nil, label .. " section must not use local bottom margin")
-end
-
-function tests.run_left_column_layout_contract_test(surface)
+function tests.run_focused_shell_layout_contract_test(surface)
   local layout = call("layout")
   local turret = create_turret(surface, { 10, 0 }, 20)
   local summary = call("install_core", turret, {
     level = 12,
   })
-  assert_true(summary ~= nil, "failed to install core for left-column layout contract test")
+  assert_true(summary ~= nil, "failed to install core for focused shell layout contract test")
 
-  local sample = call("left_column_layout_sample", turret, false)
-  assert_true(sample ~= nil and sample.available == true, "left-column layout sample was unavailable")
-  assert_eq(sample.body.width, layout.left_column_width, "left column body width drifted")
-  assert_eq(sample.body.horizontal_align, "center", "left column body must center shared-width sections")
-  assert_eq(sample.body.vertical_spacing, layout.left_section_spacing, "left column body spacing must be shell-owned")
+  local sample = call("focused_shell_layout_sample", turret)
+  assert_true(sample ~= nil and sample.available == true, "focused shell layout sample was unavailable")
+  assert_eq(sample.body.width, layout.focused_panel_width, "focused shell body width drifted")
+  assert_eq(sample.body.vertical_spacing, layout.focused_view_spacing, "focused shell spacing must be shell-owned")
+  assert_eq(sample.status.type, "frame", "focused status strip must be a frame")
+  assert_eq(sample.status.style, "turret_xp_focused_status_frame", "focused status style drifted")
+  assert_eq(sample.status.focused_status, true, "focused status strip must keep its role tag")
+  assert_eq(sample.nav.type, "flow", "focused navigation must be a flow")
+  assert_eq(sample.nav.button_count, 4, "focused navigation must expose the four first-pass views")
+  assert_eq(sample.nav.focused_nav, true, "focused navigation must keep its role tag")
+  assert_eq(sample.content.type, "frame", "focused active content must be a frame")
+  assert_eq(sample.content.style, "turret_xp_focused_content_frame", "focused content style drifted")
+  assert_eq(sample.content.active_content, true, "focused content must keep its role tag")
+  assert_eq(sample.content.active_view, "overview", "Overview must be the default installed view")
+  assert_eq(sample.content.height, layout.focused_content_height, "focused content height drifted")
 
-  assert_left_section_contract(sample.named.core, layout, "turret_xp_left_section_frame", "Core", false)
-  assert_left_section_contract(sample.named.build, layout, "turret_xp_left_section_frame", "Build", false)
-  assert_left_section_contract(sample.named.xp, layout, "turret_xp_left_section_frame", "XP", false)
-  assert_eq(sample.named.core.core_header_style, "subheader_frame", "Core section should keep a darker identity header")
-  assert_eq(sample.named.core.label_controls_bottom_margin, 2, "Core label controls should leave bottom breathing room")
-  assert_eq(sample.named.build.build_controls_type, "frame", "Build section should keep its controls in a darker header frame")
-  assert_eq(sample.named.build.build_controls_style, "subheader_frame", "live Build header should use the normal darker style")
-  assert_eq(sample.named.build.build_details_type, nil, "live Build section should not render expanded details")
-
-  local stats = sample.named.stats_panel
-  assert_true(stats ~= nil, "Stats pane was missing from the left-column layout sample")
-  assert_eq(stats.type, "frame", "Stats pane must be a frame")
-  assert_eq(stats.style, "inside_shallow_frame", "Stats pane must keep the shared content-pane shell")
-  assert_eq(stats.width, layout.stats_scroll_width, "Stats pane width must match the left-section width")
-  assert_eq(stats.stats_scroll_height, layout.stats_live_height, "live Stats pane should reclaim vertical space")
-  assert_eq(stats.top_margin, nil, "Stats pane must not use local top margin")
-  assert_eq(stats.bottom_margin, nil, "Stats pane must not use local bottom margin")
-
-  local build_sample = call("left_column_layout_sample", turret, true)
-  assert_true(build_sample ~= nil and build_sample.available == true, "Build-mode left-column layout sample was unavailable")
-  assert_left_section_contract(build_sample.named.core, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Core", true)
-  assert_left_section_contract(build_sample.named.build, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Build", true)
-  assert_left_section_contract(build_sample.named.xp, layout, "turret_xp_left_section_frame_build_mode", "Build-mode XP", false)
-  assert_eq(build_sample.named.core.core_header_style, "turret_xp_build_mode_subheader_frame", "Build-mode Core header should tint")
-  assert_eq(build_sample.named.build.build_controls_style, "turret_xp_build_mode_subheader_frame", "Build-mode Build header should tint")
-  assert_eq(
-    build_sample.named.build.build_details_style,
-    "inside_shallow_frame_with_padding",
-    "Build mode should use a nested light details section"
-  )
-  assert_eq(
-    build_sample.named.stats_panel.stats_scroll_height,
-    layout.stats_build_mode_height,
-    "Build mode should shrink Stats for planning details"
-  )
+  local stats_sample = call("focused_shell_layout_sample", turret, "stats")
+  assert_true(stats_sample ~= nil and stats_sample.available == true, "focused Stats view sample was unavailable")
+  assert_eq(stats_sample.content.active_view, "stats", "selected focused view must control the active content pane")
 end
 
 function tests.run_gui_support_samples_test()

@@ -12,6 +12,7 @@ function gui_actions_module.new(deps)
   local set_bound_turret = deps.set_bound_turret
   local set_core_picker_sort = deps.set_core_picker_sort
   local set_core_picker_filter = deps.set_core_picker_filter
+  local set_focused_gui_view = deps.set_focused_gui_view
   local get_remembered_turret = deps.get_remembered_turret
   local refresh_open_turret = deps.refresh_open_turret
   local update_name_render = deps.update_name_render
@@ -49,6 +50,10 @@ function gui_actions_module.new(deps)
     end,
     ["set-core-sort"] = function(player, event, tags)
       set_core_picker_sort(player, tags.sort)
+      refresh_open_turret(player, get_remembered_turret(player))
+    end,
+    ["set-focused-view"] = function(player, event, tags)
+      set_focused_gui_view(player, tags.view)
       refresh_open_turret(player, get_remembered_turret(player))
     end,
     ["bind-turret"] = function(player)

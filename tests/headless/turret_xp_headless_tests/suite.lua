@@ -18,7 +18,7 @@ local function run_immediate_tests()
   support.assert_true(remote.interfaces[support.IFACE] ~= nil, "Turret XP test remote interface is unavailable")
 
   gui_support_tests.run_layout_constants_test()
-  gui_support_tests.run_left_column_layout_contract_test(surface)
+  gui_support_tests.run_focused_shell_layout_contract_test(surface)
   gui_support_tests.run_gui_support_samples_test()
   gui_support_tests.run_stats_panel_alignment_test(surface)
   compat_tests.run_compat_samples_test(surface)

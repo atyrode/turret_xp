@@ -2,6 +2,7 @@ return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
   local DEFAULT_CORE_PICKER_SORT = "level:desc"
+  local DEFAULT_FOCUSED_GUI_VIEW = "overview"
 
   function ensure_storage()
     storage.turret_xp = storage.turret_xp or {}
@@ -252,6 +253,25 @@ return function(M)
     end
     settings_table.core_picker_filters = normalize_core_picker_filters(filters)
     return settings_table.core_picker_filters
+  end
+
+  function normalize_focused_gui_view(view)
+    view = tostring(view or "")
+    if view == "overview" or view == "progression" or view == "stats" or view == "automation" then
+      return view
+    end
+    return DEFAULT_FOCUSED_GUI_VIEW
+  end
+
+  function get_focused_gui_view(player)
+    local settings_table = ensure_player_settings(player)
+    return normalize_focused_gui_view(settings_table.focused_gui_view or DEFAULT_FOCUSED_GUI_VIEW)
+  end
+
+  function set_focused_gui_view(player, view)
+    local settings_table = ensure_player_settings(player)
+    settings_table.focused_gui_view = normalize_focused_gui_view(view)
+    return settings_table.focused_gui_view
   end
 
   function is_gun_turret(entity)

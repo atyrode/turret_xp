@@ -57,12 +57,12 @@ function shell_module.new(deps)
     set_style(columns, "horizontal_spacing", LAYOUT.column_spacing)
 
     local body = elems[GUI.panel_body]
-    local body_width = mode == "empty" and LAYOUT.empty_panel_width or LAYOUT.left_column_width
+    local body_width = mode == "empty" and LAYOUT.empty_panel_width or LAYOUT.focused_panel_width
     set_style(body, "width", body_width)
     set_style(body, "minimal_width", body_width)
     set_style(body, "maximal_width", body_width)
     set_style(body, "horizontal_align", "center")
-    set_style(body, "vertical_spacing", LAYOUT.left_section_spacing)
+    set_style(body, "vertical_spacing", LAYOUT.focused_view_spacing or LAYOUT.left_section_spacing)
   end
 
   local function create_relative(player)

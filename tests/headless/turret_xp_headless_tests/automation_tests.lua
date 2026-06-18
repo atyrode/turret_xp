@@ -198,33 +198,20 @@ function tests.run_build_mode_planning_test(surface)
   assert_ge(summary.automation_target.level, gates.augments, "planned augment rank should raise required build level")
 
   local gui = call("installed_gui_contract", turret)
-  assert_eq(gui.build_container_type, "frame", "Build controls should live in a separate left-column panel")
-  assert_eq(gui.build_controls_inside_core, false, "Build controls must not crowd the core identity/name panel")
-  assert_eq(gui.core_header_type, "frame", "Core identity should use a darker header frame")
-  assert_eq(gui.core_header_style, "turret_xp_build_mode_subheader_frame", "Core identity header should tint in Build mode")
-  assert_eq(gui.label_controls_style, "inside_shallow_frame_with_padding", "Name/Show controls should stay in a nested light section")
-  assert_eq(gui.label_controls_bottom_margin, 2, "Name/Show controls should leave bottom breathing room")
-  assert_eq(gui.build_controls_type, "frame", "Build mode controls should render as a darker header frame")
-  assert_eq(gui.build_controls_style, "turret_xp_build_mode_subheader_frame", "Build mode header should use the blue-tinted subheader")
-  assert_eq(gui.build_details_type, "frame", "Build mode details should render in a nested light section")
-  assert_eq(
-    gui.build_details_style,
-    "inside_shallow_frame_with_padding",
-    "Build mode details should keep the light nested-section background"
-  )
-  assert_eq(gui.has_auto_checkbox, false, "Build mode should hide the Follow build checkbox")
-  assert_eq(gui.has_build_level_summary, true, "Build mode should show the planned required level")
-  assert_eq(gui.has_build_core_summary, true, "Build mode should show planned core point budget")
-  assert_eq(gui.has_build_augment_summary, true, "Build mode should show planned augment point budget")
-  assert_eq(gui.has_build_core_forever_summary, false, "Build mode should not duplicate loop priorities in summary rows")
-  assert_eq(gui.has_build_augment_forever_summary, false, "Build mode should not duplicate augment loops in summary rows")
-  assert_eq(gui.has_damage_forever_checkbox, true, "Build mode should show loop checkboxes on upgrade rows")
-  assert_eq(gui.damage_forever_caption[1], "turret-xp.build-forever-toggle-label", "loop checkbox should have a readable label")
-  assert_eq(
-    gui.damage_forever_tooltip[1],
-    "turret-xp.build-forever-toggle-tooltip",
-    "loop checkbox should explain the post-build repeating behavior"
-  )
+  assert_true(gui.opened, "focused Build-mode GUI contract should open")
+  assert_eq(gui.selected_view, "overview", "Overview should remain the default focused view")
+  assert_eq(gui.status_style, "turret_xp_focused_status_frame", "focused status strip should own Build-mode chrome")
+  assert_eq(gui.nav_button_count, 4, "focused navigation should expose the first-pass views")
+  assert_eq(gui.has_old_core_panel, false, "focused shell must not render the old core panel")
+  assert_eq(gui.has_old_build_panel, false, "focused shell must not render the old Build panel")
+  assert_eq(gui.has_old_stats_panel, false, "Overview must not render the full Stats pane")
+  assert_eq(gui.has_old_evolution_panel, false, "focused shell must not render the old Evolution pane")
+  assert_eq(gui.automation_detail_visible_in_overview, false, "Overview must not show Automation detail controls")
+  assert_eq(gui.has_exit_build_action, true, "Build mode should be represented by a status-strip Exit action")
+  assert_eq(gui.has_enter_build_action, false, "Build mode should not show the Enter action while active")
+  local automation_gui = call("focused_gui_contract", turret, "automation")
+  assert_eq(automation_gui.selected_view, "automation", "Automation view should be selectable as the active content pane")
+  assert_eq(automation_gui.has_automation_view, true, "Automation view placeholder should render inside the focused content pane")
   summary = call("dispatch_checked_action", turret, {
     turret_xp_action = "toggle-build-auto",
   }, true)
@@ -246,41 +233,24 @@ function tests.run_build_mode_planning_test(surface)
   })
   assert_eq(summary.automation_target.base.damage, planned_damage, "Follow build should lock live Evolution controls")
   gui = call("installed_gui_contract", turret)
-  assert_eq(gui.build_container_type, "frame", "live Build controls should still use a separate panel")
-  assert_eq(gui.build_controls_inside_core, false, "live Build controls must not be nested in the core identity/name panel")
-  assert_eq(gui.core_header_style, "subheader_frame", "live Core identity should keep the normal darker header")
-  assert_eq(gui.build_controls_type, "frame", "live mode should keep Build controls in a compact header frame")
-  assert_eq(gui.build_controls_style, "subheader_frame", "live Build controls should use the normal darker header")
-  assert_eq(gui.build_details_type, nil, "live mode should not render the expanded Build details section")
-  assert_eq(gui.has_auto_checkbox, true, "live mode should show the Follow build checkbox")
-  assert_eq(gui.auto_state, true, "live Follow build checkbox should reflect enabled Auto")
-  assert_eq(gui.has_build_level_summary, false, "live mode should hide build detail summary rows")
-  assert_eq(gui.allocate_damage_enabled, false, "Follow build should disable manual Evolution buttons")
-  assert_eq(
-    gui.allocate_damage_tooltip[1],
-    "turret-xp.follow-build-locked-tooltip",
-    "Follow build locked buttons should explain why they are disabled"
-  )
-  assert_eq(gui.has_damage_forever_checkbox, false, "live mode should not show loop checkboxes")
+  assert_eq(gui.has_enter_build_action, true, "live focused shell should expose Build entry in the status strip")
+  assert_eq(gui.has_exit_build_action, false, "live focused shell should not expose Exit while Build mode is inactive")
+  assert_eq(gui.automation_detail_visible_in_overview, false, "Follow build details should stay out of Overview")
 
   summary = call("dispatch_checked_action", turret, {
     turret_xp_action = "toggle-build-auto",
   }, false)
   assert_eq(summary.automation_enabled, false, "Follow build should be manually disableable before editing")
   gui = call("installed_gui_contract", turret)
-  assert_eq(gui.build_controls_type, "frame", "unticked Follow build should keep compact live Build controls")
-  assert_eq(gui.build_details_type, nil, "unticked Follow build should not show expanded Build details")
-  assert_eq(gui.has_build_level_summary, false, "unticked Follow build should still keep live mode compact")
+  assert_eq(gui.has_enter_build_action, true, "unticked live shell should still expose Build entry")
+  assert_eq(gui.automation_detail_visible_in_overview, false, "unticked live shell should keep Automation detail out of Overview")
   summary = call("dispatch_click_action", turret, {
     turret_xp_action = "enter-build-mode",
   })
   assert_eq(summary.build_mode, true, "editing the saved build should require Build mode")
   gui = call("installed_gui_contract", turret)
-  assert_eq(gui.build_controls_type, "frame", "re-entered Build mode should render as a darker header frame")
-  assert_eq(gui.build_details_style, "inside_shallow_frame_with_padding", "re-entered Build mode should restore the nested details section")
-  assert_eq(gui.has_auto_checkbox, false, "Follow build should stay hidden after re-entering Build mode")
-  assert_eq(gui.allocate_damage_enabled, true, "unticking Follow build should allow saved build edits after re-entering Build mode")
-  assert_eq(gui.has_build_level_summary, true, "Build mode should restore build details after Follow build was unticked")
+  assert_eq(gui.has_exit_build_action, true, "re-entered Build mode should expose Exit in the status strip")
+  assert_eq(gui.has_enter_build_action, false, "re-entered Build mode should hide Enter in the status strip")
   summary = call("dispatch_click_action", turret, {
     turret_xp_action = "allocate-base",
     upgrade = "damage",
@@ -432,7 +402,7 @@ function tests.run_build_mode_planning_test(surface)
   assert_eq(summary.evolution.base.damage, 1, "Auto should spend the finite planned rank")
   assert_eq(summary.automation_enabled, false, "Auto should untick itself once a finite build path is satisfied")
   gui = call("installed_gui_contract", finite_turret)
-  assert_eq(gui.has_auto_checkbox, false, "satisfied finite builds should hide the Follow build checkbox again")
+  assert_eq(gui.automation_detail_visible_in_overview, false, "satisfied finite builds should keep Automation detail out of Overview")
 
   cleanup_turret(turret)
   cleanup_turret(recalc_turret)
@@ -503,11 +473,15 @@ function tests.run_empty_turret_gui_open_test(surface)
   local turret = create_turret(surface, { 18, 8 }, 10)
   local summary = call("open_gui_contract", turret)
   assert_true(summary.opened, "opening a pristine empty turret GUI should not crash")
-  assert_true(summary.key ~= nil, "pristine vanilla turret core panel should receive a stable refresh key")
+  assert_eq(summary.mode, "empty", "pristine empty turret should use empty picker mode")
+  assert_eq(summary.has_empty_picker, true, "pristine empty turret should render the focused picker shell")
+  assert_eq(summary.has_empty_status, true, "pristine empty turret should render the empty status row")
+  assert_eq(summary.has_source_nav, true, "pristine empty turret should render source navigation")
+  assert_eq(summary.active_view, "empty-picker", "pristine empty turret should expose one active picker pane")
   assert_eq(summary.core_slot_enabled, true, "pristine empty turret should keep the core slot manually fillable")
   assert_eq(summary.core_slot_toggled, false, "pristine empty turret should not show the requested-core tint")
   assert_eq(summary.has_inventory_picker, true, "pristine empty turret should show the core picker")
-  assert_eq(summary.has_core_request_checkbox, false, "pristine empty turret should not show a request checkbox")
+  assert_eq(summary.has_installed_dashboard, false, "pristine empty turret must not render the installed dashboard")
   cleanup_turret(turret)
 end
 
@@ -617,7 +591,7 @@ function tests.run_target_build_policy_test(surface)
   assert_eq(pasted.request.has_pending_policy, true, "target policy should wait on the destination until a core is delivered")
   local gui = call("open_gui_contract", destination)
   assert_true(gui.opened, "empty pasted target build GUI should open without crashing")
-  assert_eq(gui.core_status_caption[1], "turret-xp.core-requested", "empty pasted target build should show a requested core slot")
+  assert_eq(gui.mode, "empty", "empty pasted target build should stay in picker mode")
   assert_eq(gui.core_slot_enabled, true, "requested copied-build core slot should still accept manual placement")
   assert_eq(gui.core_slot_sprite, "item/turret-xp-veteran-core", "requested copied-build core slot should show a ghost core")
   assert_eq(gui.core_slot_toggled, true, "requested copied-build core slot should keep the blue requested tint")
@@ -626,8 +600,8 @@ function tests.run_target_build_policy_test(surface)
     "turret_xp_pending_core_slot_button",
     "requested copied-build core slot should use the pending request style"
   )
-  assert_eq(gui.has_core_request_checkbox, false, "empty pasted target build should not show a request checkbox")
-  assert_eq(gui.has_inventory_picker, false, "empty pasted target build should not show the core picker")
+  assert_eq(gui.has_inventory_picker, true, "empty pasted target build should still offer manual inventory core installation")
+  assert_eq(gui.has_installed_dashboard, false, "empty pasted target build must not render the installed dashboard")
 
   local pre_specialization_level = math.max(0, (gates.specialization or 0) - 1)
   call("insert_requested_core", destination, {

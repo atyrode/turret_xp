@@ -20,16 +20,11 @@ return function(M)
     end
 
     local body = shell.body or shell.frame
-    local columns = shell.columns or shell.frame
 
-    add_core_panel(body, mode)
     if state then
-      add_build_panel(body)
-      add_xp_panel(body)
-      add_dev_controls_panel(body, player)
-      add_stats_panel(body)
-
-      add_evolution_panel(columns)
+      add_focused_installed_panel(body, player, entity, state)
+    else
+      add_focused_empty_panel(body, player, entity)
     end
 
     update_turret_gui(player, entity, evolution_anchor)
