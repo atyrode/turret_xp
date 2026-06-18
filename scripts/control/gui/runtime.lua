@@ -9,9 +9,11 @@ function gui_runtime_module.new(deps)
   local get_entity_quality_name = deps.get_entity_quality_name
   local safe_read = deps.safe_read
   local get_max_health_for_quality = deps.get_max_health_for_quality
+  local find_gui_element = deps.find_gui_element
   local set_gui_caption = deps.set_gui_caption
   local set_gui_progress = deps.set_gui_progress
   local format_number = deps.format_number
+  local get_gui_xp_modifier_summary = deps.get_gui_xp_modifier_summary
   local update_core_panel = deps.update_core_panel
   local update_stats_panel = deps.update_stats_panel
   local update_evolution_panel = deps.update_evolution_panel
@@ -58,6 +60,18 @@ function gui_runtime_module.new(deps)
     }
   end
 
+  local function update_xp_modifier_summary(panel, entity, state)
+    local modifiers = find_gui_element(panel, GUI.xp_modifiers)
+    if not modifiers then
+      return
+    end
+
+    local summary = state and get_gui_xp_modifier_summary(entity, state) or nil
+    modifiers.visible = summary and summary.visible == true or false
+    modifiers.caption = summary and summary.caption or ""
+    modifiers.tooltip = summary and summary.tooltip or nil
+  end
+
   local function update_turret_gui_progress_and_stats(panel, entity, context)
     local state = context.state
     if state then
@@ -73,6 +87,7 @@ function gui_runtime_module.new(deps)
     end
     set_gui_progress(panel, GUI.xp_bar, context.progress)
     set_gui_caption(panel, GUI.xp_percent, state and { "turret-xp.level-progress-suffix", format_number(context.progress * 100, 0) } or "")
+    update_xp_modifier_summary(panel, entity, state)
 
     update_stats_panel(
       panel,

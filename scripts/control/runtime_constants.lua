@@ -8,7 +8,6 @@ constants.feeder_consume_limit = 100
 
 constants.combat = {
   space_xp_multiplier = 0.1,
-  asteroid_xp_multiplier = 0.2,
   trail = {
     bullet = "bullet-beam-yellow",
     bullet_faint = "bullet-beam-yellow-faint",

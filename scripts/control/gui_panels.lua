@@ -344,9 +344,11 @@ return function(M)
         get_entity_quality_name = get_entity_quality_name,
         safe_read = safe_read,
         get_max_health_for_quality = get_max_health_for_quality,
+        find_gui_element = find_gui_element,
         set_gui_caption = set_gui_caption,
         set_gui_progress = set_gui_progress,
         format_number = format_number,
+        get_gui_xp_modifier_summary = get_gui_xp_modifier_summary,
         update_core_panel = function(...)
           return update_core_panel(...)
         end,

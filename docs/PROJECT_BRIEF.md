@@ -18,7 +18,7 @@ The player installs a Veteran Core into a normal gun turret, lets that turret ea
 - Runtime scope is vanilla `gun-turret` only.
 - Veteran Cores are non-stackable tagged items that can move between turrets.
 - Bound veteran turrets are optional tagged placeable items for quick moves of one turret/core pair.
-- Combat XP uses damage contribution and kill credit, with target-aware and space-platform-aware XP weighting.
+- Combat XP uses damage contribution and kill credit, with target-aware, space-platform-aware, and platform travel-state-aware XP weighting.
 - Evolution currently has six level-gated sections: core upgrades, specialization, first element, augments, sub-specialization, and second element/combo.
 - Specialization and sub-specialization stat changes use hidden prototype-backed turret variants because Factorio does not expose equivalent per-entity runtime stat mutation. Prototype-bound native stat identity is intentionally limited to those role bodies and their bound preview variants.
 - Shield and Resistance are scripted rather than prototype-backed to avoid reintroducing Range/Max HP variant axes.

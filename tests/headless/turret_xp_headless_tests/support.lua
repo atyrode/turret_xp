@@ -26,9 +26,21 @@ function support.assert_gt(actual, minimum, message)
   end
 end
 
+function support.assert_lt(actual, maximum, message)
+  if not actual or actual >= maximum then
+    support.fail(message .. " (expected < " .. tostring(maximum) .. ", got " .. tostring(actual) .. ")")
+  end
+end
+
 function support.assert_ge(actual, minimum, message)
   if not actual or actual < minimum then
     support.fail(message .. " (expected >= " .. tostring(minimum) .. ", got " .. tostring(actual) .. ")")
+  end
+end
+
+function support.assert_le(actual, maximum, message)
+  if not actual or actual > maximum then
+    support.fail(message .. " (expected <= " .. tostring(maximum) .. ", got " .. tostring(actual) .. ")")
   end
 end
 

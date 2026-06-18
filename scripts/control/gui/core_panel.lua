@@ -98,6 +98,18 @@ function core_panel_module.new(deps)
     set_style(bar, "height", 18)
     set_style(bar, "top_margin", 4)
     set_style(bar, "bottom_margin", 0)
+
+    local modifiers = xp_panel.add({
+      type = "label",
+      name = GUI.xp_modifiers,
+      caption = "",
+      style = "caption_label",
+    })
+    modifiers.visible = false
+    set_style(modifiers, "font_color", COLOR.muted)
+    set_style(modifiers, "single_line", false)
+    set_style(modifiers, "top_margin", 4)
+    set_style(modifiers, "horizontally_stretchable", true)
   end
 
   local function add_core_panel(parent, mode)

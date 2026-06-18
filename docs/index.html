@@ -56,14 +56,20 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.11.2</h2>
+          <h2 id="current-title">Version 0.11.3</h2>
           <p>2026-06-18</p>
         </div>
         <div class="release-notes">
+          <h3>Changes</h3>
+          <ul>
+            <li>Rebalanced asteroid XP on space platforms. Asteroids now use separate runtime-global multipliers for travelling platforms and stopped or paused platforms, defaulting to 20% while travelling and 5% while stopped.</li>
+            <li>Asteroid XP no longer stacks with the separate platform non-asteroid XP multiplier, fixing the accidental double reduction introduced in 0.11.0.</li>
+            <li>Added an XP rate line under the XP bar when a combat XP modifier is active, with an info hover showing the compound formula for asteroid/platform modifiers and Veteran Training.</li>
+          </ul>
           <h3>Bugfixes</h3>
           <ul>
-            <li>Hardened release validation so local and CI Factorio runtime caches are kept outside Lua source discovery, preventing downloaded Factorio data files from breaking package and Mod Portal publishing checks.</li>
-            <li>Includes the 0.11.1 performance fix for saves with many named Veteran Cores.</li>
+            <li>Changed Veteran Training to boost newly earned combat XP instead of multiplying the core&#x27;s total XP at display time, so removing Veteran Training ranks no longer lowers existing levels.</li>
+            <li>Migrated existing Veteran Core profiles once so their already-earned Veteran Training XP is preserved under the new award-time accounting.</li>
           </ul>
         </div>
       </section>
