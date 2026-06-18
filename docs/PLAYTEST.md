@@ -93,6 +93,27 @@ Use this when iterating on GUI layout and you want shareable images for debuggin
 
 5. Review `tests/gui-snapshots/current/index.md` and the cropped PNGs in `tests/gui-snapshots/current/ui/` for wrapping, alignment, missing sprites, and section hierarchy. Use `tests/gui-snapshots/current/full/` only when the full game-window context matters.
 
+### Manual Sandbox Review
+
+Use this when you want an in-game testing ground instead of rebuilding fixtures by hand.
+
+1. Install the local sandbox companion:
+
+   ```sh
+   scripts/sandbox.sh install
+   ```
+
+2. Start Factorio with `turret_xp`, `flib`, and `turret_xp_sandbox` enabled.
+3. Load a disposable development save and run:
+
+   ```text
+   /turret-xp-sandbox build
+   ```
+
+4. Use `/turret-xp-sandbox list` to see available scenario ids.
+5. Use `/turret-xp-sandbox goto core`, `goto evolution`, `goto feeder`, `goto combat`, or `goto automation` to jump between focused lanes.
+6. Use `/turret-xp-sandbox reset` to rebuild the surface and `/turret-xp-sandbox items` to insert another set of sample Veteran Core items.
+
 ### Combat And Stats
 
 1. Spend Shield ranks, damage the turret, and confirm Shield absorbs damage before HP, uses the nine-pip in-world bar, does not recharge while taking damage, and does not refill for free when capacity changes.

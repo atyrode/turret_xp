@@ -1,0 +1,12 @@
+{
+  "name": "turret_xp_sandbox",
+  "version": "0.1.0",
+  "title": "Turret XP Manual Sandbox",
+  "author": "atyrode",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0.0",
+    "turret_xp >= 0.12.0"
+  ],
+  "description": "Local manual testing sandbox companion for Turret XP development."
+}
