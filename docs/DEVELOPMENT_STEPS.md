@@ -13,14 +13,15 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Lua validation file discovery checks tracked source plus untracked non-ignored Lua source, explicitly excludes local build/runtime caches such as `.factorio-ci/`, `dist/`, `.codex_tmp/`, and `case_study/`, and has a regression check in `scripts/check.sh` so downloaded Factorio data cannot be linted as mod source.
 - Package build: `scripts/package.sh`.
 - Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
-- Externally visible release helper: `scripts/release.sh` creates or updates the signed GitHub Release/tag after release preflight on clean, up-to-date `main`.
-- Mod Portal releases are not published from local checkouts. The GitHub Release workflow publishes the exact GitHub Release package asset to the Mod Portal behind the `factorio-mod-portal` environment gate.
+- Standard release trigger: merge a release PR into `main` with an unreleased `info.json` version and matching `changelog.txt` entry; Auto Release creates the missing GitHub Release/tag.
+- Externally visible release helper fallback: `scripts/release.sh` creates or updates the signed GitHub Release/tag after release preflight on clean, up-to-date `main`.
+- Mod Portal releases are not published from local checkouts. The GitHub Release workflow publishes the exact GitHub Release package asset to the Mod Portal.
 - CI runs strict Lua tooling and packaging for package-impacting changes, and headless Factorio tests when Mod Portal download credentials are configured.
 - Package-impacting changes are root `README.md`, `changelog.txt`, `thumbnail.png`, package source, package scripts, and validation infrastructure; internal `docs/` and generated public-site files are not mod package payload.
 
 ## Completed Foundations
 
-- CI/release automation exists for package validation, cached Factorio headless tests, GitHub Release packaging, and gated Mod Portal publishing.
+- CI/release automation exists for package validation, cached Factorio headless tests, automatic GitHub Release creation from unreleased `main` versions, GitHub Release packaging, and Mod Portal publishing.
 - `main` is protected through pull requests and selected required status checks.
 - The private `turret_xp_test` remote interface is gated to the headless companion test mod and checked by a separate production-policy smoke test.
 - Documentation ownership is split by durable truth: product intent, requirements, current spec, architecture, technical direction, design direction, future-only progression notes, development workflow, and playtest paths each have one owning document.
@@ -73,7 +74,7 @@ Use the narrowest meaningful checks for each change:
 - GUI layout changes: all Lua/runtime checks plus manual in-game visual review; state the remaining manual visual-review risk when local playtesting is not performed.
 - GUI screenshot review: `scripts/gui-snapshots.sh install`, `/turret-xp-snapshots` in a graphical development save, then `scripts/gui-snapshots.sh collect`. Use the cropped `tests/gui-snapshots/current/ui/` images for layout review before asking for another manual pass.
 - Runtime bug fixes: add or extend the narrowest deterministic headless or pure Lua regression test in the owning subsystem, or state why the behavior needs manual GUI/playtest validation instead.
-- Release changes: local script smoke checks where practical, CI on the release branch, and the GitHub Release workflow before Mod Portal publication.
+- Release changes: local script smoke checks where practical, CI on the release branch, Auto Release after merge, and the GitHub Release workflow before Mod Portal publication.
 - Release preflight changes: `bash -n scripts/release-preflight.sh scripts/release.sh scripts/publish-mod-portal-release.sh`, synthetic git-state checks, `scripts/check.sh`, `scripts/package.sh`, and `git diff --check`.
 - Website changes: inspect generated `docs/index.html` locally or in the built GitHub Pages output, and confirm public links point to current docs.
 

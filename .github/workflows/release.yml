@@ -188,9 +188,6 @@ jobs:
     name: Publish Mod Portal Release
     runs-on: ubuntu-latest
     needs: build-test-attach
-    environment:
-      name: factorio-mod-portal
-      url: https://mods.factorio.com/mod/turret_xp
     env:
       FACTORIO_MOD_PORTAL_API_KEY: ${{ secrets.FACTORIO_MOD_PORTAL_API_KEY }}
 
