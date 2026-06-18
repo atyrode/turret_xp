@@ -2,6 +2,7 @@ local support = require("support")
 
 local assert_true = support.assert_true
 local assert_eq = support.assert_eq
+local assert_gt = support.assert_gt
 local create_turret = support.create_turret
 local call = support.call
 
@@ -304,6 +305,21 @@ function tests.run_profile_label_test(surface)
   assert_eq(summary.stale_label_entity_valid, false, "stale display-panel label entity was not destroyed")
   assert_eq(summary.label_entity_valid, false, "stale display-panel label handle was preserved")
   assert_true(summary.name_render_valid, "stale label cleanup did not leave a render object label")
+end
+
+function tests.run_runtime_render_pressure_test()
+  local sample = call("runtime_render_pressure_sample", 221, 3)
+  assert_true(sample ~= nil, "runtime render pressure sample returned nothing")
+  assert_eq(sample.initial_text_draw_calls, 221, "named core labels should be created once per visible named core")
+  assert_eq(sample.initial_sprite_draw_calls, 1989, "shield bars should create nine sprites per visible shielded core")
+  assert_eq(sample.no_change_text_draw_calls, 0, "unchanged runtime refreshes should not create replacement text renders")
+  assert_eq(sample.no_change_text_property_writes, 0, "unchanged runtime refreshes should not rewrite text render properties")
+  assert_eq(sample.no_change_sprite_draw_calls, 0, "unchanged runtime refreshes should not create replacement shield renders")
+  assert_eq(sample.no_change_sprite_property_writes, 0, "unchanged runtime refreshes should not rewrite shield render properties")
+  assert_eq(sample.changed_text_draw_calls, 0, "changed named labels should reuse existing text renders")
+  assert_eq(sample.changed_sprite_draw_calls, 0, "changed shield bars should reuse existing sprite renders")
+  assert_gt(sample.changed_text_property_writes, 0, "changed named labels should still update existing text render properties")
+  assert_gt(sample.changed_sprite_property_writes, 0, "changed shield bars should still update existing sprite render properties")
 end
 
 function tests.run_gui_action_dispatch_test(surface)
