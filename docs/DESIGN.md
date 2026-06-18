@@ -18,6 +18,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Attach Turret XP as a bounded panel beside the vanilla turret GUI. Installed cores use a two-column layout: Veteran Core identity, naming, XP, dev controls, and Stats on the left; Evolution on the right. Empty turrets use one full-width Veteran Core picker instead of a split dashboard.
 - Treat the 0.11 GUI glowup as an anchored custom interface, not a move away from the vanilla turret GUI unless the relative GUI API blocks a required interaction. The panel should keep living beside the opened turret while adopting the hierarchy, icon language, spacing, and action discoverability shown by mature utility mods such as Factory Planner.
 - Use a Factorio-style header plus shallow content panes as the default frame language: the Turret XP shell owns the anchored frame and top-level columns, while section modules own their local content.
+- The left column must use one section grammar. The shell owns top-level vertical spacing and section inset, and Veteran Core, Build/Follow, XP, Dev, and Stats panes must be created through shared GUI helpers instead of local sibling margins or bespoke frame stacks. Core identity and Build controls use darker subheader frames for their primary action row, with lighter nested content sections for Name/Show and expanded Build details. Build mode may tint the same section primitives, but must not change their hierarchy or make neighboring sections lose breathing room.
 - Keep Evolution stable inside the right column: a fixed summary header, one scrollable section body, section widths derived from the right-column viewport, and no content rendering under the scrollbar.
 - Present Core upgrades as readable rank-allocation rows until a stronger narrow-column grouping pattern emerges. Future Offense/Defense/Support grouping can return only if it improves scanability without forcing the whole panel into a two-row shell.
 - Keep specialization and sub-specialization decision stats visible before picking. Choice cards can show prose and technical effects, while lower-stakes element options can stay as compact selectable rows.
@@ -35,22 +36,21 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep platform core selection explicit: when multiple tagged cores are in a platform hub, the player chooses the exact separated row using level, specialization, and neutral preview stats rather than lifetime history counters or buff/penalty colors.
 - Keep the installed Veteran Core header focused on the core's name, level, and bound/unbound state, with extract and full-width Bind/Unbind grouped as the right-side action toolbar because bound turret movement is an opt-in quick-move mode for that core/turret pair.
 - Expose installed-core extraction both through the scripted slot interaction and through a clear compact action that moves the core to the player inventory when there is room.
-- Render installed-core naming and floating-label controls as a compact shallow form: the name row keeps `Show` beside the text field, and the conditional label-color row keeps a small square swatch, color-picker trigger, and `Level` suffix toggle together. The trigger opens Turret XP's own draggable `player.gui.screen` popup for presets and RGB sliders. The native train/player color picker is not exposed to runtime mod GUIs, so Turret XP should mimic the swatch-plus-picker interaction without implying the engine popup is available.
+- Render installed-core naming and floating-label controls as a compact shallow form: the custom-name field stays separate from independent `Name`, `Level`, and `Unspent` display toggles, and the conditional label-color row keeps a small square swatch plus color-picker trigger. The trigger opens Turret XP's own draggable `player.gui.screen` popup for presets and RGB sliders. The native train/player color picker is not exposed to runtime mod GUIs, so Turret XP should mimic the swatch-plus-picker interaction without implying the engine popup is available.
+- Keep automation explicit and Factorio-native: Build mode previews a target path, Follow build executes that path in live mode, and copied/blueprinted target builds are the primary automation path for repeated defenses. Native blueprints should act as the build library; a copied turret target can request or manually receive a fresh core and spend toward the source build over time without cloning XP, history, names, or exact identity.
+- Keep the installed-core header progressive: the core identity/name panel owns only the Veteran Core slot, identity actions, name field, label toggles, and label color. Build/Follow controls live in their own left-column panel so they do not crowd the core identity/name section. Live mode should breathe and show only the compact Build entry row plus Follow build while a saved target is unfinished. Target level, core and augment budgets, specialization, element, and formula details belong inside Build mode only; loop priorities belong on their own labeled Evolution row under each upgrade or augment, not as duplicate summary rows or inline rank-row columns.
+- Let the Stats pane use available live-mode room and yield space to expanded planning controls in Build mode. This is an intentional responsive rule for the left column, not an ad hoc scroll height.
+- Do not let copied target builds silently overwrite manual specialization, sub-specialization, or element identity choices that conflict with the target. Surface the conflict and continue spending only the compatible parts of the build.
+- Let copied/blueprinted empty turrets with pending target builds request a Veteran Core through logistics in the same spirit as vanilla requester-driven machine setup, but present it as Turret XP setup fulfillment rather than a native turret inventory slot. The pending slot should also accept manual Veteran Core placement, and the hidden requester should stay invisible, narrow, and cleanup-safe.
 - Keep numeric value coloring precise: unchanged values stay neutral, beneficial deltas use muted green, harmful deltas use muted red, units/prose stay neutral, and element colors are reserved for elemental damage numbers.
 - Prefer `gui_support` rich-value and specialization-caption helpers for repeated numeric and identity captions so level, history, formulas, summaries, and specialization labels do not hand-roll rich-text color tags. The empty-core picker decision columns are the exception: level, HP, attack, and range stay plain neutral labels.
 - Use optional Bullet Trails and vanilla visual prototypes for readability, but keep fallback visuals lightweight and avoid visual spam.
 - Prefer custom local GUI helpers and focused domain widgets over a generic one-off panel file. `flib` is an accepted foundation for vanilla-like styles and helper patterns, but Turret XP should own the Veteran Core, stats, Evolution, element, and action interaction model directly.
+- GUI changes that add a new pane or mode must update the shared section/component helper first when spacing, padding, or background treatment changes. A visual fix is not complete until the headless structural contract still proves the shared layout and a graphical screenshot review confirms the result at common UI scales.
 
 ## Progression Direction
 
-The long-term progression design is captured in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md). The current playable draft uses a level-gated Evolution list:
-
-- Core upgrades are available immediately once a Veteran Core is installed.
-- Specialization unlocks at level 10.
-- First element unlocks at level 20.
-- Augments unlock at level 30.
-- Sub-specialization unlocks at level 40.
-- Second element and combo identity unlock at level 50.
+The long-term progression design is captured in [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md). The current playable draft uses a level-gated Evolution list. Core upgrades are available immediately once a Veteran Core is installed. Specialization, first element, augments, sub-specialization, and second element/combo unlock gates are defined once in `scripts/domain.lua` as `domain.gates`.
 
 Combat XP grants levels and points. Materials express industrial commitment: selected elements expose their next material rank and accept passive inserter-fed progress through the hidden turret-tile input.
 
@@ -63,6 +63,7 @@ New progression-system scope is frozen while the current playable loop is harden
 - Kill credit should be based on damage contribution so final-hit stealing does not erase turret progress.
 - Space-platform combat and asteroid defense should not passively overlevel cores.
 - Strong roles should carry tradeoffs: range for fire rate, fire rate for damage per shot, survivability for peak damage, XP gain for immediate power.
+- Build mode automation is setup convenience, not a new balance layer. It spends the same point economy a player can spend manually.
 - Native stat identity should stay limited to specialization and sub-specialization bodies. Repeatable Range or Max HP prototype axes, quality-backed chassis rewrites, and range-band rewrites are out of scope for the current direction.
 - Scripted effects such as bounce, chain arcs, status damage, and visuals need explicit performance and readability budgets before they grow.
 

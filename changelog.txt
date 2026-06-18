@@ -1,4 +1,23 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.12.0
+Date: 2026-06-18
+  Changes:
+    - Added independent floating-label visibility toggles for core name, level, and unspent point summaries, so players can show any combination instead of the old coupled name/level label.
+    - Added installed-core Build mode. Players can plan core ranks, augment ranks, specialization, sub-specialization, elements, and loop priorities without spending live points, then enable Follow build from the live view to let the core follow that build path as it levels.
+    - Added copied build targets for blueprint/entity-settings copy. Copied turrets now store the source build's target level, specialization, sub-specialization, elements, core-upgrade ranks, augment ranks, loop priorities, and bound-turret state so fresh cores can grow toward that build without cloning XP or identity.
+    - Copied/blueprinted empty turrets now request one Veteran Core through a hidden requester helper, and the pending core slot also accepts manual Veteran Core placement while preserving the delivered or carried core profile.
+    - Blueprint and entity-settings copy/paste now carry Turret XP setup policy for label visibility, label color, copied build target, Follow build state, copied bound state, and copied-build Veteran Core fulfillment without cloning XP, level, kills, damage, combat history, or custom names.
+    - The installed-core Build mode panel shows target level, spent core and augment points, selected specialization and elements, and hover details for the build formula while keeping those planning details out of the normal live turret view. Ctrl-click in Build mode now fills a rank with the currently available planned point budget, while the separate Loop forever checkbox controls post-build repeating priorities.
+  Bugfixes:
+    - Kept Follow build out of Build mode, disabled live Evolution buttons while Follow build is active, allowed saved builds to be edited again after Follow build is unticked, hid Follow build again once finite targets are satisfied, and recalculated required build level when manual off-path spending changes the live point budget.
+    - Restored breathing room in the installed-core header by moving Build/Follow controls out of the Veteran Core identity/name panel, keeping Enter/Exit anchored on the right side of the Build panel, moving build detail summaries into Build mode only, moving loop-priority checkboxes into labeled rows under each upgrade or augment, and giving main rank rows back the width previously reserved for inline loop controls.
+    - Restored the blue requested-core visual for copied-build empty turrets while keeping the pending Veteran Core slot manually fillable.
+    - Fixed copied label-only policies on installed cores so rendered floating labels refresh immediately after paste.
+    - Kept progression gate tests derived from the shared domain gate table so changing specialization, element, augment, or sub-specialization unlock levels does not require rewriting test expectations.
+    - Bounded Veteran Core request refresh work and added headless coverage for requester delivery, cancellation, teardown spills, target-build copy policy, GUI dispatch, and large-requester pressure cases.
+    - `scripts/test-headless.sh` now prints Factorio benchmark timing plus process CPU/max-RSS metrics when `/usr/bin/time` is available, making performance drift easier to spot in CI logs.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.11.3
 Date: 2026-06-18
   Changes:

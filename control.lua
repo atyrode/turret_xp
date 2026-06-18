@@ -49,6 +49,74 @@ M.feeder = feeder.new({
   feeder_input_buffer_slots = M.FEEDER_INPUT_BUFFER_SLOTS,
 })
 
+local core_requester_module = require("scripts.control.core_requester")
+M.core_requester = core_requester_module.new({
+  compat = M.compat,
+  inventory_defines = defines.inventory,
+  ensure_storage = function()
+    return M.ensure_storage()
+  end,
+  storage_root = function()
+    return storage and storage.turret_xp or nil
+  end,
+  requester_name = M.CORE_REQUESTER_NAME,
+  chip_name = M.CHIP_NAME,
+  is_gun_turret = M.is_gun_turret,
+  turret_key = M.turret_key,
+  get_turret_host = M.get_turret_host,
+  read_profile_from_chip_stack = M.read_profile_from_chip_stack,
+  create_blank_profile = M.create_blank_profile,
+  install_profile_on_turret = M.install_profile_on_turret,
+  mark_turret_body_sync_pending = function(profile)
+    return M.combat.mark_turret_body_sync_pending(profile)
+  end,
+  spill_chip_profile = function(surface, position, profile)
+    if surface and position then
+      return M.spill_stack_definition_at(surface, position, M.make_chip_item_stack(profile))
+    end
+    return false
+  end,
+  quality_name = function(object, fallback, context)
+    return M.compat.quality_name(object, fallback, context)
+  end,
+  game_tick = function()
+    return game.tick
+  end,
+})
+
+local profile_automation_module = require("scripts.control.profile_automation")
+M.profile_automation = profile_automation_module.new({
+  normalize_profile = M.normalize_profile,
+  ensure_evolution_state = M.ensure_evolution_state,
+  get_available_skill_points = M.get_available_skill_points,
+  get_available_augment_points = M.get_available_augment_points,
+  sync_turret_progression = M.sync_turret_progression,
+  normalize_shield_state = M.normalize_shield_state,
+  update_name_render = M.update_name_render,
+  update_shield_bar_render = M.update_shield_bar_render,
+  ensure_feeder = function(entity, profile)
+    return M.feeder.ensure(entity, profile)
+  end,
+  is_gun_turret = M.is_gun_turret,
+  get_turret_host = M.get_turret_host,
+  get_turret_state = M.get_turret_state,
+  has_level = function(state, level)
+    return M.has_level(state, level)
+  end,
+  mark_turret_body_sync_pending = function(profile)
+    return M.combat.mark_turret_body_sync_pending(profile)
+  end,
+  core_requester = M.core_requester,
+  gates = M.GATES,
+  base_upgrades = M.BASE_UPGRADES,
+  augments = M.AUGMENTS,
+  specialization_by_id = M.SPECIALIZATION_BY_ID,
+  element_by_id = M.ELEMENT_BY_ID,
+  sub_specialization_by_id = M.SUB_SPECIALIZATION_BY_ID,
+  element_free_rank = M.ELEMENT_FREE_RANK,
+})
+M.apply_profile_automation = M.profile_automation.apply_to_profile
+
 local stats = require("scripts.control.stats")
 M.stats = stats.new({
   target_damage_ttl = M.TARGET_DAMAGE_TTL,
@@ -145,6 +213,9 @@ M.actions = actions.new({
   get_element_remaining_requirement = M.get_element_remaining_requirement,
   add_element_material_progress = M.add_element_material_progress,
   xp_required = M.xp_required,
+  profile_automation = M.profile_automation,
+  core_requester = M.core_requester,
+  get_turret_host = M.get_turret_host,
 })
 for name, handler in pairs(M.actions) do
   M[name] = handler
@@ -173,10 +244,12 @@ M.dispatch_gui_click_action = M.gui_actions.dispatch_click_action
 M.dispatch_gui_checked_state_action = M.gui_actions.dispatch_checked_state_action
 M.dispatch_gui_value_changed_action = M.gui_actions.dispatch_value_changed_action
 M.dispatch_gui_text_changed_action = M.gui_actions.dispatch_text_changed_action
+M.dispatch_gui_selection_state_action = M.gui_actions.dispatch_selection_state_action
 M.handle_gui_click_event = M.gui_actions.on_gui_click
 M.handle_gui_checked_state_changed_event = M.gui_actions.on_gui_checked_state_changed
 M.handle_gui_value_changed_event = M.gui_actions.on_gui_value_changed
 M.handle_gui_text_changed_event = M.gui_actions.on_gui_text_changed
+M.handle_gui_selection_state_changed_event = M.gui_actions.on_gui_selection_state_changed
 
 require("scripts.control.combat_effects")(M)
 require("scripts.control.events")(M)

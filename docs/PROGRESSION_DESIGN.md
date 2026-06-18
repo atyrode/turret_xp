@@ -4,14 +4,7 @@ Status: future-only design direction. This document is not a committed implement
 
 ## Current Playable Baseline
 
-The V0.10.x line uses a level-gated Evolution list:
-
-- Core upgrades are available once a Veteran Core is installed.
-- Specialization unlocks at level 10.
-- First element unlocks at level 20.
-- Augments unlock at level 30.
-- Sub-specialization unlocks at level 40.
-- Second element and combo identity unlock at level 50.
+The current line uses a level-gated Evolution list. Core upgrades are available once a Veteran Core is installed. Specialization, first element, augments, sub-specialization, and second element/combo unlocks are defined once in `scripts/domain.lua` under `domain.gates`; runtime behavior and headless tests must read those gates instead of hardcoding unlock levels elsewhere.
 
 The previous embedded skill-tree spike was removed. A future tree can return only if it proves better than the current list for readability, validation, and player control.
 

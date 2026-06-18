@@ -9,6 +9,7 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - Ordinary gun turrets stay stackable until a Veteran Core is installed.
 - Veteran Cores store XP, levels, upgrades, elements, name/label preferences, and combat history.
 - Installed cores can move between turret bodies, or bind to a turret for one-item quick moves.
+- Copied or blueprinted turrets can request a fresh core and carry a target build so new cores grow toward the source turret's setup.
 - Current progression is scoped to vanilla `gun-turret`.
 - The live turret panel shows core state, XP, stats, formulas, Evolution choices, and material progress beside the vanilla turret GUI.
 
@@ -59,7 +60,7 @@ scripts/package.sh
 scripts/test-headless.sh
 ```
 
-`scripts/check.sh` is host-friendly and skips optional Lua tools that are not installed. The Docker Lua commands use the same pinned StyLua, Lua 5.2 syntax, and Luacheck tooling path as CI without installing them on the host. `scripts/test-headless.sh` packages the current mod and runs the Factorio headless regression suite when `factorio` is available or `FACTORIO_BIN=/path/to/factorio` is set.
+`scripts/check.sh` is host-friendly and skips optional Lua tools that are not installed. The Docker Lua commands use the same pinned StyLua, Lua 5.2 syntax, and Luacheck tooling path as CI without installing them on the host. `scripts/test-headless.sh` packages the current mod and runs the Factorio headless regression suite when `factorio` is available or `FACTORIO_BIN=/path/to/factorio` is set. Passing headless runs print the tracked hidden-prototype budget, Factorio benchmark update timing, and Linux process CPU/max-RSS metrics when `/usr/bin/time` is available; those metrics are trend signals, not strict pass/fail thresholds.
 
 Install local Git hooks once per clone to run the Docker strict Lua tooling before commits that stage Lua or Lua-tooling changes:
 

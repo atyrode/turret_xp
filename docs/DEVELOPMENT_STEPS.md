@@ -4,7 +4,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 ## Current Baseline
 
-- Main development line: `0.11.3`.
+- Main development line: `0.12.0`.
 - Stable branch policy: short-lived issue branches into protected `main`; releases are GitHub Releases/tags named `v<info.json version>`.
 - Required local lightweight check: `scripts/check.sh`.
 - Strict local Lua tooling without host installs: `docker compose run --rm lua-tools`.
@@ -12,7 +12,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Optional local Git hooks: `scripts/install-git-hooks.sh` configures this clone to run Dockerized strict Lua tooling before commits that stage Lua or Lua-tooling changes.
 - Lua validation file discovery checks tracked source plus untracked non-ignored Lua source, explicitly excludes local build/runtime caches such as `.factorio-ci/`, `dist/`, `.codex_tmp/`, and `case_study/`, and has a regression check in `scripts/check.sh` so downloaded Factorio data cannot be linted as mod source.
 - Package build: `scripts/package.sh`.
-- Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
+- Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available. Passing runs print hidden-prototype budget, Factorio benchmark timing, and process CPU/max-RSS metrics when the platform exposes them.
 - Standard release trigger: merge a release PR into `main` with an unreleased `info.json` version and matching `changelog.txt` entry; Auto Release creates the missing GitHub Release/tag and dispatches the Release workflow when the package asset is missing.
 - Externally visible release helper fallback: `scripts/release.sh` creates or updates the signed GitHub Release/tag after release preflight on clean, up-to-date `main`.
 - Mod Portal releases are not published from local checkouts. The GitHub Release workflow publishes the exact GitHub Release package asset to the Mod Portal.
@@ -28,7 +28,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Runtime code has been split into focused modules under `scripts/control/`, with explicit helper/service modules for Veteran Core profile schema/tags/inventory/labels/orchestration, hidden feeder lifecycle/inventory/inserter/refresh ownership, bound turret item handling, damage accounting, combat effect descriptors/application/targeting/visuals/scheduler/dispatch/budgets, GUI support/components, Factorio API compatibility, label color matching, stat math/inspection/formatting, GUI actions, and command registration.
 - Runtime config ownership is split so `config.lua` wires domain aliases plus progression definitions, GUI constants, and runtime constants from explicit returned-table modules instead of carrying all constants directly.
 - Data-stage prototype creation is split under `prototypes/`, with entrypoints kept small.
-- `scripts/domain.lua` owns shared stable gameplay IDs, caps, specialization data, label presets, and generated variant-name helpers across data stage, runtime, and tests.
+- `scripts/domain.lua` owns shared stable gameplay IDs, progression gates, caps, specialization data, label presets, and generated variant-name helpers across data stage, runtime, and tests. Tests and runtime helpers should derive specialization, element, augment, and sub-specialization unlock expectations from `domain.gates`.
 - Data-stage prototype generation now uses `scripts/domain.lua` for shared base turret and Turret XP body naming in turret variants, bound placeholders, bound previews, and ammo range compatibility.
 - Lua formatting and linting are enforced through StyLua, Luacheck, Lua 5.2 syntax checks, CI, and the local Docker Compose tooling path.
 - The headless suite is split by subsystem and covers the current hidden prototype budget, bound turret movement and ammo conservation, modded base turret range inheritance, turret-source projectile ammo range compatibility, damage accounting, combat effect descriptor/budget samples, GUI helper samples, compatibility helper samples, feeder routing, passive element progress, Shield, Resistance, Ammo Productivity, status damage, and gated remote policy.
@@ -50,6 +50,10 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Evolution base upgrades and augments share the rank-allocation row builder with explicit icon, detail, value, and stepper widths derived from the Evolution viewport.
 - `gui_panels.lua` has shed internal Stats/Evolution row-builder aliases; it now keeps the runtime-facing panel/update entrypoints and legacy helpers still consumed by non-GUI services.
 - Empty-turret Veteran Core selection now has a dedicated full-width picker mode. The scripted slot and explanatory text stay at the top, while inventory cores render as a Factorio-style sortable striped table component with exact install actions, persistent tri-state clickable headers, base/specialization filter checkboxes, a separate specialization column, neutral stat preview labels, and shared specialization rich-text colors. The picker height adapts to a small capped row count so short inventories do not produce empty vertical slabs, while larger inventories scroll. Sort, filter, inventory, and preview-stat changes refresh only the picker frame rather than rebuilding the whole core panel.
+- Installed-core labels now expose independent Name, Level, and Unspent display toggles with one shared color row. Legacy visible labels migrate to the old name-plus-level shape, while hidden labels stay hidden.
+- Installed-core Build mode now supports planning core ranks, augment ranks, specialization, sub-specialization, elements, and loop priorities without spending live points. Follow build runs outside Build mode, stays enabled for open-ended loop priorities, locks live Evolution buttons while active, and unticks once finite paths are satisfied. Headless coverage protects build editing, Follow build read-only behavior, off-path required-level recalculation, copied target policies, requester delivery, and GUI dispatch.
+- Copied/blueprinted empty turrets can request one delivered Veteran Core through a hidden logistic requester helper, and their pending core slot also accepts manual Veteran Core placement. Headless coverage protects request creation, delivery/install, teardown spills, bounded refresh processing, copied setup policy, and manual pending-slot fulfillment.
+- Blueprint/setup policy copy now carries label visibility, label color, build targets, Follow build state, copied bound state, and copied-core fulfillment settings without copying XP/history/name-bearing profile data.
 - GUI refreshes now distinguish empty and installed shell modes, rebuild when the mode changes, and key Evolution content so the once-per-second open-GUI refresh does not destroy and recreate unchanged interactive Evolution controls.
 - A graphical-client GUI snapshot workflow now exists for the 0.11 GUI PR: `scripts/gui-snapshots.sh install` installs the local mod and dev companion, `/turret-xp-snapshots` captures centered standalone Turret XP fixture views in Factorio, including configured top/bottom scroll views for overflowing panes, and `scripts/gui-snapshots.sh collect` copies raw PNGs into `tests/gui-snapshots/current/full/` while writing frame-cropped review images into `tests/gui-snapshots/current/ui/`.
 - Dev controls now include a dev-core creation action, +100 levels, and dev-XP delevel buttons in addition to existing rank/material/reset helpers.
@@ -70,7 +74,7 @@ Use the narrowest meaningful checks for each change:
 - Root `README.md`, `changelog.txt`, or `thumbnail.png` changes: `scripts/check.sh`, `scripts/package.sh`, `git diff --check`.
 - Public copy, version, changelog, or homepage changes: `scripts/generate-public-assets.py`, `scripts/generate-public-assets.py --check`, `git diff --check`.
 - Lua/runtime/tooling changes: `scripts/check.sh`, `docker compose run --rm lua-format`, `docker compose run --rm lua-tools`, `scripts/package.sh`.
-- Gameplay, migration, feeder, combat, profile, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
+- Gameplay, migration, feeder, combat, profile, logistics, automation, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
 - GUI layout changes: all Lua/runtime checks plus manual in-game visual review; state the remaining manual visual-review risk when local playtesting is not performed.
 - GUI screenshot review: `scripts/gui-snapshots.sh install`, `/turret-xp-snapshots` in a graphical development save, then `scripts/gui-snapshots.sh collect`. Use the cropped `tests/gui-snapshots/current/ui/` images for layout review before asking for another manual pass.
 - Runtime bug fixes: add or extend the narrowest deterministic headless or pure Lua regression test in the owning subsystem, or state why the behavior needs manual GUI/playtest validation instead.

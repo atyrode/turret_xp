@@ -11,6 +11,10 @@
 - Veteran Core profile compatibility must be maintained for Mod Portal-published versions where practical, including tagged item profiles that may exist outside live `storage`.
 - An installed Veteran Core must be able to opt into a bound quick-move mode where mining returns one tagged placeable turret item that restores the turret and core together when placed.
 - Unbinding must return the turret to the default separate turret item plus Veteran Core movement behavior.
+- Installed Veteran Cores must support a deterministic Build mode that lets players plan core ranks, augment ranks, specialization, sub-specialization, elements, and loop priorities without spending live points. Follow build must run outside Build mode, follow that build path, avoid overwriting conflicting manual specialization, sub-specialization, or element choices, spend finite ranks before round-robining loop priorities, disable manual Evolution buttons while active, remain enabled for open-ended loop priorities, disable itself once a finite path is satisfied, and disappear from the live GUI when no unfinished target remains.
+- Copied/blueprinted empty turrets with pending Turret XP setup policy must create a hidden logistic requester helper for one Veteran Core and install the delivered core profile onto that turret.
+- Veteran Core request helpers must be hidden, bounded in refresh work, cleaned up when fulfilled or when the turret/core is removed, and must spill delivered core contents instead of deleting them during teardown.
+- Blueprint tags and entity-settings copy/paste must be able to carry Turret XP setup policy for labels, label color, build targets, Follow build state, copied bound state, and copied-build Veteran Core fulfillment, while never cloning XP, level, kills, damage, or custom names as build policy.
 - On space platforms, the attached turret panel must allow selecting a specific Veteran Core from the platform hub inventory and sending an installed core back to the hub when there is room.
 - Gun turret damage against non-friendly entities must add lifetime damage and damage-derived XP only when the attacking turret has an installed core.
 - Gun turret combat on space-platform surfaces must add reduced damage-derived and kill-credit-derived XP while preserving raw displayed damage and kill-credit totals.
@@ -32,9 +36,9 @@
 - The runtime must prevent normal unsupported non-ammo insertion by managing nearby inserter targets and temporary filters while element input is needed.
 - If an unsupported non-ammo item still enters the hidden feeder through an edge case, normal routing must clear the invalid stack so element progress can continue instead of staying blocked by hidden junk.
 - Extracting or mining a core must destroy the feeder and spill leftover feeder contents.
-- The core profile must optionally render a floating label above its current turret body in `name (lvl N)` format.
+- The core profile must optionally render a floating label above its current turret body. Name, level, and unspent-point summary visibility must be independently toggleable.
 - The Evolution header must expose one clear reset action that clears all Evolution choices while preserving core XP/history. Selected elements, specialization, and sub-specialization must also expose clear section-level `Change` actions for focused local edits.
-- Floating-label color controls must only appear while the `Show` label checkbox is enabled.
+- Floating-label color controls must only appear while at least one floating-label component is enabled.
 - Preset label-color cycling must keep preset captions; `Custom` should appear only after RGB slider edits.
 - Runtime-global mod settings must allow tuning damage XP, kill-credit XP, base level XP, level XP growth, travelling asteroid XP, and stopped asteroid XP.
 - XP overflow must advance levels and carry remaining XP into the next level.
@@ -90,7 +94,9 @@
 - Apply and show specialization and sub-specialization multipliers, including Sniper Deadeye/Overwatch, Machine Gun Shredder/Sustained Fire, Bulwark Bastion/Guardian, and Brawler Executioner/Vampire.
 - Reserve stats-scrollbar space before scrolling is needed so stat values do not shift or render underneath the scrollbar when additional rows make the panel scrollable.
 - Color numeric fragments only in stat, upgrade, augment, specialization, sub-specialization, element, and material-count values. Units and descriptive text must remain neutral, and elemental damage amounts should color the number with the corresponding element color.
-- Show a compact installed-core naming form with a core naming field and `Show` floating-label checkbox; show a square color swatch, color-picker trigger, and `Level` suffix checkbox on one row only when the floating label is enabled. The trigger opens Turret XP's draggable runtime color popup with presets and RGB sliders.
+- Show a compact installed-core naming form with a core naming field plus independent `Name`, `Level`, and `Unspent` floating-label toggles. Show a square color swatch and color-picker trigger only when at least one floating-label component is enabled. The trigger opens Turret XP's draggable runtime color popup with presets and RGB sliders.
+- Show installed-core Build mode controls with Enter/Exit, finite planned ranks, loop priorities, Follow build in live mode, and clear visual tinting while previewing a build. Build/Follow controls must live outside the core identity/name panel so the Veteran Core header keeps its original breathing room. The normal live Build control must remain a single row with a stable right-aligned Enter/Exit button, detailed target summaries must render only inside Build mode, and loop-priority checkboxes must render as labeled rows under their upgrade or augment without stealing horizontal width from the main rank row.
+- Show pending copied-build Veteran Core fulfillment with a short request status and a manually fillable core slot when an empty turret has copied setup policy but no installed core.
 - Custom RGB floating-label colors should apply directly to the in-world rendered label without requiring generated label-color prototypes or palette quantization.
 - Preserve Evolution list context after point allocation so the panel does not jump back to the top, prevent GUI refreshes from resizing the attached panel in ways that move the vanilla turret GUI, and avoid timer refreshes that destroy unchanged interactive controls.
 - Keep the attached two-column panel narrow enough for normal play, and ensure Evolution content wraps or shrinks inside the scroll pane instead of rendering under the scrollbar.
@@ -113,5 +119,5 @@
 - A published GitHub Release tag must match `v<info.json version>` before release automation attaches a package or publishes to the Mod Portal.
 - Mod Portal publishing must be tied to the GitHub Release workflow, not arbitrary local operator scripts or local package uploads.
 - The Mod Portal upload must use the exact package attached to the matching GitHub Release. If that version already exists on the Mod Portal, automation must verify the existing package hash matches before refreshing details.
-- `scripts/test-headless.sh` must run a controlled Factorio headless regression suite against the packaged mod before publishing.
+- `scripts/test-headless.sh` must run a controlled Factorio headless regression suite against the packaged mod before publishing and should print benchmark timing plus process resource metrics when the local platform exposes them.
 - `scripts/release.sh` is a fallback for publishing/updating only the matching GitHub Release and signed tag; the standard path is Auto Release after a release PR merge. Package attachment and Mod Portal publication belong to the Release workflow.

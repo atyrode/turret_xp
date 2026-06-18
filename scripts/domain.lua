@@ -23,6 +23,7 @@ domain.names = {
   bound_turret = "turret-xp-bound-gun-turret",
   bound_turret_placeholder = "turret-xp-bound-gun-turret-placeholder",
   feeder = "turret-xp-veteran-feeder",
+  core_requester = "turret-xp-veteran-core-requester",
   sort_arrow_up = "turret-xp-sort-arrow-up",
   sort_arrow_down = "turret-xp-sort-arrow-down",
   profile_tag = "turret_xp_profile",

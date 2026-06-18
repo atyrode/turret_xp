@@ -279,8 +279,12 @@ function tests.setup_combat_test(surface)
 end
 
 function tests.setup_status_damage_test(surface)
-  local turret = create_turret(surface, { -30, 0 }, 10)
-  local summary = call("install_core", turret, { level = 20 })
+  local turret = create_turret(surface, { -30, 0 }, 0)
+  local summary = call("install_core", turret, {
+    level = call("target_required_level", {
+      specialization = "brawler",
+    }),
+  })
   assert_true(summary ~= nil, "failed to install core for status damage test")
   summary = call("set_evolution", turret, {
     specialization = "brawler",
@@ -289,15 +293,14 @@ function tests.setup_status_damage_test(surface)
   turret = require_turret_near(surface, { x = -30, y = 0 }, "status damage turret not found")
   turret.health = math.max(1, turret.health - 120)
 
-  local biter = surface.create_entity({
-    name = "big-biter",
+  local target = surface.create_entity({
+    name = "steel-chest",
     position = { -25, 0 },
     force = "enemy",
   })
-  assert_true(biter and biter.valid, "failed to create status damage target")
-  biter.health = 1000
+  assert_true(target and target.valid, "failed to create status damage target")
 
-  summary = call("schedule_status_damage", turret, biter, 80, "poison", 4 * 60, 60)
+  summary = call("schedule_status_damage", turret, target, 80, "poison", 4 * 60, 60)
   assert_true(summary.status_effect_count > 0, "status damage did not register an active effect")
   storage.turret_xp_headless_tests.status_position = { x = -30, y = 0 }
   storage.turret_xp_headless_tests.status_start_health = turret.health

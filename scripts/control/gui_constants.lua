@@ -10,12 +10,15 @@ local gui = {
   sort_arrow_up = domain.names.sort_arrow_up,
   sort_arrow_down = domain.names.sort_arrow_down,
   core = prefix .. "core",
+  core_header = prefix .. "core-header",
   core_slot = prefix .. "core-slot",
   core_status = prefix .. "core-status",
   core_actions = prefix .. "core-actions",
+  core_label_controls = prefix .. "core-label-controls",
   core_name = prefix .. "core-name",
   core_name_visible = prefix .. "core-name-visible",
   core_name_level_visible = prefix .. "core-name-level-visible",
+  core_unspent_visible = prefix .. "core-unspent-visible",
   core_color_preview = prefix .. "core-color-preview",
   core_color_swatch = prefix .. "core-color-swatch",
   core_color_picker = prefix .. "core-color-picker",
@@ -27,9 +30,14 @@ local gui = {
   core_color_r_value = prefix .. "core-color-r-value",
   core_color_g_value = prefix .. "core-color-g-value",
   core_color_b_value = prefix .. "core-color-b-value",
+  core_automation_enabled = prefix .. "core-automation-enabled",
+  core_build_controls_container = prefix .. "core-build-controls-container",
+  core_build_controls = prefix .. "core-build-controls",
+  core_build_details = prefix .. "core-build-details",
   inventory_cores = prefix .. "inventory-cores",
   inventory_core_filters = prefix .. "inventory-core-filters",
   platform_cores = prefix .. "platform-cores",
+  xp_panel = prefix .. "xp-panel",
   level = prefix .. "level",
   xp = prefix .. "xp",
   xp_bar = prefix .. "xp-bar",
@@ -64,6 +72,8 @@ local color = {
   caption = { 0.62, 0.62, 0.62 },
   muted = { 0.74, 0.74, 0.74 },
   section_header = { 1, 0.86, 0.46 },
+  build_mode = { 0.45, 0.78, 1 },
+  build_mode_muted = { 0.62, 0.82, 1 },
   bonus = { 0.55, 0.82, 0.55 },
   penalty = { 0.95, 0.50, 0.48 },
   specialization = {
@@ -79,6 +89,9 @@ local color = {
 local layout = {
   column_spacing = 8,
   left_column_width = 380,
+  left_section_side_margin = 8,
+  left_section_spacing = 8,
+  left_section_padding = 8,
   evolution_column_width = 430,
   core_panel_padding = 16,
   inventory_core_frame_padding = 32,
@@ -99,7 +112,9 @@ local layout = {
   evolution_outer_height = 760,
   evolution_header_height = 36,
   stats_header_height = 34,
-  stats_height = 360,
+  stats_live_height = 420,
+  stats_build_mode_height = 300,
+  stats_height = 420,
   stats_value_width = 190,
   stats_ammo_slot_size = 36,
   stats_ammo_productivity_bar_width = 128,
@@ -133,33 +148,35 @@ layout.panel_width = layout.left_column_width + layout.evolution_column_width + 
 layout.panel_max_width = layout.panel_width + 24
 layout.empty_panel_width = layout.panel_width
 layout.empty_panel_max_width = layout.panel_max_width
+layout.left_section_width = layout.left_column_width - (layout.left_section_side_margin * 2)
+layout.empty_left_section_width = layout.empty_panel_width - (layout.left_section_side_margin * 2)
 layout.core_identity_actions_width = layout.core_identity_tool_button_size
   + layout.core_identity_action_button_width
   + layout.core_identity_action_spacing
-layout.core_identity_detail_width = layout.left_column_width
+layout.core_identity_detail_width = layout.left_section_width
   - layout.core_panel_padding
   - layout.core_identity_slot_size
   - layout.core_identity_actions_width
   - 24
-layout.core_identity_empty_detail_width = layout.empty_panel_width
+layout.core_identity_empty_detail_width = layout.empty_left_section_width
   - layout.core_panel_padding
   - layout.core_identity_slot_size
   - layout.core_identity_tool_button_size
   - 32
-layout.platform_core_row_detail_width = layout.left_column_width
+layout.platform_core_row_detail_width = layout.left_section_width
   - layout.core_panel_padding
   - layout.platform_core_icon_size
   - layout.core_identity_tool_button_size
   - 24
-layout.stats_scroll_width = layout.left_column_width - 16
+layout.stats_scroll_width = layout.left_section_width
 layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12
 layout.stats_ammo_productivity_width = layout.stats_ammo_productivity_bar_width
   + layout.stats_ammo_productivity_label_width
   + layout.stats_ammo_productivity_spacing
-layout.inventory_core_picker_width = layout.left_column_width - layout.core_panel_padding - layout.inventory_core_frame_padding
+layout.inventory_core_picker_width = layout.left_section_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.inventory_core_detail_width = layout.inventory_core_picker_width - layout.inventory_core_scrollbar_width - 112
-layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding - layout.inventory_core_frame_padding
+layout.empty_inventory_core_picker_width = layout.empty_left_section_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.empty_inventory_core_picker_height = layout.inventory_core_table_header_height
   + (layout.inventory_core_table_row_height * layout.empty_inventory_core_picker_max_rows)
   + layout.empty_inventory_core_picker_vertical_padding
