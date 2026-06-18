@@ -104,6 +104,69 @@ function gui_components.new(deps)
     return outer, header, scroll
   end
 
+  function service.add_left_section(parent, options)
+    options = options or {}
+    local build_mode = options.build_mode == true
+    local section_style = options.style or (build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame")
+    local width = options.width or deps.LAYOUT.left_section_width
+
+    local frame = parent.add({
+      type = "frame",
+      name = options.name,
+      direction = options.direction or "vertical",
+      style = section_style,
+    })
+    frame.tags = options.tags or {
+      turret_xp_left_section = true,
+      turret_xp_build_mode = build_mode,
+    }
+    deps.set_style(frame, "horizontally_stretchable", false)
+    deps.set_style(frame, "width", width)
+    deps.set_style(frame, "minimal_width", width)
+    deps.set_style(frame, "maximal_width", width)
+    deps.set_style(frame, "padding", options.padding or deps.LAYOUT.left_section_padding)
+    if options.vertical_spacing then
+      deps.set_style(frame, "vertical_spacing", options.vertical_spacing)
+    end
+
+    local header
+    if options.title or options.right_caption then
+      header = frame.add({
+        type = "flow",
+        direction = "horizontal",
+      })
+      deps.set_style(header, "horizontally_stretchable", true)
+      deps.set_style(header, "vertical_align", "center")
+      deps.set_style(header, "horizontal_spacing", 6)
+      deps.set_style(header, "bottom_margin", options.header_bottom_margin or 4)
+
+      if options.title then
+        local title = header.add({
+          type = "label",
+          caption = options.title,
+          style = "caption_label",
+        })
+        deps.set_style(title, "font", "default-bold")
+      end
+
+      header.add({
+        type = "empty-widget",
+        style = "flib_horizontal_pusher",
+      })
+
+      if options.right_caption then
+        local right = header.add({
+          type = "label",
+          caption = options.right_caption,
+          style = "caption_label",
+        })
+        deps.set_style(right, "font_color", deps.COLOR.muted)
+      end
+    end
+
+    return frame, header
+  end
+
   function service.add_section_frame(parent, options)
     options = options or {}
 

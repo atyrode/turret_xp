@@ -57,6 +57,10 @@ return function(M)
 
   function set_element_style(element, style)
     if element and element.valid then
+      if type(element) == "table" and element.style_name ~= nil then
+        element.style_name = style
+        return
+      end
       pcall(function()
         element.style = style
       end)

@@ -15,6 +15,18 @@ function tests.run_layout_constants_test()
     layout.panel_width,
     "panel width must derive from the column model"
   )
+  assert_eq(
+    layout.left_section_width,
+    layout.left_column_width - (layout.left_section_side_margin * 2),
+    "left section width must derive from the left-column inset"
+  )
+  assert_eq(
+    layout.empty_left_section_width,
+    layout.empty_panel_width - (layout.left_section_side_margin * 2),
+    "empty-panel section width must derive from the full-width body inset"
+  )
+  assert_true(layout.left_section_spacing > 0, "left column sections must have shell-owned vertical spacing")
+  assert_true(layout.left_section_padding > 0, "left column sections must have shared section padding")
   assert_eq(layout.evolution_scroll_width, layout.evolution_column_width, "Evolution scroll pane should own the full right-column viewport")
   assert_eq(
     layout.evolution_content_width,
@@ -79,8 +91,8 @@ function tests.run_layout_constants_test()
     layout.platform_core_row_detail_width < layout.left_column_width,
     "platform core row details must stay inside the left-column panel"
   )
-  assert_true(layout.stats_scroll_width < layout.left_column_width, "Stats pane must stay inside the left column")
-  assert_true(layout.inventory_core_picker_width < layout.left_column_width, "inventory core picker must stay inside the left column")
+  assert_eq(layout.stats_scroll_width, layout.left_section_width, "Stats pane must share the left-column section width")
+  assert_true(layout.inventory_core_picker_width < layout.left_section_width, "inventory core picker must stay inside a left section")
   assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full two-column shell width")
   assert_true(
     layout.empty_inventory_core_picker_width > layout.inventory_core_picker_width,
@@ -180,6 +192,52 @@ function tests.run_layout_constants_test()
     layout.empty_inventory_core_name_width < layout.empty_inventory_core_specialization_width,
     "wide inventory core table should favor specialization readability over long names"
   )
+end
+
+local function assert_left_section_contract(entry, layout, expected_style, label, build_mode)
+  assert_true(entry ~= nil, label .. " section was missing from the layout sample")
+  assert_eq(entry.type, "frame", label .. " section must be a frame")
+  assert_eq(entry.style, expected_style, label .. " section style drifted")
+  assert_eq(entry.width, layout.left_section_width, label .. " section width drifted")
+  assert_eq(entry.minimal_width, layout.left_section_width, label .. " section minimum width drifted")
+  assert_eq(entry.maximal_width, layout.left_section_width, label .. " section maximum width drifted")
+  assert_eq(entry.left_section, true, label .. " section must keep the left-section tag")
+  assert_eq(entry.build_mode_section, build_mode == true, label .. " section build-mode tag drifted")
+  assert_eq(entry.top_margin, nil, label .. " section must not use local top margin")
+  assert_eq(entry.bottom_margin, nil, label .. " section must not use local bottom margin")
+end
+
+function tests.run_left_column_layout_contract_test(surface)
+  local layout = call("layout")
+  local turret = create_turret(surface, { 10, 0 }, 20)
+  local summary = call("install_core", turret, {
+    level = 12,
+  })
+  assert_true(summary ~= nil, "failed to install core for left-column layout contract test")
+
+  local sample = call("left_column_layout_sample", turret, false)
+  assert_true(sample ~= nil and sample.available == true, "left-column layout sample was unavailable")
+  assert_eq(sample.body.width, layout.left_column_width, "left column body width drifted")
+  assert_eq(sample.body.horizontal_align, "center", "left column body must center shared-width sections")
+  assert_eq(sample.body.vertical_spacing, layout.left_section_spacing, "left column body spacing must be shell-owned")
+
+  assert_left_section_contract(sample.named.core, layout, "turret_xp_left_section_frame", "Core", false)
+  assert_left_section_contract(sample.named.build, layout, "turret_xp_left_section_frame", "Build", false)
+  assert_left_section_contract(sample.named.xp, layout, "turret_xp_left_section_frame", "XP", false)
+
+  local stats = sample.named.stats_panel
+  assert_true(stats ~= nil, "Stats pane was missing from the left-column layout sample")
+  assert_eq(stats.type, "frame", "Stats pane must be a frame")
+  assert_eq(stats.style, "inside_shallow_frame", "Stats pane must keep the shared content-pane shell")
+  assert_eq(stats.width, layout.stats_scroll_width, "Stats pane width must match the left-section width")
+  assert_eq(stats.top_margin, nil, "Stats pane must not use local top margin")
+  assert_eq(stats.bottom_margin, nil, "Stats pane must not use local bottom margin")
+
+  local build_sample = call("left_column_layout_sample", turret, true)
+  assert_true(build_sample ~= nil and build_sample.available == true, "Build-mode left-column layout sample was unavailable")
+  assert_left_section_contract(build_sample.named.core, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Core", true)
+  assert_left_section_contract(build_sample.named.build, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Build", true)
+  assert_left_section_contract(build_sample.named.xp, layout, "turret_xp_left_section_frame_build_mode", "Build-mode XP", false)
 end
 
 function tests.run_gui_support_samples_test()

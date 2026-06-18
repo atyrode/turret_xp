@@ -61,6 +61,8 @@ function shell_module.new(deps)
     set_style(body, "width", body_width)
     set_style(body, "minimal_width", body_width)
     set_style(body, "maximal_width", body_width)
+    set_style(body, "horizontal_align", "center")
+    set_style(body, "vertical_spacing", LAYOUT.left_section_spacing)
   end
 
   local function create_relative(player)

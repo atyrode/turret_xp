@@ -86,6 +86,9 @@ local color = {
 local layout = {
   column_spacing = 8,
   left_column_width = 380,
+  left_section_side_margin = 8,
+  left_section_spacing = 8,
+  left_section_padding = 8,
   evolution_column_width = 430,
   core_panel_padding = 16,
   inventory_core_frame_padding = 32,
@@ -140,33 +143,35 @@ layout.panel_width = layout.left_column_width + layout.evolution_column_width + 
 layout.panel_max_width = layout.panel_width + 24
 layout.empty_panel_width = layout.panel_width
 layout.empty_panel_max_width = layout.panel_max_width
+layout.left_section_width = layout.left_column_width - (layout.left_section_side_margin * 2)
+layout.empty_left_section_width = layout.empty_panel_width - (layout.left_section_side_margin * 2)
 layout.core_identity_actions_width = layout.core_identity_tool_button_size
   + layout.core_identity_action_button_width
   + layout.core_identity_action_spacing
-layout.core_identity_detail_width = layout.left_column_width
+layout.core_identity_detail_width = layout.left_section_width
   - layout.core_panel_padding
   - layout.core_identity_slot_size
   - layout.core_identity_actions_width
   - 24
-layout.core_identity_empty_detail_width = layout.empty_panel_width
+layout.core_identity_empty_detail_width = layout.empty_left_section_width
   - layout.core_panel_padding
   - layout.core_identity_slot_size
   - layout.core_identity_tool_button_size
   - 32
-layout.platform_core_row_detail_width = layout.left_column_width
+layout.platform_core_row_detail_width = layout.left_section_width
   - layout.core_panel_padding
   - layout.platform_core_icon_size
   - layout.core_identity_tool_button_size
   - 24
-layout.stats_scroll_width = layout.left_column_width - 16
+layout.stats_scroll_width = layout.left_section_width
 layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12
 layout.stats_ammo_productivity_width = layout.stats_ammo_productivity_bar_width
   + layout.stats_ammo_productivity_label_width
   + layout.stats_ammo_productivity_spacing
-layout.inventory_core_picker_width = layout.left_column_width - layout.core_panel_padding - layout.inventory_core_frame_padding
+layout.inventory_core_picker_width = layout.left_section_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.inventory_core_detail_width = layout.inventory_core_picker_width - layout.inventory_core_scrollbar_width - 112
-layout.empty_inventory_core_picker_width = layout.empty_panel_width - layout.core_panel_padding - layout.inventory_core_frame_padding
+layout.empty_inventory_core_picker_width = layout.empty_left_section_width - layout.core_panel_padding - layout.inventory_core_frame_padding
 layout.empty_inventory_core_picker_height = layout.inventory_core_table_header_height
   + (layout.inventory_core_table_row_height * layout.empty_inventory_core_picker_max_rows)
   + layout.empty_inventory_core_picker_vertical_padding

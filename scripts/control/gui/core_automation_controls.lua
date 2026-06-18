@@ -8,7 +8,6 @@ local LAYOUT = {
 function core_automation_controls.new(deps)
   local GUI = deps.GUI
   local COLOR = deps.COLOR
-  local components = deps.components
   local set_style = deps.set_style
   local profile_automation = deps.profile_automation
 
@@ -100,14 +99,12 @@ function core_automation_controls.new(deps)
       return
     end
 
-    local frame = components.add_section_frame(parent, {
-      name = GUI.core_build_controls,
-      style = "turret_xp_build_mode_frame",
-      vertical_spacing = 4,
-    })
+    local frame = parent
+    set_style(frame, "vertical_spacing", 4)
 
     local row = frame.add({
       type = "flow",
+      name = GUI.core_build_controls,
       direction = "horizontal",
     })
     set_style(row, "horizontally_stretchable", true)

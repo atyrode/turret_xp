@@ -80,8 +80,11 @@ function gui_runtime_module.new(deps)
     }
   end
 
-  local function apply_build_mode_styles(panel, _build_mode)
-    set_element_style(find_gui_element(panel, GUI.xp_panel), "deep_frame_in_shallow_frame")
+  local function apply_build_mode_styles(panel, build_mode)
+    set_element_style(
+      find_gui_element(panel, GUI.xp_panel),
+      build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame"
+    )
     set_element_style(find_gui_element(panel, GUI.stats_header), "subheader_frame")
     set_element_style(find_gui_element(panel, GUI.evolution_summary), "subheader_frame")
   end

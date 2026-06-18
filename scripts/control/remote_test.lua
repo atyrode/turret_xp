@@ -785,6 +785,18 @@ return function(M)
     return nil
   end
 
+  local function gui_style_name(element)
+    if not element or not element.valid then
+      return nil
+    end
+
+    if type(element.style) == "string" then
+      return element.style
+    end
+
+    return element.style_name
+  end
+
   local function gui_element_name(element)
     local name = element and element.valid and element.name or nil
     if name == "" then
@@ -1093,6 +1105,98 @@ return function(M)
         panel_height = LAYOUT.evolution_outer_height + 72,
         fallback_crop = "center",
       }
+    end,
+    left_column_layout_sample = function(entity, build_mode)
+      if not is_gun_turret(entity) then
+        return {
+          available = false,
+        }
+      end
+
+      local state = get_turret_state(entity)
+      if not state then
+        return {
+          available = false,
+        }
+      end
+
+      local original_build_mode = state.build_mode
+      local original_automation_enabled = state.automation_enabled
+      local original_automation_target = copy_serializable(state.automation_target)
+      profile_automation.set_build_mode(state, build_mode == true)
+
+      local player = make_fake_dispatch_player(entity)
+      local shell = build_gui_shell_screen(player, "installed")
+      if not shell or not shell.body then
+        state.build_mode = original_build_mode
+        state.automation_enabled = original_automation_enabled
+        state.automation_target = original_automation_target
+        return {
+          available = false,
+        }
+      end
+
+      add_core_panel(shell.body, "installed")
+      add_build_panel(shell.body)
+      add_xp_panel(shell.body)
+      add_stats_panel(shell.body)
+      if not update_turret_gui(player, entity) then
+        update_core_panel(shell.frame, player, entity, state)
+        update_build_panel(shell.frame, state)
+      end
+
+      local sample = {
+        available = true,
+        build_mode = state.build_mode == true,
+        body = {
+          type = shell.body.type,
+          style = gui_style_name(shell.body),
+          width = gui_style_property(shell.body, "width"),
+          horizontal_align = gui_style_property(shell.body, "horizontal_align"),
+          vertical_spacing = gui_style_property(shell.body, "vertical_spacing"),
+        },
+        children = {},
+        named = {},
+      }
+
+      for index, child in ipairs(shell.body.children or {}) do
+        local entry = {
+          index = index,
+          name = gui_element_name(child),
+          type = child.type,
+          style = gui_style_name(child),
+          width = gui_style_property(child, "width"),
+          minimal_width = gui_style_property(child, "minimal_width"),
+          maximal_width = gui_style_property(child, "maximal_width"),
+          top_margin = gui_style_property(child, "top_margin"),
+          bottom_margin = gui_style_property(child, "bottom_margin"),
+          left_section = child.tags and child.tags.turret_xp_left_section == true or false,
+          build_mode_section = child.tags and child.tags.turret_xp_build_mode == true or false,
+          has_stats_scroll = find_gui_element(child, GUI.stats_scroll) ~= nil,
+        }
+        sample.children[#sample.children + 1] = entry
+        if entry.name then
+          sample.named[entry.name] = entry
+          if entry.name == GUI.core then
+            sample.named.core = entry
+          elseif entry.name == GUI.core_build_controls_container then
+            sample.named.build = entry
+          elseif entry.name == GUI.xp_panel then
+            sample.named.xp = entry
+          end
+        elseif entry.has_stats_scroll then
+          sample.named.stats_panel = entry
+        end
+      end
+
+      if storage and storage.turret_xp then
+        storage.turret_xp.players[player.index] = nil
+        storage.turret_xp.player_settings[player.index] = nil
+      end
+      state.build_mode = original_build_mode
+      state.automation_enabled = original_automation_enabled
+      state.automation_target = original_automation_target
+      return sample
     end,
     stats_panel_layout_sample = function(entity)
       if not is_gun_turret(entity) then

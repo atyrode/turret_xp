@@ -46,14 +46,10 @@ function core_panel_module.new(deps)
   local core_platform_controls_service = nil
 
   local function add_xp_panel(parent)
-    local xp_panel = parent.add({
-      type = "frame",
+    local xp_panel = components.add_left_section(parent, {
       name = GUI.xp_panel,
-      direction = "vertical",
-      style = "deep_frame_in_shallow_frame",
+      vertical_spacing = 4,
     })
-    set_style(xp_panel, "horizontally_stretchable", true)
-    set_style(xp_panel, "padding", { 8, 8, 8, 8 })
 
     local top = xp_panel.add({
       type = "flow",
@@ -118,28 +114,19 @@ function core_panel_module.new(deps)
   end
 
   local function add_core_panel(parent, mode)
-    local core_panel = parent.add({
-      type = "frame",
+    local core_panel = components.add_left_section(parent, {
       name = GUI.core,
-      direction = "vertical",
-      style = "deep_frame_in_shallow_frame",
+      width = mode == "empty" and LAYOUT.empty_left_section_width or LAYOUT.left_section_width,
+      vertical_spacing = 4,
     })
-    set_style(core_panel, "horizontally_stretchable", true)
-    set_style(core_panel, "padding", { 8, 8, 8, 8 })
-    set_style(core_panel, "bottom_margin", mode == "empty" and 0 or 6)
     return core_panel
   end
 
   local function add_build_panel(parent)
-    local panel = parent.add({
-      type = "frame",
+    local panel = components.add_left_section(parent, {
       name = GUI.core_build_controls_container,
-      direction = "vertical",
-      style = "deep_frame_in_shallow_frame",
+      vertical_spacing = 4,
     })
-    set_style(panel, "horizontally_stretchable", true)
-    set_style(panel, "padding", { 6, 6, 6, 6 })
-    set_style(panel, "bottom_margin", 6)
     return panel
   end
 
@@ -848,12 +835,10 @@ function core_panel_module.new(deps)
       return nil
     end
 
-    local panel = components.add_section_frame(parent, {
+    local panel = components.add_left_section(parent, {
       name = GUI.dev,
-      style = "deep_frame_in_shallow_frame",
-      padding = { 6, 6, 6, 6 },
-      bottom_margin = 6,
       title = { "turret-xp.dev-title" },
+      vertical_spacing = 4,
     })
     set_style(panel, "vertical_align", "center")
 
@@ -954,7 +939,10 @@ function core_panel_module.new(deps)
       return
     end
 
-    set_element_style(core_panel, "deep_frame_in_shallow_frame")
+    set_element_style(
+      core_panel,
+      state and profile_automation.build_mode_active(state) and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame"
+    )
 
     local key, empty_picker_model, base_key, picker_key = core_panel_key_and_model(player, state, entity)
     local tags = core_panel.tags or {}
@@ -971,6 +959,8 @@ function core_panel_module.new(deps)
           key = key,
           base_key = base_key,
           picker_key = picker_key,
+          turret_xp_left_section = true,
+          turret_xp_build_mode = false,
         }
         return
       end
@@ -981,6 +971,8 @@ function core_panel_module.new(deps)
       key = key,
       base_key = base_key,
       picker_key = picker_key,
+      turret_xp_left_section = true,
+      turret_xp_build_mode = state and profile_automation.build_mode_active(state) or false,
     }
 
     local host = not state and get_turret_host(entity, false) or nil
@@ -1046,6 +1038,9 @@ function core_panel_module.new(deps)
       return
     end
 
+    local build_mode = state and profile_automation.build_mode_active(state) or false
+    set_element_style(panel, build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame")
+
     local key = build_panel_key(state)
     if panel.tags and panel.tags.key == key then
       return
@@ -1054,6 +1049,8 @@ function core_panel_module.new(deps)
     panel.clear()
     panel.tags = {
       key = key,
+      turret_xp_left_section = true,
+      turret_xp_build_mode = build_mode,
     }
 
     if state then

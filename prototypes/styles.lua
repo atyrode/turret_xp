@@ -31,6 +31,18 @@ return function()
     embed_text_in_bar = false,
   }
 
+  styles.turret_xp_left_section_frame = {
+    type = "frame_style",
+    parent = "inside_shallow_frame_with_padding",
+    padding = 8,
+  }
+
+  styles.turret_xp_left_section_frame_build_mode = {
+    type = "frame_style",
+    parent = "turret_xp_left_section_frame",
+    graphical_set = build_mode_graphical_set,
+  }
+
   styles.turret_xp_build_mode_deep_frame = {
     type = "frame_style",
     parent = "deep_frame_in_shallow_frame",

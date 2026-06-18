@@ -84,7 +84,7 @@ The next major GUI pass should therefore prefer:
 - `scripts/control/gui/core_platform_controls.lua` should own platform hub core list and send-to-hub controls while sharing core preview summary callbacks with the player-inventory picker;
 - a small local GUI builder/helper layer for repeated domain widgets such as Veteran Core slots, stat rows, Evolution cards, element progress, and action toolbars;
 - table-like GUI surfaces should be owned by focused components, starting with `scripts/control/gui/core_picker_table.lua`, so headers, rows, column budgets, action-cell sizing, and sort indicators cannot drift independently;
-- `flib` styles/helpers where they match the desired vanilla language, especially slot buttons, drag handles, pushers, and future dictionary/migration utilities;
+- `flib` styles/helpers where they match the desired vanilla language, especially slot buttons, drag handles, pushers, and future dictionary/migration utilities. Treat `flib` as the Factorio-native foundation, not as a full reactive layout framework: Turret XP must own its domain layout layer through local components such as left-column sections, Veteran Core slots, stat rows, Evolution cards, and refresh boundaries;
 - custom sprites and data-stage styles for Turret XP-specific actions only when vanilla utility sprites or `flib` styles are insufficient;
 - tag-based action routing and refresh/build triggers that keep behavior discoverable without burying player actions in ad hoc closures;
 - manual in-game playtest checkpoints for GUI-heavy changes, because headless tests can protect helpers and remote summaries but cannot prove visual quality.
@@ -97,6 +97,7 @@ Do not add a second broad GUI framework for the #42 GUI split unless it replaces
   - Factorio 2.0 compatible internal library mod.
   - Large adoption signal on the Mod Portal, with over 1M downloads and hundreds of dependent mods.
   - Turret XP uses `flib` GUI styles for slot buttons, pushers, and compact panel structure.
+  - `flib.gui` reduces boilerplate and keeps construction declarative, but it does not enforce spacing contracts, visual hierarchy, mode variants, or reactive state reconciliation for Turret XP. Those belong in `scripts/control/gui_components.lua`, `scripts/control/gui/runtime.lua`, and focused domain panel modules.
   - Useful future modules for this project may include `gui`, `migration`, `dictionary`, `on-tick-n`, `queue`, `format`, `table`, and position/geometry helpers.
 - Optional `bullet-trails`:
   - Version 0.7.1 was downloaded and verified against the Mod Portal release hash before being considered.
