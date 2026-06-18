@@ -808,7 +808,12 @@ return function(M)
       tooltip = definition.tooltip,
       tags = definition.tags,
       direction = definition.direction,
+      sprite = definition.sprite,
+      quality = definition.quality,
+      elem_tooltip = definition.elem_tooltip,
       state = definition.state,
+      toggled = definition.toggled == true,
+      auto_toggle = definition.auto_toggle == true,
       value = definition.value,
       selected_index = definition.selected_index,
       items = definition.items,
@@ -986,10 +991,16 @@ return function(M)
       update_core_panel(root, player, entity, nil)
       local panel = find_gui_element(root, GUI.core)
       local status = panel and find_gui_element(panel, GUI.core_status) or nil
+      local slot = panel and find_gui_element(panel, GUI.core_slot) or nil
+      local slot_style = slot and (type(slot.style) == "string" and slot.style or slot.style_name) or nil
       local summary = {
         opened = panel and panel.valid == true or false,
         key = panel and panel.tags and panel.tags.key or nil,
         core_status_caption = status and copy_serializable(status.caption) or nil,
+        core_slot_enabled = slot and slot.enabled == true or false,
+        core_slot_sprite = slot and slot.sprite or nil,
+        core_slot_toggled = slot and slot.toggled == true or false,
+        core_slot_style = slot_style,
         has_inventory_picker = panel and find_gui_element(panel, GUI.inventory_cores) ~= nil or false,
         has_core_request_checkbox = panel and find_gui_action(panel, "toggle-core-request") ~= nil or false,
       }
@@ -1023,6 +1034,7 @@ return function(M)
 
       local panel = find_gui_element(root, GUI.core)
       local auto = panel and find_gui_element(panel, GUI.core_automation_enabled) or nil
+      local build_controls = panel and find_gui_element(panel, GUI.core_build_controls) or nil
       local evolution = find_gui_element(root, GUI.evolution)
       local allocate_damage = find_gui_action(evolution, "allocate-base", "upgrade", "damage")
       local forever_damage = find_gui_action(evolution, "toggle-base-forever", "upgrade", "damage")
@@ -1036,6 +1048,7 @@ return function(M)
         opened = panel and panel.valid == true or false,
         build_mode = state.build_mode == true,
         automation_enabled = state.automation_enabled == true,
+        build_controls_type = build_controls and build_controls.type or nil,
         has_auto_checkbox = auto ~= nil,
         auto_state = auto and auto.state == true or false,
         auto_enabled = auto and auto.enabled == true or false,
@@ -1044,6 +1057,7 @@ return function(M)
         has_damage_forever_checkbox = forever_damage ~= nil,
         damage_forever_state = forever_damage and forever_damage.state == true or false,
         damage_forever_enabled = forever_damage and forever_damage.enabled == true or false,
+        damage_forever_caption = forever_damage and copy_serializable(forever_damage.caption) or nil,
         damage_forever_tooltip = forever_damage and copy_serializable(forever_damage.tooltip) or nil,
         has_build_level_summary = build_level ~= nil,
         has_build_core_summary = build_core ~= nil,

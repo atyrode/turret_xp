@@ -49,6 +49,21 @@ return function()
     graphical_set = build_mode_graphical_set,
   }
 
+  styles.turret_xp_pending_core_slot_button = {
+    type = "button_style",
+    parent = "slot_button",
+    selected_graphical_set = {
+      base = {
+        center = {
+          filename = "__core__/graphics/gui-new.png",
+          position = { 472, 25 },
+          size = 1,
+          tint = { 0.24, 0.48, 0.82, 0.95 },
+        },
+      },
+    },
+  }
+
   styles.turret_xp_inventory_core_table_header_row = {
     type = "horizontal_flow_style",
     horizontally_stretchable = "on",

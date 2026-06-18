@@ -345,7 +345,7 @@ function evolution_panel_module.new(deps)
     options = options or {}
     local row_definition = {
       type = "table",
-      column_count = 5,
+      column_count = 4,
     }
     if options.row_name then
       row_definition.name = options.row_name
@@ -358,8 +358,7 @@ function evolution_panel_module.new(deps)
       row.style.column_alignments[1] = "left"
       row.style.column_alignments[2] = "left"
       row.style.column_alignments[3] = "right"
-      row.style.column_alignments[4] = "center"
-      row.style.column_alignments[5] = "right"
+      row.style.column_alignments[4] = "right"
     end)
 
     add_fixed_sprite(row, options.sprite, LAYOUT.rank_allocation_icon_size, LAYOUT.rank_allocation_icon_cell_width)
@@ -403,27 +402,6 @@ function evolution_panel_module.new(deps)
     set_style(value, "minimal_width", LAYOUT.rank_allocation_value_width)
     set_style(value, "maximal_width", LAYOUT.rank_allocation_value_width)
 
-    if options.forever_tags then
-      local forever = row.add({
-        type = "checkbox",
-        caption = "",
-        tooltip = options.forever_tooltip,
-        state = options.forever_checked == true,
-        enabled = options.can_toggle_forever == true,
-        tags = options.forever_tags,
-      })
-      set_style(forever, "width", LAYOUT.rank_allocation_forever_width)
-      set_style(forever, "minimal_width", LAYOUT.rank_allocation_forever_width)
-      set_style(forever, "maximal_width", LAYOUT.rank_allocation_forever_width)
-    else
-      local spacer = row.add({
-        type = "empty-widget",
-      })
-      set_style(spacer, "width", LAYOUT.rank_allocation_forever_width)
-      set_style(spacer, "minimal_width", LAYOUT.rank_allocation_forever_width)
-      set_style(spacer, "maximal_width", LAYOUT.rank_allocation_forever_width)
-    end
-
     get_gui_components_service().add_rank_stepper(row, {
       rank = options.rank or 0,
       can_decrease = options.can_decrease == true,
@@ -433,6 +411,34 @@ function evolution_panel_module.new(deps)
       decrease_tags = options.decrease_tags,
       increase_tags = options.increase_tags,
     })
+
+    if options.forever_tags then
+      local forever_row = parent.add({
+        type = "flow",
+        direction = "horizontal",
+      })
+      set_evolution_content_width(forever_row, true)
+      set_style(forever_row, "top_margin", 2)
+      set_style(forever_row, "horizontal_spacing", 6)
+      set_style(forever_row, "vertical_align", "center")
+
+      local indent = forever_row.add({
+        type = "empty-widget",
+      })
+      set_style(indent, "width", LAYOUT.rank_allocation_icon_cell_width)
+      set_style(indent, "minimal_width", LAYOUT.rank_allocation_icon_cell_width)
+      set_style(indent, "maximal_width", LAYOUT.rank_allocation_icon_cell_width)
+
+      local forever = forever_row.add({
+        type = "checkbox",
+        caption = { "turret-xp.build-forever-toggle-label" },
+        tooltip = options.forever_tooltip,
+        state = options.forever_checked == true,
+        enabled = options.can_toggle_forever == true,
+        tags = options.forever_tags,
+      })
+      set_style(forever, "font_color", options.forever_checked == true and COLOR.build_mode or COLOR.muted)
+    end
 
     return row
   end

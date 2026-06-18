@@ -633,6 +633,11 @@ function profile_automation.new(deps)
     return true
   end
 
+  function service.target_unfinished(profile)
+    local target = normalize_target(profile and profile.automation_target, false, profile)
+    return target ~= nil and target_satisfied(profile, target) == false
+  end
+
   local function apply_target_to_profile(entity, profile, target)
     target = normalize_target(target)
     if not target then

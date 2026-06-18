@@ -111,10 +111,13 @@ function core_identity_module.new(deps)
         name = CHIP_NAME,
         quality = state and state.chip_quality or "normal",
       }
+      if options.pending_core == true and not state then
+        slot_definition.toggled = true
+      end
     end
 
     local icon = top.add(slot_definition)
-    set_element_style(icon, "slot_button")
+    set_element_style(icon, options.pending_core == true and not state and "turret_xp_pending_core_slot_button" or "slot_button")
     set_style(icon, "size", LAYOUT.core_identity_slot_size)
 
     add_header_details(top, state, options)

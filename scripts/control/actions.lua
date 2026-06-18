@@ -5,10 +5,12 @@ function actions_module.new(deps)
   local COLOR = deps.COLOR
   local LAYOUT = deps.LAYOUT or {}
   local GATES = deps.GATES
+  local BASE_UPGRADES = deps.BASE_UPGRADES
   local BASE_UPGRADE_BY_ID = deps.BASE_UPGRADE_BY_ID
   local ELEMENT_BY_ID = deps.ELEMENT_BY_ID
   local SPECIALIZATION_BY_ID = deps.SPECIALIZATION_BY_ID
   local SUB_SPECIALIZATION_BY_ID = deps.SUB_SPECIALIZATION_BY_ID
+  local AUGMENTS = deps.AUGMENTS
   local AUGMENT_BY_ID = deps.AUGMENT_BY_ID
   local ELEMENT_FREE_RANK = deps.ELEMENT_FREE_RANK
   local FEEDER_CONSUME_LIMIT = deps.FEEDER_CONSUME_LIMIT
@@ -130,6 +132,47 @@ function actions_module.new(deps)
     mutator(target)
     state.automation_target = profile_automation.normalize_target(target, true, state) or profile_automation.empty_target()
     return true
+  end
+
+  local function positive_rank(value)
+    return math.max(0, math.floor(tonumber(value) or 0))
+  end
+
+  local function merged_rank_total(definitions, live_ranks, target_ranks)
+    local total = 0
+    live_ranks = type(live_ranks) == "table" and live_ranks or {}
+    target_ranks = type(target_ranks) == "table" and target_ranks or {}
+    for _, definition in ipairs(definitions or {}) do
+      total = total + math.max(positive_rank(live_ranks[definition.id]), positive_rank(target_ranks[definition.id]))
+    end
+    return total
+  end
+
+  local function augment_points_for_level(level)
+    level = positive_rank(level)
+    if level < GATES.augments then
+      return 0
+    end
+
+    return 1 + math.floor((level - GATES.augments) / 10)
+  end
+
+  local function build_rank_fill_amount(definitions, live_ranks, target_ranks, id, budget, max_rank)
+    target_ranks = target_ranks or {}
+    local target_rank = positive_rank(target_ranks[id])
+    local current_total = merged_rank_total(definitions, live_ranks, target_ranks)
+    local available = positive_rank(budget) - current_total
+    if available <= 0 then
+      return 0
+    end
+
+    local live_rank = positive_rank(type(live_ranks) == "table" and live_ranks[id] or 0)
+    local current_merged = math.max(live_rank, target_rank)
+    local desired_rank = current_merged + available
+    if max_rank then
+      desired_rank = math.min(desired_rank, max_rank)
+    end
+    return math.max(0, desired_rank - target_rank)
   end
 
   local function sync_manual_evolution_change(state)
@@ -468,7 +511,12 @@ function actions_module.new(deps)
 
         local rank = target.base[upgrade_id] or 0
         if amount > 10 then
-          amount = 1
+          local evolution = ensure_evolution_state(state)
+          local budget_level = math.max(positive_rank(state.level), positive_rank(target.level))
+          amount = build_rank_fill_amount(BASE_UPGRADES, evolution.base, target.base, upgrade_id, budget_level, upgrade.max_rank)
+          if amount <= 0 then
+            return
+          end
         end
         local next_rank = rank + amount
         if upgrade.max_rank then
@@ -852,7 +900,19 @@ function actions_module.new(deps)
 
         local rank = target.augments[augment_id] or 0
         if amount > 10 then
-          amount = 1
+          local evolution = ensure_evolution_state(state)
+          local budget_level = math.max(positive_rank(state.level), positive_rank(target.level))
+          amount = build_rank_fill_amount(
+            AUGMENTS,
+            evolution.augments,
+            target.augments,
+            augment_id,
+            augment_points_for_level(budget_level),
+            augment.max_rank
+          )
+          if amount <= 0 then
+            return
+          end
         end
         local next_rank = rank + amount
         if augment.max_rank then
