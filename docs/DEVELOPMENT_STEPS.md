@@ -61,7 +61,6 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Harden the current playable loop before adding progression scope. Balance/readability fixes, GUI quality, validation, and bug fixes are in scope; new branches, elements, mastery loops, quality-backed chassis work, range-band rewrites, repeatable HP/Range axes, or other prototype-backed stat axes need separate approved issues.
 - Keep documentation edits ownership-based: move facts to the owning document, replace duplicates with cross-references, and delete stale planning prose once the current decision is represented elsewhere.
 - Restart the next major GUI pass as spec-first work tracked by issue #96. The active redesign path is: write and review the GUI spec factory, produce the Turret XP GUI spec, then implement against that accepted spec in Lua. The failed focused-tabs branch and the old two-column glowup are historical references, not layout sources for the next implementation.
-- Keep the Factorio GUI web editor outside this mod repository. Browser-builder, shared-renderer, JSON model export, and Lua-skeleton export experiments belong in <https://github.com/atyrode/factorio-gui-web-editor> unless a specific generated output is deliberately imported back into the mod.
 
 ## Validation Checklist
 

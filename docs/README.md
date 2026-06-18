@@ -27,7 +27,6 @@ This directory is the working context for `turret_xp`. The goal is not more docu
 - Mark future-only ideas explicitly, especially progression, GUI, dependency, and rewrite notes.
 - Keep version-by-version release history in the root [changelog.txt](../changelog.txt); do not recreate release diaries in active docs.
 - When changing behavior, architecture, workflow, CI, release, or assumptions, update the owning document in the same PR.
-- Keep browser-editor/tooling experiments in <https://github.com/atyrode/factorio-gui-web-editor>; this repository should keep only mod-owned specs and implementation docs.
 
 ## Homepage
 
