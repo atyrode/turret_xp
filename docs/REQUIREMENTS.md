@@ -109,7 +109,7 @@
 - `scripts/package.sh` must create `dist/turret_xp_<info.json version>.zip` deterministically from the same file contents so release assets can be hash-compared.
 - Pull requests and pushes to `main` must run GitHub Actions package validation.
 - GitHub Actions headless tests must use an isolated mods directory, the official Factorio headless Linux build, required Mod Portal dependency zips, repository secrets for authenticated dependency downloads, and caches that do not contain credentials.
-- When `main` contains an `info.json` version whose matching `v<version>` GitHub Release does not exist, automation must create that GitHub Release/tag so accepting the release PR triggers packaging and publishing without a local release command.
+- When `main` contains an `info.json` version whose matching `v<version>` GitHub Release does not exist, automation must create that GitHub Release/tag and dispatch package publication so accepting the release PR triggers packaging and publishing without a local release command.
 - A published GitHub Release tag must match `v<info.json version>` before release automation attaches a package or publishes to the Mod Portal.
 - Mod Portal publishing must be tied to the GitHub Release workflow, not arbitrary local operator scripts or local package uploads.
 - The Mod Portal upload must use the exact package attached to the matching GitHub Release. If that version already exists on the Mod Portal, automation must verify the existing package hash matches before refreshing details.

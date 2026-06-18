@@ -98,7 +98,7 @@ Standard path:
 2. For a release PR, update `info.json`, `changelog.txt`, and regenerate `docs/index.html`.
 3. Confirm CI passes.
 4. Merge the PR into `main`.
-5. The Auto Release workflow creates the missing `v<info.json version>` GitHub Release/tag.
+5. The Auto Release workflow creates the missing `v<info.json version>` GitHub Release/tag and dispatches the Release workflow when the package asset is missing.
 6. The Release workflow builds/tests the package, attaches the zip to the GitHub Release, and publishes that exact release package to the Factorio Mod Portal.
 
 Local GitHub Release helper fallback. This creates or updates only the GitHub Release object and signed tag; normal release PRs should not need it because Auto Release creates the GitHub Release after merge.
