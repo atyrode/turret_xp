@@ -40,13 +40,15 @@ function gui_runtime_module.new(deps)
     local required = progression and progression.required or 1
     local progress = progression and required > 0 and math.min(1, progression.xp / required) or 0
     if build_mode then
+      local live_level = live_state and live_state.level or 0
+      local required_level = build_target and build_target.level or 0
       progression = {
-        level = display_state.level or 0,
+        level = live_level,
         xp = 0,
-        required = 0,
+        required = required_level,
       }
-      required = 0
-      progress = build_target and build_target.open_ended and 0 or 1
+      required = required_level
+      progress = required_level > 0 and math.min(1, live_level / required_level) or 1
     end
     local ammo_name, ammo_count, ammo_quality, ammo_in_magazine, ammo_magazine_size = get_loaded_ammo(entity)
     local quality_name = get_entity_quality_name(entity)
@@ -77,16 +79,10 @@ function gui_runtime_module.new(deps)
     }
   end
 
-  local function apply_build_mode_styles(panel, build_mode)
-    set_element_style(
-      find_gui_element(panel, GUI.xp_panel),
-      build_mode and "turret_xp_build_mode_deep_frame" or "deep_frame_in_shallow_frame"
-    )
-    set_element_style(find_gui_element(panel, GUI.stats_header), build_mode and "turret_xp_build_mode_subheader_frame" or "subheader_frame")
-    set_element_style(
-      find_gui_element(panel, GUI.evolution_summary),
-      build_mode and "turret_xp_build_mode_subheader_frame" or "subheader_frame"
-    )
+  local function apply_build_mode_styles(panel, _build_mode)
+    set_element_style(find_gui_element(panel, GUI.xp_panel), "deep_frame_in_shallow_frame")
+    set_element_style(find_gui_element(panel, GUI.stats_header), "subheader_frame")
+    set_element_style(find_gui_element(panel, GUI.evolution_summary), "subheader_frame")
   end
 
   local function update_xp_modifier_summary(panel, entity, state)
@@ -106,12 +102,12 @@ function gui_runtime_module.new(deps)
     apply_build_mode_styles(panel, context.build_mode == true)
     if state then
       if context.build_mode then
-        set_gui_caption(panel, GUI.level, { "turret-xp.build-level", context.progression.level })
+        set_gui_caption(panel, GUI.level, { "turret-xp.level", context.progression.level })
         set_gui_caption(
           panel,
           GUI.xp,
-          context.build_target and context.build_target.open_ended and { "turret-xp.build-xp-open-ended" }
-            or { "turret-xp.build-xp", context.progression.level }
+          context.build_target and context.build_target.open_ended and { "turret-xp.build-xp-open-ended", context.required }
+            or { "turret-xp.build-xp", context.required }
         )
       else
         set_gui_caption(panel, GUI.level, { "turret-xp.level", context.progression.level })
@@ -126,10 +122,10 @@ function gui_runtime_module.new(deps)
       set_gui_caption(panel, GUI.xp, { "turret-xp.no-core-xp" })
     end
     set_gui_progress(panel, GUI.xp_bar, context.progress)
-    set_gui_caption(panel, GUI.xp_percent, state and (context.build_mode and { "turret-xp.build-mode-caption" } or {
+    set_gui_caption(panel, GUI.xp_percent, state and {
       "turret-xp.level-progress-suffix",
       format_number(context.progress * 100, 0),
-    }) or "")
+    } or "")
     update_xp_modifier_summary(panel, entity, state)
 
     update_stats_panel(

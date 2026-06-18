@@ -189,13 +189,18 @@ function gui_actions_module.new(deps)
       return true
     end
 
-    if action == "toggle-core-request" then
-      actions.set_core_request_enabled(player, element and element.state == true)
+    if action == "toggle-build-auto" then
+      actions.set_build_auto(player, element and element.state == true)
       return true
     end
 
-    if action == "toggle-build-auto" then
-      actions.set_build_auto(player, element and element.state == true)
+    if action == "toggle-base-forever" then
+      actions.set_base_forever(player, tags.upgrade, element and element.state == true)
+      return true
+    end
+
+    if action == "toggle-augment-forever" then
+      actions.set_augment_forever(player, tags.augment, element and element.state == true)
       return true
     end
 

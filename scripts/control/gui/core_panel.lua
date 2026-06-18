@@ -798,53 +798,7 @@ function core_panel_module.new(deps)
     return get_core_platform_controls().add_list(core_panel, entity, state)
   end
 
-  local function add_core_request_controls(core_panel, entity)
-    local status = core_requester.status(entity)
-    local frame = components.add_section_frame(core_panel, {
-      top_margin = 6,
-      vertical_spacing = 4,
-    })
-
-    local row = frame.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(row, "horizontally_stretchable", true)
-    set_style(row, "horizontal_spacing", 8)
-    set_style(row, "vertical_align", "center")
-
-    row.add({
-      type = "checkbox",
-      name = GUI.core_request_enabled,
-      caption = { "turret-xp.core-request-enable" },
-      tooltip = { "turret-xp.core-request-tooltip" },
-      state = status.enabled == true,
-      tags = {
-        turret_xp_action = "toggle-core-request",
-      },
-    })
-
-    row.add({
-      type = "empty-widget",
-      style = "flib_horizontal_pusher",
-    })
-
-    local status_caption = status.enabled
-        and (status.delivered and { "turret-xp.core-request-status-delivered" } or status.network and {
-          "turret-xp.core-request-status-waiting",
-        } or { "turret-xp.core-request-status-no-network" })
-      or { "turret-xp.core-request-status-off" }
-    local label = row.add({
-      type = "label",
-      caption = status_caption,
-      style = "caption_label",
-    })
-    set_style(label, "font_color", status.enabled and COLOR.muted or COLOR.caption)
-  end
-
   local function add_pending_build_request(core_panel, entity)
-    add_core_request_controls(core_panel, entity)
-
     local host = get_turret_host(entity, false)
     local target = profile_automation.target_model(host and host.pending_policy or nil)
     if not target then
@@ -987,10 +941,7 @@ function core_panel_module.new(deps)
       return
     end
 
-    set_element_style(
-      core_panel,
-      state and profile_automation.build_mode_active(state) and "turret_xp_build_mode_deep_frame" or "deep_frame_in_shallow_frame"
-    )
+    set_element_style(core_panel, "deep_frame_in_shallow_frame")
 
     local key, empty_picker_model, base_key, picker_key = core_panel_key_and_model(player, state, entity)
     local tags = core_panel.tags or {}
@@ -1040,7 +991,6 @@ function core_panel_module.new(deps)
       set_style(note, "font_color", COLOR.muted)
       set_style(note, "single_line", false)
       set_style(note, "maximal_width", LAYOUT.empty_panel_width - 24)
-      add_core_request_controls(core_panel, entity)
       add_inventory_core_picker(core_panel, player, entity, {
         wide = true,
         model = empty_picker_model,

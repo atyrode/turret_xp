@@ -96,10 +96,9 @@ function core_identity_module.new(deps)
     local slot_definition = {
       type = "sprite-button",
       name = GUI.core_slot,
-      tooltip = state and { "turret-xp.extract-core-tooltip" } or options.pending_core and { "turret-xp.pending-core-slot-tooltip" } or {
-        "turret-xp.install-core-tooltip",
-      },
-      enabled = options.pending_core ~= true,
+      tooltip = state and { "turret-xp.extract-core-tooltip" } or options.pending_core and {
+        "turret-xp.pending-core-slot-tooltip",
+      } or { "turret-xp.install-core-tooltip" },
       tags = {
         turret_xp_action = "core-slot",
       },

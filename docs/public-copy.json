@@ -33,7 +33,7 @@
     "Pick specializations and sub-specializations with strong tradeoffs.",
     "Feed fire, electric, explosive, or toxic resources into passive element ranks to strengthen elemental effects and combos.",
     "Name favorite turrets and show their level above them.",
-    "Use Build mode, copy or blueprint Veteran Core build targets, and let logistic bots deliver fresh cores into repeated turret builds.",
+    "Use Build mode, copy or blueprint Veteran Core build targets, and let logistic bots or manual placement deliver fresh cores into repeated turret builds.",
     "Choose exact Veteran Cores from platform hubs for space-platform defenses.",
     "Tune XP pacing in mod settings."
   ],
@@ -52,7 +52,7 @@
     },
     {
       "title": "Setup Automation",
-      "body": "Copy or blueprint a built turret as a target build, let bots deliver a fresh Veteran Core into empty copies, and keep future points on Auto so the new core grows toward the copied specialization, elements, and rank plan."
+      "body": "Copy or blueprint a built turret as a target build, let bots or manual placement deliver a fresh Veteran Core into empty copies, and enable Follow build so the new core grows toward the copied specialization, elements, rank plan, and bound state."
     },
     {
       "title": "Element Projects",

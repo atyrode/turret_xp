@@ -95,27 +95,29 @@ function core_automation_controls.new(deps)
     })
     set_style(toggle, "minimal_width", 96)
 
-    local auto_row = frame.add({
-      type = "flow",
-      direction = "horizontal",
-    })
-    set_style(auto_row, "horizontally_stretchable", true)
-    set_style(auto_row, "horizontal_spacing", 8)
-    set_style(auto_row, "vertical_align", "center")
-    add_row_label(auto_row, { "turret-xp.build-mode-auto" })
+    if not build_mode then
+      local auto_row = frame.add({
+        type = "flow",
+        direction = "horizontal",
+      })
+      set_style(auto_row, "horizontally_stretchable", true)
+      set_style(auto_row, "horizontal_spacing", 8)
+      set_style(auto_row, "vertical_align", "center")
+      add_row_label(auto_row, { "turret-xp.build-mode-auto" })
 
-    local auto = auto_row.add({
-      type = "checkbox",
-      name = GUI.core_automation_enabled,
-      caption = { "turret-xp.build-mode-auto-enabled" },
-      tooltip = { "turret-xp.build-mode-auto-tooltip" },
-      state = state and state.automation_enabled == true or false,
-      enabled = has_target == true,
-      tags = {
-        turret_xp_action = "toggle-build-auto",
-      },
-    })
-    set_style(auto, "font_color", state and state.automation_enabled == true and COLOR.build_mode or COLOR.muted)
+      local auto = auto_row.add({
+        type = "checkbox",
+        name = GUI.core_automation_enabled,
+        caption = { "turret-xp.build-mode-auto-enabled" },
+        tooltip = { "turret-xp.build-mode-auto-tooltip" },
+        state = state and state.automation_enabled == true or false,
+        enabled = has_target == true,
+        tags = {
+          turret_xp_action = "toggle-build-auto",
+        },
+      })
+      set_style(auto, "font_color", state and state.automation_enabled == true and COLOR.build_mode or COLOR.muted)
+    end
 
     if not target then
       add_summary_row(frame, { "turret-xp.build-mode-target" }, { "turret-xp.build-mode-target-none" })

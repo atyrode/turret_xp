@@ -314,7 +314,7 @@ function gui_components.new(deps)
     return delimiter
   end
 
-  function service.add_choice_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name)
+  function service.add_choice_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name, action_tooltip)
     local row_definition = {
       type = "table",
       column_count = 3,
@@ -364,6 +364,7 @@ function gui_components.new(deps)
       local button = row.add({
         type = "button",
         caption = right_caption,
+        tooltip = action_tooltip,
         tags = tags,
         enabled = enabled,
       })

@@ -44,6 +44,7 @@ local function copy_policy(policy)
     show_name_label = policy.show_name_label == true,
     show_label_level = policy.show_label_level == true,
     show_unspent_label = policy.show_unspent_label == true,
+    bound_turret = policy.bound_turret == true,
     request_core = policy.request_core == true,
     label_color = type(policy.label_color) == "table" and {
       policy.label_color[1],
@@ -138,8 +139,7 @@ function profile_automation.new(deps)
   local function target_has_content(target)
     return type(target) == "table"
       and (
-        positive_rank(target.level) > 0
-        or table_has_content(target.base)
+        table_has_content(target.base)
         or table_has_content(target.base_infinite)
         or table_has_content(target.augments)
         or table_has_content(target.augment_infinite)
@@ -176,33 +176,48 @@ function profile_automation.new(deps)
     return 1 + math.floor((level - deps.gates.augments) / 10)
   end
 
+  local function merged_rank_total(definitions, live_ranks, target_ranks)
+    local total = 0
+    live_ranks = type(live_ranks) == "table" and live_ranks or {}
+    target_ranks = type(target_ranks) == "table" and target_ranks or {}
+    for _, definition in ipairs(definitions or {}) do
+      total = total + math.max(positive_rank(live_ranks[definition.id]), positive_rank(target_ranks[definition.id]))
+    end
+    return total
+  end
+
   local function has_infinite_targets(target)
     return table_has_content(target and target.base_infinite) or table_has_content(target and target.augment_infinite)
   end
 
-  local function required_level_for_target(target)
+  local function required_level_for_target(target, profile)
     if type(target) ~= "table" then
       return 0
     end
 
-    local level = total_ranks(deps.base_upgrades, target.base)
-    level = math.max(level, level_for_augment_points(total_ranks(deps.augments, target.augments)))
-    if target.specialization then
+    local evolution = profile and deps.ensure_evolution_state(profile) or nil
+    local base_points = evolution and merged_rank_total(deps.base_upgrades, evolution.base, target.base)
+      or total_ranks(deps.base_upgrades, target.base)
+    local augment_points = evolution and merged_rank_total(deps.augments, evolution.augments, target.augments)
+      or total_ranks(deps.augments, target.augments)
+    local level = base_points
+    level = math.max(level, level_for_augment_points(augment_points))
+    if target.specialization or (evolution and evolution.specialization) then
       level = math.max(level, deps.gates.specialization)
     end
-    if target.sub_specialization then
+    if target.sub_specialization or (evolution and evolution.sub_specialization) then
       level = math.max(level, deps.gates.sub_specialization)
     end
-    if target.elements and target.elements[1] then
+    if (target.elements and target.elements[1]) or (evolution and evolution.elements and evolution.elements[1]) then
       level = math.max(level, deps.gates.first_element)
     end
-    if target.elements and target.elements[2] then
+    if (target.elements and target.elements[2]) or (evolution and evolution.elements and evolution.elements[2]) then
       level = math.max(level, deps.gates.second_element)
     end
     return level
   end
 
-  local function normalize_target(target, allow_empty)
+  local function normalize_target(target, allow_empty, profile)
     if type(target) ~= "table" then
       return nil
     end
@@ -230,7 +245,7 @@ function profile_automation.new(deps)
       specialization = specialization,
       sub_specialization = sub_specialization,
     }
-    normalized.level = required_level_for_target(normalized)
+    normalized.level = required_level_for_target(normalized, profile)
 
     return (allow_empty == true or target_has_content(normalized)) and normalized or nil
   end
@@ -262,7 +277,7 @@ function profile_automation.new(deps)
   end
 
   local function target_to_preview_profile(profile, target)
-    target = normalize_target(target, true)
+    target = normalize_target(target, true, profile)
     if not profile or not target then
       return nil
     end
@@ -296,7 +311,7 @@ function profile_automation.new(deps)
     end
 
     local target_can_be_empty = profile.automation_enabled == true or profile.build_mode == true
-    profile.automation_target = normalize_target(profile.automation_target, target_can_be_empty)
+    profile.automation_target = normalize_target(profile.automation_target, target_can_be_empty, profile)
     if profile.build_mode == true then
       profile.automation_target = profile.automation_target or empty_target()
     end
@@ -312,8 +327,22 @@ function profile_automation.new(deps)
     return empty_target()
   end
 
-  function service.normalize_target(target, allow_empty)
-    return normalize_target(target, allow_empty)
+  function service.normalize_target(target, allow_empty, profile)
+    return normalize_target(target, allow_empty, profile)
+  end
+
+  function service.reconcile_profile_target(profile)
+    if not profile then
+      return nil
+    end
+
+    local target_can_be_empty = profile.automation_enabled == true or profile.build_mode == true
+    profile.automation_target = normalize_target(profile.automation_target, target_can_be_empty, profile)
+    if profile.build_mode == true then
+      profile.automation_target = profile.automation_target or empty_target()
+    end
+    profile.automation_enabled = profile.automation_enabled == true and target_has_content(profile.automation_target)
+    return profile.automation_target
   end
 
   function service.required_level_for_target(target)
@@ -327,10 +356,13 @@ function profile_automation.new(deps)
 
     if enabled == true then
       profile.build_mode = true
-      profile.automation_target = normalize_target(profile.automation_target, true) or target_from_profile(profile, true) or empty_target()
+      profile.automation_enabled = false
+      profile.automation_target = normalize_target(profile.automation_target, true, profile)
+        or target_from_profile(profile, true)
+        or empty_target()
     else
       profile.build_mode = false
-      profile.automation_target = normalize_target(profile.automation_target, true)
+      profile.automation_target = normalize_target(profile.automation_target, true, profile)
       if not target_has_content(profile.automation_target) then
         profile.automation_target = nil
         profile.automation_enabled = false
@@ -345,7 +377,9 @@ function profile_automation.new(deps)
       return nil
     end
 
-    profile.automation_target = normalize_target(profile.automation_target, true) or target_from_profile(profile, true) or empty_target()
+    profile.automation_target = normalize_target(profile.automation_target, true, profile)
+      or target_from_profile(profile, true)
+      or empty_target()
     return profile.automation_target
   end
 
@@ -420,7 +454,7 @@ function profile_automation.new(deps)
   end
 
   function service.target_model(profile)
-    local target = normalize_target(profile and profile.automation_target, profile and profile.build_mode == true)
+    local target = normalize_target(profile and profile.automation_target, profile and profile.build_mode == true, profile)
     if not target then
       return nil
     end
@@ -479,6 +513,7 @@ function profile_automation.new(deps)
       show_name_label = profile.show_name_label == true,
       show_label_level = profile.show_label_level == true,
       show_unspent_label = profile.show_unspent_label == true,
+      bound_turret = profile.bound_turret == true,
       label_color = profile.label_color,
       label_color_preset = profile.label_color_preset,
     })
@@ -522,16 +557,16 @@ function profile_automation.new(deps)
     target_ranks = type(target_ranks) == "table" and target_ranks or {}
     infinite_targets = type(infinite_targets) == "table" and infinite_targets or {}
 
-    while available > 0 do
+    local function spend_pass(infinite_only)
       local spent_this_pass = false
       for _, definition in ipairs(definitions or {}) do
         local id = definition.id
         local finite_target = positive_rank(target_ranks[id])
         local infinite = infinite_targets[id] == true
-        if finite_target > 0 or infinite then
+        if (not infinite_only and finite_target > 0) or (infinite_only and infinite) then
           local rank = math.max(0, math.floor(tonumber(ranks[id]) or 0))
           local max_rank = definition.max_rank or math.huge
-          local target_cap = infinite and max_rank or math.min(max_rank, finite_target)
+          local target_cap = infinite_only and max_rank or math.min(max_rank, finite_target)
           if rank < target_cap then
             ranks[id] = rank + 1
             available = available - 1
@@ -544,10 +579,12 @@ function profile_automation.new(deps)
           end
         end
       end
+      return spent_this_pass
+    end
 
-      if not spent_this_pass then
-        break
-      end
+    while available > 0 and spend_pass(false) do
+    end
+    while available > 0 and spend_pass(true) do
     end
 
     return changed, spent
@@ -696,6 +733,7 @@ function profile_automation.new(deps)
       if profile.automation_enabled == true and target_result.satisfied == true then
         profile.automation_enabled = false
       end
+      service.reconcile_profile_target(profile)
       return target_result
     end
 
@@ -712,7 +750,7 @@ function profile_automation.new(deps)
     if target then
       profile.automation_target = target
       profile.automation_enabled = policy.automation_enabled ~= false
-      profile.build_mode = true
+      profile.build_mode = false
     else
       profile.automation_target = nil
       profile.automation_enabled = false
@@ -733,6 +771,9 @@ function profile_automation.new(deps)
       profile.label_color = { policy.label_color[1], policy.label_color[2], policy.label_color[3] }
       profile.label_color_preset = policy.label_color_preset or "custom"
       visual_changed = true
+    end
+    if policy.bound_turret ~= nil then
+      profile.bound_turret = policy.bound_turret == true
     end
 
     service.apply_to_profile(entity, profile, { force = profile.automation_enabled == true })

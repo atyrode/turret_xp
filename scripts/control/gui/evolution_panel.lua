@@ -107,7 +107,15 @@ function evolution_panel_module.new(deps)
   end
 
   local function is_build_auto(state)
-    return is_build_mode(state) and state._build_auto == true
+    return state and not is_build_mode(state) and state.automation_enabled == true
+  end
+
+  local function action_lock_tooltip(state)
+    return is_build_auto(state) and { "turret-xp.follow-build-locked-tooltip" } or nil
+  end
+
+  local function action_tooltip(state, tooltip)
+    return action_lock_tooltip(state) or tooltip
   end
 
   local function is_infinite_target(state, group, id)
@@ -116,10 +124,11 @@ function evolution_panel_module.new(deps)
     return targets and targets[id] == true
   end
 
-  local function add_card_pick_button(parent, tags, enabled)
+  local function add_card_pick_button(parent, tags, enabled, tooltip)
     local button = parent.add({
       type = "button",
       caption = { "turret-xp.evolution-action-pick" },
+      tooltip = tooltip,
       enabled = enabled ~= false,
       tags = tags,
     })
@@ -157,7 +166,7 @@ function evolution_panel_module.new(deps)
     return icon, cell
   end
 
-  local function add_card_title_row(parent, sprite, name, action_tags, action_enabled)
+  local function add_card_title_row(parent, sprite, name, action_tags, action_enabled, tooltip)
     local title_row = parent.add({
       type = "flow",
       direction = "horizontal",
@@ -182,7 +191,7 @@ function evolution_panel_module.new(deps)
         type = "empty-widget",
         style = "flib_horizontal_pusher",
       })
-      add_card_pick_button(title_row, action_tags, action_enabled)
+      add_card_pick_button(title_row, action_tags, action_enabled, tooltip)
     end
 
     return title_row
@@ -267,7 +276,7 @@ function evolution_panel_module.new(deps)
       type = "sprite-button",
       sprite = "utility/reset",
       style = "tool_button",
-      tooltip = { "turret-xp.evolution-reset-tooltip" },
+      tooltip = action_tooltip(state, { "turret-xp.evolution-reset-tooltip" }),
       enabled = not build_auto,
       tags = {
         turret_xp_action = "reset-evolution",
@@ -285,7 +294,7 @@ function evolution_panel_module.new(deps)
     right_caption,
     action_caption,
     action_tags,
-    action_tooltip,
+    section_action_tooltip,
     action_enabled
   )
     return get_gui_components_service().add_evolution_section(parent, {
@@ -295,7 +304,7 @@ function evolution_panel_module.new(deps)
       right_caption = right_caption,
       action_caption = action_caption,
       action_tags = action_tags,
-      action_tooltip = action_tooltip,
+      action_tooltip = section_action_tooltip,
       action_enabled = action_enabled,
     })
   end
@@ -304,8 +313,8 @@ function evolution_panel_module.new(deps)
     return get_gui_components_service().add_choice_delimiter(parent)
   end
 
-  local function add_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name)
-    return get_gui_components_service().add_choice_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name)
+  local function add_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name, tooltip)
+    return get_gui_components_service().add_choice_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name, tooltip)
   end
 
   local function add_element_choice_card(parent, element, state, slot)
@@ -314,7 +323,7 @@ function evolution_panel_module.new(deps)
       turret_xp_action = "start-element",
       element = element.id,
       slot = slot,
-    }, not is_build_auto(state), evolution_anchor_name("element", element.id, slot))
+    }, not is_build_auto(state), evolution_anchor_name("element", element.id, slot), action_tooltip(state))
 
     local evolution = ensure_evolution_state(state)
     if slot == 2 and evolution.elements[1] then
@@ -336,7 +345,7 @@ function evolution_panel_module.new(deps)
     options = options or {}
     local row_definition = {
       type = "table",
-      column_count = 4,
+      column_count = 5,
     }
     if options.row_name then
       row_definition.name = options.row_name
@@ -349,7 +358,8 @@ function evolution_panel_module.new(deps)
       row.style.column_alignments[1] = "left"
       row.style.column_alignments[2] = "left"
       row.style.column_alignments[3] = "right"
-      row.style.column_alignments[4] = "right"
+      row.style.column_alignments[4] = "center"
+      row.style.column_alignments[5] = "right"
     end)
 
     add_fixed_sprite(row, options.sprite, LAYOUT.rank_allocation_icon_size, LAYOUT.rank_allocation_icon_cell_width)
@@ -393,6 +403,27 @@ function evolution_panel_module.new(deps)
     set_style(value, "minimal_width", LAYOUT.rank_allocation_value_width)
     set_style(value, "maximal_width", LAYOUT.rank_allocation_value_width)
 
+    if options.forever_tags then
+      local forever = row.add({
+        type = "checkbox",
+        caption = "",
+        tooltip = options.forever_tooltip,
+        state = options.forever_checked == true,
+        enabled = options.can_toggle_forever == true,
+        tags = options.forever_tags,
+      })
+      set_style(forever, "width", LAYOUT.rank_allocation_forever_width)
+      set_style(forever, "minimal_width", LAYOUT.rank_allocation_forever_width)
+      set_style(forever, "maximal_width", LAYOUT.rank_allocation_forever_width)
+    else
+      local spacer = row.add({
+        type = "empty-widget",
+      })
+      set_style(spacer, "width", LAYOUT.rank_allocation_forever_width)
+      set_style(spacer, "minimal_width", LAYOUT.rank_allocation_forever_width)
+      set_style(spacer, "maximal_width", LAYOUT.rank_allocation_forever_width)
+    end
+
     get_gui_components_service().add_rank_stepper(row, {
       rank = options.rank or 0,
       can_decrease = options.can_decrease == true,
@@ -410,6 +441,8 @@ function evolution_panel_module.new(deps)
     local build_mode = is_build_mode(state)
     local build_auto = is_build_auto(state)
     local infinite = is_infinite_target(state, "base", upgrade.id)
+    local locked_tooltip = action_lock_tooltip(state)
+    local forever_enabled = build_mode and not build_auto and (not upgrade.max_rank or rank < upgrade.max_rank or infinite)
     local rank_caption = infinite
         and (upgrade.max_rank and {
           "turret-xp.rank-caption-with-max-forever",
@@ -432,9 +465,11 @@ function evolution_panel_module.new(deps)
       value_caption = rich_stat_text(upgrade.value),
       can_decrease = not build_auto and (rank > 0 or infinite),
       can_increase = not build_auto and ((build_mode and not (upgrade.max_rank and rank >= upgrade.max_rank)) or can_increase),
-      decrease_tooltip = build_mode and { "turret-xp.build-rank-remove-tooltip", upgrade.name }
-        or { "turret-xp.rank-remove-tooltip", upgrade.name },
-      increase_tooltip = build_mode and {
+      decrease_tooltip = action_tooltip(
+        state,
+        build_mode and { "turret-xp.build-rank-remove-tooltip", upgrade.name } or { "turret-xp.rank-remove-tooltip", upgrade.name }
+      ),
+      increase_tooltip = action_tooltip(state, build_mode and {
         "turret-xp.build-base-rank-add-tooltip",
         upgrade.name,
         rich_stat_text(upgrade.value),
@@ -446,7 +481,14 @@ function evolution_panel_module.new(deps)
         rich_stat_text(upgrade.value),
         tostring(rank),
         tostring(rank + 1),
-      },
+      }),
+      forever_checked = infinite,
+      can_toggle_forever = forever_enabled,
+      forever_tooltip = locked_tooltip or { "turret-xp.build-forever-toggle-tooltip", upgrade.name },
+      forever_tags = build_mode and {
+        turret_xp_action = "toggle-base-forever",
+        upgrade = upgrade.id,
+      } or nil,
       decrease_tags = {
         turret_xp_action = "deallocate-base",
         upgrade = upgrade.id,
@@ -462,6 +504,8 @@ function evolution_panel_module.new(deps)
     local build_mode = is_build_mode(state)
     local build_auto = is_build_auto(state)
     local infinite = is_infinite_target(state, "augments", augment.id)
+    local locked_tooltip = action_lock_tooltip(state)
+    local forever_enabled = build_mode and not build_auto and (not augment.max_rank or rank < augment.max_rank or infinite)
     local rank_caption = infinite
         and (augment.max_rank and {
           "turret-xp.rank-caption-with-max-forever",
@@ -492,9 +536,11 @@ function evolution_panel_module.new(deps)
         turret_xp_action = "allocate-augment",
         augment = augment.id,
       },
-      decrease_tooltip = build_mode and { "turret-xp.build-rank-remove-tooltip", augment.name }
-        or { "turret-xp.rank-remove-tooltip", augment.name },
-      increase_tooltip = build_mode and {
+      decrease_tooltip = action_tooltip(
+        state,
+        build_mode and { "turret-xp.build-rank-remove-tooltip", augment.name } or { "turret-xp.rank-remove-tooltip", augment.name }
+      ),
+      increase_tooltip = action_tooltip(state, build_mode and {
         "turret-xp.build-augment-rank-add-tooltip",
         augment.name,
         rich_stat_text(augment.description),
@@ -506,7 +552,14 @@ function evolution_panel_module.new(deps)
         rich_stat_text(augment.description),
         tostring(rank),
         tostring(at_max and rank or (rank + 1)),
-      },
+      }),
+      forever_checked = infinite,
+      can_toggle_forever = forever_enabled,
+      forever_tooltip = locked_tooltip or { "turret-xp.build-forever-toggle-tooltip", augment.name },
+      forever_tags = build_mode and {
+        turret_xp_action = "toggle-augment-forever",
+        augment = augment.id,
+      } or nil,
     })
   end
 
@@ -647,7 +700,7 @@ function evolution_panel_module.new(deps)
     } or nil, has_element and {
       turret_xp_action = "reset-element-slot",
       slot = 1,
-    } or nil, { "turret-xp.first-element-reset-tooltip" }, not is_build_auto(state))
+    } or nil, action_tooltip(state, { "turret-xp.first-element-reset-tooltip" }), not is_build_auto(state))
     if unlocked then
       add_element_choices(section, state, 1)
     end
@@ -662,10 +715,11 @@ function evolution_panel_module.new(deps)
     effects,
     selected,
     action_tags,
-    action_enabled
+    action_enabled,
+    tooltip
   )
     local row = add_choice_card(parent, anchor_name, 6)
-    add_card_title_row(row, sprite, name, (not selected) and action_tags or nil, action_enabled)
+    add_card_title_row(row, sprite, name, (not selected) and action_tags or nil, action_enabled, tooltip)
 
     local description_label = row.add({
       type = "label",
@@ -694,7 +748,8 @@ function evolution_panel_module.new(deps)
         turret_xp_action = "choose-specialization",
         specialization = specialization.id,
       },
-      not is_build_auto(state)
+      not is_build_auto(state),
+      action_tooltip(state)
     )
   end
 
@@ -711,7 +766,7 @@ function evolution_panel_module.new(deps)
       evolution.specialization and {
         turret_xp_action = "reset-specialization",
       } or nil,
-      { "turret-xp.specialization-reset-tooltip" },
+      action_tooltip(state, { "turret-xp.specialization-reset-tooltip" }),
       not is_build_auto(state)
     )
     if not unlocked then
@@ -745,7 +800,8 @@ function evolution_panel_module.new(deps)
         turret_xp_action = "choose-sub-specialization",
         sub_specialization = sub_specialization.id,
       },
-      not is_build_auto(state)
+      not is_build_auto(state),
+      action_tooltip(state)
     )
   end
 
@@ -762,7 +818,7 @@ function evolution_panel_module.new(deps)
       evolution.sub_specialization and {
         turret_xp_action = "reset-sub-specialization",
       } or nil,
-      { "turret-xp.sub-specialization-reset-tooltip" },
+      action_tooltip(state, { "turret-xp.sub-specialization-reset-tooltip" }),
       not is_build_auto(state)
     )
     if not unlocked then
@@ -825,7 +881,7 @@ function evolution_panel_module.new(deps)
     } or nil, has_element and {
       turret_xp_action = "reset-element-slot",
       slot = 2,
-    } or nil, { "turret-xp.second-element-reset-tooltip" }, not is_build_auto(state))
+    } or nil, action_tooltip(state, { "turret-xp.second-element-reset-tooltip" }), not is_build_auto(state))
     if not unlocked then
       return
     end

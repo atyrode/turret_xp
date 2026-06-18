@@ -59,19 +59,19 @@ Use this path before merging gameplay, GUI, persistence, feeder, combat, or rele
 6. Hover stat-name info markers and confirm formulas live there. HP and Range quality breakdowns should live on the quality diamond.
 7. Confirm stats reserve scrollbar space and values do not render under the scrollbar.
 8. Confirm numeric rich text colors only numbers; units and prose stay neutral.
-9. Enter Build mode, plan core ranks, augments, specialization, elements, and a Ctrl-click forever priority, then confirm the UI tint and target level make it clear that this is a preview path.
-10. Enable Auto on that build path, add levels, and confirm finite targets are spent toward while forever priorities keep Auto enabled.
+9. Enter Build mode, plan core ranks, augments, specialization, elements, and a checked loop priority, then confirm the UI tint and target level make it clear that this is a preview path.
+10. Exit Build mode, enable Follow build on that path, add levels, and confirm finite targets are spent first while loop priorities keep Follow build enabled.
 11. Set a manual specialization, paste a conflicting copied build, and confirm the manual specialization is not overwritten while the conflict is surfaced.
-12. Copy/paste settings from a configured veteran turret to an empty turret and confirm label visibility, label color, copied build target, Auto state, and core request policy copy without copying the source name, XP, level, kills, or damage.
+12. Copy/paste settings from a configured veteran turret to an empty turret and confirm label visibility, label color, copied build target, Follow build state, bound state, and pending core fulfillment copy without copying the source name, XP, level, kills, or damage.
 
 ### Logistics And Setup Policy
 
-1. Open an empty turret, enable `Request Veteran Core`, and confirm a logistic request appears for one Veteran Core when the turret is in a logistic network.
-2. Deliver a tagged Veteran Core by bot and confirm it installs on that turret with its profile intact.
-3. Cancel the request before delivery and confirm the request disappears.
+1. Blueprint or copy/paste a configured veteran turret, build the empty copy, and confirm the copied turret requests one Veteran Core when it is in a logistic network.
+2. Deliver a tagged Veteran Core by bot and confirm it installs on that turret with its profile intact while applying the copied build policy.
+3. Repeat with manual placement into the pending core slot and confirm the copied build policy still applies to the carried core.
 4. Deliver a core, then mine or destroy the empty requested turret before the refresh installs it; the delivered core should spill rather than vanish.
-5. Blueprint or copy/paste a configured empty requested turret, build the copy, and confirm the copied turret requests a core and keeps the copied setup policy for the core it later receives.
-6. Build a batch of requested empty turrets and watch UPS/TPS during normal play; there should be no visible stutter from waiting requests.
+5. Copy/paste a bound veteran turret and confirm the copied turret becomes bound after a core is delivered or manually placed.
+6. Build a batch of requested empty copied turrets and watch UPS/TPS during normal play; there should be no visible stutter from waiting requests.
 
 ### GUI Snapshot Review
 

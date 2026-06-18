@@ -119,6 +119,7 @@ return function(M)
         or policy.show_name_label == true
         or policy.show_label_level == true
         or policy.show_unspent_label == true
+        or policy.bound_turret == true
       )
   end
 

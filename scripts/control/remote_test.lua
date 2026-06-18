@@ -726,6 +726,25 @@ return function(M)
     return nil
   end
 
+  local function find_gui_action(parent, action, tag_key, tag_value)
+    if not parent or not parent.valid then
+      return nil
+    end
+
+    if parent.tags and parent.tags.turret_xp_action == action and (not tag_key or parent.tags[tag_key] == tag_value) then
+      return parent
+    end
+
+    for _, child in pairs(parent.children or {}) do
+      local found = find_gui_action(child, action, tag_key, tag_value)
+      if found then
+        return found
+      end
+    end
+
+    return nil
+  end
+
   local function gui_style_property(element, property)
     if not element or not element.valid or not element.style then
       return nil
@@ -952,7 +971,55 @@ return function(M)
         key = panel and panel.tags and panel.tags.key or nil,
         core_status_caption = status and copy_serializable(status.caption) or nil,
         has_inventory_picker = panel and find_gui_element(panel, GUI.inventory_cores) ~= nil or false,
-        has_core_request_checkbox = panel and find_gui_element(panel, GUI.core_request_enabled) ~= nil or false,
+        has_core_request_checkbox = panel and find_gui_action(panel, "toggle-core-request") ~= nil or false,
+      }
+      if storage and storage.turret_xp then
+        storage.turret_xp.players[player.index] = nil
+        storage.turret_xp.player_settings[player.index] = nil
+      end
+      return summary
+    end,
+    installed_gui_contract = function(entity)
+      if not is_gun_turret(entity) then
+        return {
+          opened = false,
+        }
+      end
+
+      local state = get_turret_state(entity)
+      if not state then
+        return {
+          opened = false,
+        }
+      end
+
+      local player = make_fake_dispatch_player(entity)
+      local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
+      add_core_panel(root, "installed")
+      add_evolution_panel(root)
+      update_core_panel(root, player, entity, state)
+      local display_state = profile_automation.build_preview_profile(state) or state
+      update_evolution_panel(root, entity, display_state, "firearm-magazine")
+
+      local panel = find_gui_element(root, GUI.core)
+      local auto = panel and find_gui_element(panel, GUI.core_automation_enabled) or nil
+      local evolution = find_gui_element(root, GUI.evolution)
+      local allocate_damage = find_gui_action(evolution, "allocate-base", "upgrade", "damage")
+      local forever_damage = find_gui_action(evolution, "toggle-base-forever", "upgrade", "damage")
+
+      local summary = {
+        opened = panel and panel.valid == true or false,
+        build_mode = state.build_mode == true,
+        automation_enabled = state.automation_enabled == true,
+        has_auto_checkbox = auto ~= nil,
+        auto_state = auto and auto.state == true or false,
+        auto_enabled = auto and auto.enabled == true or false,
+        allocate_damage_enabled = allocate_damage and allocate_damage.enabled == true or false,
+        allocate_damage_tooltip = allocate_damage and copy_serializable(allocate_damage.tooltip) or nil,
+        has_damage_forever_checkbox = forever_damage ~= nil,
+        damage_forever_state = forever_damage and forever_damage.state == true or false,
+        damage_forever_enabled = forever_damage and forever_damage.enabled == true or false,
+        damage_forever_tooltip = forever_damage and copy_serializable(forever_damage.tooltip) or nil,
       }
       if storage and storage.turret_xp then
         storage.turret_xp.players[player.index] = nil
@@ -1114,24 +1181,44 @@ return function(M)
 
       return summary
     end,
-    dispatch_toggle_core_request = function(entity, visible)
+    dispatch_core_slot_cursor_install = function(entity, fields)
       if not is_gun_turret(entity) then
         return nil
       end
 
       local player = make_fake_dispatch_player(entity)
+      local cursor_inventory = game.create_inventory(1)
+      local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields or {})
+      cursor_inventory[1].set_stack(make_chip_item_stack(profile))
+      player.cursor_stack = cursor_inventory[1]
+
       remember_open_turret(player, entity)
-      dispatch_gui_checked_state_action(player, {
-        element = {
-          valid = true,
-          state = visible == true,
-        },
+      dispatch_gui_click_action(player, {
+        player_index = player.index,
+        element = make_fake_gui_element({
+          type = "sprite-button",
+          name = GUI.core_slot,
+          tags = {
+            turret_xp_action = "core-slot",
+          },
+        }),
       }, {
-        turret_xp_action = "toggle-core-request",
+        turret_xp_action = "core-slot",
       })
       forget_open_turret(player)
 
-      return turret_xp_test_core_request_status(entity)
+      local summary = turret_xp_test_state_summary(entity)
+      local status = turret_xp_test_core_request_status(entity)
+      local cursor_has_stack = cursor_inventory[1].valid_for_read
+      local cursor_name = cursor_has_stack and cursor_inventory[1].name or nil
+      cursor_inventory.destroy()
+
+      return {
+        state = summary,
+        request = status,
+        cursor_has_stack = cursor_has_stack,
+        cursor_name = cursor_name,
+      }
     end,
     dispatch_click_action = function(entity, tags, event)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil

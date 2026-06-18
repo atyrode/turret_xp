@@ -169,6 +169,7 @@ function tests.run_layout_constants_test()
     layout.rank_allocation_detail_width
       + layout.rank_allocation_icon_cell_width
       + layout.rank_allocation_value_width
+      + layout.rank_allocation_forever_width
       + layout.rank_stepper_width
       + layout.rank_allocation_spacing_width,
     layout.evolution_inner_width,
