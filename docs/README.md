@@ -11,6 +11,8 @@ This directory is the working context for `turret_xp`. The goal is not more docu
 - [ARCHITECTURE.md](ARCHITECTURE.md): runtime/data/test ownership, storage shape, module boundaries, and invariants.
 - [TECHNICAL_DIRECTION.md](TECHNICAL_DIRECTION.md): technical choices, research memory, dependencies, API notes, risks, and validation paths.
 - [DESIGN.md](DESIGN.md): gameplay direction, UX direction, balance intent, compatibility posture, public identity, and feedback goals.
+- [GUI_SPEC_FACTORY.md](GUI_SPEC_FACTORY.md): process for writing agent-readable GUI specs before implementation.
+- [TURRET_XP_GUI_SPEC.md](TURRET_XP_GUI_SPEC.md): future Turret XP GUI redesign spec produced by the GUI spec factory.
 - [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md): future-only progression direction. It is not an implementation promise.
 - [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md): current baseline, completed foundations, near-term roadmap, and validation checklist.
 - [PLAYTEST.md](PLAYTEST.md): smoke, regression, deep manual, compatibility, and report-back paths.
