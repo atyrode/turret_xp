@@ -59,8 +59,8 @@ Use this path before merging gameplay, GUI, persistence, feeder, combat, or rele
 6. Hover stat-name info markers and confirm formulas live there. HP and Range quality breakdowns should live on the quality diamond.
 7. Confirm stats reserve scrollbar space and values do not render under the scrollbar.
 8. Confirm numeric rich text colors only numbers; units and prose stay neutral.
-9. Enter Build mode, plan core ranks, augments, specialization, elements, and a checked loop priority, then confirm the UI tint and target level make it clear that this is a preview path.
-10. Exit Build mode, enable Follow build on that path, add levels, and confirm finite targets are spent first while loop priorities keep Follow build enabled.
+9. Enter Build mode, plan core ranks, augments, specialization, elements, and a checked loop priority, then confirm the UI tint and target level make it clear that this is a preview path. The target level, core, augment, specialization, and element summaries should appear only while Build mode is open.
+10. Exit Build mode, enable Follow build on that path, add levels, and confirm finite targets are spent first while loop priorities keep Follow build enabled. Untick Follow build and re-enter Build mode; the saved build should be editable again.
 11. Set a manual specialization, paste a conflicting copied build, and confirm the manual specialization is not overwritten while the conflict is surfaced.
 12. Copy/paste settings from a configured veteran turret to an empty turret and confirm label visibility, label color, copied build target, Follow build state, bound state, and pending core fulfillment copy without copying the source name, XP, level, kills, or damage.
 

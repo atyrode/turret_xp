@@ -48,10 +48,6 @@ function core_automation_controls.new(deps)
     return value
   end
 
-  local function has_text(value)
-    return value ~= nil and value ~= ""
-  end
-
   function service.add_installed(parent, state)
     local build_mode = profile_automation.build_mode_active(state)
     local target = profile_automation.target_model(state)
@@ -119,7 +115,11 @@ function core_automation_controls.new(deps)
       set_style(auto, "font_color", state and state.automation_enabled == true and COLOR.build_mode or COLOR.muted)
     end
 
-    if not target then
+    if not build_mode then
+      return
+    end
+
+    if not target or not has_target then
       add_summary_row(frame, { "turret-xp.build-mode-target" }, { "turret-xp.build-mode-target-none" })
       return
     end
@@ -145,22 +145,6 @@ function core_automation_controls.new(deps)
     )
     add_summary_row(frame, { "turret-xp.build-mode-specialization" }, target.choice and target.choice ~= "" and target.choice or "-")
     add_summary_row(frame, { "turret-xp.build-mode-elements" }, target.elements and target.elements ~= "" and target.elements or "-")
-    if has_text(target.core_infinite) then
-      add_summary_row(
-        frame,
-        { "turret-xp.build-mode-core-forever" },
-        target.core_infinite,
-        build_mode and COLOR.build_mode_muted or COLOR.muted
-      )
-    end
-    if has_text(target.augment_infinite) then
-      add_summary_row(
-        frame,
-        { "turret-xp.build-mode-augment-forever" },
-        target.augment_infinite,
-        build_mode and COLOR.build_mode_muted or COLOR.muted
-      )
-    end
   end
 
   return service

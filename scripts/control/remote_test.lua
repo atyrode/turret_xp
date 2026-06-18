@@ -745,6 +745,26 @@ return function(M)
     return nil
   end
 
+  local function find_gui_caption_key(parent, caption_key)
+    if not parent or not parent.valid then
+      return nil
+    end
+
+    local caption = parent.caption
+    if type(caption) == "table" and caption[1] == caption_key then
+      return parent
+    end
+
+    for _, child in pairs(parent.children or {}) do
+      local found = find_gui_caption_key(child, caption_key)
+      if found then
+        return found
+      end
+    end
+
+    return nil
+  end
+
   local function gui_style_property(element, property)
     if not element or not element.valid or not element.style then
       return nil
@@ -1006,6 +1026,11 @@ return function(M)
       local evolution = find_gui_element(root, GUI.evolution)
       local allocate_damage = find_gui_action(evolution, "allocate-base", "upgrade", "damage")
       local forever_damage = find_gui_action(evolution, "toggle-base-forever", "upgrade", "damage")
+      local build_level = find_gui_caption_key(panel, "turret-xp.build-mode-level")
+      local build_core = find_gui_caption_key(panel, "turret-xp.build-mode-core")
+      local build_augments = find_gui_caption_key(panel, "turret-xp.build-mode-augments")
+      local build_core_forever = find_gui_caption_key(panel, "turret-xp.build-mode-core-forever")
+      local build_augment_forever = find_gui_caption_key(panel, "turret-xp.build-mode-augment-forever")
 
       local summary = {
         opened = panel and panel.valid == true or false,
@@ -1020,6 +1045,11 @@ return function(M)
         damage_forever_state = forever_damage and forever_damage.state == true or false,
         damage_forever_enabled = forever_damage and forever_damage.enabled == true or false,
         damage_forever_tooltip = forever_damage and copy_serializable(forever_damage.tooltip) or nil,
+        has_build_level_summary = build_level ~= nil,
+        has_build_core_summary = build_core ~= nil,
+        has_build_augment_summary = build_augments ~= nil,
+        has_build_core_forever_summary = build_core_forever ~= nil,
+        has_build_augment_forever_summary = build_augment_forever ~= nil,
       }
       if storage and storage.turret_xp then
         storage.turret_xp.players[player.index] = nil

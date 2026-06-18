@@ -109,6 +109,7 @@ function gui_runtime_module.new(deps)
           context.build_target and context.build_target.open_ended and { "turret-xp.build-xp-open-ended", context.required }
             or { "turret-xp.build-xp", context.required }
         )
+        set_gui_caption(panel, GUI.xp_percent, "")
       else
         set_gui_caption(panel, GUI.level, { "turret-xp.level", context.progression.level })
         set_gui_caption(
@@ -116,16 +117,17 @@ function gui_runtime_module.new(deps)
           GUI.xp,
           { "turret-xp.xp-progress", format_number(context.progression.xp, 0), format_number(context.required, 0) }
         )
+        set_gui_caption(panel, GUI.xp_percent, {
+          "turret-xp.level-progress-suffix",
+          format_number(context.progress * 100, 0),
+        })
       end
     else
       set_gui_caption(panel, GUI.level, { "turret-xp.no-core-level" })
       set_gui_caption(panel, GUI.xp, { "turret-xp.no-core-xp" })
+      set_gui_caption(panel, GUI.xp_percent, "")
     end
     set_gui_progress(panel, GUI.xp_bar, context.progress)
-    set_gui_caption(panel, GUI.xp_percent, state and {
-      "turret-xp.level-progress-suffix",
-      format_number(context.progress * 100, 0),
-    } or "")
     update_xp_modifier_summary(panel, entity, state)
 
     update_stats_panel(

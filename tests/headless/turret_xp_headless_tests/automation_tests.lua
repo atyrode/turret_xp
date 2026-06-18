@@ -199,6 +199,11 @@ function tests.run_build_mode_planning_test(surface)
 
   local gui = call("installed_gui_contract", turret)
   assert_eq(gui.has_auto_checkbox, false, "Build mode should hide the Follow build checkbox")
+  assert_eq(gui.has_build_level_summary, true, "Build mode should show the planned required level")
+  assert_eq(gui.has_build_core_summary, true, "Build mode should show planned core point budget")
+  assert_eq(gui.has_build_augment_summary, true, "Build mode should show planned augment point budget")
+  assert_eq(gui.has_build_core_forever_summary, false, "Build mode should not duplicate loop priorities in summary rows")
+  assert_eq(gui.has_build_augment_forever_summary, false, "Build mode should not duplicate augment loops in summary rows")
   summary = call("dispatch_checked_action", turret, {
     turret_xp_action = "toggle-build-auto",
   }, true)
@@ -222,6 +227,7 @@ function tests.run_build_mode_planning_test(surface)
   gui = call("installed_gui_contract", turret)
   assert_eq(gui.has_auto_checkbox, true, "live mode should show the Follow build checkbox")
   assert_eq(gui.auto_state, true, "live Follow build checkbox should reflect enabled Auto")
+  assert_eq(gui.has_build_level_summary, false, "live mode should hide build detail summary rows")
   assert_eq(gui.allocate_damage_enabled, false, "Follow build should disable manual Evolution buttons")
   assert_eq(
     gui.allocate_damage_tooltip[1],
@@ -234,10 +240,16 @@ function tests.run_build_mode_planning_test(surface)
     turret_xp_action = "toggle-build-auto",
   }, false)
   assert_eq(summary.automation_enabled, false, "Follow build should be manually disableable before editing")
+  gui = call("installed_gui_contract", turret)
+  assert_eq(gui.has_build_level_summary, false, "unticked Follow build should still keep live mode compact")
   summary = call("dispatch_click_action", turret, {
     turret_xp_action = "enter-build-mode",
   })
   assert_eq(summary.build_mode, true, "editing the saved build should require Build mode")
+  gui = call("installed_gui_contract", turret)
+  assert_eq(gui.has_auto_checkbox, false, "Follow build should stay hidden after re-entering Build mode")
+  assert_eq(gui.allocate_damage_enabled, true, "unticking Follow build should allow saved build edits after re-entering Build mode")
+  assert_eq(gui.has_build_level_summary, true, "Build mode should restore build details after Follow build was unticked")
   summary = call("dispatch_click_action", turret, {
     turret_xp_action = "allocate-base",
     upgrade = "damage",
