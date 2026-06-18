@@ -1000,8 +1000,13 @@ return function(M)
       local player = make_fake_dispatch_player(entity)
       local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
       add_core_panel(root, "empty")
+      add_inventory_core_panel(root)
+      add_platform_core_panel(root)
       update_core_panel(root, player, entity, nil)
+      update_inventory_core_panel(root, player, entity, nil)
+      update_platform_core_panel(root, entity, nil)
       local panel = find_gui_element(root, GUI.core)
+      local inventory_panel = find_gui_element(root, GUI.inventory_cores)
       local status = panel and find_gui_element(panel, GUI.core_status) or nil
       local slot = panel and find_gui_element(panel, GUI.core_slot) or nil
       local slot_style = slot and (type(slot.style) == "string" and slot.style or slot.style_name) or nil
@@ -1013,8 +1018,8 @@ return function(M)
         core_slot_sprite = slot and slot.sprite or nil,
         core_slot_toggled = slot and slot.toggled == true or false,
         core_slot_style = slot_style,
-        has_inventory_picker = panel and find_gui_element(panel, GUI.inventory_cores) ~= nil or false,
-        has_core_request_checkbox = panel and find_gui_action(panel, "toggle-core-request") ~= nil or false,
+        has_inventory_picker = inventory_panel and inventory_panel.visible ~= false or false,
+        has_core_request_checkbox = find_gui_action(root, "toggle-core-request") ~= nil or false,
       }
       if storage and storage.turret_xp then
         storage.turret_xp.players[player.index] = nil
@@ -1039,16 +1044,19 @@ return function(M)
       local player = make_fake_dispatch_player(entity)
       local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
       add_core_panel(root, "installed")
+      add_label_panel(root)
       add_build_panel(root)
       add_evolution_panel(root)
       update_core_panel(root, player, entity, state)
+      update_label_panel(root, state)
       update_build_panel(root, state)
       local display_state = profile_automation.build_preview_profile(state) or state
       update_evolution_panel(root, entity, display_state, "firearm-magazine")
 
       local panel = find_gui_element(root, GUI.core)
       local core_header = panel and find_gui_element(panel, GUI.core_header) or nil
-      local label_controls = panel and find_gui_element(panel, GUI.core_label_controls) or nil
+      local label_section = find_gui_element(root, GUI.core_label_section)
+      local label_name = label_section and find_gui_element(label_section, GUI.core_name) or nil
       local build_container = find_gui_element(root, GUI.core_build_controls_container)
       local auto = build_container and find_gui_element(build_container, GUI.core_automation_enabled) or nil
       local build_controls = build_container and find_gui_element(build_container, GUI.core_build_controls) or nil
@@ -1066,11 +1074,13 @@ return function(M)
         opened = panel and panel.valid == true or false,
         build_container_type = build_container and build_container.type or nil,
         build_controls_inside_core = panel and find_gui_element(panel, GUI.core_build_controls) ~= nil or false,
+        label_controls_inside_core = panel and find_gui_element(panel, GUI.core_name) ~= nil or false,
         core_header_type = core_header and core_header.type or nil,
         core_header_style = gui_style_name(core_header),
-        label_controls_type = label_controls and label_controls.type or nil,
-        label_controls_style = gui_style_name(label_controls),
-        label_controls_bottom_margin = gui_style_property(label_controls, "bottom_margin"),
+        label_section_type = label_section and label_section.type or nil,
+        label_section_style = gui_style_name(label_section),
+        label_section_role = label_section and label_section.tags and label_section.tags.turret_xp_section_role or nil,
+        label_name_type = label_name and label_name.type or nil,
         build_mode = state.build_mode == true,
         automation_enabled = state.automation_enabled == true,
         build_controls_type = build_controls and build_controls.type or nil,
@@ -1148,11 +1158,13 @@ return function(M)
       end
 
       add_core_panel(shell.body, "installed")
+      add_label_panel(shell.body)
       add_build_panel(shell.body)
       add_xp_panel(shell.body)
       add_stats_panel(shell.body)
       if not update_turret_gui(player, entity) then
         update_core_panel(shell.frame, player, entity, state)
+        update_label_panel(shell.frame, state)
         update_build_panel(shell.frame, state)
       end
 
@@ -1173,7 +1185,7 @@ return function(M)
       for index, child in ipairs(shell.body.children or {}) do
         local stats_scroll = find_gui_element(child, GUI.stats_scroll)
         local core_header = find_gui_element(child, GUI.core_header)
-        local label_controls = find_gui_element(child, GUI.core_label_controls)
+        local label_name = find_gui_element(child, GUI.core_name)
         local build_controls = find_gui_element(child, GUI.core_build_controls)
         local build_details = find_gui_element(child, GUI.core_build_details)
         local entry = {
@@ -1187,11 +1199,12 @@ return function(M)
           top_margin = gui_style_property(child, "top_margin"),
           bottom_margin = gui_style_property(child, "bottom_margin"),
           left_section = child.tags and child.tags.turret_xp_left_section == true or false,
+          section_role = child.tags and child.tags.turret_xp_section_role or nil,
           build_mode_section = child.tags and child.tags.turret_xp_build_mode == true or false,
           has_stats_scroll = stats_scroll ~= nil,
           stats_scroll_height = gui_style_property(stats_scroll, "height"),
           core_header_style = gui_style_name(core_header),
-          label_controls_bottom_margin = gui_style_property(label_controls, "bottom_margin"),
+          has_label_name = label_name ~= nil,
           build_controls_type = build_controls and build_controls.type or nil,
           build_controls_style = gui_style_name(build_controls),
           build_details_type = build_details and build_details.type or nil,
@@ -1202,6 +1215,8 @@ return function(M)
           sample.named[entry.name] = entry
           if entry.name == GUI.core then
             sample.named.core = entry
+          elseif entry.name == GUI.core_label_section then
+            sample.named.label = entry
           elseif entry.name == GUI.core_build_controls_container then
             sample.named.build = entry
           elseif entry.name == GUI.xp_panel then

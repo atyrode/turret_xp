@@ -119,6 +119,7 @@ Do not publish Mod Portal releases from a local checkout. The only supported Mod
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): runtime/data/test ownership and invariants.
 - [docs/TECHNICAL_DIRECTION.md](docs/TECHNICAL_DIRECTION.md): technical choices, research memory, risks, dependencies, and validation.
 - [docs/DESIGN.md](docs/DESIGN.md): UX, balance, compatibility, and public identity direction.
+- [docs/GUI_SPEC.md](docs/GUI_SPEC.md): attached turret GUI rewrite contract and layout acceptance criteria.
 - [docs/PROGRESSION_DESIGN.md](docs/PROGRESSION_DESIGN.md): future-only progression design notes.
 - [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md): current work, validation checklist, and near-term roadmap.
 - [docs/PLAYTEST.md](docs/PLAYTEST.md): smoke, regression, and deep manual playtest paths.

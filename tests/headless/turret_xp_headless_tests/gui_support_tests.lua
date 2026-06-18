@@ -196,7 +196,7 @@ function tests.run_layout_constants_test()
   )
 end
 
-local function assert_left_section_contract(entry, layout, expected_style, label, build_mode)
+local function assert_left_section_contract(entry, layout, expected_style, label, build_mode, expected_role)
   assert_true(entry ~= nil, label .. " section was missing from the layout sample")
   assert_eq(entry.type, "frame", label .. " section must be a frame")
   assert_eq(entry.style, expected_style, label .. " section style drifted")
@@ -204,6 +204,7 @@ local function assert_left_section_contract(entry, layout, expected_style, label
   assert_eq(entry.minimal_width, layout.left_section_width, label .. " section minimum width drifted")
   assert_eq(entry.maximal_width, layout.left_section_width, label .. " section maximum width drifted")
   assert_eq(entry.left_section, true, label .. " section must keep the left-section tag")
+  assert_eq(entry.section_role, expected_role, label .. " section role drifted")
   assert_eq(entry.build_mode_section, build_mode == true, label .. " section build-mode tag drifted")
   assert_eq(entry.top_margin, nil, label .. " section must not use local top margin")
   assert_eq(entry.bottom_margin, nil, label .. " section must not use local bottom margin")
@@ -223,11 +224,18 @@ function tests.run_left_column_layout_contract_test(surface)
   assert_eq(sample.body.horizontal_align, "center", "left column body must center shared-width sections")
   assert_eq(sample.body.vertical_spacing, layout.left_section_spacing, "left column body spacing must be shell-owned")
 
-  assert_left_section_contract(sample.named.core, layout, "turret_xp_left_section_frame", "Core", false)
-  assert_left_section_contract(sample.named.build, layout, "turret_xp_left_section_frame", "Build", false)
-  assert_left_section_contract(sample.named.xp, layout, "turret_xp_left_section_frame", "XP", false)
+  assert_eq(sample.children[1].name, "turret-xp-core", "Core should be the first left-column section")
+  assert_eq(sample.children[2].name, "turret-xp-core-label-section", "Label should be the second left-column section")
+  assert_eq(sample.children[3].name, "turret-xp-core-build-controls-container", "Build should be the third left-column section")
+  assert_eq(sample.children[4].name, "turret-xp-xp-panel", "Level should be the fourth left-column section")
+
+  assert_left_section_contract(sample.named.core, layout, "turret_xp_left_section_frame", "Core", false, "core")
+  assert_left_section_contract(sample.named.label, layout, "turret_xp_left_section_frame", "Label", false, "label")
+  assert_left_section_contract(sample.named.build, layout, "turret_xp_left_section_frame", "Build", false, "build")
+  assert_left_section_contract(sample.named.xp, layout, "turret_xp_left_section_frame", "Level", false, "level")
   assert_eq(sample.named.core.core_header_style, "subheader_frame", "Core section should keep a darker identity header")
-  assert_eq(sample.named.core.label_controls_bottom_margin, 2, "Core label controls should leave bottom breathing room")
+  assert_eq(sample.named.core.has_label_name, false, "Core section must not contain Label controls")
+  assert_eq(sample.named.label.has_label_name, true, "Label section should contain the core name field")
   assert_eq(sample.named.build.build_controls_type, "frame", "Build section should keep its controls in a darker header frame")
   assert_eq(sample.named.build.build_controls_style, "subheader_frame", "live Build header should use the normal darker style")
   assert_eq(sample.named.build.build_details_type, nil, "live Build section should not render expanded details")
@@ -243,9 +251,24 @@ function tests.run_left_column_layout_contract_test(surface)
 
   local build_sample = call("left_column_layout_sample", turret, true)
   assert_true(build_sample ~= nil and build_sample.available == true, "Build-mode left-column layout sample was unavailable")
-  assert_left_section_contract(build_sample.named.core, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Core", true)
-  assert_left_section_contract(build_sample.named.build, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Build", true)
-  assert_left_section_contract(build_sample.named.xp, layout, "turret_xp_left_section_frame_build_mode", "Build-mode XP", false)
+  assert_left_section_contract(build_sample.named.core, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Core", true, "core")
+  assert_left_section_contract(
+    build_sample.named.label,
+    layout,
+    "turret_xp_left_section_frame_build_mode",
+    "Build-mode Label",
+    true,
+    "label"
+  )
+  assert_left_section_contract(
+    build_sample.named.build,
+    layout,
+    "turret_xp_left_section_frame_build_mode",
+    "Build-mode Build",
+    true,
+    "build"
+  )
+  assert_left_section_contract(build_sample.named.xp, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Level", true, "level")
   assert_eq(build_sample.named.core.core_header_style, "turret_xp_build_mode_subheader_frame", "Build-mode Core header should tint")
   assert_eq(build_sample.named.build.build_controls_style, "turret_xp_build_mode_subheader_frame", "Build-mode Build header should tint")
   assert_eq(

@@ -2,10 +2,6 @@ local gui_support = require("scripts.control.gui_support")
 local gui_components = require("scripts.control.gui_components")
 local gui_formatters = require("scripts.control.gui.formatters")
 local gui_core_panel = require("scripts.control.gui.core_panel")
-local gui_core_identity = require("scripts.control.gui.core_identity")
-local gui_core_label_controls = require("scripts.control.gui.core_label_controls")
-local gui_core_automation_controls = require("scripts.control.gui.core_automation_controls")
-local gui_core_platform_controls = require("scripts.control.gui.core_platform_controls")
 local gui_stats_panel = require("scripts.control.gui.stats_panel")
 local gui_evolution_panel = require("scripts.control.gui.evolution_panel")
 local gui_shell = require("scripts.control.gui.shell")
@@ -21,9 +17,6 @@ return function(M)
   local gui_components_service = nil
   local gui_formatters_service = nil
   local core_panel_service = nil
-  local core_identity_service = nil
-  local core_label_controls_service = nil
-  local core_automation_controls_service = nil
   local stats_panel_service = nil
   local evolution_panel_service = nil
   local shell_service = nil
@@ -108,52 +101,6 @@ return function(M)
     return core_picker_table_service
   end
 
-  local function get_core_identity_service()
-    if not core_identity_service then
-      core_identity_service = gui_core_identity.new({
-        GUI = GUI,
-        COLOR = COLOR,
-        LAYOUT = LAYOUT,
-        CHIP_NAME = CHIP_NAME,
-        components = get_gui_components_service(),
-        set_style = set_style,
-        set_element_style = set_element_style,
-        dev_controls_enabled = gui_dev_controls_enabled,
-        widgets = get_gui_widgets_service(),
-      })
-    end
-
-    return core_identity_service
-  end
-
-  local function get_core_label_controls_service()
-    if not core_label_controls_service then
-      core_label_controls_service = gui_core_label_controls.new({
-        GUI = GUI,
-        COLOR = COLOR,
-        components = get_gui_components_service(),
-        set_style = set_style,
-        find_matching_label_color_preset = find_matching_label_color_preset,
-      })
-    end
-
-    return core_label_controls_service
-  end
-
-  local function get_core_automation_controls_service()
-    if not core_automation_controls_service then
-      core_automation_controls_service = gui_core_automation_controls.new({
-        GUI = GUI,
-        COLOR = COLOR,
-        components = get_gui_components_service(),
-        set_style = set_style,
-        profile_automation = profile_automation,
-      })
-    end
-
-    return core_automation_controls_service
-  end
-
   local function get_gui_formatters_service()
     if not gui_formatters_service then
       gui_formatters_service = gui_formatters.new({
@@ -188,7 +135,6 @@ return function(M)
         set_element_style = set_element_style,
         find_gui_element = find_gui_element,
         get_remembered_turret = get_remembered_turret,
-        get_player_core_options = get_player_core_options,
         get_player_core_options_model = get_player_core_options_model,
         get_core_picker_sort = get_core_picker_sort,
         get_core_picker_filters = get_core_picker_filters,
@@ -220,14 +166,11 @@ return function(M)
         end,
         widgets = get_gui_widgets_service(),
         core_picker_table = get_core_picker_table_service(),
-        core_identity = get_core_identity_service(),
-        core_label_controls = get_core_label_controls_service(),
-        core_automation_controls = get_core_automation_controls_service(),
         profile_automation = profile_automation,
         components = get_gui_components_service(),
-        core_platform_controls = gui_core_platform_controls,
         get_turret_host = get_turret_host,
         core_requester = core_requester,
+        find_matching_label_color_preset = find_matching_label_color_preset,
       })
     end
 
@@ -375,8 +318,17 @@ return function(M)
         update_core_panel = function(...)
           return update_core_panel(...)
         end,
+        update_label_panel = function(...)
+          return update_label_panel(...)
+        end,
         update_build_panel = function(...)
           return update_build_panel(...)
+        end,
+        update_inventory_core_panel = function(...)
+          return update_inventory_core_panel(...)
+        end,
+        update_platform_core_panel = function(...)
+          return update_platform_core_panel(...)
         end,
         update_stats_panel = function(...)
           return update_stats_panel(...)
@@ -541,8 +493,20 @@ return function(M)
     return get_core_panel_service().add_core_panel(parent, mode)
   end
 
+  function add_label_panel(parent)
+    return get_core_panel_service().add_label_panel(parent)
+  end
+
   function add_build_panel(parent)
     return get_core_panel_service().add_build_panel(parent)
+  end
+
+  function add_inventory_core_panel(parent)
+    return get_core_panel_service().add_inventory_core_panel(parent)
+  end
+
+  function add_platform_core_panel(parent)
+    return get_core_panel_service().add_platform_core_panel(parent)
   end
 
   function core_panel_key(player, state)
@@ -569,8 +533,20 @@ return function(M)
     return get_core_panel_service().update_core_panel(root, player, entity, state)
   end
 
+  function update_label_panel(root, state)
+    return get_core_panel_service().update_label_panel(root, state)
+  end
+
   function update_build_panel(root, state)
     return get_core_panel_service().update_build_panel(root, state)
+  end
+
+  function update_inventory_core_panel(root, player, entity, state)
+    return get_core_panel_service().update_inventory_core_panel(root, player, entity, state)
+  end
+
+  function update_platform_core_panel(root, entity, state)
+    return get_core_panel_service().update_platform_core_panel(root, entity, state)
   end
 
   function add_stats_panel(parent)

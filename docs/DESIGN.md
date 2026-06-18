@@ -15,6 +15,7 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 ## Current UX Direction
 
 - Keep the vanilla turret GUI as the main interaction.
+- Treat the attached turret GUI rewrite contract in [GUI_SPEC.md](GUI_SPEC.md) as the source of truth for visible values, layout grammar, refresh behavior, and acceptance criteria.
 - Attach Turret XP as a bounded panel beside the vanilla turret GUI. Installed cores use a two-column layout: Veteran Core identity, naming, XP, dev controls, and Stats on the left; Evolution on the right. Empty turrets use one full-width Veteran Core picker instead of a split dashboard.
 - Treat the 0.11 GUI glowup as an anchored custom interface, not a move away from the vanilla turret GUI unless the relative GUI API blocks a required interaction. The panel should keep living beside the opened turret while adopting the hierarchy, icon language, spacing, and action discoverability shown by mature utility mods such as Factory Planner.
 - Use a Factorio-style header plus shallow content panes as the default frame language: the Turret XP shell owns the anchored frame and top-level columns, while section modules own their local content.

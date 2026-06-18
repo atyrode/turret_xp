@@ -24,12 +24,16 @@ return function(M)
 
     add_core_panel(body, mode)
     if state then
+      add_label_panel(body)
       add_build_panel(body)
       add_xp_panel(body)
       add_dev_controls_panel(body, player)
       add_stats_panel(body)
 
       add_evolution_panel(columns)
+    else
+      add_inventory_core_panel(body)
+      add_platform_core_panel(body)
     end
 
     update_turret_gui(player, entity, evolution_anchor)

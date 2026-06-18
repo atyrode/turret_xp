@@ -15,7 +15,10 @@ function gui_runtime_module.new(deps)
   local format_number = deps.format_number
   local get_gui_xp_modifier_summary = deps.get_gui_xp_modifier_summary
   local update_core_panel = deps.update_core_panel
+  local update_label_panel = deps.update_label_panel
   local update_build_panel = deps.update_build_panel
+  local update_inventory_core_panel = deps.update_inventory_core_panel
+  local update_platform_core_panel = deps.update_platform_core_panel
   local update_stats_panel = deps.update_stats_panel
   local update_evolution_panel = deps.update_evolution_panel
   local update_shield_bar_render = deps.update_shield_bar_render
@@ -81,10 +84,17 @@ function gui_runtime_module.new(deps)
   end
 
   local function apply_build_mode_styles(panel, build_mode)
-    set_element_style(
-      find_gui_element(panel, GUI.xp_panel),
-      build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame"
-    )
+    local xp_panel = find_gui_element(panel, GUI.xp_panel)
+    set_element_style(xp_panel, build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame")
+    if xp_panel and xp_panel.tags then
+      xp_panel.tags.turret_xp_build_mode = build_mode == true
+    end
+
+    local label_section = find_gui_element(panel, GUI.core_label_section)
+    set_element_style(label_section, build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame")
+    if label_section and label_section.tags then
+      label_section.tags.turret_xp_build_mode = build_mode == true
+    end
     set_element_style(find_gui_element(panel, GUI.stats_header), "subheader_frame")
     set_element_style(find_gui_element(panel, GUI.evolution_summary), "subheader_frame")
   end
@@ -179,6 +189,9 @@ function gui_runtime_module.new(deps)
     end
 
     update_core_panel(panel, player, entity, context.live_state)
+    update_label_panel(panel, context.live_state)
+    update_inventory_core_panel(panel, player, entity, context.live_state)
+    update_platform_core_panel(panel, entity, context.live_state)
     update_build_panel(panel, context.live_state)
     if not context.live_state then
       return true

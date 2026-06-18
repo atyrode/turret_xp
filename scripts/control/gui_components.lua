@@ -167,6 +167,73 @@ function gui_components.new(deps)
     return frame, header
   end
 
+  function service.add_left_stack_section(parent, options)
+    options = options or {}
+    local build_mode = options.build_mode == true
+    local section_style = options.style or (build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame")
+    local width = options.width or deps.LAYOUT.left_section_width
+
+    local frame = parent.add({
+      type = "frame",
+      name = options.name,
+      direction = "vertical",
+      style = section_style,
+    })
+    frame.tags = {
+      turret_xp_left_section = true,
+      turret_xp_section_role = options.role,
+      turret_xp_build_mode = build_mode,
+    }
+    deps.set_style(frame, "horizontally_stretchable", false)
+    deps.set_style(frame, "width", width)
+    deps.set_style(frame, "minimal_width", width)
+    deps.set_style(frame, "maximal_width", width)
+    deps.set_style(frame, "padding", options.padding or deps.LAYOUT.left_section_padding)
+    deps.set_style(frame, "vertical_spacing", options.vertical_spacing or 6)
+
+    local header
+    if options.title or options.header_name then
+      header = frame.add({
+        type = "frame",
+        name = options.header_name,
+        direction = "horizontal",
+        style = options.header_style or (build_mode and "turret_xp_build_mode_subheader_frame" or "subheader_frame"),
+      })
+      deps.set_style(header, "horizontally_stretchable", true)
+      deps.set_style(header, "vertical_align", "center")
+      deps.set_style(header, "horizontal_spacing", options.header_spacing or 6)
+      deps.set_style(header, "height", options.header_height or deps.LAYOUT.left_section_header_height)
+
+      if options.title then
+        local title = header.add({
+          type = "label",
+          caption = options.title,
+          style = "heading_2_label",
+        })
+        deps.set_style(title, "font", "default-bold")
+        deps.set_style(title, "font_color", build_mode and deps.COLOR.build_mode or deps.COLOR.section_header)
+      end
+
+      if options.title then
+        header.add({
+          type = "empty-widget",
+          style = "flib_horizontal_pusher",
+        })
+      end
+
+      if options.right_caption then
+        local right = header.add({
+          type = "label",
+          caption = options.right_caption,
+          style = "caption_label",
+        })
+        deps.set_style(right, "font_color", build_mode and deps.COLOR.build_mode_muted or deps.COLOR.muted)
+      end
+    end
+
+    return frame, header
+  end
+
   function service.add_subheader_frame(parent, options)
     options = options or {}
     local build_mode = options.build_mode == true

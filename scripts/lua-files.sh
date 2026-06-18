@@ -31,6 +31,7 @@ emit_non_excluded_lua_files() {
 
   while IFS= read -r path; do
     [ -n "$path" ] || continue
+    [ -f "$path" ] || continue
     if ! is_excluded_path "$path"; then
       printf '%s\n' "$path"
     fi
