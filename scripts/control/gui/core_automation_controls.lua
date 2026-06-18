@@ -3,6 +3,7 @@ local core_automation_controls = {}
 local LAYOUT = {
   label_width = 82,
   dropdown_width = 150,
+  target_value_width = 220,
 }
 
 function core_automation_controls.new(deps)
@@ -82,6 +83,27 @@ function core_automation_controls.new(deps)
       },
     })
     set_style(apply, "minimal_width", 64)
+
+    local target = profile_automation.target_model(state)
+    if target then
+      local target_row = frame.add({
+        type = "flow",
+        direction = "horizontal",
+      })
+      set_style(target_row, "horizontally_stretchable", true)
+      set_style(target_row, "horizontal_spacing", 8)
+      set_style(target_row, "vertical_align", "center")
+      add_row_label(target_row, { "turret-xp.automation-target-title" })
+
+      local target_label = target_row.add({
+        type = "label",
+        caption = { "turret-xp.automation-target-caption", target.level or 0 },
+        tooltip = target.tooltip,
+      })
+      set_style(target_label, "width", LAYOUT.target_value_width)
+      set_style(target_label, "single_line", false)
+      set_style(target_label, "font_color", COLOR.muted)
+    end
   end
 
   return service

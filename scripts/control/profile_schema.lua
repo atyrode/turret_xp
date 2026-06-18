@@ -33,6 +33,7 @@ function profile_schema.new(deps)
       label_scale = 2,
       automation_preset = "manual",
       automation_enabled = false,
+      automation_target = nil,
       bound_turret = false,
       last_ammo = nil,
       ammo_productivity_progress = 0,
@@ -67,6 +68,11 @@ function profile_schema.new(deps)
     profile.label_display_schema = LABEL_DISPLAY_SCHEMA
     profile.automation_preset = tostring(profile.automation_preset or "manual")
     profile.automation_enabled = profile.automation_enabled == true
+    if type(profile.automation_target) ~= "table" then
+      profile.automation_target = nil
+    else
+      profile.automation_target = service.copy_serializable(profile.automation_target)
+    end
     profile.bound_turret = profile.bound_turret == true
     profile.ammo_productivity_progress = math.max(0, tonumber(profile.ammo_productivity_progress or profile.ammo_regen_progress) or 0)
     profile.ammo_regen_progress = nil
@@ -134,6 +140,7 @@ function profile_schema.new(deps)
       label_scale = profile.label_scale or 2,
       automation_preset = profile.automation_preset or "manual",
       automation_enabled = profile.automation_enabled == true,
+      automation_target = service.copy_serializable(profile.automation_target),
       xp = profile.xp or 0,
       total_xp = profile.total_xp or 0,
       level = profile.level or 0,
@@ -177,6 +184,7 @@ function profile_schema.new(deps)
       profile.label_scale = data.label_scale or 2
       profile.automation_preset = data.automation_preset or "manual"
       profile.automation_enabled = data.automation_enabled == true
+      profile.automation_target = service.copy_serializable(data.automation_target)
       profile.xp = data.xp or 0
       profile.total_xp = data.total_xp or 0
       profile.level = data.level or 0

@@ -110,6 +110,7 @@ M.profile_automation = profile_automation_module.new({
   gates = M.GATES,
   base_upgrades = M.BASE_UPGRADES,
   augments = M.AUGMENTS,
+  specialization_by_id = M.SPECIALIZATION_BY_ID,
   element_by_id = M.ELEMENT_BY_ID,
   sub_specialization_by_id = M.SUB_SPECIALIZATION_BY_ID,
   element_free_rank = M.ELEMENT_FREE_RANK,

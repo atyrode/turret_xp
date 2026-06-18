@@ -107,6 +107,7 @@ function actions_module.new(deps)
   local function set_automation_preset(player, preset_id)
     opened_turret_action(player, function(entity, state)
       state.automation_preset = profile_automation.preset_by_id(preset_id).id
+      state.automation_target = nil
       if state.automation_preset == "manual" then
         state.automation_enabled = false
       end
@@ -117,7 +118,8 @@ function actions_module.new(deps)
 
   local function set_automation_enabled(player, enabled)
     opened_turret_action(player, function(entity, state)
-      state.automation_enabled = enabled == true and state.automation_preset ~= "manual"
+      state.automation_enabled = enabled == true
+        and (state.automation_preset ~= "manual" or profile_automation.target_has_content(state.automation_target))
       profile_automation.apply_to_profile(entity, state, { force = state.automation_enabled == true })
       return nil, true
     end)
@@ -790,6 +792,8 @@ function actions_module.new(deps)
     evolution.elements = {}
     evolution.element_mastery = {}
     evolution.element_project = nil
+    state.automation_target = nil
+    state.automation_enabled = state.automation_preset ~= "manual" and state.automation_enabled == true
 
     feeder.destroy(state, entity and entity.position or nil, spill == true)
     ensure_evolution_state(state)

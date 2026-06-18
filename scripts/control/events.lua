@@ -115,6 +115,7 @@ return function(M)
       and (
         policy.request_core == true
         or policy.automation_enabled == true
+        or profile_automation.target_has_content(policy.automation_target)
         or (policy.automation_preset and policy.automation_preset ~= "manual")
         or policy.show_name_label == true
         or policy.show_label_level == true

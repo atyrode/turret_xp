@@ -9,6 +9,7 @@ Homepage: <https://atyrode.github.io/turret_xp/>
 - Ordinary gun turrets stay stackable until a Veteran Core is installed.
 - Veteran Cores store XP, levels, upgrades, elements, name/label preferences, and combat history.
 - Installed cores can move between turret bodies, or bind to a turret for one-item quick moves.
+- Copied or blueprinted turrets can request a fresh core and carry a target build so new cores grow toward the source turret's setup.
 - Current progression is scoped to vanilla `gun-turret`.
 - The live turret panel shows core state, XP, stats, formulas, Evolution choices, and material progress beside the vanilla turret GUI.
 

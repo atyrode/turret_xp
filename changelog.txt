@@ -4,12 +4,14 @@ Date: 2026-06-18
   Changes:
     - Added independent floating-label visibility toggles for core name, level, and unspent point summaries, so players can show any combination instead of the old coupled name/level label.
     - Added installed-core automation presets with one-shot Apply and Auto modes. Presets spend available core and augment points deterministically and choose compatible specialization, sub-specialization, and element defaults without overwriting existing conflicting manual choices.
+    - Added copied build targets for blueprint/entity-settings copy. Copied turrets now store the source build's target level, specialization, sub-specialization, elements, core-upgrade ranks, and augment ranks so delivered cores can grow toward that build instead of only copying a preset name.
     - Added a Veteran Core request control for empty turrets. Logistic bots can deliver one Veteran Core into a hidden requester helper, and the mod installs it on the turret while preserving the delivered core profile.
-    - Blueprint and entity-settings copy/paste now carry Turret XP setup policy for label visibility, label color, automation preset/Auto mode, and empty-turret Veteran Core requests without cloning XP, level, kills, damage, or custom names.
+    - Blueprint and entity-settings copy/paste now carry Turret XP setup policy for label visibility, label color, copied build target, automation preset/Auto mode, and empty-turret Veteran Core requests without cloning XP, level, kills, damage, combat history, or custom names.
+    - The installed-core automation panel now shows when a core is following a copied build target, including the target level and hover details for target specialization, elements, core ranks, and augment ranks.
   Bugfixes:
     - Fixed opening a pristine empty vanilla turret so the new Veteran Core request checkbox always has an explicit off state instead of crashing GUI construction.
     - Fixed copied label-only policies on installed cores so rendered floating labels refresh immediately after paste.
-    - Bounded Veteran Core request refresh work and added headless coverage for requester delivery, cancellation, teardown spills, copy policy, GUI dispatch, and large-requester pressure cases.
+    - Bounded Veteran Core request refresh work and added headless coverage for requester delivery, cancellation, teardown spills, target-build copy policy, GUI dispatch, and large-requester pressure cases.
     - `scripts/test-headless.sh` now prints Factorio benchmark timing plus process CPU/max-RSS metrics when `/usr/bin/time` is available, making performance drift easier to spot in CI logs.
 
 ---------------------------------------------------------------------------------------------------

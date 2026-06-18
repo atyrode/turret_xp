@@ -64,14 +64,16 @@
           <ul>
             <li>Added independent floating-label visibility toggles for core name, level, and unspent point summaries, so players can show any combination instead of the old coupled name/level label.</li>
             <li>Added installed-core automation presets with one-shot Apply and Auto modes. Presets spend available core and augment points deterministically and choose compatible specialization, sub-specialization, and element defaults without overwriting existing conflicting manual choices.</li>
+            <li>Added copied build targets for blueprint/entity-settings copy. Copied turrets now store the source build&#x27;s target level, specialization, sub-specialization, elements, core-upgrade ranks, and augment ranks so delivered cores can grow toward that build instead of only copying a preset name.</li>
             <li>Added a Veteran Core request control for empty turrets. Logistic bots can deliver one Veteran Core into a hidden requester helper, and the mod installs it on the turret while preserving the delivered core profile.</li>
-            <li>Blueprint and entity-settings copy/paste now carry Turret XP setup policy for label visibility, label color, automation preset/Auto mode, and empty-turret Veteran Core requests without cloning XP, level, kills, damage, or custom names.</li>
+            <li>Blueprint and entity-settings copy/paste now carry Turret XP setup policy for label visibility, label color, copied build target, automation preset/Auto mode, and empty-turret Veteran Core requests without cloning XP, level, kills, damage, combat history, or custom names.</li>
+            <li>The installed-core automation panel now shows when a core is following a copied build target, including the target level and hover details for target specialization, elements, core ranks, and augment ranks.</li>
           </ul>
           <h3>Bugfixes</h3>
           <ul>
             <li>Fixed opening a pristine empty vanilla turret so the new Veteran Core request checkbox always has an explicit off state instead of crashing GUI construction.</li>
             <li>Fixed copied label-only policies on installed cores so rendered floating labels refresh immediately after paste.</li>
-            <li>Bounded Veteran Core request refresh work and added headless coverage for requester delivery, cancellation, teardown spills, copy policy, GUI dispatch, and large-requester pressure cases.</li>
+            <li>Bounded Veteran Core request refresh work and added headless coverage for requester delivery, cancellation, teardown spills, target-build copy policy, GUI dispatch, and large-requester pressure cases.</li>
             <li><code>scripts/test-headless.sh</code> now prints Factorio benchmark timing plus process CPU/max-RSS metrics when <code>/usr/bin/time</code> is available, making performance drift easier to spot in CI logs.</li>
           </ul>
         </div>
@@ -94,7 +96,7 @@
           </article>
           <article>
             <h3>Setup Automation</h3>
-            <p>Apply build presets, keep future points on Auto, copy setup policy to new turrets, and let logistic bots deliver a requested Veteran Core into an empty turret.</p>
+            <p>Copy or blueprint a built turret as a target build, let bots deliver a fresh Veteran Core into empty copies, and keep future points on Auto so the new core grows toward the copied specialization, elements, and rank plan.</p>
           </article>
           <article>
             <h3>Element Projects</h3>

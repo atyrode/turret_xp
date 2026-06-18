@@ -264,6 +264,126 @@ function tests.run_core_request_pressure_test(surface)
   assert_eq(status.active_count, 0, "pressure test cleanup should remove every tracked requester")
 end
 
+function tests.run_target_build_policy_test(surface)
+  local source_position = { 12, 12 }
+  local source = create_turret(surface, source_position, 10)
+  local summary = call("install_core", source, {
+    custom_name = "Source Build",
+    level = 50,
+    show_label_level = true,
+  })
+  assert_true(summary ~= nil, "failed to install source core for target build testing")
+  summary = call("set_evolution", source, {
+    base = {
+      damage = 8,
+      shield = 4,
+      ammo_regen = 3,
+    },
+    augments = {
+      repair = 2,
+      veteran_training = 1,
+    },
+    elements = {
+      "explosive",
+      "fire",
+    },
+    element_mastery = {
+      explosive = { rank = 3 },
+      fire = { rank = 2 },
+    },
+    specialization = "sniper",
+    sub_specialization = "sniper_deadeye",
+  })
+  assert_eq(summary.evolution.specialization, "sniper", "test setup should give the source a specialization")
+  source = refresh_turret(surface, source_position)
+
+  local policy = call("policy_from_entity", source)
+  assert_eq(policy.request_core, true, "copied target build should request a fresh core for empty destinations")
+  assert_eq(policy.custom_name, nil, "copied target build must not clone the source custom name")
+  assert_eq(policy.level, nil, "copied target build must not clone source level as destination XP")
+  assert_true(type(policy.automation_target) == "table", "copied policy should include an explicit target build")
+  assert_eq(policy.automation_enabled, true, "copied target build should enable future auto-follow")
+  assert_eq(policy.automation_target.level, 50, "target build should record the source build level")
+  assert_eq(policy.automation_target.base.damage, 8, "target build should record source Damage rank")
+  assert_eq(policy.automation_target.base.shield, 4, "target build should record source Shield rank")
+  assert_eq(policy.automation_target.augments.repair, 2, "target build should record source augment ranks")
+  assert_eq(policy.automation_target.specialization, "sniper", "target build should record source specialization")
+  assert_eq(policy.automation_target.sub_specialization, "sniper_deadeye", "target build should record source sub-specialization")
+  assert_eq(policy.automation_target.elements[1], "explosive", "target build should record source first element")
+  assert_eq(policy.automation_target.elements[2], "fire", "target build should record source second element")
+  assert_eq(policy.automation_target.element_mastery.explosive.rank, 3, "target build should record element rank goals")
+
+  local destination_position = { 14, 12 }
+  local destination = create_turret(surface, destination_position, 10)
+  local pasted = call("paste_policy", source, destination)
+  assert_eq(pasted.applied, true, "target policy should paste to an empty destination turret")
+  assert_eq(pasted.request.enabled, true, "target policy should request a core on the empty destination")
+  assert_eq(pasted.request.has_pending_policy, true, "target policy should wait on the destination until a core is delivered")
+
+  call("insert_requested_core", destination, {
+    custom_name = "Fresh Copy",
+    level = 9,
+  })
+  local refresh = call("process_core_requests", 64)
+  assert_eq(refresh.installed, 1, "target policy destination should install a delivered core")
+  destination = refresh_turret(surface, destination_position)
+  summary = call("get_state", destination)
+  assert_eq(summary.custom_name, "Fresh Copy", "target policy must preserve delivered core identity")
+  assert_eq(summary.level, 9, "target policy must preserve delivered core level")
+  assert_eq(summary.automation_enabled, true, "delivered core should follow the copied target")
+  assert_true(type(summary.automation_target) == "table", "delivered core should store the copied target")
+  assert_eq(summary.automation_target.level, 50, "delivered core should retain the copied target level")
+  assert_eq(summary.evolution.specialization, nil, "level 9 core should not receive the level 10 specialization early")
+  assert_eq(summary.evolution.base.damage, 3, "level 9 core should spend toward target Damage")
+  assert_eq(summary.evolution.base.shield, 3, "level 9 core should spend toward target Shield")
+  assert_eq(summary.evolution.base.ammo_regen, 3, "level 9 core should spread points across copied target ranks")
+  assert_eq(summary.evolution.available_core_points, 0, "level 9 target follower should spend every available point toward the target")
+
+  summary = call("set_profile", destination, {
+    level = 50,
+  })
+  assert_eq(summary.level, 50, "test level update should raise the delivered core")
+  local apply_summary = call("apply_automation", destination)
+  assert_true(apply_summary ~= nil, "target follower should apply after gaining levels")
+  destination = refresh_turret(surface, destination_position)
+  summary = call("get_state", destination)
+  assert_eq(summary.evolution.specialization, "sniper", "target follower should choose specialization when the gate unlocks")
+  assert_eq(
+    summary.evolution.sub_specialization,
+    "sniper_deadeye",
+    "target follower should choose sub-specialization when the gate unlocks"
+  )
+  assert_eq(summary.evolution.elements[1], "explosive", "target follower should choose the first copied element")
+  assert_eq(summary.evolution.elements[2], "fire", "target follower should choose the second copied element")
+  assert_eq(summary.evolution.base.damage, 8, "target follower should reach target Damage rank")
+  assert_eq(summary.evolution.base.shield, 4, "target follower should reach target Shield rank")
+  assert_eq(summary.evolution.base.ammo_regen, 3, "target follower should reach target Ammo Productivity rank")
+  assert_eq(summary.evolution.augments.repair, 2, "target follower should reach target Regeneration rank")
+  assert_eq(summary.evolution.augments.veteran_training, 1, "target follower should reach target Veteran Training rank")
+  assert_ge(summary.evolution.available_core_points, 1, "target follower should stop spending once target core ranks are reached")
+  assert_true(summary.automation_target_model ~= nil, "target follower should expose a GUI-ready target model")
+
+  local conflict_turret = create_turret(surface, { 16, 12 }, 10)
+  summary = call("install_core", conflict_turret, {
+    level = 50,
+  })
+  assert_true(summary ~= nil, "failed to install conflict test core")
+  summary = call("set_evolution", conflict_turret, {
+    specialization = "bulwark",
+  })
+  assert_eq(summary.evolution.specialization, "bulwark", "conflict setup should choose a manual specialization")
+  conflict_turret = refresh_turret(surface, { 16, 12 })
+  local applied = call("apply_policy", conflict_turret, policy)
+  assert_eq(applied.applied, true, "target policy should apply to installed cores")
+  summary = call("get_state", conflict_turret)
+  assert_eq(summary.evolution.specialization, "bulwark", "target build must not overwrite conflicting manual specialization")
+  assert_eq(summary.automation_conflict, true, "target build should surface conflicting manual choices")
+
+  cleanup_turret(source)
+  cleanup_turret(destination)
+  cleanup_turret(conflict_turret)
+end
+
 function tests.run_copy_policy_test(surface)
   local source_position = { 12, 4 }
   local source = create_turret(surface, source_position, 10)
