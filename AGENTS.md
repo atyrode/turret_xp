@@ -85,6 +85,12 @@ These instructions apply to the whole repository. Follow them before making chan
 ## Validation
 
 - Run the narrowest meaningful checks for the change before committing.
+- Treat tests as the driver for Factorio mod work. Before implementing or fixing a feature, enumerate the player interaction surfaces it touches, such as GUI controls, copy/paste, cut, blueprint setup, blueprint records, ghost revive, manual build/mine, robot build/mine, migrations, settings changes, multiplayer-relevant state, surfaces, and space platforms.
+- For every feature, add or extend tests for the normal path, important failure/no-op paths, and the ways a player can realistically trigger the behavior. Prefer headless tests for anything the suite can express.
+- Every reproduced bug should become a regression test before or alongside the fix. The test should exercise the public gameplay/event boundary when possible, not only lower-level helper functions.
+- When Factorio exposes lazy or engine-owned runtime objects, test through a realistic event adapter or real engine path so userdata/table differences and validity rules are covered.
+- If an interaction cannot be automated in the headless suite, document the exact manual in-game test steps and remaining risk in the PR before asking for review.
+- Add pressure or benchmark coverage for behavior that can run on ticks, many entities, robot logistics, blueprint placement, or repeated GUI refreshes.
 - Prefer CI for expensive production-like builds when local execution would be slow, fragile, or inappropriate for the machine.
 - If checks cannot be run, state why and describe the remaining risk.
 

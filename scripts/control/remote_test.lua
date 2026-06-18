@@ -603,6 +603,38 @@ return function(M)
         request = turret_xp_test_core_request_status(destination),
       }
     end,
+    blueprint_setup_event_policy = function(entity, direct_mapping)
+      local written = 0
+      local tags = {}
+      local fake_blueprint = {
+        set_blueprint_entity_tag = function(index, key, value)
+          tags[index] = tags[index] or {}
+          tags[index][key] = copy_serializable(value)
+          written = written + 1
+        end,
+      }
+      local mapping = {
+        [1] = entity,
+      }
+      local event_mapping = direct_mapping == true and mapping
+        or {
+          object_name = "LuaLazyLoadedValue",
+          valid = true,
+          get = function()
+            return mapping
+          end,
+        }
+
+      handlers.on_player_setup_blueprint({
+        stack = fake_blueprint,
+        mapping = event_mapping,
+      })
+
+      return {
+        written = written,
+        tags = tags,
+      }
+    end,
   })
 
   local function gui_snapshot_frame_for_player(player, center)

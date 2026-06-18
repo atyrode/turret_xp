@@ -151,15 +151,50 @@ return function(M)
     end, false)
   end
 
+  local function load_blueprint_source_mapping(mapping)
+    if not mapping then
+      return nil
+    end
+
+    local get_mapping = compat.safe_read(mapping, "get", nil, "read blueprint source mapping getter")
+    if type(get_mapping) == "function" then
+      local loaded = compat.try("load blueprint source mapping", function()
+        return get_mapping()
+      end)
+      if type(loaded) == "table" then
+        return loaded
+      end
+    end
+
+    if type(mapping) == "table" then
+      return mapping
+    end
+
+    return nil
+  end
+
+  function apply_blueprint_setup_policy(blueprint, source_mapping)
+    local mapping = load_blueprint_source_mapping(source_mapping)
+    if not blueprint or not mapping then
+      return 0
+    end
+
+    local written = 0
+    for index, source in pairs(mapping) do
+      if write_blueprint_policy(blueprint, index, build_policy_from_turret(source)) then
+        written = written + 1
+      end
+    end
+    return written
+  end
+
   function handlers.on_player_setup_blueprint(event)
     local blueprint = event.stack or event.record
     if not blueprint or not event.mapping then
       return
     end
 
-    for index, source in pairs(event.mapping) do
-      write_blueprint_policy(blueprint, index, build_policy_from_turret(source))
-    end
+    apply_blueprint_setup_policy(blueprint, event.mapping)
   end
 
   function handlers.on_gui_opened(event)

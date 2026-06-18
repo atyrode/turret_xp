@@ -313,6 +313,19 @@ function tests.run_target_build_policy_test(surface)
   assert_eq(policy.automation_target.elements[2], "fire", "target build should record source second element")
   assert_eq(policy.automation_target.element_mastery.explosive.rank, 3, "target build should record element rank goals")
 
+  local blueprint = call("blueprint_setup_event_policy", source)
+  local blueprint_policy = blueprint.tags[1] and blueprint.tags[1].turret_xp_policy or nil
+  assert_eq(blueprint.written, 1, "blueprint setup event should write one Turret XP policy from lazy mapping")
+  assert_true(type(blueprint_policy) == "table", "blueprint setup event should write a readable policy tag")
+  assert_eq(blueprint_policy.request_core, true, "blueprint setup event should request a fresh core for empty copies")
+  assert_eq(blueprint_policy.custom_name, nil, "blueprint setup event must not clone the source custom name")
+  assert_eq(blueprint_policy.level, nil, "blueprint setup event must not clone source level as destination XP")
+  assert_eq(blueprint_policy.automation_target.level, 50, "blueprint setup event should preserve the copied target level")
+  assert_eq(blueprint_policy.automation_target.specialization, "sniper", "blueprint setup event should preserve target specialization")
+
+  local direct_blueprint = call("blueprint_setup_event_policy", source, true)
+  assert_eq(direct_blueprint.written, 1, "blueprint setup event should still accept a direct table mapping")
+
   local destination_position = { 14, 12 }
   local destination = create_turret(surface, destination_position, 10)
   local pasted = call("paste_policy", source, destination)
