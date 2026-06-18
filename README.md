@@ -61,6 +61,16 @@ scripts/test-headless.sh
 
 `scripts/check.sh` is host-friendly and skips optional Lua tools that are not installed. The Docker Lua commands use the same pinned StyLua, Lua 5.2 syntax, and Luacheck tooling path as CI without installing them on the host. `scripts/test-headless.sh` packages the current mod and runs the Factorio headless regression suite when `factorio` is available or `FACTORIO_BIN=/path/to/factorio` is set.
 
+Browser GUI prototype review uses a static local tool before Lua GUI work:
+
+```text
+tools/gui-prototype/index.html
+```
+
+Open it in a browser to inspect the spec-backed Core Picker, Installed
+Workbench, Build Plan mode, pinned Stat Inspector, and drawer fixtures.
+`scripts/check.sh` validates its source anchors and fixture coverage.
+
 Install local Git hooks once per clone to run the Docker strict Lua tooling before commits that stage Lua or Lua-tooling changes:
 
 ```sh
@@ -120,6 +130,8 @@ Do not publish Mod Portal releases from a local checkout. The only supported Mod
 - [docs/DESIGN.md](docs/DESIGN.md): UX, balance, compatibility, and public identity direction.
 - [docs/GUI_SPEC_FACTORY.md](docs/GUI_SPEC_FACTORY.md): process for creating agent-readable GUI specs before implementation.
 - [docs/TURRET_XP_GUI_SPEC.md](docs/TURRET_XP_GUI_SPEC.md): future Turret XP GUI redesign spec produced from that process.
+- [docs/gui-spec/README.md](docs/gui-spec/README.md): split future GUI spec used by the browser prototype.
+- [docs/gui-spec/browser-builder-roadmap.md](docs/gui-spec/browser-builder-roadmap.md): future constrained browser builder and shared browser/Lua renderer roadmap.
 - [docs/PROGRESSION_DESIGN.md](docs/PROGRESSION_DESIGN.md): future-only progression design notes.
 - [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md): current work, validation checklist, and near-term roadmap.
 - [docs/PLAYTEST.md](docs/PLAYTEST.md): smoke, regression, and deep manual playtest paths.

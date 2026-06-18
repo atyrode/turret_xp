@@ -17,9 +17,11 @@ The portal image should be simple, sober, and specific to the mod. Prefer Factor
 - Keep the vanilla turret GUI as the main interaction and attach Turret XP beside it when the relative GUI API allows it.
 - Treat the current two-column installed-core panel as current implemented behavior, not the future design target. Exact current behavior remains described in [PROJECT_SPEC.md](PROJECT_SPEC.md) until a replacement lands.
 - Restart the next major GUI redesign through the spec-first workflow in [GUI_SPEC_FACTORY.md](GUI_SPEC_FACTORY.md), with the concrete future design captured in [TURRET_XP_GUI_SPEC.md](TURRET_XP_GUI_SPEC.md).
+- Use the split spec in [gui-spec/README.md](gui-spec/README.md) and the browser prototype in [../tools/gui-prototype](../tools/gui-prototype) as the review surface before changing Lua GUI code.
 - The next installed-core direction is a Veteran Core Workbench: progression editing, Build Plan mode, Follow build state, and key stat consequences must be visible together instead of split across unrelated tabs or old left/right implementation sections.
 - The next empty-turret direction is still a focused Core Picker. Preserve the successful table-first picker behavior unless a later spec gives a better concrete replacement.
 - Do not carry forward the failed focused-tabs layout or the old left-stats/right-Evolution dashboard as a layout source. Preserve gameplay features and interaction contracts, not the previous nesting structure.
+- Do not use the old GUI architecture as the prototype model. Old code is a feature inventory and regression warning only.
 - Keep numeric value coloring precise: unchanged values stay neutral, beneficial deltas use muted green, harmful deltas use muted red, units/prose stay neutral, and element colors are reserved for elemental damage numbers.
 - Keep dev controls hidden by default and toggled through `/turret-xp-dev`.
 - Use the Veteran Core slot as a scripted tag-preserving control. Do not imply native arbitrary inventory-slot support inside the vanilla turret GUI.

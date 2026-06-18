@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Turret XP GUI Prototype Lab</title>
+    <link rel="stylesheet" href="https://cdn.factorio.com/assets/fonts/titillium-web.css">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="fx-sitebar">
+      <div class="fx-sitebar__inner">
+        <div>
+          <strong>Turret XP</strong>
+          <span>GUI Prototype Lab</span>
+        </div>
+        <nav aria-label="Prototype links">
+          <a href="../../docs/gui-spec/README.md">Spec</a>
+          <a href="../../docs/GUI_SPEC_FACTORY.md">Factory</a>
+          <a href="../../docs/gui-spec/browser-prototype.md">Prototype Contract</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="fx-lab">
+      <aside class="fx-lab__rail" aria-label="Prototype controls">
+        <section class="fx-panel fx-panel--compact">
+          <h1>Review Fixtures</h1>
+          <div id="fixture-list" class="fx-fixture-list"></div>
+        </section>
+        <section class="fx-panel fx-panel--compact">
+          <h2>Design Rules</h2>
+          <ul class="fx-checklist">
+            <li>Feature inventory only from old GUI.</li>
+            <li>No old dashboard layout.</li>
+            <li>No focused-tab split.</li>
+            <li>Progression and stat feedback stay together.</li>
+            <li>Build Plan is a workbench mode.</li>
+            <li>Empty turret uses picker mode.</li>
+          </ul>
+        </section>
+      </aside>
+
+      <section class="fx-lab__stage" aria-label="Prototype preview">
+        <div id="prototype-root"></div>
+      </section>
+    </main>
+
+    <script src="fixtures.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

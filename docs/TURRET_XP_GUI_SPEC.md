@@ -2,7 +2,9 @@
 
 This is the product GUI spec produced from
 [GUI_SPEC_FACTORY.md](GUI_SPEC_FACTORY.md). It targets the next Turret XP GUI
-redesign tracked by issue #96.
+redesign tracked by issue #96. The current implementation-facing slices live in
+[gui-spec/README.md](gui-spec/README.md), which assembles the browser prototype
+contract before any Lua rewrite.
 
 ## Status
 
@@ -13,8 +15,9 @@ work. It also supersedes the failed focused-tabs rewrite. The current playable
 implementation remains described in [PROJECT_SPEC.md](PROJECT_SPEC.md) until a
 new implementation is accepted.
 
-Code MUST NOT implement a new GUI shape that is not represented here. If this
-spec is wrong, revise this spec before revising Lua.
+Code MUST NOT implement a new GUI shape that is not represented here or in the
+split spec under [gui-spec/](gui-spec/). If this spec is wrong, revise the spec
+before revising Lua.
 
 ## Problem Frame
 

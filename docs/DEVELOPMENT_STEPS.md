@@ -7,6 +7,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Main development line: `0.11.3`.
 - Stable branch policy: short-lived issue branches into protected `main`; releases are GitHub Releases/tags named `v<info.json version>`.
 - Required local lightweight check: `scripts/check.sh`.
+- Browser GUI prototype check: `scripts/check-gui-prototype.sh`, also run by `scripts/check.sh`.
 - Strict local Lua tooling without host installs: `docker compose run --rm lua-tools`.
 - Lua formatting without host installs: `docker compose run --rm lua-format`.
 - Optional local Git hooks: `scripts/install-git-hooks.sh` configures this clone to run Dockerized strict Lua tooling before commits that stage Lua or Lua-tooling changes.
@@ -60,7 +61,8 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 - Harden the current playable loop before adding progression scope. Balance/readability fixes, GUI quality, validation, and bug fixes are in scope; new branches, elements, mastery loops, quality-backed chassis work, range-band rewrites, repeatable HP/Range axes, or other prototype-backed stat axes need separate approved issues.
 - Keep documentation edits ownership-based: move facts to the owning document, replace duplicates with cross-references, and delete stale planning prose once the current decision is represented elsewhere.
-- Restart the next major GUI pass as spec-first work tracked by issue #96. The active redesign path is: write and review the GUI spec factory, produce the Turret XP GUI spec, build a static shell from that spec, capture screenshots, then wire behavior only after the static shell passes visual review. The failed focused-tabs branch and the old two-column glowup are historical references, not layout sources for the next implementation.
+- Restart the next major GUI pass as spec-first work tracked by issue #96. The active redesign path is: write and review the GUI spec factory, produce the Turret XP GUI spec, build the browser prototype from the split spec, review it visually, then translate the accepted shape into Lua only after the prototype direction passes review. The failed focused-tabs branch and the old two-column glowup are historical references, not layout sources for the next implementation.
+- Treat the Factorio-constrained browser builder and shared browser/Lua renderer as sequential future spikes, tracked in [gui-spec/browser-builder-roadmap.md](gui-spec/browser-builder-roadmap.md). Do not block the static viewer on full builder/export parity.
 
 ## Validation Checklist
 
@@ -72,6 +74,7 @@ Use the narrowest meaningful checks for each change:
 - Lua/runtime/tooling changes: `scripts/check.sh`, `docker compose run --rm lua-format`, `docker compose run --rm lua-tools`, `scripts/package.sh`.
 - Gameplay, migration, feeder, combat, profile, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
 - GUI layout changes: all Lua/runtime checks plus manual in-game visual review; state the remaining manual visual-review risk when local playtesting is not performed.
+- Browser GUI prototype changes: `scripts/check.sh`, `scripts/check-gui-prototype.sh`, `git diff --check`, plus manual browser review.
 - GUI screenshot review: `scripts/gui-snapshots.sh install`, `/turret-xp-snapshots` in a graphical development save, then `scripts/gui-snapshots.sh collect`. Use the cropped `tests/gui-snapshots/current/ui/` images for layout review before asking for another manual pass.
 - Runtime bug fixes: add or extend the narrowest deterministic headless or pure Lua regression test in the owning subsystem, or state why the behavior needs manual GUI/playtest validation instead.
 - Release changes: local script smoke checks where practical, CI on the release branch, Auto Release after merge, and the GitHub Release workflow before Mod Portal publication.
