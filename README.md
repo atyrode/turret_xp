@@ -47,7 +47,7 @@ git fetch
 git status --short --branch
 ```
 
-Use short-lived issue branches and pull requests into protected `main`. Keep releases on `main`: merge the release-ready PR, then publish a GitHub Release/tag named `v<info.json version>`.
+Use short-lived issue branches and pull requests into protected `main`. Keep releases on `main`: the release-ready PR should update `info.json`, `changelog.txt`, and generated public assets; merging it lets automation publish the unreleased `v<info.json version>` tag and GitHub Release.
 
 Common checks:
 
@@ -95,18 +95,19 @@ The package is written to `dist/turret_xp_<version>.zip`. It includes the root `
 Standard path:
 
 1. Finish the issue branch and open a pull request into `main`.
-2. Confirm CI passes.
-3. Merge the PR into `main`.
-4. Publish a GitHub Release named `v<info.json version>`.
-5. Let the Release workflow build/test the package, attach the zip to the GitHub Release, wait for the `factorio-mod-portal` environment approval when configured, and publish that exact release package to the Factorio Mod Portal.
+2. For a release PR, update `info.json`, `changelog.txt`, and regenerate `docs/index.html`.
+3. Confirm CI passes.
+4. Merge the PR into `main`.
+5. The Auto Release workflow creates the missing `v<info.json version>` GitHub Release/tag.
+6. The Release workflow builds/tests the package, attaches the zip to the GitHub Release, and publishes that exact release package to the Factorio Mod Portal.
 
-Local GitHub Release helper. This creates or updates only the GitHub Release object and signed tag; the workflow owns package attachment and Mod Portal publication.
+Local GitHub Release helper fallback. This creates or updates only the GitHub Release object and signed tag; normal release PRs should not need it because Auto Release creates the GitHub Release after merge.
 
 ```sh
 scripts/release.sh
 ```
 
-Do not publish Mod Portal releases from a local checkout. The only supported Mod Portal deployment path is the GitHub Release workflow, using `FACTORIO_MOD_PORTAL_API_KEY` from GitHub Secrets and the `factorio-mod-portal` environment gate. Do not commit secrets, paste tokens into chat, or put real credentials in tracked files.
+Do not publish Mod Portal releases from a local checkout. The only supported Mod Portal deployment path is the GitHub Release workflow, using `FACTORIO_MOD_PORTAL_API_KEY` from GitHub Secrets. If automated signed release tags are required, configure `RELEASE_SSH_SIGNING_KEY` as a GitHub Secret; otherwise Auto Release creates an annotated GitHub Actions bot tag. Do not commit secrets, paste tokens into chat, or put real credentials in tracked files.
 
 ## Documents
 

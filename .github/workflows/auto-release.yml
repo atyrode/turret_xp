@@ -1,0 +1,130 @@
+name: Auto Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-release-main
+  cancel-in-progress: false
+
+env:
+  PYTHON: python3
+
+jobs:
+  create-release:
+    name: Create GitHub Release For Unreleased Version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Read release metadata
+        id: metadata
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open("info.json"))["version"])')"
+          tag="v${version}"
+          head_sha="$(git rev-parse HEAD)"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "head_sha=${head_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check changelog entry
+        run: |
+          if ! grep -Eq "^Version: ${{ steps.metadata.outputs.version }}$" changelog.txt; then
+            echo "changelog.txt does not contain Version: ${{ steps.metadata.outputs.version }}." >&2
+            exit 1
+          fi
+
+      - name: Verify generated public assets
+        run: scripts/generate-public-assets.py --check
+
+      - name: Check existing release/tag state
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          HEAD_SHA: ${{ steps.metadata.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+
+          remote_tag="$(
+            {
+              git ls-remote --tags origin "${TAG}^{}"
+              git ls-remote --tags origin "${TAG}"
+            } | awk 'NR == 1 {print $1}'
+          )"
+
+          if [ -n "${remote_tag}" ] && [ "${remote_tag}" != "${HEAD_SHA}" ]; then
+            echo "Remote tag ${TAG} points to ${remote_tag}, not current HEAD ${HEAD_SHA}." >&2
+            exit 1
+          fi
+
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "release_exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "release_exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+          if [ -n "${remote_tag}" ]; then
+            echo "tag_exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "tag_exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Stop if release already exists
+        if: steps.existing.outputs.release_exists == 'true'
+        run: echo "Release ${{ steps.metadata.outputs.tag }} already exists; nothing to publish."
+
+      - name: Generate release notes
+        if: steps.existing.outputs.release_exists != 'true'
+        run: scripts/generate-public-assets.py --release-notes "dist/release-notes-${{ steps.metadata.outputs.version }}.md"
+
+      - name: Create annotated tag
+        if: steps.existing.outputs.release_exists != 'true' && steps.existing.outputs.tag_exists != 'true'
+        env:
+          TAG: ${{ steps.metadata.outputs.tag }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          RELEASE_SSH_SIGNING_KEY: ${{ secrets.RELEASE_SSH_SIGNING_KEY }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "${RELEASE_SSH_SIGNING_KEY}" ]; then
+            signing_key_path="${RUNNER_TEMP}/release-signing-key"
+            printf '%s\n' "${RELEASE_SSH_SIGNING_KEY}" > "${signing_key_path}"
+            chmod 600 "${signing_key_path}"
+            git config gpg.format ssh
+            git config user.signingkey "${signing_key_path}"
+            git tag -s "${TAG}" -m "Turret XP ${VERSION}"
+          else
+            git tag -a "${TAG}" -m "Turret XP ${VERSION}"
+          fi
+          git push origin "${TAG}"
+
+      - name: Create GitHub Release
+        if: steps.existing.outputs.release_exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          HEAD_SHA: ${{ steps.metadata.outputs.head_sha }}
+        run: |
+          gh release create "${TAG}" \
+            --target "${HEAD_SHA}" \
+            --verify-tag \
+            --title "Turret XP ${VERSION}" \
+            --notes-file "dist/release-notes-${VERSION}.md"
