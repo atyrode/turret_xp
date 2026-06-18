@@ -56,20 +56,22 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.11.3</h2>
+          <h2 id="current-title">Version 0.12.0</h2>
           <p>2026-06-18</p>
         </div>
         <div class="release-notes">
           <h3>Changes</h3>
           <ul>
-            <li>Rebalanced asteroid XP on space platforms. Asteroids now use separate runtime-global multipliers for travelling platforms and stopped or paused platforms, defaulting to 20% while travelling and 5% while stopped.</li>
-            <li>Asteroid XP no longer stacks with the separate platform non-asteroid XP multiplier, fixing the accidental double reduction introduced in 0.11.0.</li>
-            <li>Added an XP rate line under the XP bar when a combat XP modifier is active, with an info hover showing the compound formula for asteroid/platform modifiers and Veteran Training.</li>
+            <li>Added independent floating-label visibility toggles for core name, level, and unspent point summaries, so players can show any combination instead of the old coupled name/level label.</li>
+            <li>Added installed-core automation presets with one-shot Apply and Auto modes. Presets spend available core and augment points deterministically and choose compatible specialization, sub-specialization, and element defaults without overwriting existing conflicting manual choices.</li>
+            <li>Added a Veteran Core request control for empty turrets. Logistic bots can deliver one Veteran Core into a hidden requester helper, and the mod installs it on the turret while preserving the delivered core profile.</li>
+            <li>Blueprint and entity-settings copy/paste now carry Turret XP setup policy for label visibility, label color, automation preset/Auto mode, and empty-turret Veteran Core requests without cloning XP, level, kills, damage, or custom names.</li>
           </ul>
           <h3>Bugfixes</h3>
           <ul>
-            <li>Changed Veteran Training to boost newly earned combat XP instead of multiplying the core&#x27;s total XP at display time, so removing Veteran Training ranks no longer lowers existing levels.</li>
-            <li>Migrated existing Veteran Core profiles once so their already-earned Veteran Training XP is preserved under the new award-time accounting.</li>
+            <li>Fixed copied label-only policies on installed cores so rendered floating labels refresh immediately after paste.</li>
+            <li>Bounded Veteran Core request refresh work and added headless coverage for requester delivery, cancellation, teardown spills, copy policy, GUI dispatch, and large-requester pressure cases.</li>
+            <li><code>scripts/test-headless.sh</code> now prints Factorio benchmark timing plus process CPU/max-RSS metrics when <code>/usr/bin/time</code> is available, making performance drift easier to spot in CI logs.</li>
           </ul>
         </div>
       </section>
@@ -88,6 +90,10 @@
           <article>
             <h3>Specialized Defenders</h3>
             <p>Choose strong identities with tradeoffs: long-range snipers, rapid machine guns, tough bulwarks, or brutal close-range brawlers.</p>
+          </article>
+          <article>
+            <h3>Setup Automation</h3>
+            <p>Apply build presets, keep future points on Auto, copy setup policy to new turrets, and let logistic bots deliver a requested Veteran Core into an empty turret.</p>
           </article>
           <article>
             <h3>Element Projects</h3>

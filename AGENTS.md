@@ -10,6 +10,17 @@ These instructions apply to the whole repository. Follow them before making chan
 - Do not add long-lived branch conventions unless the workflow is explicitly revisited.
 - Push directly to `main` only when the operator explicitly asks for it and the repository workflow allows it.
 
+## Feature Workflow
+
+- For feature work, bug fixes, and release candidates, start with one or more GitHub issues that describe the intended outcome, risks, and validation expectations.
+- Create the implementation branch from the owning issue, using a short-lived branch name tied to that issue or release scope.
+- Open a draft pull request early, before substantial implementation work, and keep the issue, branch, and PR linked.
+- Commit meaningful steps to the branch as work progresses instead of leaving a large completed change only in the working tree.
+- Keep the PR description, linked issue, changelog, docs, and test plan updated as scope or implementation details change.
+- When implementation is complete, validation passes, and the branch is pushed, mark the PR ready for review or explicitly ask the operator before undrafting when operator review is required.
+- Do not merge or release feature branches until the operator has reviewed and approved the ready PR and required CI has passed.
+- Update or close linked issues, branch state, and PR state when the work is merged, abandoned, superseded, or otherwise resolved.
+
 ## Repository Governance
 
 - Do not change branch protection, bypass branch protection, force-push protected branches, delete remote refs, or rewrite shared remote history unless the operator explicitly authorizes that exact action in the current conversation.

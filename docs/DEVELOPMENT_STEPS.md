@@ -4,7 +4,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 
 ## Current Baseline
 
-- Main development line: `0.11.3`.
+- Main development line: `0.12.0`.
 - Stable branch policy: short-lived issue branches into protected `main`; releases are GitHub Releases/tags named `v<info.json version>`.
 - Required local lightweight check: `scripts/check.sh`.
 - Strict local Lua tooling without host installs: `docker compose run --rm lua-tools`.
@@ -12,7 +12,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Optional local Git hooks: `scripts/install-git-hooks.sh` configures this clone to run Dockerized strict Lua tooling before commits that stage Lua or Lua-tooling changes.
 - Lua validation file discovery checks tracked source plus untracked non-ignored Lua source, explicitly excludes local build/runtime caches such as `.factorio-ci/`, `dist/`, `.codex_tmp/`, and `case_study/`, and has a regression check in `scripts/check.sh` so downloaded Factorio data cannot be linted as mod source.
 - Package build: `scripts/package.sh`.
-- Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
+- Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available. Passing runs print hidden-prototype budget, Factorio benchmark timing, and process CPU/max-RSS metrics when the platform exposes them.
 - Standard release trigger: merge a release PR into `main` with an unreleased `info.json` version and matching `changelog.txt` entry; Auto Release creates the missing GitHub Release/tag and dispatches the Release workflow when the package asset is missing.
 - Externally visible release helper fallback: `scripts/release.sh` creates or updates the signed GitHub Release/tag after release preflight on clean, up-to-date `main`.
 - Mod Portal releases are not published from local checkouts. The GitHub Release workflow publishes the exact GitHub Release package asset to the Mod Portal.
@@ -50,6 +50,10 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Evolution base upgrades and augments share the rank-allocation row builder with explicit icon, detail, value, and stepper widths derived from the Evolution viewport.
 - `gui_panels.lua` has shed internal Stats/Evolution row-builder aliases; it now keeps the runtime-facing panel/update entrypoints and legacy helpers still consumed by non-GUI services.
 - Empty-turret Veteran Core selection now has a dedicated full-width picker mode. The scripted slot and explanatory text stay at the top, while inventory cores render as a Factorio-style sortable striped table component with exact install actions, persistent tri-state clickable headers, base/specialization filter checkboxes, a separate specialization column, neutral stat preview labels, and shared specialization rich-text colors. The picker height adapts to a small capped row count so short inventories do not produce empty vertical slabs, while larger inventories scroll. Sort, filter, inventory, and preview-stat changes refresh only the picker frame rather than rebuilding the whole core panel.
+- Installed-core labels now expose independent Name, Level, and Unspent display toggles with one shared color row. Legacy visible labels migrate to the old name-plus-level shape, while hidden labels stay hidden.
+- Installed-core automation presets now support one-shot Apply and Auto point spending, with conflict-safe specialization/sub-specialization/element choices and headless coverage for preset spending and GUI dispatch.
+- Empty turrets can request one delivered Veteran Core through a hidden logistic requester helper. Headless coverage protects request creation, delivery/install, cancellation, teardown spills, bounded refresh processing, copied setup policy, and GUI dispatch.
+- Blueprint/setup policy copy now carries label visibility, label color, automation, and empty-core request settings without copying XP/history/name-bearing profile data.
 - GUI refreshes now distinguish empty and installed shell modes, rebuild when the mode changes, and key Evolution content so the once-per-second open-GUI refresh does not destroy and recreate unchanged interactive Evolution controls.
 - A graphical-client GUI snapshot workflow now exists for the 0.11 GUI PR: `scripts/gui-snapshots.sh install` installs the local mod and dev companion, `/turret-xp-snapshots` captures centered standalone Turret XP fixture views in Factorio, including configured top/bottom scroll views for overflowing panes, and `scripts/gui-snapshots.sh collect` copies raw PNGs into `tests/gui-snapshots/current/full/` while writing frame-cropped review images into `tests/gui-snapshots/current/ui/`.
 - Dev controls now include a dev-core creation action, +100 levels, and dev-XP delevel buttons in addition to existing rank/material/reset helpers.
@@ -70,7 +74,7 @@ Use the narrowest meaningful checks for each change:
 - Root `README.md`, `changelog.txt`, or `thumbnail.png` changes: `scripts/check.sh`, `scripts/package.sh`, `git diff --check`.
 - Public copy, version, changelog, or homepage changes: `scripts/generate-public-assets.py`, `scripts/generate-public-assets.py --check`, `git diff --check`.
 - Lua/runtime/tooling changes: `scripts/check.sh`, `docker compose run --rm lua-format`, `docker compose run --rm lua-tools`, `scripts/package.sh`.
-- Gameplay, migration, feeder, combat, profile, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
+- Gameplay, migration, feeder, combat, profile, logistics, automation, or test-surface changes: all Lua/runtime checks plus `scripts/test-headless.sh`.
 - GUI layout changes: all Lua/runtime checks plus manual in-game visual review; state the remaining manual visual-review risk when local playtesting is not performed.
 - GUI screenshot review: `scripts/gui-snapshots.sh install`, `/turret-xp-snapshots` in a graphical development save, then `scripts/gui-snapshots.sh collect`. Use the cropped `tests/gui-snapshots/current/ui/` images for layout review before asking for another manual pass.
 - Runtime bug fixes: add or extend the narrowest deterministic headless or pure Lua regression test in the owning subsystem, or state why the behavior needs manual GUI/playtest validation instead.

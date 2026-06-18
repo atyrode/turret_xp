@@ -112,6 +112,7 @@ cp -R "tests/headless/turret_xp_headless_tests" "$mods_dir/turret_xp_headless_te
 save_path="$tmpdir/headless-test.zip"
 create_log="$tmpdir/create.log"
 benchmark_log="$tmpdir/benchmark.log"
+benchmark_time_log="$tmpdir/benchmark.time.log"
 
 run_factorio() {
   log_path="$1"
@@ -122,8 +123,51 @@ run_factorio() {
   fi
 }
 
+run_factorio_benchmark() {
+  log_path="$1"
+  time_log_path="$2"
+  shift 2
+
+  if [ -x /usr/bin/time ]; then
+    if ! /usr/bin/time -v -o "$time_log_path" "$factorio_bin" --config "$config_path" --mod-directory "$mods_dir" --disable-migration-window "$@" >"$log_path" 2>&1; then
+      cat "$log_path" >&2
+      cat "$time_log_path" >&2
+      exit 1
+    fi
+    return
+  fi
+
+  run_factorio "$log_path" "$@"
+}
+
+print_benchmark_metrics() {
+  log_path="$1"
+  time_log_path="$2"
+
+  local performed_line
+  performed_line="$(grep -E "Performed [0-9]+ updates in " "$log_path" | tail -n 1 || true)"
+  if [ -n "$performed_line" ]; then
+    echo "benchmark: $performed_line"
+  fi
+
+  local avg_line
+  avg_line="$(grep -E "avg: .* ms" "$log_path" | tail -n 1 || true)"
+  if [ -n "$avg_line" ]; then
+    echo "benchmark: $avg_line"
+  fi
+
+  if [ -s "$time_log_path" ]; then
+    local user_seconds system_seconds cpu_percent max_rss_kb
+    user_seconds="$(awk -F: '/User time/ { gsub(/^[ \t]+/, "", $2); print $2; exit }' "$time_log_path")"
+    system_seconds="$(awk -F: '/System time/ { gsub(/^[ \t]+/, "", $2); print $2; exit }' "$time_log_path")"
+    cpu_percent="$(awk -F: '/Percent of CPU/ { gsub(/^[ \t]+/, "", $2); print $2; exit }' "$time_log_path")"
+    max_rss_kb="$(awk -F: '/Maximum resident set size/ { gsub(/^[ \t]+/, "", $2); print $2; exit }' "$time_log_path")"
+    echo "benchmark resource: user_seconds=${user_seconds:-unknown}, system_seconds=${system_seconds:-unknown}, cpu=${cpu_percent:-unknown}, max_rss_kb=${max_rss_kb:-unknown}"
+  fi
+}
+
 run_factorio "$create_log" --create "$save_path" --map-gen-seed 1
-run_factorio "$benchmark_log" --benchmark "$save_path" --benchmark-ticks 1200 --benchmark-runs 1
+run_factorio_benchmark "$benchmark_log" "$benchmark_time_log" --benchmark "$save_path" --benchmark-ticks 1200 --benchmark-runs 1
 
 if ! grep -q "\[turret_xp_headless_tests\] PASS" "$benchmark_log"; then
   cat "$create_log" >&2
@@ -136,6 +180,7 @@ budget_line="$(grep -m 1 "\[turret_xp_headless_tests\] prototype budget:" "$crea
 if [ -n "$budget_line" ]; then
   echo "$budget_line"
 fi
+print_benchmark_metrics "$benchmark_log" "$benchmark_time_log"
 
 remote_policy_mods_dir="$tmpdir/remote-policy-mods"
 mkdir -p "$remote_policy_mods_dir"

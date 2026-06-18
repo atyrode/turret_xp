@@ -38,7 +38,10 @@ function core_panel_module.new(deps)
   local core_picker_table = deps.core_picker_table
   local core_identity = deps.core_identity
   local core_label_controls = deps.core_label_controls
+  local core_automation_controls = deps.core_automation_controls
   local core_platform_controls_module = deps.core_platform_controls
+  local get_turret_host = deps.get_turret_host
+  local core_requester = deps.core_requester
   local core_platform_controls_service = nil
 
   local function add_xp_panel(parent)
@@ -185,16 +188,21 @@ function core_panel_module.new(deps)
         tostring(state.chip_quality or "normal"),
         tostring(state.bound_turret == true),
         tostring(state.show_name_label == true),
-        tostring(state.show_label_level ~= false),
+        tostring(state.show_label_level == true),
+        tostring(state.show_unspent_label == true),
         tostring(platform_inventory_present),
         tostring(state.label_color_preset or ""),
         tostring(color[1] or ""),
         tostring(color[2] or ""),
         tostring(color[3] or ""),
+        tostring(state.automation_preset or "manual"),
+        tostring(state.automation_enabled == true),
       }, ":")
     end
 
     empty_picker_model = build_empty_core_picker_model(player, entity)
+    local host = get_turret_host(entity, false)
+    local request_status = core_requester.status(entity)
     local picker_key = "picker:"
       .. empty_picker_model.key
       .. ":quality:"
@@ -206,6 +214,10 @@ function core_panel_module.new(deps)
       tostring(dev_controls_enabled(player)),
       tostring(platform_inventory_present),
       tostring(platform_core_count),
+      tostring(host and host.request_core == true),
+      tostring(request_status.requester_valid == true),
+      tostring(request_status.delivered == true),
+      tostring(request_status.network == true),
     }, ":")
     return base_key .. ":" .. picker_key, empty_picker_model, base_key, picker_key
   end
@@ -769,6 +781,51 @@ function core_panel_module.new(deps)
     return get_core_platform_controls().add_list(core_panel, entity, state)
   end
 
+  local function add_core_request_controls(core_panel, entity)
+    local host = get_turret_host(entity, false)
+    local status = core_requester.status(entity)
+    local frame = components.add_section_frame(core_panel, {
+      top_margin = 6,
+      vertical_spacing = 4,
+    })
+
+    local row = frame.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(row, "horizontally_stretchable", true)
+    set_style(row, "horizontal_spacing", 8)
+    set_style(row, "vertical_align", "center")
+
+    row.add({
+      type = "checkbox",
+      name = GUI.core_request_enabled,
+      caption = { "turret-xp.core-request-enable" },
+      tooltip = { "turret-xp.core-request-tooltip" },
+      state = host and host.request_core == true,
+      tags = {
+        turret_xp_action = "toggle-core-request",
+      },
+    })
+
+    row.add({
+      type = "empty-widget",
+      style = "flib_horizontal_pusher",
+    })
+
+    local status_caption = status.enabled
+        and (status.delivered and { "turret-xp.core-request-status-delivered" } or status.network and {
+          "turret-xp.core-request-status-waiting",
+        } or { "turret-xp.core-request-status-no-network" })
+      or { "turret-xp.core-request-status-off" }
+    local label = row.add({
+      type = "label",
+      caption = status_caption,
+      style = "caption_label",
+    })
+    set_style(label, "font_color", status.enabled and COLOR.muted or COLOR.caption)
+  end
+
   local function add_dev_controls_panel(parent, player)
     if not dev_controls_enabled(player) then
       return nil
@@ -919,6 +976,7 @@ function core_panel_module.new(deps)
       set_style(note, "font_color", COLOR.muted)
       set_style(note, "single_line", false)
       set_style(note, "maximal_width", LAYOUT.empty_panel_width - 24)
+      add_core_request_controls(core_panel, entity)
       add_inventory_core_picker(core_panel, player, entity, {
         wide = true,
         model = empty_picker_model,
@@ -929,6 +987,7 @@ function core_panel_module.new(deps)
     end
 
     core_label_controls.add(core_panel, state)
+    core_automation_controls.add_installed(core_panel, state)
 
     update_name_render(entity, state)
     add_platform_core_list(core_panel, entity, state)

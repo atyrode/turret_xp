@@ -71,15 +71,10 @@ function core_label_controls_module.new(deps)
       type = "empty-widget",
       style = "flib_horizontal_pusher",
     })
-    preset_flow.add({
-      type = "checkbox",
-      name = GUI.core_name_level_visible,
-      caption = { "turret-xp.label-level" },
-      state = state.show_label_level ~= false,
-      tags = {
-        turret_xp_action = "toggle-label-level",
-      },
-    })
+  end
+
+  local function label_controls_enabled(state)
+    return state.show_name_label == true or state.show_label_level == true or state.show_unspent_label == true
   end
 
   function service.add(parent, state)
@@ -107,17 +102,47 @@ function core_label_controls_module.new(deps)
     set_style(textfield, "minimal_width", LABEL_LAYOUT.textfield_min_width)
     set_style(textfield, "horizontally_stretchable", true)
 
-    name_flow.add({
+    local visibility_flow = frame.add({
+      type = "flow",
+      direction = "horizontal",
+    })
+    set_style(visibility_flow, "vertical_align", "center")
+    set_style(visibility_flow, "horizontally_stretchable", true)
+    set_style(visibility_flow, "horizontal_spacing", 8)
+    add_row_label(visibility_flow, { "turret-xp.label-show" })
+
+    visibility_flow.add({
       type = "checkbox",
       name = GUI.core_name_visible,
-      caption = { "turret-xp.core-name-show" },
+      caption = { "turret-xp.label-name" },
       state = state.show_name_label == true,
       tags = {
         turret_xp_action = "toggle-core-label",
       },
     })
 
-    if state.show_name_label == true then
+    visibility_flow.add({
+      type = "checkbox",
+      name = GUI.core_name_level_visible,
+      caption = { "turret-xp.label-level" },
+      state = state.show_label_level == true,
+      tags = {
+        turret_xp_action = "toggle-label-level",
+      },
+    })
+
+    visibility_flow.add({
+      type = "checkbox",
+      name = GUI.core_unspent_visible,
+      caption = { "turret-xp.label-unspent" },
+      tooltip = { "turret-xp.label-unspent-tooltip" },
+      state = state.show_unspent_label == true,
+      tags = {
+        turret_xp_action = "toggle-label-unspent",
+      },
+    })
+
+    if label_controls_enabled(state) then
       add_color_controls(frame, state)
     end
   end

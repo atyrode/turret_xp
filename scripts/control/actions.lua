@@ -41,6 +41,8 @@ function actions_module.new(deps)
   local get_element_remaining_requirement = deps.get_element_remaining_requirement
   local add_element_material_progress = deps.add_element_material_progress
   local xp_required = deps.xp_required
+  local profile_automation = deps.profile_automation
+  local core_requester = deps.core_requester
 
   local function opened_turret_action(player, mutator)
     local entity, state = get_open_turret_state(player)
@@ -89,6 +91,42 @@ function actions_module.new(deps)
     opened_turret_action(player, function(entity, state)
       state.show_name_label = visible == true
       update_name_render(entity, state)
+    end)
+  end
+
+  local function set_core_request_enabled(player, enabled)
+    local entity = get_remembered_turret(player)
+    if not entity or player.opened ~= entity then
+      return
+    end
+
+    core_requester.set_request(entity, enabled == true)
+    refresh_open_turret(player, entity)
+  end
+
+  local function set_automation_preset(player, preset_id)
+    opened_turret_action(player, function(entity, state)
+      state.automation_preset = profile_automation.preset_by_id(preset_id).id
+      if state.automation_preset == "manual" then
+        state.automation_enabled = false
+      end
+      profile_automation.apply_to_profile(entity, state, { force = state.automation_enabled == true })
+      return nil, true
+    end)
+  end
+
+  local function set_automation_enabled(player, enabled)
+    opened_turret_action(player, function(entity, state)
+      state.automation_enabled = enabled == true and state.automation_preset ~= "manual"
+      profile_automation.apply_to_profile(entity, state, { force = state.automation_enabled == true })
+      return nil, true
+    end)
+  end
+
+  local function apply_automation_now(player)
+    opened_turret_action(player, function(entity, state)
+      profile_automation.apply_to_profile(entity, state, { force = true })
+      return nil, true
     end)
   end
 
@@ -315,16 +353,6 @@ function actions_module.new(deps)
       type = "empty-widget",
       style = "flib_horizontal_pusher",
     })
-    local level = current.add({
-      type = "checkbox",
-      name = GUI.core_name_level_visible,
-      caption = { "turret-xp.label-level" },
-      state = state.show_label_level ~= false,
-      tags = {
-        turret_xp_action = "toggle-label-level",
-      },
-    })
-    set_style(level, "left_margin", 8)
 
     local presets_table = content.add({
       type = "table",
@@ -892,7 +920,7 @@ function actions_module.new(deps)
   end
 
   local function add_dev_levels(player, levels)
-    opened_turret_action(player, function(_, state)
+    opened_turret_action(player, function(entity, state)
       levels = math.floor(tonumber(levels) or 1)
       if levels == 0 then
         return
@@ -913,6 +941,7 @@ function actions_module.new(deps)
         state.dev_xp = math.max(0, needed_total - combat_xp)
       end
       sync_turret_progression(state)
+      profile_automation.apply_to_profile(entity, state)
     end)
   end
 
@@ -935,6 +964,7 @@ function actions_module.new(deps)
       feeder.destroy(state, entity.position, false)
       ensure_evolution_state(state)
       sync_turret_progression(state)
+      profile_automation.apply_to_profile(entity, state)
       combat.mark_turret_body_sync_pending(state)
     end)
   end
@@ -946,6 +976,10 @@ function actions_module.new(deps)
     set_core_label_visibility = set_core_label_visibility,
     update_label_color_preview = update_label_color_preview,
     set_label_color_channel = set_label_color_channel,
+    set_core_request_enabled = set_core_request_enabled,
+    set_automation_preset = set_automation_preset,
+    set_automation_enabled = set_automation_enabled,
+    apply_automation_now = apply_automation_now,
     cycle_label_color = cycle_label_color,
     open_label_color_picker = open_label_color_picker,
     close_label_color_picker = destroy_label_color_picker,

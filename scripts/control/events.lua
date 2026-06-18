@@ -102,6 +102,65 @@ return function(M)
     return filters
   end
 
+  local function build_event_filters()
+    local filters = bound_placeholder_event_filters()
+    for _, filter in ipairs(gun_turret_event_filters()) do
+      filters[#filters + 1] = filter
+    end
+    return filters
+  end
+
+  local function policy_has_content(policy)
+    return type(policy) == "table"
+      and (
+        policy.request_core == true
+        or policy.automation_enabled == true
+        or (policy.automation_preset and policy.automation_preset ~= "manual")
+        or policy.show_name_label == true
+        or policy.show_label_level == true
+        or policy.show_unspent_label == true
+      )
+  end
+
+  local function build_policy_from_turret(entity)
+    if not is_gun_turret(entity) then
+      return nil
+    end
+
+    local profile = get_turret_state(entity)
+    if profile then
+      local policy = profile_automation.policy_from_profile(profile)
+      policy.request_core = true
+      return policy
+    end
+
+    local host = get_turret_host(entity, false)
+    local policy = profile_automation.policy_from_host(host)
+    return policy_has_content(policy) and policy or nil
+  end
+
+  local function write_blueprint_policy(blueprint, index, policy)
+    if not blueprint or not policy_has_content(policy) then
+      return false
+    end
+
+    return compat.try("write blueprint Turret XP policy tag", function()
+      blueprint.set_blueprint_entity_tag(index, "turret_xp_policy", policy)
+      return true
+    end, false)
+  end
+
+  function handlers.on_player_setup_blueprint(event)
+    local blueprint = event.stack or event.record
+    if not blueprint or not event.mapping then
+      return
+    end
+
+    for index, source in pairs(event.mapping) do
+      write_blueprint_policy(blueprint, index, build_policy_from_turret(source))
+    end
+  end
+
   function handlers.on_gui_opened(event)
     local player = game.get_player(event.player_index)
     if not player then
@@ -149,6 +208,10 @@ return function(M)
 
   function handlers.on_gui_text_changed(event)
     handle_gui_text_changed_event(event)
+  end
+
+  function handlers.on_gui_selection_state_changed(event)
+    handle_gui_selection_state_changed_event(event)
   end
 
   function handlers.on_runtime_mod_setting_changed(event)
@@ -211,14 +274,42 @@ return function(M)
 
   function handlers.on_built_entity(event)
     install_bound_turret_from_build_event(event)
+    if is_gun_turret(event.entity) and event.tags and event.tags.turret_xp_policy then
+      profile_automation.apply_policy_to_host(event.entity, event.tags.turret_xp_policy)
+    end
   end
 
   function handlers.on_robot_built_entity(event)
     install_bound_turret_from_build_event(event)
+    if is_gun_turret(event.entity) and event.tags and event.tags.turret_xp_policy then
+      profile_automation.apply_policy_to_host(event.entity, event.tags.turret_xp_policy)
+    end
   end
 
   function handlers.on_space_platform_built_entity(event)
     install_bound_turret_from_build_event(event)
+    if is_gun_turret(event.entity) and event.tags and event.tags.turret_xp_policy then
+      profile_automation.apply_policy_to_host(event.entity, event.tags.turret_xp_policy)
+    end
+  end
+
+  function handlers.on_script_raised_revive(event)
+    if is_gun_turret(event.entity) and event.tags and event.tags.turret_xp_policy then
+      profile_automation.apply_policy_to_host(event.entity, event.tags.turret_xp_policy)
+    end
+  end
+
+  function handlers.on_entity_settings_pasted(event)
+    local source = event.source
+    local destination = event.destination
+    if not is_gun_turret(source) or not is_gun_turret(destination) then
+      return
+    end
+
+    local policy = build_policy_from_turret(source)
+    if policy_has_content(policy) then
+      profile_automation.apply_policy_to_host(destination, policy)
+    end
   end
 
   function handlers.on_entity_damaged(event)
@@ -253,6 +344,7 @@ return function(M)
         add_profile_damage(state, damage, cause, event.entity)
         combat.apply_evolution_damage_effects(event, cause, state, damage)
         sync_turret_progression(state)
+        apply_profile_automation(cause, state)
         update_name_render(cause, state)
       end
     end
@@ -443,6 +535,7 @@ return function(M)
     cleanup_target_damage()
     cleanup_pending_bound_mining()
     apply_passive_evolution_effects()
+    core_requester.process_requests(64)
 
     for player_index in pairs(storage.turret_xp.players) do
       local player = game.get_player(player_index)
@@ -518,16 +611,20 @@ return function(M)
   script.on_event(defines.events.on_gui_checked_state_changed, handlers.on_gui_checked_state_changed)
   script.on_event(defines.events.on_gui_value_changed, handlers.on_gui_value_changed)
   script.on_event(defines.events.on_gui_text_changed, handlers.on_gui_text_changed)
+  script.on_event(defines.events.on_gui_selection_state_changed, handlers.on_gui_selection_state_changed)
   script.on_event(defines.events.on_runtime_mod_setting_changed, handlers.on_runtime_mod_setting_changed)
   script.on_event(defines.events.on_research_finished, handlers.on_research_finished)
   script.on_event(defines.events.on_force_created, handlers.on_force_created)
+  script.on_event(defines.events.on_player_setup_blueprint, handlers.on_player_setup_blueprint)
+  script.on_event(defines.events.on_entity_settings_pasted, handlers.on_entity_settings_pasted)
+  script.on_event(defines.events.script_raised_revive, handlers.on_script_raised_revive, gun_turret_event_filters())
   script.on_event(defines.events.on_entity_damaged, handlers.on_entity_damaged)
   script.on_event(defines.events.on_entity_died, handlers.on_entity_died)
 
   local gun_turret_filters = gun_turret_event_filters()
-  local bound_placeholder_filters = bound_placeholder_event_filters()
-  script.on_event(defines.events.on_built_entity, handlers.on_built_entity, bound_placeholder_filters)
-  script.on_event(defines.events.on_robot_built_entity, handlers.on_robot_built_entity, bound_placeholder_filters)
+  local built_filters = build_event_filters()
+  script.on_event(defines.events.on_built_entity, handlers.on_built_entity, built_filters)
+  script.on_event(defines.events.on_robot_built_entity, handlers.on_robot_built_entity, built_filters)
   script.on_event(defines.events.on_pre_player_mined_item, handlers.on_turret_removed, gun_turret_filters)
   script.on_event(defines.events.on_robot_pre_mined, handlers.on_turret_removed, gun_turret_filters)
   script.on_event(defines.events.on_player_mined_entity, handlers.on_turret_mined_entity, gun_turret_filters)
@@ -541,7 +638,7 @@ return function(M)
 
   space_platform_built_event = defines.events.on_space_platform_built_entity
   if space_platform_built_event then
-    script.on_event(space_platform_built_event, handlers.on_space_platform_built_entity, bound_placeholder_filters)
+    script.on_event(space_platform_built_event, handlers.on_space_platform_built_entity, built_filters)
   end
 
   space_platform_mined_event = defines.events.on_space_platform_mined_entity

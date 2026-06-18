@@ -41,6 +41,18 @@ return function(M)
     end
   end
 
+  local function destroy_core_requester_for_turret(entity, spill)
+    if core_requester then
+      core_requester.destroy_for_turret(entity, spill)
+    end
+  end
+
+  local function apply_pending_policy_for_profile(entity, profile, host)
+    if profile_automation then
+      profile_automation.apply_pending_policy(entity, profile, host)
+    end
+  end
+
   local schema = profile_schema.new({
     label_colors = label_colors,
     is_ammo_item = feeder_is_ammo_item,
@@ -128,6 +140,8 @@ return function(M)
     is_gun_turret = is_gun_turret,
     normalize_profile = normalize_profile,
     normalize_shield_state = normalize_shield_state,
+    get_available_skill_points = get_available_skill_points,
+    get_available_augment_points = get_available_augment_points,
     game_tick = function()
       return game and game.tick or nil
     end,
@@ -157,6 +171,8 @@ return function(M)
     destroy_feeder = feeder_destroy,
     update_name_render = update_name_render,
     update_shield_bar_render = update_shield_bar_render,
+    destroy_core_requester = destroy_core_requester_for_turret,
+    apply_pending_policy = apply_pending_policy_for_profile,
   })
   allocate_chip_id = service.allocate_chip_id
   get_turret_host = service.get_turret_host
