@@ -842,42 +842,61 @@ return function(M)
 
       return summary
     end,
-    profile_label_idempotency_sample = function(label_count, repeat_updates)
+    runtime_render_pressure_sample = function(core_count, repeat_updates)
       local counter = {
-        draw_calls = 0,
-        property_writes = 0,
+        text_draw_calls = 0,
+        text_property_writes = 0,
+        sprite_draw_calls = 0,
+        sprite_property_writes = 0,
         destroy_calls = 0,
       }
+
+      local function make_render_object(kind)
+        local store = {
+          valid = true,
+        }
+        local object = {}
+        setmetatable(object, {
+          __index = function(_, key)
+            if key == "destroy" then
+              return function()
+                store.valid = false
+                counter.destroy_calls = counter.destroy_calls + 1
+              end
+            end
+            return store[key]
+          end,
+          __newindex = function(_, key, value)
+            counter[kind .. "_property_writes"] = counter[kind .. "_property_writes"] + 1
+            store[key] = value
+          end,
+        })
+        return object
+      end
+
+      local function normalize_test_profile(profile)
+        local shield = profile and profile.shield or nil
+        local shield_capacity = profile and profile._test_shield_capacity or nil
+        profile = normalize_profile(profile)
+        profile.shield = shield
+        profile._test_shield_capacity = shield_capacity
+        return profile
+      end
+
       local labels = profile_labels_module.new({
-        normalize_profile = normalize_profile,
+        normalize_profile = normalize_test_profile,
         is_gun_turret = function(entity)
           return entity and entity.valid == true
         end,
         rendering_api = function()
           return {
             draw_text = function()
-              counter.draw_calls = counter.draw_calls + 1
-
-              local store = {
-                valid = true,
-              }
-              local object = {}
-              setmetatable(object, {
-                __index = function(_, key)
-                  if key == "destroy" then
-                    return function()
-                      store.valid = false
-                      counter.destroy_calls = counter.destroy_calls + 1
-                    end
-                  end
-                  return store[key]
-                end,
-                __newindex = function(_, key, value)
-                  counter.property_writes = counter.property_writes + 1
-                  store[key] = value
-                end,
-              })
-              return object
+              counter.text_draw_calls = counter.text_draw_calls + 1
+              return make_render_object("text")
+            end,
+            draw_sprite = function()
+              counter.sprite_draw_calls = counter.sprite_draw_calls + 1
+              return make_render_object("sprite")
             end,
           }
         end,
@@ -885,10 +904,25 @@ return function(M)
         game_tick = function()
           return game and game.tick or 0
         end,
-        normalize_shield_state = normalize_shield_state,
+        normalize_shield_state = function(profile, fill_if_missing)
+          local capacity = tonumber(profile and profile._test_shield_capacity) or 0
+          if capacity <= 0 then
+            if profile then
+              profile.shield = 0
+            end
+            return 0, 0
+          end
+
+          local current = tonumber(profile.shield)
+          if current == nil then
+            current = fill_if_missing ~= false and capacity or 0
+          end
+          profile.shield = math.max(0, math.min(capacity, current))
+          return profile.shield, capacity
+        end,
       })
 
-      local count = math.max(1, math.floor(tonumber(label_count) or 1))
+      local count = math.max(1, math.floor(tonumber(core_count) or 1))
       local repeats = math.max(1, math.floor(tonumber(repeat_updates) or 1))
       local surface = game.surfaces[1]
       local force = game.forces.player
@@ -911,35 +945,49 @@ return function(M)
             label_color_preset = "gold",
           }),
         }
-        entries[index].profile._test_label_counter = counter
+        entries[index].profile._test_shield_capacity = 100
+        entries[index].profile.shield = 50
         labels.update_name_render(entries[index].entity, entries[index].profile)
+        labels.update_shield_bar_render(entries[index].entity, entries[index].profile, true)
       end
 
-      local initial_draw_calls = counter.draw_calls
-      local initial_property_writes = counter.property_writes
+      local initial_text_draw_calls = counter.text_draw_calls
+      local initial_text_property_writes = counter.text_property_writes
+      local initial_sprite_draw_calls = counter.sprite_draw_calls
+      local initial_sprite_property_writes = counter.sprite_property_writes
 
       for _ = 1, repeats do
         for _, entry in ipairs(entries) do
           labels.update_name_render(entry.entity, entry.profile)
+          labels.update_shield_bar_render(entry.entity, entry.profile, true)
         end
       end
 
-      local no_change_draw_calls = counter.draw_calls - initial_draw_calls
-      local no_change_property_writes = counter.property_writes - initial_property_writes
+      local no_change_text_draw_calls = counter.text_draw_calls - initial_text_draw_calls
+      local no_change_text_property_writes = counter.text_property_writes - initial_text_property_writes
+      local no_change_sprite_draw_calls = counter.sprite_draw_calls - initial_sprite_draw_calls
+      local no_change_sprite_property_writes = counter.sprite_property_writes - initial_sprite_property_writes
 
       for _, entry in ipairs(entries) do
         entry.profile.level = entry.profile.level + 1
+        entry.profile.shield = entry.profile.shield + 10
         labels.update_name_render(entry.entity, entry.profile)
+        labels.update_shield_bar_render(entry.entity, entry.profile, true)
       end
 
       return {
-        label_count = count,
+        core_count = count,
         repeat_updates = repeats,
-        initial_draw_calls = initial_draw_calls,
-        no_change_draw_calls = no_change_draw_calls,
-        no_change_property_writes = no_change_property_writes,
-        changed_draw_calls = counter.draw_calls - initial_draw_calls - no_change_draw_calls,
-        changed_property_writes = counter.property_writes - initial_property_writes - no_change_property_writes,
+        initial_text_draw_calls = initial_text_draw_calls,
+        initial_sprite_draw_calls = initial_sprite_draw_calls,
+        no_change_text_draw_calls = no_change_text_draw_calls,
+        no_change_text_property_writes = no_change_text_property_writes,
+        no_change_sprite_draw_calls = no_change_sprite_draw_calls,
+        no_change_sprite_property_writes = no_change_sprite_property_writes,
+        changed_text_draw_calls = counter.text_draw_calls - initial_text_draw_calls - no_change_text_draw_calls,
+        changed_text_property_writes = counter.text_property_writes - initial_text_property_writes - no_change_text_property_writes,
+        changed_sprite_draw_calls = counter.sprite_draw_calls - initial_sprite_draw_calls - no_change_sprite_draw_calls,
+        changed_sprite_property_writes = counter.sprite_property_writes - initial_sprite_property_writes - no_change_sprite_property_writes,
       }
     end,
     dispatch_rank_modifier_sample = function(entity)

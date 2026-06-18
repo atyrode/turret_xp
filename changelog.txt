@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.11.1
+Date: 2026-06-18
+  Bugfixes:
+    - Fixed a 0.11.0 performance regression for saves with many named Veteran Cores by avoiding repeated no-op render-object updates for unchanged in-world core name labels and Shield bars.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.11.0
 Date: 2026-06-17
   Changes:

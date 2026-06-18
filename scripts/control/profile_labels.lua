@@ -18,6 +18,24 @@ local SHIELD_BAR_DAMAGE_VISIBLE_TICKS = 180
 function profile_labels.new(deps)
   local service = {}
 
+  local function force_name(force)
+    return force and (force.name or force) or ""
+  end
+
+  local function surface_index(surface)
+    return surface and (surface.index or surface.name or surface) or ""
+  end
+
+  local function color_signature(color)
+    color = color or {}
+    return table.concat({
+      tostring(color[1] or color.r or 1),
+      tostring(color[2] or color.g or 0.86),
+      tostring(color[3] or color.b or 0.46),
+      tostring(color[4] or color.a or 1),
+    }, ",")
+  end
+
   function service.destroy_name_render(profile)
     if profile and profile.name_render and profile.name_render.valid then
       profile.name_render.destroy()
@@ -104,9 +122,26 @@ function profile_labels.new(deps)
     return ok and object or nil
   end
 
+  local function shield_bar_pip_signature(entity, sprite, x, y)
+    return table.concat({
+      tostring(sprite or ""),
+      tostring(entity and entity.unit_number or ""),
+      tostring(surface_index(entity and entity.surface)),
+      tostring(force_name(entity and entity.force)),
+      tostring(x or ""),
+      tostring(y or ""),
+    }, "|")
+  end
+
   local function update_shield_bar_pip(segment, entity, sprite, x, y)
+    local signature = shield_bar_pip_signature(entity, sprite, x, y)
     local object = segment.object
     if object and object.valid then
+      if segment._render_signature == signature then
+        segment.sprite = sprite
+        return object
+      end
+
       local ok = pcall(function()
         object.surface = entity.surface
         object.sprite = sprite
@@ -119,6 +154,7 @@ function profile_labels.new(deps)
       end)
       if ok then
         segment.sprite = sprite
+        segment._render_signature = signature
         return object
       end
       destroy_render_object(object)
@@ -127,6 +163,7 @@ function profile_labels.new(deps)
     object = draw_shield_bar_pip(entity, sprite, x, y)
     segment.object = object
     segment.sprite = sprite
+    segment._render_signature = object and signature or nil
     return object
   end
 
@@ -146,6 +183,7 @@ function profile_labels.new(deps)
           segment.background = nil
           segment.fill = nil
           segment.border = nil
+          segment._render_signature = nil
         end
       end
     end
@@ -284,24 +322,6 @@ function profile_labels.new(deps)
     end
 
     return name .. " (lvl " .. tostring(profile.level or 0) .. ")"
-  end
-
-  local function force_name(force)
-    return force and (force.name or force) or ""
-  end
-
-  local function surface_index(surface)
-    return surface and (surface.index or surface.name or surface) or ""
-  end
-
-  local function color_signature(color)
-    color = color or {}
-    return table.concat({
-      tostring(color[1] or color.r or 1),
-      tostring(color[2] or color.g or 0.86),
-      tostring(color[3] or color.b or 0.46),
-      tostring(color[4] or color.a or 1),
-    }, ",")
   end
 
   local function name_render_signature(entity, profile, text)

@@ -56,24 +56,13 @@
       <section class="band" aria-labelledby="current-title">
         <div>
           <p class="eyebrow">Current release</p>
-          <h2 id="current-title">Version 0.11.0</h2>
-          <p>2026-06-17</p>
+          <h2 id="current-title">Version 0.11.1</h2>
+          <p>2026-06-18</p>
         </div>
         <div class="release-notes">
-          <h3>Changes</h3>
-          <ul>
-            <li>Rebuilt the Turret XP GUI around an anchored Factorio-native <code>flib.gui</code> shell with focused services for shell ownership, runtime refresh, actions, core identity, label controls, platform controls, Stats, Evolution, widgets, and the Veteran Core picker table.</li>
-            <li>Reworked empty turrets into a full-width Veteran Core picker with sortable headers, Base/Sniper/Machine gun/Bulwark/Brawler filters, persisted sort/filter preferences, neutral preview stats, and exact-slot install actions.</li>
-            <li>Reworked installed-core controls with a compact identity/action row, explicit extract and Bind/Unbind actions, platform hub core rows, a label-color swatch, and a draggable Turret XP color popup with presets and RGB sliders.</li>
-            <li>Gave Stats and Evolution matching fixed-header shallow panes with bounded scroll bodies, native section headers, named layout constants, stable row budgets, and regression guards for layout contracts.</li>
-            <li>Added dev-only GUI snapshot tooling for graphical review of fixture scenes, plus headless and script-level GUI contract tests for the picker, Stats layout, action dispatch, and layout constants.</li>
-            <li>Added Dockerized Lua formatting/linting workflows and a pre-commit hook so local Lua formatting and strict checks match CI without installing Lua tools on the host.</li>
-          </ul>
           <h3>Bugfixes</h3>
           <ul>
-            <li>Fixed interface-scale-sensitive Evolution icons by rendering decorative sprites in fixed cells so they no longer overflow into labels or action controls at smaller or automatic UI scales.</li>
-            <li>Fixed Ammo-section stat alignment so Magazine, Ammo, and Ammo Productivity values are pinned to the same right-side value column as the rest of the Stats panel.</li>
-            <li>Reduced GUI refresh churn by preserving stable interactive controls and using narrower refresh keys for picker and open-turret updates where practical.</li>
+            <li>Fixed a 0.11.0 performance regression for saves with many named Veteran Cores by avoiding repeated no-op render-object updates for unchanged in-world core name labels and Shield bars.</li>
           </ul>
         </div>
       </section>
