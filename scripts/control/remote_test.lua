@@ -990,6 +990,166 @@ return function(M)
         changed_sprite_property_writes = counter.sprite_property_writes - initial_sprite_property_writes - no_change_sprite_property_writes,
       }
     end,
+    runtime_world_pressure_sample = function(surface, core_count, repeat_updates)
+      surface = surface or game.surfaces[1]
+      local count = math.max(1, math.floor(tonumber(core_count) or 1))
+      local repeats = math.max(1, math.floor(tonumber(repeat_updates) or 1))
+      local counter = {
+        text_property_writes = 0,
+        sprite_property_writes = 0,
+        destroy_calls = 0,
+      }
+      ensure_storage()
+      local existing_chip_count = turret_xp_test_table_count(storage.turret_xp.chips)
+      local existing_feeder_count = turret_xp_test_table_count(storage.turret_xp.feeders)
+      local existing_managed_inserter_count = turret_xp_test_table_count(storage.turret_xp.managed_inserters)
+      local existing_status_effect_count = #(storage.turret_xp.status_effects or {})
+      local existing_pending_visual_count = #(storage.turret_xp.pending_visuals or {})
+      local entries = {}
+
+      local function make_render_object(kind)
+        local store = {
+          valid = true,
+        }
+        local object = {}
+        setmetatable(object, {
+          __index = function(_, key)
+            if key == "destroy" then
+              return function()
+                store.valid = false
+                counter.destroy_calls = counter.destroy_calls + 1
+              end
+            end
+            return store[key]
+          end,
+          __newindex = function(_, key, value)
+            counter[kind .. "_property_writes"] = counter[kind .. "_property_writes"] + 1
+            store[key] = value
+          end,
+        })
+        return object
+      end
+
+      local function attach_counted_render_handles(state)
+        destroy_name_render(state)
+        destroy_shield_bar_render(state)
+
+        state.name_render = make_render_object("text")
+        state._name_render_signature = nil
+        state.shield_bar = {
+          _shield_bar_render_version = 3,
+          segments = {},
+        }
+        for index = 1, 9 do
+          state.shield_bar.segments[index] = {
+            object = make_render_object("sprite"),
+          }
+        end
+      end
+
+      local function cleanup()
+        for _, entry in ipairs(entries) do
+          local entity = entry.entity
+          local state = entry.state
+          if state then
+            destroy_name_render(state)
+            destroy_shield_bar_render(state)
+            feeder.destroy(state, entity and entity.valid and entity.position or nil, false)
+          end
+          if entity and entity.valid then
+            remove_turret_state(entity, true)
+            entity.destroy({ raise_destroy = false })
+          end
+        end
+      end
+
+      local ok, result = pcall(function()
+        for index = 1, count do
+          local row = math.floor((index - 1) / 17)
+          local column = (index - 1) % 17
+          local entity = surface.create_entity({
+            name = BASE_TURRET_NAME,
+            position = {
+              x = -80 + (column * 2.5),
+              y = -80 + (row * 2.5),
+            },
+            force = "player",
+            raise_built = false,
+          })
+          if not entity or not entity.valid then
+            error("failed to create pressure-test turret " .. tostring(index))
+          end
+          entity.insert({ name = "firearm-magazine", count = 10 })
+
+          local profile = turret_xp_test_set_profile_fields(create_blank_profile(), {
+            custom_name = "Pressure core " .. tostring(index),
+            level = 7,
+            label_color = { 1, 0.86, 0.46 },
+            label_color_preset = "gold",
+          })
+          local state = install_profile_on_turret(entity, profile)
+          if not state then
+            error("failed to install pressure-test core " .. tostring(index))
+          end
+
+          state.show_name_label = true
+          state.show_label_level = true
+          local evolution = ensure_evolution_state(state)
+          evolution.base.shield = 10
+          state.shield = 50
+          normalize_shield_state(state, false)
+          sync_turret_progression(state)
+          attach_counted_render_handles(state)
+          update_name_render(entity, state)
+          update_shield_bar_render(entity, state, true)
+          entries[#entries + 1] = {
+            entity = entity,
+            state = state,
+          }
+        end
+
+        local initial_text_property_writes = counter.text_property_writes
+        local initial_sprite_property_writes = counter.sprite_property_writes
+
+        for _ = 1, repeats do
+          apply_passive_evolution_effects()
+        end
+
+        local passive_text_property_writes = counter.text_property_writes - initial_text_property_writes
+        local passive_sprite_property_writes = counter.sprite_property_writes - initial_sprite_property_writes
+
+        for _, entry in ipairs(entries) do
+          sync_turret_progression(entry.state)
+          update_name_render(entry.entity, entry.state)
+          update_shield_bar_render(entry.entity, entry.state, true)
+        end
+
+        return {
+          core_count = count,
+          repeat_updates = repeats,
+          installed_core_count = #entries,
+          storage_chip_count_delta = turret_xp_test_table_count(storage.turret_xp.chips) - existing_chip_count,
+          feeder_count_delta = turret_xp_test_table_count(storage.turret_xp.feeders) - existing_feeder_count,
+          managed_inserter_count_delta = turret_xp_test_table_count(storage.turret_xp.managed_inserters) - existing_managed_inserter_count,
+          status_effect_count_delta = #(storage.turret_xp.status_effects or {}) - existing_status_effect_count,
+          pending_visual_count_delta = #(storage.turret_xp.pending_visuals or {}) - existing_pending_visual_count,
+          initial_text_property_writes = initial_text_property_writes,
+          initial_sprite_property_writes = initial_sprite_property_writes,
+          passive_text_property_writes = passive_text_property_writes,
+          passive_sprite_property_writes = passive_sprite_property_writes,
+          direct_refresh_text_property_writes = counter.text_property_writes - initial_text_property_writes - passive_text_property_writes,
+          direct_refresh_sprite_property_writes = counter.sprite_property_writes
+            - initial_sprite_property_writes
+            - passive_sprite_property_writes,
+        }
+      end)
+
+      cleanup()
+      if ok then
+        return result
+      end
+      error(result, 0)
+    end,
     dispatch_rank_modifier_sample = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
       if not state then
