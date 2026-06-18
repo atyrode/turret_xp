@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.11.2
+Date: 2026-06-18
+  Bugfixes:
+    - Hardened release validation so local and CI Factorio runtime caches are kept outside Lua source discovery, preventing downloaded Factorio data files from breaking package and Mod Portal publishing checks.
+    - Includes the 0.11.1 performance fix for saves with many named Veteran Cores.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.11.1
 Date: 2026-06-18
   Bugfixes:

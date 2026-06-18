@@ -16,8 +16,8 @@ permissions:
 
 env:
   FACTORIO_HEADLESS_VERSION: 2.0.76
-  FACTORIO_DIR: ${{ github.workspace }}/.factorio-ci/factorio
-  FACTORIO_MODS_DIR: ${{ github.workspace }}/.factorio-ci/mods
+  FACTORIO_DIR: /tmp/turret-xp-factorio-ci/factorio
+  FACTORIO_MODS_DIR: /tmp/turret-xp-factorio-ci/mods
   PYTHON: python3
   LUAC: luac5.2
   STYLUA_VERSION: 2.5.2
