@@ -1027,25 +1027,30 @@ return function(M)
       local player = make_fake_dispatch_player(entity)
       local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
       add_core_panel(root, "installed")
+      add_build_panel(root)
       add_evolution_panel(root)
       update_core_panel(root, player, entity, state)
+      update_build_panel(root, state)
       local display_state = profile_automation.build_preview_profile(state) or state
       update_evolution_panel(root, entity, display_state, "firearm-magazine")
 
       local panel = find_gui_element(root, GUI.core)
-      local auto = panel and find_gui_element(panel, GUI.core_automation_enabled) or nil
-      local build_controls = panel and find_gui_element(panel, GUI.core_build_controls) or nil
+      local build_container = find_gui_element(root, GUI.core_build_controls_container)
+      local auto = build_container and find_gui_element(build_container, GUI.core_automation_enabled) or nil
+      local build_controls = build_container and find_gui_element(build_container, GUI.core_build_controls) or nil
       local evolution = find_gui_element(root, GUI.evolution)
       local allocate_damage = find_gui_action(evolution, "allocate-base", "upgrade", "damage")
       local forever_damage = find_gui_action(evolution, "toggle-base-forever", "upgrade", "damage")
-      local build_level = find_gui_caption_key(panel, "turret-xp.build-mode-level")
-      local build_core = find_gui_caption_key(panel, "turret-xp.build-mode-core")
-      local build_augments = find_gui_caption_key(panel, "turret-xp.build-mode-augments")
-      local build_core_forever = find_gui_caption_key(panel, "turret-xp.build-mode-core-forever")
-      local build_augment_forever = find_gui_caption_key(panel, "turret-xp.build-mode-augment-forever")
+      local build_level = find_gui_caption_key(build_container, "turret-xp.build-mode-level")
+      local build_core = find_gui_caption_key(build_container, "turret-xp.build-mode-core")
+      local build_augments = find_gui_caption_key(build_container, "turret-xp.build-mode-augments")
+      local build_core_forever = find_gui_caption_key(build_container, "turret-xp.build-mode-core-forever")
+      local build_augment_forever = find_gui_caption_key(build_container, "turret-xp.build-mode-augment-forever")
 
       local summary = {
         opened = panel and panel.valid == true or false,
+        build_container_type = build_container and build_container.type or nil,
+        build_controls_inside_core = panel and find_gui_element(panel, GUI.core_build_controls) ~= nil or false,
         build_mode = state.build_mode == true,
         automation_enabled = state.automation_enabled == true,
         build_controls_type = build_controls and build_controls.type or nil,

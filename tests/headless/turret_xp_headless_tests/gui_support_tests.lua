@@ -169,11 +169,10 @@ function tests.run_layout_constants_test()
     layout.rank_allocation_detail_width
       + layout.rank_allocation_icon_cell_width
       + layout.rank_allocation_value_width
-      + layout.rank_allocation_forever_width
       + layout.rank_stepper_width
       + layout.rank_allocation_spacing_width,
     layout.evolution_inner_width,
-    "rank allocation row columns must derive from the Evolution inner width"
+    "rank allocation row columns must derive from the Evolution inner width without reserving inline loop controls"
   )
   assert_true(layout.rank_allocation_detail_width > 0, "rank allocation detail text must retain a positive width")
   assert_true(layout.rank_stepper_width < layout.evolution_inner_width, "rank stepper controls must fit inside Evolution rows")

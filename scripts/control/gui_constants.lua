@@ -29,6 +29,7 @@ local gui = {
   core_color_g_value = prefix .. "core-color-g-value",
   core_color_b_value = prefix .. "core-color-b-value",
   core_automation_enabled = prefix .. "core-automation-enabled",
+  core_build_controls_container = prefix .. "core-build-controls-container",
   core_build_controls = prefix .. "core-build-controls",
   inventory_cores = prefix .. "inventory-cores",
   inventory_core_filters = prefix .. "inventory-core-filters",
@@ -127,7 +128,6 @@ local layout = {
   rank_stepper_spacing = 4,
   rank_allocation_icon_size = 28,
   rank_allocation_icon_cell_width = 28,
-  rank_allocation_forever_width = 34,
   rank_allocation_value_width = 96,
   rank_allocation_horizontal_spacing = 8,
   inventory_core_picker_height = 230,
@@ -211,11 +211,10 @@ layout.evolution_effect_column_width = math.floor((layout.evolution_card_inner_w
 layout.evolution_detail_width = layout.evolution_inner_width - 96
 layout.evolution_effect_width = layout.evolution_inner_width - 64
 layout.rank_stepper_width = (layout.rank_stepper_button_size * 2) + layout.rank_stepper_label_width + (layout.rank_stepper_spacing * 2)
-layout.rank_allocation_spacing_width = layout.rank_allocation_horizontal_spacing * 4
+layout.rank_allocation_spacing_width = layout.rank_allocation_horizontal_spacing * 3
 layout.rank_allocation_detail_width = layout.evolution_inner_width
   - layout.rank_allocation_icon_cell_width
   - layout.rank_allocation_value_width
-  - layout.rank_allocation_forever_width
   - layout.rank_stepper_width
   - layout.rank_allocation_spacing_width
 layout.element_mastery_icon_width = 36

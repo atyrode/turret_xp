@@ -374,6 +374,9 @@ return function(M)
         update_core_panel = function(...)
           return update_core_panel(...)
         end,
+        update_build_panel = function(...)
+          return update_build_panel(...)
+        end,
         update_stats_panel = function(...)
           return update_stats_panel(...)
         end,
@@ -537,6 +540,10 @@ return function(M)
     return get_core_panel_service().add_core_panel(parent, mode)
   end
 
+  function add_build_panel(parent)
+    return get_core_panel_service().add_build_panel(parent)
+  end
+
   function core_panel_key(player, state)
     return get_core_panel_service().core_panel_key(player, state)
   end
@@ -559,6 +566,10 @@ return function(M)
 
   function update_core_panel(root, player, entity, state)
     return get_core_panel_service().update_core_panel(root, player, entity, state)
+  end
+
+  function update_build_panel(root, state)
+    return get_core_panel_service().update_build_panel(root, state)
   end
 
   function add_stats_panel(parent)

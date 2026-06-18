@@ -15,6 +15,7 @@ function gui_runtime_module.new(deps)
   local format_number = deps.format_number
   local get_gui_xp_modifier_summary = deps.get_gui_xp_modifier_summary
   local update_core_panel = deps.update_core_panel
+  local update_build_panel = deps.update_build_panel
   local update_stats_panel = deps.update_stats_panel
   local update_evolution_panel = deps.update_evolution_panel
   local update_shield_bar_render = deps.update_shield_bar_render
@@ -175,6 +176,7 @@ function gui_runtime_module.new(deps)
     end
 
     update_core_panel(panel, player, entity, context.live_state)
+    update_build_panel(panel, context.live_state)
     if not context.live_state then
       return true
     end

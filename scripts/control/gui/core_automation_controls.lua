@@ -60,20 +60,14 @@ function core_automation_controls.new(deps)
         direction = "horizontal",
       })
       set_style(row, "horizontally_stretchable", true)
-      set_style(row, "top_margin", 6)
       set_style(row, "horizontal_spacing", 8)
       set_style(row, "vertical_align", "center")
-      add_row_label(row, { "turret-xp.build-mode-title" })
-
-      local toggle = row.add({
-        type = "button",
-        caption = { "turret-xp.build-mode-enter" },
-        tooltip = { "turret-xp.build-mode-enter-tooltip" },
-        tags = {
-          turret_xp_action = "enter-build-mode",
-        },
+      local title = row.add({
+        type = "label",
+        caption = { "turret-xp.build-mode-title" },
+        style = "caption_label",
       })
-      set_style(toggle, "minimal_width", 72)
+      set_style(title, "font_color", COLOR.caption)
 
       if has_unfinished_target then
         local auto = row.add({
@@ -93,13 +87,22 @@ function core_automation_controls.new(deps)
         type = "empty-widget",
         style = "flib_horizontal_pusher",
       })
+
+      local toggle = row.add({
+        type = "button",
+        caption = { "turret-xp.build-mode-enter" },
+        tooltip = { "turret-xp.build-mode-enter-tooltip" },
+        tags = {
+          turret_xp_action = "enter-build-mode",
+        },
+      })
+      set_style(toggle, "minimal_width", 72)
       return
     end
 
     local frame = components.add_section_frame(parent, {
       name = GUI.core_build_controls,
       style = "turret_xp_build_mode_frame",
-      top_margin = 6,
       vertical_spacing = 4,
     })
 
@@ -110,15 +113,13 @@ function core_automation_controls.new(deps)
     set_style(row, "horizontally_stretchable", true)
     set_style(row, "horizontal_spacing", 8)
     set_style(row, "vertical_align", "center")
-    add_row_label(row, { "turret-xp.build-mode-title" })
-
-    local mode = row.add({
+    local title = row.add({
       type = "label",
-      caption = { "turret-xp.build-mode-active" },
-      style = "caption_label",
+      caption = { "turret-xp.build-mode-title" },
+      style = "heading_2_label",
     })
-    set_style(mode, "font", "default-bold")
-    set_style(mode, "font_color", COLOR.build_mode)
+    set_style(title, "font", "default-bold")
+    set_style(title, "font_color", COLOR.build_mode)
 
     row.add({
       type = "empty-widget",

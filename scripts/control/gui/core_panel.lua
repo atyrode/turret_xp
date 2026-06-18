@@ -130,6 +130,19 @@ function core_panel_module.new(deps)
     return core_panel
   end
 
+  local function add_build_panel(parent)
+    local panel = parent.add({
+      type = "frame",
+      name = GUI.core_build_controls_container,
+      direction = "vertical",
+      style = "deep_frame_in_shallow_frame",
+    })
+    set_style(panel, "horizontally_stretchable", true)
+    set_style(panel, "padding", { 6, 6, 6, 6 })
+    set_style(panel, "bottom_margin", 6)
+    return panel
+  end
+
   local function core_options_key(options)
     local parts = {}
     for _, option in ipairs(options or {}) do
@@ -1001,20 +1014,63 @@ function core_panel_module.new(deps)
     end
 
     core_label_controls.add(core_panel, state)
-    core_automation_controls.add_installed(core_panel, state)
 
     update_name_render(entity, state)
     add_platform_core_list(core_panel, entity, state)
   end
 
+  local function build_panel_key(state)
+    if not state then
+      return "empty"
+    end
+
+    local target = profile_automation.target_model(state) or {}
+    return table.concat({
+      "installed",
+      tostring(state.automation_enabled == true),
+      tostring(profile_automation.build_mode_active(state)),
+      tostring(profile_automation.target_unfinished(state)),
+      tostring(target.level or ""),
+      tostring(target.core or ""),
+      tostring(target.core_infinite or ""),
+      tostring(target.augments or ""),
+      tostring(target.augment_infinite or ""),
+      tostring(target.choice or ""),
+      tostring(target.elements or ""),
+    }, ":")
+  end
+
+  local function update_build_panel(root, state)
+    local panel = find_gui_element(root, GUI.core_build_controls_container)
+    if not panel then
+      return
+    end
+
+    local key = build_panel_key(state)
+    if panel.tags and panel.tags.key == key then
+      return
+    end
+
+    panel.clear()
+    panel.tags = {
+      key = key,
+    }
+
+    if state then
+      core_automation_controls.add_installed(panel, state)
+    end
+  end
+
   return {
     add_xp_panel = add_xp_panel,
     add_core_panel = add_core_panel,
+    add_build_panel = add_build_panel,
     core_panel_key = core_panel_key,
     add_inventory_core_picker = add_inventory_core_picker,
     add_platform_core_list = add_platform_core_list,
     add_dev_controls_panel = add_dev_controls_panel,
     update_core_panel = update_core_panel,
+    update_build_panel = update_build_panel,
     prepare_core_options_for_display = prepare_core_options_for_display,
   }
 end

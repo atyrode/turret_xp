@@ -24,6 +24,7 @@ return function(M)
 
     add_core_panel(body, mode)
     if state then
+      add_build_panel(body)
       add_xp_panel(body)
       add_dev_controls_panel(body, player)
       add_stats_panel(body)
