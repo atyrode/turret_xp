@@ -1,3 +1,5 @@
+local profile_labels_module = require("scripts.control.profile_labels")
+
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
@@ -839,6 +841,106 @@ return function(M)
       forget_open_turret(player)
 
       return summary
+    end,
+    profile_label_idempotency_sample = function(label_count, repeat_updates)
+      local counter = {
+        draw_calls = 0,
+        property_writes = 0,
+        destroy_calls = 0,
+      }
+      local labels = profile_labels_module.new({
+        normalize_profile = normalize_profile,
+        is_gun_turret = function(entity)
+          return entity and entity.valid == true
+        end,
+        rendering_api = function()
+          return {
+            draw_text = function()
+              counter.draw_calls = counter.draw_calls + 1
+
+              local store = {
+                valid = true,
+              }
+              local object = {}
+              setmetatable(object, {
+                __index = function(_, key)
+                  if key == "destroy" then
+                    return function()
+                      store.valid = false
+                      counter.destroy_calls = counter.destroy_calls + 1
+                    end
+                  end
+                  return store[key]
+                end,
+                __newindex = function(_, key, value)
+                  counter.property_writes = counter.property_writes + 1
+                  store[key] = value
+                end,
+              })
+              return object
+            end,
+          }
+        end,
+        label_colors = label_colors,
+        game_tick = function()
+          return game and game.tick or 0
+        end,
+        normalize_shield_state = normalize_shield_state,
+      })
+
+      local count = math.max(1, math.floor(tonumber(label_count) or 1))
+      local repeats = math.max(1, math.floor(tonumber(repeat_updates) or 1))
+      local surface = game.surfaces[1]
+      local force = game.forces.player
+      local entries = {}
+
+      for index = 1, count do
+        entries[index] = {
+          entity = {
+            valid = true,
+            unit_number = 100000 + index,
+            surface = surface,
+            force = force,
+          },
+          profile = normalize_profile({
+            custom_name = "Named turret " .. tostring(index),
+            level = 7,
+            show_name_label = true,
+            show_label_level = true,
+            label_color = { 1, 0.86, 0.46 },
+            label_color_preset = "gold",
+          }),
+        }
+        entries[index].profile._test_label_counter = counter
+        labels.update_name_render(entries[index].entity, entries[index].profile)
+      end
+
+      local initial_draw_calls = counter.draw_calls
+      local initial_property_writes = counter.property_writes
+
+      for _ = 1, repeats do
+        for _, entry in ipairs(entries) do
+          labels.update_name_render(entry.entity, entry.profile)
+        end
+      end
+
+      local no_change_draw_calls = counter.draw_calls - initial_draw_calls
+      local no_change_property_writes = counter.property_writes - initial_property_writes
+
+      for _, entry in ipairs(entries) do
+        entry.profile.level = entry.profile.level + 1
+        labels.update_name_render(entry.entity, entry.profile)
+      end
+
+      return {
+        label_count = count,
+        repeat_updates = repeats,
+        initial_draw_calls = initial_draw_calls,
+        no_change_draw_calls = no_change_draw_calls,
+        no_change_property_writes = no_change_property_writes,
+        changed_draw_calls = counter.draw_calls - initial_draw_calls - no_change_draw_calls,
+        changed_property_writes = counter.property_writes - initial_property_writes - no_change_property_writes,
+      }
     end,
     dispatch_rank_modifier_sample = function(entity)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil

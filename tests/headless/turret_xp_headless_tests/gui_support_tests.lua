@@ -2,6 +2,7 @@ local support = require("support")
 
 local assert_true = support.assert_true
 local assert_eq = support.assert_eq
+local assert_gt = support.assert_gt
 local create_turret = support.create_turret
 local call = support.call
 
@@ -304,6 +305,16 @@ function tests.run_profile_label_test(surface)
   assert_eq(summary.stale_label_entity_valid, false, "stale display-panel label entity was not destroyed")
   assert_eq(summary.label_entity_valid, false, "stale display-panel label handle was preserved")
   assert_true(summary.name_render_valid, "stale label cleanup did not leave a render object label")
+end
+
+function tests.run_profile_label_idempotency_test()
+  local sample = call("profile_label_idempotency_sample", 221, 3)
+  assert_true(sample ~= nil, "profile label idempotency sample returned nothing")
+  assert_eq(sample.initial_draw_calls, 221, "named turret labels should be created once per visible named core")
+  assert_eq(sample.no_change_draw_calls, 0, "unchanged named labels should not create replacement render objects")
+  assert_eq(sample.no_change_property_writes, 0, "unchanged named labels should not rewrite render properties on refresh/combat paths")
+  assert_eq(sample.changed_draw_calls, 0, "changed named labels should reuse existing render objects")
+  assert_gt(sample.changed_property_writes, 0, "changed named labels should still update existing render properties")
 end
 
 function tests.run_gui_action_dispatch_test(surface)

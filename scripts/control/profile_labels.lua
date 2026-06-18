@@ -30,6 +30,7 @@ function profile_labels.new(deps)
     if profile then
       profile.name_render = nil
       profile.label_entity = nil
+      profile._name_render_signature = nil
     end
   end
 
@@ -285,6 +286,35 @@ function profile_labels.new(deps)
     return name .. " (lvl " .. tostring(profile.level or 0) .. ")"
   end
 
+  local function force_name(force)
+    return force and (force.name or force) or ""
+  end
+
+  local function surface_index(surface)
+    return surface and (surface.index or surface.name or surface) or ""
+  end
+
+  local function color_signature(color)
+    color = color or {}
+    return table.concat({
+      tostring(color[1] or color.r or 1),
+      tostring(color[2] or color.g or 0.86),
+      tostring(color[3] or color.b or 0.46),
+      tostring(color[4] or color.a or 1),
+    }, ",")
+  end
+
+  local function name_render_signature(entity, profile, text)
+    return table.concat({
+      tostring(text or ""),
+      tostring(entity and entity.unit_number or ""),
+      tostring(surface_index(entity and entity.surface)),
+      tostring(force_name(entity and entity.force)),
+      color_signature(profile and profile.label_color),
+      tostring(profile and profile.label_scale or 2),
+    }, "|")
+  end
+
   function service.update_name_render(entity, profile)
     if not profile then
       return
@@ -309,6 +339,11 @@ function profile_labels.new(deps)
     profile.label_entity = nil
 
     if profile.name_render and profile.name_render.valid then
+      local signature = name_render_signature(entity, profile, text)
+      if profile._name_render_signature == signature then
+        return
+      end
+
       local ok = pcall(function()
         profile.name_render.text = text
         profile.name_render.target = {
@@ -321,11 +356,13 @@ function profile_labels.new(deps)
         profile.name_render.scale = profile.label_scale or 2
       end)
       if ok then
+        profile._name_render_signature = signature
         return
       end
       service.destroy_name_render(profile)
     end
 
+    local signature = name_render_signature(entity, profile, text)
     local ok, render_object = pcall(function()
       return deps.rendering_api().draw_text({
         text = text,
@@ -345,8 +382,11 @@ function profile_labels.new(deps)
       })
     end)
 
-    if ok then
+    if ok and render_object then
       profile.name_render = render_object
+      profile._name_render_signature = signature
+    else
+      profile._name_render_signature = nil
     end
   end
 
