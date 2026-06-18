@@ -11,6 +11,5 @@ scripts/generate-public-assets.py --check
 scripts/check-lua-file-discovery.sh
 scripts/lint-lua.sh
 bash scripts/check-gui-contracts.sh
-bash scripts/check-gui-prototype.sh
 
 echo "Basic checks passed."

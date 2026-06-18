@@ -13,8 +13,6 @@ This directory is the working context for `turret_xp`. The goal is not more docu
 - [DESIGN.md](DESIGN.md): gameplay direction, UX direction, balance intent, compatibility posture, public identity, and feedback goals.
 - [GUI_SPEC_FACTORY.md](GUI_SPEC_FACTORY.md): process for writing agent-readable GUI specs before implementation.
 - [TURRET_XP_GUI_SPEC.md](TURRET_XP_GUI_SPEC.md): future Turret XP GUI redesign spec produced by the GUI spec factory.
-- [gui-spec/README.md](gui-spec/README.md): split future GUI spec slices used by the browser prototype.
-- [gui-spec/browser-builder-roadmap.md](gui-spec/browser-builder-roadmap.md): future constrained browser builder, shared renderer, and Lua skeleton export roadmap.
 - [PROGRESSION_DESIGN.md](PROGRESSION_DESIGN.md): future-only progression direction. It is not an implementation promise.
 - [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md): current baseline, completed foundations, near-term roadmap, and validation checklist.
 - [PLAYTEST.md](PLAYTEST.md): smoke, regression, deep manual, compatibility, and report-back paths.
@@ -29,8 +27,7 @@ This directory is the working context for `turret_xp`. The goal is not more docu
 - Mark future-only ideas explicitly, especially progression, GUI, dependency, and rewrite notes.
 - Keep version-by-version release history in the root [changelog.txt](../changelog.txt); do not recreate release diaries in active docs.
 - When changing behavior, architecture, workflow, CI, release, or assumptions, update the owning document in the same PR.
-- Keep browser prototype contracts in [gui-spec/README.md](gui-spec/README.md)
-  and the tool implementation under [../tools/gui-prototype](../tools/gui-prototype).
+- Keep browser-editor/tooling experiments in <https://github.com/atyrode/factorio-gui-web-editor>; this repository should keep only mod-owned specs and implementation docs.
 
 ## Homepage
 
