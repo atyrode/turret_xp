@@ -19,7 +19,12 @@ local gui = {
   focused_content = prefix .. "focused-content",
   focused_overview = prefix .. "focused-overview",
   focused_progression = prefix .. "focused-progression",
+  focused_progression_summary = prefix .. "focused-progression-summary",
+  focused_progression_scroll = prefix .. "focused-progression-scroll",
   focused_stats = prefix .. "focused-stats",
+  focused_stats_header = prefix .. "focused-stats-header",
+  focused_stats_scroll = prefix .. "focused-stats-scroll",
+  focused_stats_table = prefix .. "focused-stats-table",
   focused_automation = prefix .. "focused-automation",
   empty_picker = prefix .. "empty-picker",
   empty_status = prefix .. "empty-status",
@@ -113,6 +118,7 @@ local layout = {
   focused_nav_button_width = 112,
   focused_view_spacing = 8,
   focused_content_padding = 10,
+  focused_detail_width = 720,
   left_section_side_margin = 8,
   left_section_spacing = 8,
   left_section_padding = 8,
@@ -192,7 +198,7 @@ layout.platform_core_row_detail_width = layout.left_section_width
   - layout.platform_core_icon_size
   - layout.core_identity_tool_button_size
   - 24
-layout.stats_scroll_width = layout.left_section_width
+layout.stats_scroll_width = layout.focused_detail_width
 layout.stats_content_width = layout.stats_scroll_width - 30
 layout.stats_label_width = layout.stats_content_width - layout.stats_value_width - 12
 layout.stats_ammo_productivity_width = layout.stats_ammo_productivity_bar_width
@@ -225,6 +231,7 @@ layout.empty_inventory_core_fixed_width = layout.empty_inventory_core_level_widt
   + ((layout.inventory_core_table_column_count - 1) * layout.inventory_core_table_spacing)
 layout.empty_inventory_core_name_width = layout.empty_inventory_core_table_content_width - layout.empty_inventory_core_fixed_width
 layout.empty_inventory_core_detail_width = layout.empty_inventory_core_name_width
+layout.evolution_column_width = layout.focused_detail_width
 layout.evolution_scroll_width = layout.evolution_column_width
 layout.evolution_scroll_height = layout.evolution_outer_height - layout.evolution_header_height
 layout.evolution_content_width = layout.evolution_scroll_width - 28

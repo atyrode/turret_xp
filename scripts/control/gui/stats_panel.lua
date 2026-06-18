@@ -199,29 +199,58 @@ function stats_panel.new(deps)
     add_right_value_label(flow, format_number(ammo_in_magazine, 0) .. " / " .. format_number(ammo_magazine_size, 0), "label")
   end
 
-  local function add_stats_panel(parent)
+  local function stats_names(options)
+    options = options or {}
+    return {
+      header = options.header_name or GUI.stats_header,
+      scroll = options.scroll_name or GUI.stats_scroll,
+      table = options.table_name or GUI.stats,
+    }
+  end
+
+  local function find_stats_scroll(panel)
+    return find_gui_element(panel, GUI.focused_stats_scroll) or find_gui_element(panel, GUI.stats_scroll)
+  end
+
+  local function find_stats_table(panel)
+    return find_gui_element(panel, GUI.focused_stats_table) or find_gui_element(panel, GUI.stats)
+  end
+
+  local function add_stats_panel(parent, options)
+    options = options or {}
+    local names = stats_names(options)
+    local scroll_height = options.scroll_height or LAYOUT.stats_live_height
     local _, _, scroll = add_content_pane(parent, {
-      width = LAYOUT.stats_scroll_width,
-      header_name = GUI.stats_header,
+      width = options.width or LAYOUT.stats_scroll_width,
+      header_name = names.header,
       header_height = LAYOUT.stats_header_height,
       title = { "turret-xp.stats-title" },
-      scroll_name = GUI.stats_scroll,
+      scroll_name = names.scroll,
       scroll_direction = "vertical",
-      scroll_width = LAYOUT.stats_scroll_width,
-      scroll_height = LAYOUT.stats_live_height,
+      scroll_width = options.scroll_width or options.width or LAYOUT.stats_scroll_width,
+      scroll_height = scroll_height,
       scroll_padding = { 6, 6, 6, 6 },
     })
 
-    return make_stats_table(scroll, GUI.stats)
+    scroll.tags = {
+      turret_xp_focused_stats = names.scroll == GUI.focused_stats_scroll,
+      live_height = scroll_height,
+      build_height = options.build_scroll_height or scroll_height,
+    }
+
+    return make_stats_table(scroll, names.table)
   end
 
   local function update_stats_scroll_height(panel, state)
-    local scroll = find_gui_element(panel, GUI.stats_scroll)
+    local scroll = find_stats_scroll(panel)
     if not scroll then
       return
     end
 
-    local height = state and state._build_mode_preview == true and LAYOUT.stats_build_mode_height or LAYOUT.stats_live_height
+    local tags = scroll.tags or {}
+    local live_height = tonumber(tags.live_height) or LAYOUT.stats_live_height
+    local build_height = tonumber(tags.build_height) or LAYOUT.stats_build_mode_height
+    local height = state and state._build_mode_preview == true and build_height or live_height
     set_style(scroll, "height", height)
     set_style(scroll, "maximal_height", height)
   end
@@ -494,7 +523,7 @@ function stats_panel.new(deps)
     max_health,
     health
   )
-    local stats = find_gui_element(panel, GUI.stats)
+    local stats = find_stats_table(panel)
     if not stats then
       return
     end

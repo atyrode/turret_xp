@@ -32,6 +32,8 @@ return function(M)
   local runtime_service = nil
   local widgets_service = nil
   local core_picker_table_service = nil
+  local get_stats_panel_service
+  local get_evolution_panel_service
 
   local function gui_dev_controls_enabled(player)
     local panel = get_gui_panel and get_gui_panel(player) or nil
@@ -251,6 +253,10 @@ return function(M)
         get_sub_specialization = get_sub_specialization,
         get_available_skill_points = get_available_skill_points,
         get_available_augment_points = get_available_augment_points,
+        ensure_evolution_state = ensure_evolution_state,
+        get_base_rank = get_base_rank,
+        get_augment_rank = get_augment_rank,
+        GATES = GATES,
         rich_specialization_caption = function(specialization_id, caption)
           return get_gui_support_service().rich_specialization_caption(specialization_id, caption)
         end,
@@ -260,13 +266,27 @@ return function(M)
         get_platform_hub_inventory = get_platform_hub_inventory,
         core_requester = core_requester,
         widgets = get_gui_widgets_service(),
+        core_label_controls = get_core_label_controls_service(),
+        core_automation_controls = get_core_automation_controls_service(),
+        add_stats_panel = function(...)
+          return get_stats_panel_service().add_stats_panel(...)
+        end,
+        update_stats_panel = function(...)
+          return get_stats_panel_service().update_stats_panel(...)
+        end,
+        add_evolution_panel = function(...)
+          return get_evolution_panel_service().add_evolution_panel(...)
+        end,
+        update_evolution_panel = function(...)
+          return get_evolution_panel_service().update_evolution_panel(...)
+        end,
       })
     end
 
     return focused_panel_service
   end
 
-  local function get_stats_panel_service()
+  function get_stats_panel_service()
     if not stats_panel_service then
       stats_panel_service = gui_stats_panel.new({
         GUI = GUI,
@@ -338,7 +358,7 @@ return function(M)
     return stats_panel_service
   end
 
-  local function get_evolution_panel_service()
+  function get_evolution_panel_service()
     if not evolution_panel_service then
       evolution_panel_service = gui_evolution_panel.new({
         GUI = GUI,
@@ -564,8 +584,8 @@ return function(M)
     return get_core_panel_service().add_xp_panel(parent)
   end
 
-  function add_focused_installed_panel(parent, player, _entity, state)
-    return get_focused_panel_service().add_installed_panel(parent, player, state)
+  function add_focused_installed_panel(parent, player, entity, state)
+    return get_focused_panel_service().add_installed_panel(parent, player, entity, state)
   end
 
   function add_focused_empty_panel(parent, player, entity)
@@ -577,7 +597,7 @@ return function(M)
   end
 
   function update_focused_panel(panel, player, entity, context)
-    return get_focused_panel_service().update_status(panel, context)
+    return get_focused_panel_service().update_status(panel, entity, context)
   end
 
   function build_gui_shell(player, mode)

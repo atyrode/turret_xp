@@ -13,6 +13,10 @@ function focused_panel_module.new(deps)
   local get_sub_specialization = deps.get_sub_specialization
   local get_available_skill_points = deps.get_available_skill_points
   local get_available_augment_points = deps.get_available_augment_points
+  local ensure_evolution_state = deps.ensure_evolution_state
+  local get_base_rank = deps.get_base_rank
+  local get_augment_rank = deps.get_augment_rank
+  local GATES = deps.GATES or {}
   local rich_specialization_caption = deps.rich_specialization_caption
   local format_number = deps.format_number
   local profile_automation = deps.profile_automation
@@ -20,6 +24,12 @@ function focused_panel_module.new(deps)
   local get_platform_hub_inventory = deps.get_platform_hub_inventory
   local core_requester = deps.core_requester
   local widgets = deps.widgets
+  local core_label_controls = deps.core_label_controls
+  local core_automation_controls = deps.core_automation_controls
+  local add_stats_panel = deps.add_stats_panel
+  local update_stats_panel = deps.update_stats_panel
+  local add_evolution_panel = deps.add_evolution_panel
+  local update_evolution_panel = deps.update_evolution_panel
 
   local views = {
     {
@@ -111,6 +121,46 @@ function focused_panel_module.new(deps)
       tostring(state and profile_automation.build_mode_active(state) == true),
       tostring(state and state.automation_enabled == true),
     }, ":")
+  end
+
+  local function focused_content_key(view_id, state)
+    if view_id == "overview" then
+      local evolution = state and ensure_evolution_state and ensure_evolution_state(state) or {}
+      return table.concat({
+        "overview",
+        tostring(state and state.level or 0),
+        tostring(state and get_available_skill_points(state) or 0),
+        tostring(state and get_available_augment_points(state) or 0),
+        tostring(evolution.specialization or ""),
+        tostring(evolution.sub_specialization or ""),
+        tostring(evolution.elements and evolution.elements[1] or ""),
+        tostring(evolution.elements and evolution.elements[2] or ""),
+        tostring(state and state.show_name_label == true),
+        tostring(state and state.show_label_level == true),
+        tostring(state and state.show_unspent_label == true),
+        tostring(state and get_base_rank and get_base_rank(state, "damage") or 0),
+        tostring(state and get_base_rank and get_base_rank(state, "resistance") or 0),
+        tostring(state and get_base_rank and get_base_rank(state, "ammo_regen") or 0),
+        tostring(state and get_augment_rank and get_augment_rank(state, "siphon") or 0),
+        tostring(state and get_augment_rank and get_augment_rank(state, "bounce") or 0),
+      }, ":")
+    end
+
+    if view_id == "automation" then
+      local target = profile_automation.target_model(state) or {}
+      return table.concat({
+        "automation",
+        tostring(state and profile_automation.build_mode_active(state) == true),
+        tostring(state and state.automation_enabled == true),
+        tostring(target.level or ""),
+        tostring(target.core or ""),
+        tostring(target.augments or ""),
+        tostring(target.choice or ""),
+        tostring(target.elements or ""),
+      }, ":")
+    end
+
+    return view_id or "overview"
   end
 
   local function add_status_text(parent)
@@ -293,7 +343,7 @@ function focused_panel_module.new(deps)
     return views[1]
   end
 
-  local function add_content_shell(parent, view_id)
+  local function add_content_shell(parent, view_id, state)
     local view = find_view(view_id)
     local content = parent.add({
       type = "frame",
@@ -304,6 +354,7 @@ function focused_panel_module.new(deps)
     content.tags = {
       turret_xp_active_content = true,
       turret_xp_active_view = view.id,
+      key = focused_content_key(view.id, state),
     }
     set_style(content, "horizontally_stretchable", true)
     set_style(content, "height", LAYOUT.focused_content_height)
@@ -312,16 +363,31 @@ function focused_panel_module.new(deps)
     return content, view
   end
 
-  local function add_overview_card(parent, title_caption, body_caption)
+  local function add_view_root(parent, view)
+    local inner = parent.add({
+      type = "flow",
+      name = view.name,
+      direction = "vertical",
+    })
+    inner.tags = {
+      turret_xp_content_view = view.id,
+    }
+    set_style(inner, "horizontally_stretchable", true)
+    set_style(inner, "vertical_spacing", 8)
+    return inner
+  end
+
+  local function add_overview_card(parent, title_caption, body_caption, options)
+    options = options or {}
     local card = parent.add({
       type = "frame",
       direction = "vertical",
       style = "inside_shallow_frame_with_padding",
     })
-    set_style(card, "width", 350)
-    set_style(card, "minimal_width", 350)
-    set_style(card, "maximal_width", 350)
-    set_style(card, "vertical_spacing", 4)
+    set_style(card, "width", options.width or 350)
+    set_style(card, "minimal_width", options.width or 350)
+    set_style(card, "maximal_width", options.width or 350)
+    set_style(card, "vertical_spacing", options.vertical_spacing or 4)
 
     local title = card.add({
       type = "label",
@@ -346,15 +412,81 @@ function focused_panel_module.new(deps)
     return value and { "turret-xp.overview-label-on" } or { "turret-xp.overview-label-off" }
   end
 
-  local function add_overview_content(content, state)
-    local title = content.add({
+  local function next_goal_caption(state)
+    if not state then
+      return { "turret-xp.overview-next-live" }
+    end
+
+    local level = state.level or 0
+    local core_points = get_available_skill_points(state) or 0
+    local augment_points = get_available_augment_points(state) or 0
+    if core_points > 0 or augment_points > 0 then
+      return { "turret-xp.overview-next-spend", core_points, augment_points }
+    end
+
+    local evolution = ensure_evolution_state and ensure_evolution_state(state) or {}
+    if GATES.specialization and level < GATES.specialization then
+      return { "turret-xp.overview-next-gate", { "turret-xp.section-specialization" }, GATES.specialization }
+    end
+    if GATES.specialization and not evolution.specialization then
+      return { "turret-xp.overview-next-choice", { "turret-xp.section-specialization" } }
+    end
+    if GATES.first_element and level < GATES.first_element then
+      return { "turret-xp.overview-next-gate", { "turret-xp.section-first-element" }, GATES.first_element }
+    end
+    if GATES.first_element and not (evolution.elements and evolution.elements[1]) then
+      return { "turret-xp.overview-next-choice", { "turret-xp.section-first-element" } }
+    end
+    if GATES.augments and level < GATES.augments then
+      return { "turret-xp.overview-next-gate", { "turret-xp.section-augments" }, GATES.augments }
+    end
+    if GATES.sub_specialization and level < GATES.sub_specialization then
+      return { "turret-xp.overview-next-gate", { "turret-xp.section-sub-specialization" }, GATES.sub_specialization }
+    end
+    if GATES.second_element and level < GATES.second_element then
+      return { "turret-xp.overview-next-gate", { "turret-xp.section-second-element" }, GATES.second_element }
+    end
+    return { "turret-xp.overview-next-live" }
+  end
+
+  local function strength_caption(state)
+    local parts = {}
+    local function add_rank(label, rank)
+      if rank and rank > 0 then
+        parts[#parts + 1] = { "turret-xp.overview-rank-highlight", label, rank }
+      end
+    end
+
+    add_rank({ "turret-xp.overview-highlight-damage" }, get_base_rank and get_base_rank(state, "damage") or 0)
+    add_rank({ "turret-xp.overview-highlight-resistance" }, get_base_rank and get_base_rank(state, "resistance") or 0)
+    add_rank({ "turret-xp.overview-highlight-ammo" }, get_base_rank and get_base_rank(state, "ammo_regen") or 0)
+    add_rank({ "turret-xp.overview-highlight-shield" }, get_augment_rank and get_augment_rank(state, "siphon") or 0)
+    add_rank({ "turret-xp.overview-highlight-bounce" }, get_augment_rank and get_augment_rank(state, "bounce") or 0)
+
+    if #parts == 0 then
+      return { "turret-xp.overview-no-highlights" }
+    end
+
+    local caption = { "" }
+    for index, part in ipairs(parts) do
+      if index > 1 then
+        caption[#caption + 1] = "\n"
+      end
+      caption[#caption + 1] = part
+    end
+    return caption
+  end
+
+  local function add_overview_content(content, view, state)
+    local inner = add_view_root(content, view)
+    local title = inner.add({
       type = "label",
       caption = { "turret-xp.view-overview" },
       style = "heading_2_label",
     })
     set_style(title, "font", "default-bold")
 
-    local rows = content.add({
+    local rows = inner.add({
       type = "table",
       column_count = 2,
     })
@@ -367,7 +499,7 @@ function focused_panel_module.new(deps)
       "\n",
       { "turret-xp.status-unspent", get_available_skill_points(state) or 0, get_available_augment_points(state) or 0 },
       "\n",
-      profile_automation.build_mode_active(state) and { "turret-xp.overview-next-build" } or { "turret-xp.overview-next-live" },
+      profile_automation.build_mode_active(state) and { "turret-xp.overview-next-build" } or next_goal_caption(state),
     })
     add_overview_card(rows, { "turret-xp.overview-role" }, {
       "",
@@ -375,48 +507,99 @@ function focused_panel_module.new(deps)
       "\n",
       build_status_caption(state),
     })
-    add_overview_card(rows, { "turret-xp.overview-build" }, build_status_caption(state))
+    add_overview_card(rows, { "turret-xp.overview-strengths" }, strength_caption(state))
     add_overview_card(rows, { "turret-xp.overview-labels" }, {
       "turret-xp.overview-label-summary",
       on_off_caption(state.show_name_label == true),
       on_off_caption(state.show_label_level == true),
       on_off_caption(state.show_unspent_label == true),
     })
+
+    if core_label_controls then
+      core_label_controls.add(inner, state)
+    end
   end
 
-  local function add_placeholder_content(parent, view_id, state)
-    local content, view = add_content_shell(parent, view_id)
-    if view.id == "overview" then
-      add_overview_content(content, state)
-      return content
+  local function add_progression_content(content, view)
+    local inner = add_view_root(content, view)
+    if not add_evolution_panel then
+      return inner
     end
 
-    local inner = content.add({
-      type = "flow",
-      name = view.name,
-      direction = "vertical",
+    add_evolution_panel(inner, {
+      header_name = GUI.focused_progression_summary,
+      scroll_name = GUI.focused_progression_scroll,
+      width = LAYOUT.focused_detail_width,
+      scroll_width = LAYOUT.focused_detail_width,
+      height = LAYOUT.focused_content_height - 6,
+      scroll_height = LAYOUT.focused_content_height - LAYOUT.evolution_header_height - 12,
     })
-    inner.tags = {
-      turret_xp_content_view = view.id,
-    }
-    set_style(inner, "horizontally_stretchable", true)
-    set_style(inner, "vertical_spacing", 6)
+    return inner
+  end
 
+  local function add_stats_content(content, view)
+    local inner = add_view_root(content, view)
+    if not add_stats_panel then
+      return inner
+    end
+
+    add_stats_panel(inner, {
+      header_name = GUI.focused_stats_header,
+      scroll_name = GUI.focused_stats_scroll,
+      table_name = GUI.focused_stats_table,
+      width = LAYOUT.focused_detail_width,
+      scroll_width = LAYOUT.focused_detail_width,
+      scroll_height = LAYOUT.focused_content_height - LAYOUT.stats_header_height - 16,
+      build_scroll_height = LAYOUT.focused_content_height - LAYOUT.stats_header_height - 16,
+    })
+    return inner
+  end
+
+  local function add_automation_content(content, view, state)
+    local inner = add_view_root(content, view)
     local title = inner.add({
       type = "label",
-      caption = view.caption,
+      caption = { "turret-xp.view-automation" },
       style = "heading_2_label",
     })
     set_style(title, "font", "default-bold")
 
-    local note = inner.add({
+    local summary = inner.add({
       type = "label",
-      caption = view.placeholder,
+      caption = { "turret-xp.automation-view-summary" },
       style = "caption_label",
     })
-    set_style(note, "font_color", COLOR.muted)
-    set_style(note, "single_line", false)
-    set_style(note, "maximal_width", LAYOUT.focused_panel_width - 48)
+    set_style(summary, "font_color", COLOR.muted)
+    set_style(summary, "single_line", false)
+    set_style(summary, "maximal_width", LAYOUT.focused_detail_width)
+
+    if core_automation_controls then
+      core_automation_controls.add_installed(inner, state)
+    end
+    return inner
+  end
+
+  local function add_view_content(parent, view_id, state)
+    local content, view = add_content_shell(parent, view_id, state)
+    if view.id == "overview" then
+      add_overview_content(content, view, state)
+      return content
+    end
+
+    if view.id == "progression" then
+      add_progression_content(content, view)
+      return content
+    end
+
+    if view.id == "stats" then
+      add_stats_content(content, view)
+      return content
+    end
+
+    if view.id == "automation" then
+      add_automation_content(content, view, state)
+      return content
+    end
 
     return content
   end
@@ -435,11 +618,43 @@ function focused_panel_module.new(deps)
     end
   end
 
-  function service.add_installed_panel(parent, player, state)
+  local function update_active_content(root, entity, context)
+    local content = find_gui_element(root, GUI.focused_content)
+    local active_view = content and content.tags and content.tags.turret_xp_active_view or nil
+    local display_state = context and (context.state or context.live_state) or nil
+    if active_view == "progression" and update_evolution_panel then
+      update_evolution_panel(
+        content,
+        entity,
+        display_state,
+        context and context.ammo_name or nil,
+        context and context.evolution_anchor or nil
+      )
+      return
+    end
+
+    if active_view == "stats" and update_stats_panel then
+      update_stats_panel(
+        content,
+        entity,
+        display_state,
+        context and context.ammo_name or nil,
+        context and context.ammo_count or nil,
+        context and context.ammo_quality or nil,
+        context and context.ammo_in_magazine or nil,
+        context and context.ammo_magazine_size or nil,
+        context and context.quality_name or nil,
+        context and context.max_health or nil,
+        context and context.health or nil
+      )
+    end
+  end
+
+  function service.add_installed_panel(parent, player, _entity, state)
     local selected_view = get_focused_gui_view(player)
     add_status_strip(parent, state)
     add_view_nav(parent, selected_view)
-    add_placeholder_content(parent, selected_view, state)
+    add_view_content(parent, selected_view, state)
   end
 
   function service.add_empty_panel(parent, player, entity, add_inventory_core_picker, add_platform_core_list)
@@ -547,7 +762,7 @@ function focused_panel_module.new(deps)
     return panel
   end
 
-  function service.update_status(root, context)
+  function service.update_status(root, entity, context)
     local state = context and context.live_state or nil
     if not state then
       return false
@@ -555,6 +770,9 @@ function focused_panel_module.new(deps)
 
     local content = find_gui_element(root, GUI.focused_content)
     if not content or not content.tags or content.tags.turret_xp_active_view ~= get_focused_gui_view(context.player) then
+      return false
+    end
+    if content.tags.key ~= focused_content_key(content.tags.turret_xp_active_view, context.state or state) then
       return false
     end
 
@@ -592,6 +810,7 @@ function focused_panel_module.new(deps)
     })
     set_caption(root, GUI.focused_status_build, build_status_caption(state))
     set_progress(root, GUI.xp_bar, progress)
+    update_active_content(root, entity, context)
     return true
   end
 

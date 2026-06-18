@@ -197,17 +197,41 @@ function evolution_panel_module.new(deps)
     return title_row
   end
 
-  local function add_evolution_panel(parent)
+  local function progression_names(options)
+    options = options or {}
+    return {
+      header = options.header_name or GUI.evolution_summary,
+      scroll = options.scroll_name or GUI.evolution,
+    }
+  end
+
+  local function find_evolution_scroll(panel)
+    return find_gui_element(panel, GUI.focused_progression_scroll) or find_gui_element(panel, GUI.evolution)
+  end
+
+  local function find_evolution_summary(panel)
+    return find_gui_element(panel, GUI.focused_progression_summary) or find_gui_element(panel, GUI.evolution_summary)
+  end
+
+  local function add_evolution_panel(parent, options)
+    options = options or {}
+    local names = progression_names(options)
+    local header_height = options.header_height or LAYOUT.evolution_header_height
+    local height = options.height or LAYOUT.evolution_outer_height
+    local scroll_height = options.scroll_height or (height and (height - header_height) or LAYOUT.evolution_scroll_height)
     local _, _, panel = get_gui_components_service().add_content_pane(parent, {
-      width = LAYOUT.evolution_column_width,
-      height = LAYOUT.evolution_outer_height,
-      header_name = GUI.evolution_summary,
-      header_height = LAYOUT.evolution_header_height,
-      scroll_name = GUI.evolution,
-      scroll_width = LAYOUT.evolution_scroll_width,
-      scroll_height = LAYOUT.evolution_scroll_height,
+      width = options.width or LAYOUT.evolution_column_width,
+      height = height,
+      header_name = names.header,
+      header_height = header_height,
+      scroll_name = names.scroll,
+      scroll_width = options.scroll_width or options.width or LAYOUT.evolution_scroll_width,
+      scroll_height = scroll_height,
       vertically_stretchable = true,
     })
+    panel.tags = {
+      turret_xp_focused_progression = names.scroll == GUI.focused_progression_scroll,
+    }
     return panel
   end
 
@@ -220,7 +244,7 @@ function evolution_panel_module.new(deps)
   end
 
   local function update_evolution_summary(panel, state)
-    local header = find_gui_element(panel, GUI.evolution_summary)
+    local header = find_evolution_summary(panel)
     if not header then
       return
     end
@@ -956,7 +980,7 @@ function evolution_panel_module.new(deps)
   end
 
   local function update_evolution_panel(panel, entity, state, ammo_name, anchor_name)
-    local evolution_panel = find_gui_element(panel, GUI.evolution)
+    local evolution_panel = find_evolution_scroll(panel)
     if not evolution_panel then
       return
     end
