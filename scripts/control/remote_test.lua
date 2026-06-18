@@ -1047,9 +1047,12 @@ return function(M)
       update_evolution_panel(root, entity, display_state, "firearm-magazine")
 
       local panel = find_gui_element(root, GUI.core)
+      local core_header = panel and find_gui_element(panel, GUI.core_header) or nil
+      local label_controls = panel and find_gui_element(panel, GUI.core_label_controls) or nil
       local build_container = find_gui_element(root, GUI.core_build_controls_container)
       local auto = build_container and find_gui_element(build_container, GUI.core_automation_enabled) or nil
       local build_controls = build_container and find_gui_element(build_container, GUI.core_build_controls) or nil
+      local build_details = build_container and find_gui_element(build_container, GUI.core_build_details) or nil
       local evolution = find_gui_element(root, GUI.evolution)
       local allocate_damage = find_gui_action(evolution, "allocate-base", "upgrade", "damage")
       local forever_damage = find_gui_action(evolution, "toggle-base-forever", "upgrade", "damage")
@@ -1063,9 +1066,17 @@ return function(M)
         opened = panel and panel.valid == true or false,
         build_container_type = build_container and build_container.type or nil,
         build_controls_inside_core = panel and find_gui_element(panel, GUI.core_build_controls) ~= nil or false,
+        core_header_type = core_header and core_header.type or nil,
+        core_header_style = gui_style_name(core_header),
+        label_controls_type = label_controls and label_controls.type or nil,
+        label_controls_style = gui_style_name(label_controls),
+        label_controls_bottom_margin = gui_style_property(label_controls, "bottom_margin"),
         build_mode = state.build_mode == true,
         automation_enabled = state.automation_enabled == true,
         build_controls_type = build_controls and build_controls.type or nil,
+        build_controls_style = gui_style_name(build_controls),
+        build_details_type = build_details and build_details.type or nil,
+        build_details_style = gui_style_name(build_details),
         has_auto_checkbox = auto ~= nil,
         auto_state = auto and auto.state == true or false,
         auto_enabled = auto and auto.enabled == true or false,
@@ -1160,6 +1171,11 @@ return function(M)
       }
 
       for index, child in ipairs(shell.body.children or {}) do
+        local stats_scroll = find_gui_element(child, GUI.stats_scroll)
+        local core_header = find_gui_element(child, GUI.core_header)
+        local label_controls = find_gui_element(child, GUI.core_label_controls)
+        local build_controls = find_gui_element(child, GUI.core_build_controls)
+        local build_details = find_gui_element(child, GUI.core_build_details)
         local entry = {
           index = index,
           name = gui_element_name(child),
@@ -1172,7 +1188,14 @@ return function(M)
           bottom_margin = gui_style_property(child, "bottom_margin"),
           left_section = child.tags and child.tags.turret_xp_left_section == true or false,
           build_mode_section = child.tags and child.tags.turret_xp_build_mode == true or false,
-          has_stats_scroll = find_gui_element(child, GUI.stats_scroll) ~= nil,
+          has_stats_scroll = stats_scroll ~= nil,
+          stats_scroll_height = gui_style_property(stats_scroll, "height"),
+          core_header_style = gui_style_name(core_header),
+          label_controls_bottom_margin = gui_style_property(label_controls, "bottom_margin"),
+          build_controls_type = build_controls and build_controls.type or nil,
+          build_controls_style = gui_style_name(build_controls),
+          build_details_type = build_details and build_details.type or nil,
+          build_details_style = gui_style_name(build_details),
         }
         sample.children[#sample.children + 1] = entry
         if entry.name then

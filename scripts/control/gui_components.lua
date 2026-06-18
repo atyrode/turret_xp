@@ -167,6 +167,32 @@ function gui_components.new(deps)
     return frame, header
   end
 
+  function service.add_subheader_frame(parent, options)
+    options = options or {}
+    local build_mode = options.build_mode == true
+    local frame = parent.add({
+      type = "frame",
+      name = options.name,
+      direction = options.direction or "horizontal",
+      style = options.style or (build_mode and "turret_xp_build_mode_subheader_frame" or "subheader_frame"),
+    })
+    deps.set_style(frame, "horizontally_stretchable", options.horizontally_stretchable ~= false)
+    deps.set_style(frame, "vertical_align", options.vertical_align or "center")
+    if options.horizontal_spacing then
+      deps.set_style(frame, "horizontal_spacing", options.horizontal_spacing)
+    end
+    if options.top_margin then
+      deps.set_style(frame, "top_margin", options.top_margin)
+    end
+    if options.bottom_margin then
+      deps.set_style(frame, "bottom_margin", options.bottom_margin)
+    end
+    if options.padding then
+      deps.set_style(frame, "padding", options.padding)
+    end
+    return frame
+  end
+
   function service.add_section_frame(parent, options)
     options = options or {}
 

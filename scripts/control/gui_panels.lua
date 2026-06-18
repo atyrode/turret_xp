@@ -115,6 +115,7 @@ return function(M)
         COLOR = COLOR,
         LAYOUT = LAYOUT,
         CHIP_NAME = CHIP_NAME,
+        components = get_gui_components_service(),
         set_style = set_style,
         set_element_style = set_element_style,
         dev_controls_enabled = gui_dev_controls_enabled,

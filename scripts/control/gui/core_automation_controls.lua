@@ -8,6 +8,7 @@ local LAYOUT = {
 function core_automation_controls.new(deps)
   local GUI = deps.GUI
   local COLOR = deps.COLOR
+  local components = deps.components
   local set_style = deps.set_style
   local profile_automation = deps.profile_automation
 
@@ -53,14 +54,10 @@ function core_automation_controls.new(deps)
     local has_target = profile_automation.target_has_content(state and state.automation_target)
     local has_unfinished_target = profile_automation.target_unfinished(state)
     if not build_mode then
-      local row = parent.add({
-        type = "flow",
+      local row = components.add_subheader_frame(parent, {
         name = GUI.core_build_controls,
-        direction = "horizontal",
+        horizontal_spacing = 8,
       })
-      set_style(row, "horizontally_stretchable", true)
-      set_style(row, "horizontal_spacing", 8)
-      set_style(row, "vertical_align", "center")
       local title = row.add({
         type = "label",
         caption = { "turret-xp.build-mode-title" },
@@ -99,17 +96,12 @@ function core_automation_controls.new(deps)
       return
     end
 
-    local frame = parent
-    set_style(frame, "vertical_spacing", 4)
-
-    local row = frame.add({
-      type = "flow",
+    local row = components.add_subheader_frame(parent, {
       name = GUI.core_build_controls,
-      direction = "horizontal",
+      build_mode = true,
+      horizontal_spacing = 8,
+      bottom_margin = 6,
     })
-    set_style(row, "horizontally_stretchable", true)
-    set_style(row, "horizontal_spacing", 8)
-    set_style(row, "vertical_align", "center")
     local title = row.add({
       type = "label",
       caption = { "turret-xp.build-mode-title" },
@@ -133,32 +125,39 @@ function core_automation_controls.new(deps)
     })
     set_style(toggle, "minimal_width", 72)
 
+    local details = components.add_section_frame(parent, {
+      name = GUI.core_build_details,
+      style = "inside_shallow_frame_with_padding",
+      vertical_spacing = 4,
+      bottom_margin = 2,
+    })
+
     if not target or not has_target then
-      add_summary_row(frame, { "turret-xp.build-mode-target" }, { "turret-xp.build-mode-target-none" })
+      add_summary_row(details, { "turret-xp.build-mode-target" }, { "turret-xp.build-mode-target-none" })
       return
     end
 
     add_summary_row(
-      frame,
+      details,
       { "turret-xp.build-mode-level" },
       target.open_ended and { "turret-xp.build-mode-level-open-ended", target.level or 0 }
         or { "turret-xp.build-mode-level-value", target.level or 0 },
       COLOR.build_mode_muted
     )
     add_summary_row(
-      frame,
+      details,
       { "turret-xp.build-mode-core" },
       { "turret-xp.build-mode-points-value", target.core_points or 0, target.core_total or 0 },
       COLOR.build_mode_muted
     )
     add_summary_row(
-      frame,
+      details,
       { "turret-xp.build-mode-augments" },
       { "turret-xp.build-mode-points-value", target.augment_points or 0, target.augment_total or 0 },
       COLOR.build_mode_muted
     )
-    add_summary_row(frame, { "turret-xp.build-mode-specialization" }, target.choice and target.choice ~= "" and target.choice or "-")
-    add_summary_row(frame, { "turret-xp.build-mode-elements" }, target.elements and target.elements ~= "" and target.elements or "-")
+    add_summary_row(details, { "turret-xp.build-mode-specialization" }, target.choice and target.choice ~= "" and target.choice or "-")
+    add_summary_row(details, { "turret-xp.build-mode-elements" }, target.elements and target.elements ~= "" and target.elements or "-")
   end
 
   return service

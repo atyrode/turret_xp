@@ -5,6 +5,7 @@ function core_identity_module.new(deps)
   local COLOR = deps.COLOR
   local LAYOUT = deps.LAYOUT
   local CHIP_NAME = deps.CHIP_NAME
+  local components = deps.components
   local set_style = deps.set_style
   local set_element_style = deps.set_element_style
   local dev_controls_enabled = deps.dev_controls_enabled
@@ -85,13 +86,12 @@ function core_identity_module.new(deps)
 
   function service.add_header(parent, player, state, options)
     options = options or {}
-    local top = parent.add({
-      type = "flow",
-      direction = "horizontal",
+    local top = components.add_subheader_frame(parent, {
+      name = GUI.core_header,
+      build_mode = options.build_mode == true,
+      horizontal_spacing = 6,
+      bottom_margin = 6,
     })
-    set_style(top, "horizontally_stretchable", true)
-    set_style(top, "vertical_align", "center")
-    set_style(top, "horizontal_spacing", 6)
 
     local slot_definition = {
       type = "sprite-button",

@@ -979,6 +979,7 @@ function core_panel_module.new(deps)
     local pending_build = not state and host and type(host.pending_policy) == "table" and host.request_core == true
     core_identity.add_header(core_panel, player, state, {
       pending_core = pending_build,
+      build_mode = state and profile_automation.build_mode_active(state) or false,
     })
 
     if not state then

@@ -79,7 +79,9 @@ function core_label_controls_module.new(deps)
 
   function service.add(parent, state)
     local frame = components.add_section_frame(parent, {
+      name = GUI.core_label_controls,
       top_margin = 6,
+      bottom_margin = 2,
       vertical_spacing = 4,
     })
 

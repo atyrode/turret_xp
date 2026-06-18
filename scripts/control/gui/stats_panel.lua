@@ -208,11 +208,22 @@ function stats_panel.new(deps)
       scroll_name = GUI.stats_scroll,
       scroll_direction = "vertical",
       scroll_width = LAYOUT.stats_scroll_width,
-      scroll_height = LAYOUT.stats_height,
+      scroll_height = LAYOUT.stats_live_height,
       scroll_padding = { 6, 6, 6, 6 },
     })
 
     return make_stats_table(scroll, GUI.stats)
+  end
+
+  local function update_stats_scroll_height(panel, state)
+    local scroll = find_gui_element(panel, GUI.stats_scroll)
+    if not scroll then
+      return
+    end
+
+    local height = state and state._build_mode_preview == true and LAYOUT.stats_build_mode_height or LAYOUT.stats_live_height
+    set_style(scroll, "height", height)
+    set_style(scroll, "maximal_height", height)
   end
 
   local function add_stats_section(stats, caption)
@@ -487,6 +498,8 @@ function stats_panel.new(deps)
     if not stats then
       return
     end
+
+    update_stats_scroll_height(panel, state)
 
     stats.clear()
     stats.tags = {

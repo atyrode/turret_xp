@@ -92,6 +92,8 @@ function tests.run_layout_constants_test()
     "platform core row details must stay inside the left-column panel"
   )
   assert_eq(layout.stats_scroll_width, layout.left_section_width, "Stats pane must share the left-column section width")
+  assert_true(layout.stats_live_height > layout.stats_build_mode_height, "live Stats pane must be taller than Build-mode Stats")
+  assert_eq(layout.stats_height, layout.stats_live_height, "legacy Stats height alias must match the live height")
   assert_true(layout.inventory_core_picker_width < layout.left_section_width, "inventory core picker must stay inside a left section")
   assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full two-column shell width")
   assert_true(
@@ -224,12 +226,18 @@ function tests.run_left_column_layout_contract_test(surface)
   assert_left_section_contract(sample.named.core, layout, "turret_xp_left_section_frame", "Core", false)
   assert_left_section_contract(sample.named.build, layout, "turret_xp_left_section_frame", "Build", false)
   assert_left_section_contract(sample.named.xp, layout, "turret_xp_left_section_frame", "XP", false)
+  assert_eq(sample.named.core.core_header_style, "subheader_frame", "Core section should keep a darker identity header")
+  assert_eq(sample.named.core.label_controls_bottom_margin, 2, "Core label controls should leave bottom breathing room")
+  assert_eq(sample.named.build.build_controls_type, "frame", "Build section should keep its controls in a darker header frame")
+  assert_eq(sample.named.build.build_controls_style, "subheader_frame", "live Build header should use the normal darker style")
+  assert_eq(sample.named.build.build_details_type, nil, "live Build section should not render expanded details")
 
   local stats = sample.named.stats_panel
   assert_true(stats ~= nil, "Stats pane was missing from the left-column layout sample")
   assert_eq(stats.type, "frame", "Stats pane must be a frame")
   assert_eq(stats.style, "inside_shallow_frame", "Stats pane must keep the shared content-pane shell")
   assert_eq(stats.width, layout.stats_scroll_width, "Stats pane width must match the left-section width")
+  assert_eq(stats.stats_scroll_height, layout.stats_live_height, "live Stats pane should reclaim vertical space")
   assert_eq(stats.top_margin, nil, "Stats pane must not use local top margin")
   assert_eq(stats.bottom_margin, nil, "Stats pane must not use local bottom margin")
 
@@ -238,6 +246,18 @@ function tests.run_left_column_layout_contract_test(surface)
   assert_left_section_contract(build_sample.named.core, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Core", true)
   assert_left_section_contract(build_sample.named.build, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Build", true)
   assert_left_section_contract(build_sample.named.xp, layout, "turret_xp_left_section_frame_build_mode", "Build-mode XP", false)
+  assert_eq(build_sample.named.core.core_header_style, "turret_xp_build_mode_subheader_frame", "Build-mode Core header should tint")
+  assert_eq(build_sample.named.build.build_controls_style, "turret_xp_build_mode_subheader_frame", "Build-mode Build header should tint")
+  assert_eq(
+    build_sample.named.build.build_details_style,
+    "inside_shallow_frame_with_padding",
+    "Build mode should use a nested light details section"
+  )
+  assert_eq(
+    build_sample.named.stats_panel.stats_scroll_height,
+    layout.stats_build_mode_height,
+    "Build mode should shrink Stats for planning details"
+  )
 end
 
 function tests.run_gui_support_samples_test()
