@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: auto-release-main
@@ -69,15 +70,34 @@ jobs:
             } | awk 'NR == 1 {print $1}'
           )"
 
-          if [ -n "${remote_tag}" ] && [ "${remote_tag}" != "${HEAD_SHA}" ]; then
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "release_exists=true" >> "${GITHUB_OUTPUT}"
+            release_exists="true"
+            package_asset_count="$(
+              gh release view "${TAG}" \
+                --json assets \
+                --jq '[.assets[].name | select(test("^turret_xp_.*\\.zip$"))] | length'
+            )"
+          else
+            echo "release_exists=false" >> "${GITHUB_OUTPUT}"
+            release_exists="false"
+            package_asset_count="0"
+          fi
+
+          if [ -z "${remote_tag}" ] && [ "${release_exists}" = "true" ]; then
+            echo "GitHub Release ${TAG} exists, but the matching remote tag is missing." >&2
+            exit 1
+          fi
+
+          if [ -n "${remote_tag}" ] && [ "${remote_tag}" != "${HEAD_SHA}" ] && [ "${release_exists}" != "true" ]; then
             echo "Remote tag ${TAG} points to ${remote_tag}, not current HEAD ${HEAD_SHA}." >&2
             exit 1
           fi
 
-          if gh release view "${TAG}" >/dev/null 2>&1; then
-            echo "release_exists=true" >> "${GITHUB_OUTPUT}"
+          if [ "${package_asset_count}" -gt 0 ]; then
+            echo "package_exists=true" >> "${GITHUB_OUTPUT}"
           else
-            echo "release_exists=false" >> "${GITHUB_OUTPUT}"
+            echo "package_exists=false" >> "${GITHUB_OUTPUT}"
           fi
 
           if [ -n "${remote_tag}" ]; then
@@ -86,9 +106,9 @@ jobs:
             echo "tag_exists=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: Stop if release already exists
-        if: steps.existing.outputs.release_exists == 'true'
-        run: echo "Release ${{ steps.metadata.outputs.tag }} already exists; nothing to publish."
+      - name: Stop if release package already exists
+        if: steps.existing.outputs.release_exists == 'true' && steps.existing.outputs.package_exists == 'true'
+        run: echo "Release ${{ steps.metadata.outputs.tag }} already has a package asset; nothing to publish."
 
       - name: Generate release notes
         if: steps.existing.outputs.release_exists != 'true'
@@ -128,3 +148,10 @@ jobs:
             --verify-tag \
             --title "Turret XP ${VERSION}" \
             --notes-file "dist/release-notes-${VERSION}.md"
+
+      - name: Dispatch package and Mod Portal publication
+        if: steps.existing.outputs.package_exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+        run: gh workflow run release.yml --ref main --field "tag=${TAG}"

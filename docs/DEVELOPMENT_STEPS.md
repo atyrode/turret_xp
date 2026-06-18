@@ -13,7 +13,7 @@ This file tracks current work, validation checkpoints, and near-term roadmap onl
 - Lua validation file discovery checks tracked source plus untracked non-ignored Lua source, explicitly excludes local build/runtime caches such as `.factorio-ci/`, `dist/`, `.codex_tmp/`, and `case_study/`, and has a regression check in `scripts/check.sh` so downloaded Factorio data cannot be linted as mod source.
 - Package build: `scripts/package.sh`.
 - Gameplay regression suite: `scripts/test-headless.sh` when a local Factorio binary is available.
-- Standard release trigger: merge a release PR into `main` with an unreleased `info.json` version and matching `changelog.txt` entry; Auto Release creates the missing GitHub Release/tag.
+- Standard release trigger: merge a release PR into `main` with an unreleased `info.json` version and matching `changelog.txt` entry; Auto Release creates the missing GitHub Release/tag and dispatches the Release workflow when the package asset is missing.
 - Externally visible release helper fallback: `scripts/release.sh` creates or updates the signed GitHub Release/tag after release preflight on clean, up-to-date `main`.
 - Mod Portal releases are not published from local checkouts. The GitHub Release workflow publishes the exact GitHub Release package asset to the Mod Portal.
 - CI runs strict Lua tooling and packaging for package-impacting changes, and headless Factorio tests when Mod Portal download credentials are configured.
