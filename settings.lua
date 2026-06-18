@@ -35,4 +35,22 @@ data:extend({
     maximum_value = 10,
     order = "d",
   },
+  {
+    type = "double-setting",
+    name = "turret-xp-travelling-asteroid-xp-multiplier",
+    setting_type = "runtime-global",
+    default_value = 0.2,
+    minimum_value = 0,
+    maximum_value = 10,
+    order = "e",
+  },
+  {
+    type = "double-setting",
+    name = "turret-xp-stopped-asteroid-xp-multiplier",
+    setting_type = "runtime-global",
+    default_value = 0.05,
+    minimum_value = 0,
+    maximum_value = 10,
+    order = "f",
+  },
 })

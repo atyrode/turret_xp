@@ -1,4 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.11.3
+Date: 2026-06-18
+  Changes:
+    - Rebalanced asteroid XP on space platforms. Asteroids now use separate runtime-global multipliers for travelling platforms and stopped or paused platforms, defaulting to 20% while travelling and 5% while stopped.
+    - Asteroid XP no longer stacks with the separate platform non-asteroid XP multiplier, fixing the accidental double reduction introduced in 0.11.0.
+    - Added an XP rate line under the XP bar when a combat XP modifier is active, with an info hover showing the compound formula for asteroid/platform modifiers and Veteran Training.
+  Bugfixes:
+    - Changed Veteran Training to boost newly earned combat XP instead of multiplying the core's total XP at display time, so removing Veteran Training ranks no longer lowers existing levels.
+    - Migrated existing Veteran Core profiles once so their already-earned Veteran Training XP is preserved under the new award-time accounting.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.11.2
 Date: 2026-06-18
   Bugfixes:

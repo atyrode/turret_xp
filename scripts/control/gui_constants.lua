@@ -34,6 +34,7 @@ local gui = {
   xp = prefix .. "xp",
   xp_bar = prefix .. "xp-bar",
   xp_percent = prefix .. "xp-percent",
+  xp_modifiers = prefix .. "xp-modifiers",
   hp = prefix .. "hp",
   shooting_speed = prefix .. "shooting-speed",
   range = prefix .. "range",

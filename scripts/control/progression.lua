@@ -1,5 +1,17 @@
 local legacy_migrations = require("scripts.control.migrations")
 
+local COMBAT_XP_GAIN_SCHEMA = 2
+
+local function format_percent_value(value)
+  local percent = (tonumber(value) or 0) * 100
+  local rounded = math.floor(percent + 0.5)
+  if math.abs(percent - rounded) < 0.05 then
+    return tostring(rounded) .. "%"
+  end
+
+  return string.format("%.1f%%", percent)
+end
+
 return function(M)
   setmetatable(M, { __index = _G })
   local _ENV = M
@@ -28,6 +40,14 @@ return function(M)
     }
   end
 
+  function get_travelling_asteroid_xp_multiplier()
+    return math.max(0, get_setting(SETTINGS.travelling_asteroid_xp_multiplier, DEFAULTS.travelling_asteroid_xp_multiplier))
+  end
+
+  function get_stopped_asteroid_xp_multiplier()
+    return math.max(0, get_setting(SETTINGS.stopped_asteroid_xp_multiplier, DEFAULTS.stopped_asteroid_xp_multiplier))
+  end
+
   function ensure_xp_counters(state)
     if not state then
       return
@@ -43,18 +63,177 @@ return function(M)
     end
   end
 
-  function combat.get_surface_combat_xp_multiplier(turret)
+  function combat.get_space_platform(turret)
     local surface = turret and turret.valid and safe_read(turret, "surface") or nil
-    local platform = surface and safe_read(surface, "platform") or nil
+    return surface and safe_read(surface, "platform") or nil
+  end
+
+  function combat.get_surface_combat_xp_multiplier(turret)
+    local platform = combat.get_space_platform(turret)
     return platform and COMBAT_CONSTANTS.space_xp_multiplier or 1
   end
 
-  function get_combat_xp_multiplier(turret, target_context, channel)
-    local context = combat.get_entity_xp_context(target_context) or target_context
-    local target_multiplier = channel == "kill" and combat.target_kill_credit_multiplier(context)
-      or combat.target_damage_xp_multiplier(context)
+  function combat.is_space_platform_travelling(turret)
+    local platform = combat.get_space_platform(turret)
+    if not platform then
+      return false
+    end
 
-    return combat.get_surface_combat_xp_multiplier(turret) * target_multiplier
+    local space_connection = safe_read(platform, "space_connection")
+    local space_location = safe_read(platform, "space_location")
+    local paused = safe_read(platform, "paused") == true
+    local speed = math.abs(tonumber(safe_read(platform, "speed")) or 0)
+    return space_connection ~= nil and space_location == nil and not paused and speed > 0.0001
+  end
+
+  function combat.is_asteroid_xp_context(context)
+    context = combat.get_entity_xp_context(context) or context
+    local entity_type = context and context.type or nil
+    return entity_type == "asteroid" or entity_type == "asteroid-chunk"
+  end
+
+  function get_asteroid_xp_multiplier(turret)
+    if combat.get_space_platform(turret) and not combat.is_space_platform_travelling(turret) then
+      return get_stopped_asteroid_xp_multiplier()
+    end
+
+    return get_travelling_asteroid_xp_multiplier()
+  end
+
+  function get_veteran_training_xp_bonus(state)
+    return get_augment_rank(state, "veteran_training") * 0.05
+  end
+
+  function get_veteran_training_xp_multiplier(state)
+    return 1 + get_veteran_training_xp_bonus(state)
+  end
+
+  function migrate_combat_xp_gain_schema(state)
+    if not state then
+      return
+    end
+
+    local schema = math.floor(tonumber(state.combat_xp_gain_schema) or 1)
+    if schema >= COMBAT_XP_GAIN_SCHEMA then
+      state.combat_xp_gain_schema = COMBAT_XP_GAIN_SCHEMA
+      return
+    end
+
+    local training_multiplier = get_veteran_training_xp_multiplier(state)
+    if training_multiplier > 1 then
+      state.xp_damage = (state.xp_damage or state.damage or 0) * training_multiplier
+      state.xp_kill_credit = (state.xp_kill_credit or state.kill_credit or state.kills or 0) * training_multiplier
+    end
+    state.combat_xp_gain_schema = COMBAT_XP_GAIN_SCHEMA
+  end
+
+  function get_combat_xp_multiplier_details(turret, target_context, channel, state)
+    local context = combat.get_entity_xp_context(target_context) or target_context
+    local is_asteroid = combat.is_asteroid_xp_context(context)
+    local target_multiplier = is_asteroid and get_asteroid_xp_multiplier(turret)
+      or (channel == "kill" and combat.target_kill_credit_multiplier(context) or combat.target_damage_xp_multiplier(context))
+    local surface_multiplier = is_asteroid and 1 or combat.get_surface_combat_xp_multiplier(turret)
+    local training_multiplier = get_veteran_training_xp_multiplier(state)
+
+    return {
+      surface_multiplier = surface_multiplier,
+      target_multiplier = target_multiplier,
+      training_multiplier = training_multiplier,
+      multiplier = surface_multiplier * target_multiplier * training_multiplier,
+      is_asteroid = is_asteroid,
+    }
+  end
+
+  function get_combat_xp_multiplier(turret, target_context, channel, state)
+    return get_combat_xp_multiplier_details(turret, target_context, channel, state).multiplier
+  end
+
+  local function xp_rate_formula(parts, final_multiplier)
+    local formula = "base " .. format_percent_value(1)
+    for _, part in ipairs(parts or {}) do
+      formula = formula .. " x " .. part.label .. " " .. format_percent_value(part.multiplier)
+    end
+    return formula .. " = " .. format_percent_value(final_multiplier)
+  end
+
+  function get_gui_xp_modifier_summary(turret, state)
+    local platform = combat.get_space_platform(turret)
+    local training_multiplier = get_veteran_training_xp_multiplier(state)
+    local training_part = training_multiplier ~= 1 and {
+      label = "Veteran Training",
+      multiplier = training_multiplier,
+    } or nil
+
+    if platform then
+      local travelling = combat.is_space_platform_travelling(turret)
+      local asteroid_multiplier = get_asteroid_xp_multiplier(turret)
+      local asteroid_part = {
+        label = travelling and "travelling asteroids" or "stopped asteroids",
+        multiplier = asteroid_multiplier,
+      }
+      local parts = { asteroid_part }
+      if training_part then
+        parts[#parts + 1] = training_part
+      end
+
+      local final_multiplier = asteroid_multiplier * training_multiplier
+      local non_asteroid_multiplier = combat.get_surface_combat_xp_multiplier(turret) * training_multiplier
+      local non_asteroid_parts = {
+        {
+          label = "platform non-asteroids",
+          multiplier = combat.get_surface_combat_xp_multiplier(turret),
+        },
+      }
+      if training_part then
+        non_asteroid_parts[#non_asteroid_parts + 1] = training_part
+      end
+
+      return {
+        visible = true,
+        context = travelling and "travelling-asteroids" or "stopped-asteroids",
+        final_multiplier = final_multiplier,
+        caption = { "", { "turret-xp.xp-rate-caption-asteroids", format_percent_value(final_multiplier) }, " [img=info]" },
+        tooltip = {
+          "",
+          { "turret-xp.xp-rate-tooltip-header" },
+          "\n",
+          { "turret-xp.xp-rate-tooltip-formula", xp_rate_formula(parts, final_multiplier) },
+          "\n",
+          {
+            "turret-xp.xp-rate-tooltip-platform-non-asteroid",
+            format_percent_value(non_asteroid_multiplier),
+            xp_rate_formula(non_asteroid_parts, non_asteroid_multiplier),
+          },
+          "\n",
+          { "turret-xp.xp-rate-tooltip-settings" },
+        },
+      }
+    end
+
+    if training_part then
+      local final_multiplier = training_multiplier
+      return {
+        visible = true,
+        context = "combat",
+        final_multiplier = final_multiplier,
+        caption = { "", { "turret-xp.xp-rate-caption-combat", format_percent_value(final_multiplier) }, " [img=info]" },
+        tooltip = {
+          "",
+          { "turret-xp.xp-rate-tooltip-header" },
+          "\n",
+          { "turret-xp.xp-rate-tooltip-formula", xp_rate_formula({ training_part }, final_multiplier) },
+          "\n",
+          { "turret-xp.xp-rate-tooltip-settings" },
+        },
+      }
+    end
+
+    return {
+      visible = false,
+      context = "base",
+      final_multiplier = 1,
+      caption = "",
+    }
   end
 
   function add_profile_damage(state, amount, turret, target_context)
@@ -65,7 +244,7 @@ return function(M)
 
     ensure_xp_counters(state)
     state.damage = (state.damage or 0) + amount
-    state.xp_damage = (state.xp_damage or 0) + (amount * get_combat_xp_multiplier(turret, target_context, "damage"))
+    state.xp_damage = (state.xp_damage or 0) + (amount * get_combat_xp_multiplier(turret, target_context, "damage", state))
   end
 
   function add_profile_kill_credit(state, credit, turret, target_context)
@@ -76,7 +255,7 @@ return function(M)
 
     ensure_xp_counters(state)
     state.kill_credit = (state.kill_credit or state.kills or 0) + credit
-    state.xp_kill_credit = (state.xp_kill_credit or 0) + (credit * get_combat_xp_multiplier(turret, target_context, "kill"))
+    state.xp_kill_credit = (state.xp_kill_credit or 0) + (credit * get_combat_xp_multiplier(turret, target_context, "kill", state))
   end
 
   function get_element_requirement_count(element, next_rank)
@@ -449,12 +628,12 @@ return function(M)
     state.kill_credit = state.kill_credit or state.kills or 0
     ensure_xp_counters(state)
     ensure_evolution_state(state)
+    migrate_combat_xp_gain_schema(state)
 
     local xp_settings = get_xp_settings()
-    local veteran_training_rank = get_augment_rank(state, "veteran_training")
     local combat_xp = ((state.xp_damage or state.damage or 0) * xp_settings.xp_per_damage)
       + ((state.xp_kill_credit or state.kill_credit or 0) * xp_settings.xp_per_kill_credit)
-    local total_xp = (combat_xp * (1 + (veteran_training_rank * 0.05))) + (state.dev_xp or 0)
+    local total_xp = combat_xp + (state.dev_xp or 0)
     local settings_key = tostring(xp_settings.xp_per_damage)
       .. ":"
       .. tostring(xp_settings.xp_per_kill_credit)
@@ -462,8 +641,6 @@ return function(M)
       .. tostring(xp_settings.level_base_xp)
       .. ":"
       .. tostring(xp_settings.level_growth)
-      .. ":"
-      .. tostring(veteran_training_rank)
     local cached_total_xp = state._progress_total_xp
     local cached_level = state.level
     local level

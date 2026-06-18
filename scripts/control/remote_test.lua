@@ -215,6 +215,7 @@ return function(M)
       damage = state.damage or 0,
       xp_damage = state.xp_damage or 0,
       xp_kill_credit = state.xp_kill_credit or 0,
+      combat_xp_gain_schema = state.combat_xp_gain_schema or 0,
       dev_xp = state.dev_xp or 0,
       required_xp = state.required_xp or 0,
       attack_range = attack_parameters and attack_parameters.range or nil,
@@ -257,6 +258,10 @@ return function(M)
       level = profile.level or 0,
       kills = profile.kills or 0,
       damage = profile.damage or 0,
+      xp_damage = profile.xp_damage or 0,
+      xp_kill_credit = profile.xp_kill_credit or 0,
+      total_xp = profile.total_xp or 0,
+      combat_xp_gain_schema = profile.combat_xp_gain_schema or 0,
       skills = copy_serializable(profile.skills or {}),
       evolution = {
         base = copy_serializable(evolution.base or {}),
@@ -291,6 +296,7 @@ return function(M)
       "bound_turret",
       "xp_damage",
       "xp_kill_credit",
+      "combat_xp_gain_schema",
       "dev_xp",
       "kills",
       "kill_credit",
@@ -1552,6 +1558,142 @@ return function(M)
       ensure_storage()
       return {
         target_entry_count = turret_xp_test_table_count(storage.turret_xp.targets),
+      }
+    end,
+    award_damage_xp = function(entity, amount, target_context)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      add_profile_damage(state, amount or 0, entity, target_context)
+      sync_turret_progression(state)
+      return turret_xp_test_state_summary(entity)
+    end,
+    award_kill_credit_xp = function(entity, credit, target_context)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      add_profile_kill_credit(state, credit or 0, entity, target_context)
+      sync_turret_progression(state)
+      return turret_xp_test_state_summary(entity)
+    end,
+    combat_xp_multiplier_samples = function()
+      local ground_turret = { valid = true, surface = {} }
+      local travelling_platform_turret = {
+        valid = true,
+        surface = {
+          platform = {
+            paused = false,
+            space_connection = {},
+            speed = 1,
+          },
+        },
+      }
+      local stopped_platform_turret = {
+        valid = true,
+        surface = {
+          platform = {
+            paused = false,
+            space_location = {},
+            speed = 0,
+          },
+        },
+      }
+      local asteroid_context = {
+        name = "small-metallic-asteroid",
+        type = "asteroid",
+        max_health = 100,
+        force_name = "enemy",
+      }
+      local biter_context = {
+        name = "small-biter",
+        type = "unit",
+        max_health = 15,
+        force_name = "enemy",
+      }
+      local training_state = create_blank_profile()
+      ensure_evolution_state(training_state).augments.veteran_training = 2
+      local base_state = create_blank_profile()
+      local travelling_multiplier = get_travelling_asteroid_xp_multiplier()
+      local stopped_multiplier = get_stopped_asteroid_xp_multiplier()
+
+      return {
+        travelling_asteroid_setting = travelling_multiplier,
+        stopped_asteroid_setting = stopped_multiplier,
+        platform_surface = combat.get_surface_combat_xp_multiplier(travelling_platform_turret),
+        old_stacked_platform_asteroid = combat.get_surface_combat_xp_multiplier(travelling_platform_turret) * travelling_multiplier,
+        ground_biter_damage = get_combat_xp_multiplier_details(ground_turret, biter_context, "damage"),
+        platform_biter_damage = get_combat_xp_multiplier_details(travelling_platform_turret, biter_context, "damage"),
+        travelling_platform_asteroid_damage = get_combat_xp_multiplier_details(travelling_platform_turret, asteroid_context, "damage"),
+        travelling_platform_asteroid_kill = get_combat_xp_multiplier_details(travelling_platform_turret, asteroid_context, "kill"),
+        stopped_platform_asteroid_damage = get_combat_xp_multiplier_details(stopped_platform_turret, asteroid_context, "damage"),
+        travelling_modifier_summary = get_gui_xp_modifier_summary(travelling_platform_turret, training_state),
+        stopped_modifier_summary = get_gui_xp_modifier_summary(stopped_platform_turret, nil),
+        ground_modifier_summary = get_gui_xp_modifier_summary(ground_turret, base_state),
+        ground_training_modifier_summary = get_gui_xp_modifier_summary(ground_turret, training_state),
+        trained_travelling_platform_asteroid_damage = get_combat_xp_multiplier_details(
+          travelling_platform_turret,
+          asteroid_context,
+          "damage",
+          training_state
+        ),
+      }
+    end,
+    asteroid_xp_balance_sample = function()
+      local xp_settings = get_xp_settings()
+      local travel_multiplier = get_travelling_asteroid_xp_multiplier()
+      local stopped_multiplier = get_stopped_asteroid_xp_multiplier()
+      local old_stacked_multiplier = COMBAT_CONSTANTS.space_xp_multiplier * travel_multiplier
+
+      local function scenario(entries, multiplier)
+        local total_xp = 0
+        local total_count = 0
+        local rows = {}
+
+        for _, entry in ipairs(entries) do
+          local count = math.max(0, math.floor(tonumber(entry.count) or 0))
+          local health = tonumber(entry.health) or 0
+          local xp_each = ((health * xp_settings.xp_per_damage) + xp_settings.xp_per_kill_credit) * multiplier
+          total_xp = total_xp + (xp_each * count)
+          total_count = total_count + count
+          rows[#rows + 1] = {
+            name = entry.name,
+            count = count,
+            health = health,
+            xp_each = xp_each,
+          }
+        end
+
+        return {
+          total_xp = total_xp,
+          count = total_count,
+          average_xp_per_asteroid = total_count > 0 and (total_xp / total_count) or 0,
+          rows = rows,
+        }
+      end
+
+      local trip_entries = {
+        { name = "small-metallic-asteroid", count = 30, health = 100 },
+        { name = "medium-metallic-asteroid", count = 6, health = 400 },
+        { name = "big-metallic-asteroid", count = 1, health = 2000 },
+      }
+      local stationary_entries = {
+        { name = "small-metallic-asteroid", count = 10, health = 100 },
+      }
+
+      return {
+        travel_multiplier = travel_multiplier,
+        stopped_multiplier = stopped_multiplier,
+        old_stacked_multiplier = old_stacked_multiplier,
+        level_1_required = xp_required(0),
+        level_2_required = xp_required(1),
+        trip = scenario(trip_entries, travel_multiplier),
+        old_stacked_trip = scenario(trip_entries, old_stacked_multiplier),
+        stationary = scenario(stationary_entries, stopped_multiplier),
+        old_stacked_stationary = scenario(stationary_entries, old_stacked_multiplier),
       }
     end,
     award_recorded_kill_credit = function(target, killing_turret)

@@ -386,7 +386,7 @@ return function(M)
     local max_health = tonumber(context.max_health) or 0
 
     if entity_type == "asteroid" or entity_type == "asteroid-chunk" then
-      return COMBAT_CONSTANTS.asteroid_xp_multiplier
+      return get_asteroid_xp_multiplier(nil)
     end
 
     if entity_type == "unit" then
@@ -427,7 +427,7 @@ return function(M)
     local entity_name = context.name or ""
 
     if entity_type == "asteroid" or entity_type == "asteroid-chunk" then
-      return COMBAT_CONSTANTS.asteroid_xp_multiplier
+      return get_asteroid_xp_multiplier(nil)
     end
 
     if entity_type == "unit-spawner" then

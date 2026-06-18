@@ -19,6 +19,7 @@ function profile_schema.new(deps)
       damage = 0,
       xp_damage = 0,
       xp_kill_credit = 0,
+      combat_xp_gain_schema = 2,
       evolution = {},
       chip_quality = "normal",
       custom_name = "",
@@ -46,6 +47,7 @@ function profile_schema.new(deps)
     profile.kill_credit = profile.kill_credit or profile.kills or 0
     profile.damage = profile.damage or 0
     deps.ensure_xp_counters(profile)
+    profile.combat_xp_gain_schema = math.max(1, math.floor(tonumber(profile.combat_xp_gain_schema) or 1))
     profile.dev_xp = profile.dev_xp or 0
     profile.chip_quality = profile.chip_quality or "normal"
     profile.custom_name = profile.custom_name or ""
@@ -122,6 +124,7 @@ function profile_schema.new(deps)
       damage = profile.damage or 0,
       xp_damage = profile.xp_damage or profile.damage or 0,
       xp_kill_credit = profile.xp_kill_credit or profile.kill_credit or 0,
+      combat_xp_gain_schema = profile.combat_xp_gain_schema or 2,
       dev_xp = profile.dev_xp or 0,
       last_ammo = service.copy_serializable(profile.last_ammo),
       ammo_productivity_progress = profile.ammo_productivity_progress or 0,
@@ -160,6 +163,7 @@ function profile_schema.new(deps)
       profile.damage = data.damage or 0
       profile.xp_damage = data.xp_damage
       profile.xp_kill_credit = data.xp_kill_credit
+      profile.combat_xp_gain_schema = data.combat_xp_gain_schema
       profile.dev_xp = data.dev_xp or 0
       profile.last_ammo = service.copy_serializable(data.last_ammo)
       profile.ammo_productivity_progress = data.ammo_productivity_progress or data.ammo_regen_progress or 0

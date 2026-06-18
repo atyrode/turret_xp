@@ -14,7 +14,8 @@
 - On space platforms, the attached turret panel must allow selecting a specific Veteran Core from the platform hub inventory and sending an installed core back to the hub when there is room.
 - Gun turret damage against non-friendly entities must add lifetime damage and damage-derived XP only when the attacking turret has an installed core.
 - Gun turret combat on space-platform surfaces must add reduced damage-derived and kill-credit-derived XP while preserving raw displayed damage and kill-credit totals.
-- Asteroids and asteroid chunks must grant reduced XP compared with normal enemies, including when fought on space platforms.
+- Asteroids and asteroid chunks must grant reduced XP compared with normal enemies, including when fought on space platforms, but their platform XP reduction must not stack with the separate non-asteroid space-platform reduction.
+- Asteroid and asteroid-chunk XP must distinguish travelling space platforms from stopped, paused, or non-advancing platforms so travelling combat can be more rewarding than stationary asteroid trickle.
 - Kill-credit XP should account for target type and approximate target durability so small targets, large enemies, worms, and spawners do not all pay the same XP.
 - Enemy deaths must add proportional kill-credit XP to contributing installed cores, even when another source lands the final hit.
 - Gun turret final hits must add a killing-blow count to the installed core.
@@ -35,8 +36,9 @@
 - The Evolution header must expose one clear reset action that clears all Evolution choices while preserving core XP/history. Selected elements, specialization, and sub-specialization must also expose clear section-level `Change` actions for focused local edits.
 - Floating-label color controls must only appear while the `Show` label checkbox is enabled.
 - Preset label-color cycling must keep preset captions; `Custom` should appear only after RGB slider edits.
-- Runtime-global mod settings must allow tuning damage XP, kill-credit XP, base level XP, and level XP growth.
+- Runtime-global mod settings must allow tuning damage XP, kill-credit XP, base level XP, level XP growth, travelling asteroid XP, and stopped asteroid XP.
 - XP overflow must advance levels and carry remaining XP into the next level.
+- Veteran Training must boost newly earned combat XP and must not reduce already-earned XP or levels when ranks are removed.
 - When XP progression increases an installed core's level, a short in-world level-up popup should appear above the turret.
 - Evolution points must be derived from turret level and spent allocations.
 - Clicking an allocatable core upgrade or augment must allocate one rank to the opened turret and refresh the panel; Shift-click must apply up to ten ranks, and Ctrl-click must spend all currently available points or remove all ranks from that row.
@@ -60,6 +62,7 @@
 ## Display
 
 - Show current level and XP progress to the next level.
+- Show the active combat XP modifier near the XP bar as a final percentage only when it differs from base `100%` XP. Its hover tooltip must show the compound formula for platform, asteroid travel/stopped, and Veteran Training modifiers when relevant.
 - Show whether a Veteran Core is installed and provide install/extract controls, including an explicit action that moves an installed core to the player inventory when there is room.
 - When no core is installed, show a single full-width Veteran Core picker with exact-slot install actions, readable striped rows, a persistent `All` filter plus persistent specialization/base filters, and clickable table headers for level, name, specialization, HP, attack speed, and range. Sort headers must cycle ascending, descending, and back to the default level-descending ordering, with a compact table-header sprite cue for the active direction. Level, HP, attack, and range picker values must stay neutral/plain; visible red or green values are reserved for stat buff/penalty semantics elsewhere.
 - Show Bind/Unbind controls for installed cores.

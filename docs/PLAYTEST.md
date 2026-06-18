@@ -4,7 +4,7 @@ This guide is split by depth. Run the smoke path for ordinary feedback, the regr
 
 ## Install
 
-Current development package target: `0.11.0`.
+Current development package target: `0.11.3`.
 
 Preferred once published:
 
@@ -126,11 +126,13 @@ Run this when validating release candidates, compatibility claims, or high-risk 
 - On a space platform, place one or more Veteran Cores in the hub inventory, open a platform turret, and confirm the panel lists exact available cores.
 - Install a specific listed core, then send it back to the hub and confirm the same profile returns when hub inventory has room.
 - Let a platform turret fight and confirm XP rises much more slowly than comparable surface combat while raw damage and kills still display.
-- Park a space platform above asteroid-heavy traffic and confirm asteroid kills do not overlevel a core.
+- Let a travelling space platform fight asteroids and confirm the XP rate line reports travelling asteroid XP and its hover formula compounds asteroid/platform context with Veteran Training if ranked.
+- Park or pause a space platform above asteroid-heavy traffic and confirm the XP rate line reports stopped asteroid XP, XP rises slower than while travelling, and asteroid kills still do not overlevel a core.
 
 ### Long-Fight Balance
 
 - Let several turret builds survive real waves and compare XP pace, level gates, material rank progress, and ammo demand.
+- Rank Veteran Training, earn combat XP, remove those ranks, and confirm already-earned XP and levels do not drop.
 - Check whether Shield, Regeneration, Ammo Productivity, Shield on Hit, Lifesteal, Luck, Double Shot, Bounce, and element procs are readable without dominating the screen.
 - Confirm specialization tradeoffs are understandable: range for fire rate, fire rate for damage per shot, survivability for peak damage, and XP gain for immediate power.
 - Change runtime-global XP settings and confirm open panels refresh with the new pacing.
@@ -148,6 +150,6 @@ Most useful feedback:
 - Did passive material progress feel like a clear material goal?
 - Which specialization, element, combo, augment, or stat felt confusing, too weak, or too strong?
 - Did Shield feel like a satisfying survivability replacement for Max HP?
-- Did target-aware XP pacing feel closer to intended progression speed, especially for passive asteroid defense?
+- Did target-aware XP pacing feel closer to intended progression speed, especially travelling platform asteroid combat versus passive stopped-platform asteroid defense?
 - Did optional Bullet Trails improve scripted feedback without adding noise?
 - Did the mod fail to load, desync, or throw a runtime error?

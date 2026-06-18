@@ -135,6 +135,8 @@ definitions.settings = {
   xp_per_kill_credit = domain.names.mod_prefix .. "xp-per-kill-credit",
   level_base_xp = domain.names.mod_prefix .. "level-base-xp",
   level_growth = domain.names.mod_prefix .. "level-growth",
+  travelling_asteroid_xp_multiplier = domain.names.mod_prefix .. "travelling-asteroid-xp-multiplier",
+  stopped_asteroid_xp_multiplier = domain.names.mod_prefix .. "stopped-asteroid-xp-multiplier",
 }
 
 definitions.defaults = {
@@ -142,6 +144,8 @@ definitions.defaults = {
   xp_per_kill_credit = 25,
   level_base_xp = 100,
   level_growth = 1.65,
+  travelling_asteroid_xp_multiplier = 0.2,
+  stopped_asteroid_xp_multiplier = 0.05,
 }
 
 return definitions
