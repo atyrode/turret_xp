@@ -20,6 +20,7 @@
 - `tests/headless/turret_xp_remote_policy_tests/`: separate headless smoke-test mod used by `scripts/test-headless.sh` to verify private test remotes are absent when the companion suite is not active.
 - `tests/gui-snapshots/turret_xp_gui_snapshots/`: local graphical-client companion mod used only by `scripts/gui-snapshots.sh`. It enables the private test remote, creates temporary GUI fixture scenes, opens the real Turret XP panel as a centered standalone screen frame, selects configured scroll positions, records frame bounds, and captures PNGs through Factorio's screenshot API.
 - `tests/gui-snapshots/current/`: latest copied GUI screenshot artifacts for local review. `full/` holds raw graphical-client screenshots, `ui/` holds frame-cropped Turret XP-only images, and the root manifest/index describe the run. These are generated files that may later be promoted into docs or visual baselines.
+- `tests/manual-sandbox/turret_xp_sandbox/`: local graphical/manual companion mod used only by `scripts/sandbox.sh`. It enables the private test remote, creates a disposable `turret_xp_sandbox` surface, and lays out repeatable manual scenario lanes for core movement, Evolution, feeder routing, combat/stat behavior, and automation setup policy.
 - `docs/`: project context, playtest guidance, shared public copy, and the generated GitHub Pages homepage.
 
 ## Runtime State
@@ -221,7 +222,7 @@ storage.turret_xp = {
 }
 ```
 
-The private `turret_xp_test` remote interface is registered only when `turret_xp_headless_tests` or `turret_xp_gui_snapshots` is active. Normal gameplay loads and packaged releases must not expose it.
+The private `turret_xp_test` remote interface is registered only when `turret_xp_headless_tests`, `turret_xp_gui_snapshots`, or `turret_xp_sandbox` is active. Normal gameplay loads and packaged releases must not expose it.
 
 ## Runtime Responsibilities
 
@@ -262,7 +263,7 @@ The private `turret_xp_test` remote interface is registered only when `turret_xp
 - `on_nth_tick(60)`: refresh open panels while the vanilla GUI remains open. GUI panel refreshes should be keyed and non-destructive when visible state has not changed so timer refreshes do not race player clicks.
 - Runtime label render objects: `scripts/control/profile_labels.lua` draws optional chip-carried labels above currently installed turret bodies using the independently enabled name, level, and unspent point summary components. Preset colors and RGB slider colors are stored on the Veteran Core profile and applied directly through `rendering.draw_text`; stale display-panel label entities from older saves are destroyed the next time the label updates.
 - `scripts/control/commands.lua`: explicit command-registration service for `/turret-xp`, the fallback command for opening the selected turret's GUI/panel, and `/turret-xp-dev`, the per-player toggle for dev controls in the attached panel.
-- `remote.interfaces.turret_xp_test`: controlled test-only API used by the headless test mod to install cores, inspect sanitized profile state, drive feeder state, drive automation and core-request policies, reset individual evolution sections, and create tagged test stacks. `scripts/control/remote_test.lua` keeps these hooks in named registry sections that mirror the headless subsystem tests. `control.lua` registers this interface only when `script.active_mods["turret_xp_headless_tests"]` is present, so gameplay and other mods must not depend on it.
+- `remote.interfaces.turret_xp_test`: controlled test-only API used by the headless, GUI snapshot, and manual sandbox companion mods to install cores, inspect sanitized profile state, drive feeder state, drive automation and core-request policies, reset individual evolution sections, and create tagged test stacks. `scripts/control/remote_test.lua` keeps these hooks in named registry sections that mirror the headless subsystem tests. `control.lua` registers this interface only when an approved local test companion is active, so gameplay and other mods must not depend on it.
 
 ## Invisible Feeder Contract
 

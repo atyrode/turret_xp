@@ -251,7 +251,11 @@ M.handle_gui_selection_state_changed_event = M.gui_actions.on_gui_selection_stat
 
 require("scripts.control.combat_effects")(M)
 require("scripts.control.events")(M)
-if script.active_mods["turret_xp_headless_tests"] or script.active_mods["turret_xp_gui_snapshots"] then
+if
+  script.active_mods["turret_xp_headless_tests"]
+  or script.active_mods["turret_xp_gui_snapshots"]
+  or script.active_mods["turret_xp_sandbox"]
+then
   require("scripts.control.remote_test")(M)
 end
 

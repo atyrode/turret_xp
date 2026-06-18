@@ -81,6 +81,18 @@ scripts/gui-snapshots.sh collect
 
 The generated index lands in `tests/gui-snapshots/current/`. Cropped Turret XP-only review images are written to `tests/gui-snapshots/current/ui/`, and the raw full-client screenshots stay under `tests/gui-snapshots/current/full/` for context.
 
+Manual sandbox review uses a separate local companion mod. It generates a disposable in-game test surface with repeatable scenario lanes for core movement, Evolution, feeder routing, combat/stat behavior, and automation setup policy:
+
+```sh
+scripts/sandbox.sh install
+```
+
+Then start Factorio, load a disposable development save, and run:
+
+```text
+/turret-xp-sandbox build
+```
+
 Public website, release notes, and Mod Portal copy are generated from `info.json`, `changelog.txt`, and [docs/public-copy.json](docs/public-copy.json):
 
 ```sh
