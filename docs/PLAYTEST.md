@@ -4,7 +4,7 @@ This guide is split by depth. Run the smoke path for ordinary feedback, the regr
 
 ## Install
 
-Current development package target: `0.11.3`.
+Current development package target: `0.12.0`.
 
 Preferred once published:
 
@@ -31,7 +31,7 @@ Use this when you only need to confirm the mod loads and the main loop works.
 5. Confirm level, XP, HP, shooting speed, range, Magazine, Ammo, damage, estimated DPS, kills, and Evolution sections appear.
 6. Let the turret shoot enemies and confirm XP, damage, kill credit, and level progress update.
 7. Spend one core upgrade and confirm ranks, points, and stats refresh without moving the vanilla turret GUI.
-8. Name the core, toggle `Show`, and confirm the floating label appears above the turret.
+8. Name the core, toggle `Name`, `Level`, and `Unspent` independently, and confirm the floating label shows only the enabled parts above the turret.
 9. Extract and reinstall the core, then confirm XP, upgrades, name, and label settings move with it.
 10. Select the turret and run `/turret-xp` to confirm the fallback open command.
 
@@ -59,6 +59,19 @@ Use this path before merging gameplay, GUI, persistence, feeder, combat, or rele
 6. Hover stat-name info markers and confirm formulas live there. HP and Range quality breakdowns should live on the quality diamond.
 7. Confirm stats reserve scrollbar space and values do not render under the scrollbar.
 8. Confirm numeric rich text colors only numbers; units and prose stay neutral.
+9. Select each automation preset, use `Apply`, and confirm it spends available points without enabling Auto.
+10. Enable Auto on a non-manual preset, then add levels and confirm newly available points are spent by the preset.
+11. Set a manual specialization, then enable a conflicting preset and confirm the manual specialization is not overwritten.
+12. Copy/paste settings from a configured veteran turret to an empty turret and confirm label visibility, label color, automation, and core request policy copy without copying the source name, XP, level, kills, or damage.
+
+### Logistics And Setup Policy
+
+1. Open an empty turret, enable `Request Veteran Core`, and confirm a logistic request appears for one Veteran Core when the turret is in a logistic network.
+2. Deliver a tagged Veteran Core by bot and confirm it installs on that turret with its profile intact.
+3. Cancel the request before delivery and confirm the request disappears.
+4. Deliver a core, then mine or destroy the empty requested turret before the refresh installs it; the delivered core should spill rather than vanish.
+5. Blueprint or copy/paste a configured empty requested turret, build the copy, and confirm the copied turret requests a core and keeps the copied setup policy for the core it later receives.
+6. Build a batch of requested empty turrets and watch UPS/TPS during normal play; there should be no visible stutter from waiting requests.
 
 ### GUI Snapshot Review
 
@@ -146,6 +159,9 @@ Most useful feedback:
 - Did Bind/Unbind make quick turret moves clearer, or does it need different wording or placement?
 - Did the core slot feel close enough to an inventory slot, especially cursor transfer and swap?
 - Did label color and level visibility cover the customization needed for now?
+- Did independent Name/Level/Unspent label controls feel clear?
+- Did automation presets save setup time without feeling like they stole manual choices?
+- Did logistic Veteran Core requests behave like a useful setup convenience for empty turrets?
 - Did the hidden turret-tile input feel reliable and readable enough?
 - Did passive material progress feel like a clear material goal?
 - Which specialization, element, combo, augment, or stat felt confusing, too weak, or too strong?

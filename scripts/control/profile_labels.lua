@@ -312,16 +312,42 @@ function profile_labels.new(deps)
 
   function service.get_profile_label_text(profile)
     profile = deps.normalize_profile(profile)
+    local parts = {}
     local name = profile.custom_name or ""
-    if name == "" then
+
+    if profile.show_name_label == true and name ~= "" then
+      parts[#parts + 1] = name
+    end
+
+    if profile.show_label_level == true then
+      parts[#parts + 1] = "Lvl " .. tostring(profile.level or 0)
+    end
+
+    if profile.show_unspent_label == true then
+      local core_points = math.max(0, deps.get_available_skill_points(profile) or 0)
+      local augment_points = math.max(0, deps.get_available_augment_points(profile) or 0)
+      if core_points > 0 and augment_points > 0 then
+        parts[#parts + 1] = "Core +" .. tostring(core_points) .. " / Aug +" .. tostring(augment_points)
+      elseif core_points > 0 then
+        parts[#parts + 1] = "Core +" .. tostring(core_points)
+      elseif augment_points > 0 then
+        parts[#parts + 1] = "Aug +" .. tostring(augment_points)
+      end
+    end
+
+    if #parts == 0 then
       return nil
     end
 
-    if profile.show_label_level == false then
-      return name
+    if #parts == 1 then
+      return parts[1]
     end
 
-    return name .. " (lvl " .. tostring(profile.level or 0) .. ")"
+    if profile.show_name_label == true and name ~= "" and #parts == 2 and profile.show_label_level == true then
+      return name .. " (" .. parts[2] .. ")"
+    end
+
+    return table.concat(parts, " - ")
   end
 
   local function name_render_signature(entity, profile, text)
@@ -340,7 +366,10 @@ function profile_labels.new(deps)
       return
     end
 
-    if not deps.is_gun_turret(entity) or not profile.show_name_label then
+    if
+      not deps.is_gun_turret(entity)
+      or (not profile.show_name_label and not profile.show_label_level and not profile.show_unspent_label)
+    then
       service.destroy_name_render(profile)
       return
     end

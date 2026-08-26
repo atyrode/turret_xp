@@ -59,7 +59,7 @@ scripts/package.sh
 scripts/test-headless.sh
 ```
 
-`scripts/check.sh` is host-friendly and skips optional Lua tools that are not installed. The Docker Lua commands use the same pinned StyLua, Lua 5.2 syntax, and Luacheck tooling path as CI without installing them on the host. `scripts/test-headless.sh` packages the current mod and runs the Factorio headless regression suite when `factorio` is available or `FACTORIO_BIN=/path/to/factorio` is set.
+`scripts/check.sh` is host-friendly and skips optional Lua tools that are not installed. The Docker Lua commands use the same pinned StyLua, Lua 5.2 syntax, and Luacheck tooling path as CI without installing them on the host. `scripts/test-headless.sh` packages the current mod and runs the Factorio headless regression suite when `factorio` is available or `FACTORIO_BIN=/path/to/factorio` is set. Passing headless runs print the tracked hidden-prototype budget, Factorio benchmark update timing, and Linux process CPU/max-RSS metrics when `/usr/bin/time` is available; those metrics are trend signals, not strict pass/fail thresholds.
 
 Install local Git hooks once per clone to run the Docker strict Lua tooling before commits that stage Lua or Lua-tooling changes:
 

@@ -1,6 +1,7 @@
 local profile_schema = {}
 
 local DEFAULT_LABEL_COLOR = { 1, 0.86, 0.46 }
+local LABEL_DISPLAY_SCHEMA = 2
 
 local function default_label_color()
   return { DEFAULT_LABEL_COLOR[1], DEFAULT_LABEL_COLOR[2], DEFAULT_LABEL_COLOR[3] }
@@ -23,11 +24,15 @@ function profile_schema.new(deps)
       evolution = {},
       chip_quality = "normal",
       custom_name = "",
+      label_display_schema = LABEL_DISPLAY_SCHEMA,
       show_name_label = false,
-      show_label_level = true,
+      show_label_level = false,
+      show_unspent_label = false,
       label_color = default_label_color(),
       label_color_preset = "gold",
       label_scale = 2,
+      automation_preset = "manual",
+      automation_enabled = false,
       bound_turret = false,
       last_ammo = nil,
       ammo_productivity_progress = 0,
@@ -51,8 +56,17 @@ function profile_schema.new(deps)
     profile.dev_xp = profile.dev_xp or 0
     profile.chip_quality = profile.chip_quality or "normal"
     profile.custom_name = profile.custom_name or ""
+    local label_display_schema = math.floor(tonumber(profile.label_display_schema) or 1)
     profile.show_name_label = profile.show_name_label == true
-    profile.show_label_level = profile.show_label_level ~= false
+    if label_display_schema < LABEL_DISPLAY_SCHEMA then
+      profile.show_label_level = profile.show_name_label == true and profile.show_label_level ~= false
+    else
+      profile.show_label_level = profile.show_label_level == true
+    end
+    profile.show_unspent_label = profile.show_unspent_label == true
+    profile.label_display_schema = LABEL_DISPLAY_SCHEMA
+    profile.automation_preset = tostring(profile.automation_preset or "manual")
+    profile.automation_enabled = profile.automation_enabled == true
     profile.bound_turret = profile.bound_turret == true
     profile.ammo_productivity_progress = math.max(0, tonumber(profile.ammo_productivity_progress or profile.ammo_regen_progress) or 0)
     profile.ammo_regen_progress = nil
@@ -110,12 +124,16 @@ function profile_schema.new(deps)
       chip_id = profile.chip_id,
       chip_quality = profile.chip_quality or "normal",
       custom_name = profile.custom_name or "",
+      label_display_schema = LABEL_DISPLAY_SCHEMA,
       show_name_label = profile.show_name_label == true,
-      show_label_level = profile.show_label_level ~= false,
+      show_label_level = profile.show_label_level == true,
+      show_unspent_label = profile.show_unspent_label == true,
       bound_turret = profile.bound_turret == true,
       label_color = service.copy_serializable(profile.label_color or default_label_color()),
       label_color_preset = profile.label_color_preset or "custom",
       label_scale = profile.label_scale or 2,
+      automation_preset = profile.automation_preset or "manual",
+      automation_enabled = profile.automation_enabled == true,
       xp = profile.xp or 0,
       total_xp = profile.total_xp or 0,
       level = profile.level or 0,
@@ -149,12 +167,16 @@ function profile_schema.new(deps)
       profile.chip_id = data.chip_id
       profile.chip_quality = data.chip_quality or "normal"
       profile.custom_name = data.custom_name or ""
+      profile.label_display_schema = data.label_display_schema
       profile.show_name_label = data.show_name_label == true
-      profile.show_label_level = data.show_label_level ~= false
+      profile.show_label_level = data.show_label_level
+      profile.show_unspent_label = data.show_unspent_label == true
       profile.bound_turret = data.bound_turret == true
       profile.label_color = service.copy_serializable(data.label_color or default_label_color())
       profile.label_color_preset = data.label_color_preset or nil
       profile.label_scale = data.label_scale or 2
+      profile.automation_preset = data.automation_preset or "manual"
+      profile.automation_enabled = data.automation_enabled == true
       profile.xp = data.xp or 0
       profile.total_xp = data.total_xp or 0
       profile.level = data.level or 0

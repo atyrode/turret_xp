@@ -69,6 +69,9 @@ function gui_actions_module.new(deps)
     ["cycle-label-color"] = function(player)
       actions.cycle_label_color(player)
     end,
+    ["apply-automation"] = function(player)
+      actions.apply_automation_now(player)
+    end,
     ["dev-create-core"] = function(player)
       actions.dev_create_core(player)
     end,
@@ -175,6 +178,24 @@ function gui_actions_module.new(deps)
       return true
     end
 
+    if action == "toggle-label-unspent" then
+      actions.opened_turret_action(player, function(entity, state)
+        state.show_unspent_label = element and element.state == true
+        update_name_render(entity, state)
+      end)
+      return true
+    end
+
+    if action == "toggle-core-request" then
+      actions.set_core_request_enabled(player, element and element.state == true)
+      return true
+    end
+
+    if action == "toggle-automation" then
+      actions.set_automation_enabled(player, element and element.state == true)
+      return true
+    end
+
     if action == "set-core-filter" then
       set_core_picker_filter(player, tags.filter, element and element.state == true)
       refresh_open_turret(player, get_remembered_turret(player))
@@ -202,6 +223,18 @@ function gui_actions_module.new(deps)
     end
 
     actions.update_core_name_from_textfield(player, element)
+    return true
+  end
+
+  function service.dispatch_selection_state_action(player, event, tags)
+    tags = tags or {}
+    if tags.turret_xp_action ~= "set-automation-preset" then
+      return false
+    end
+
+    local element = event and event.element or nil
+    local presets = tags.presets or {}
+    actions.set_automation_preset(player, presets[element and element.selected_index or 1])
     return true
   end
 
@@ -259,6 +292,20 @@ function gui_actions_module.new(deps)
     end
 
     return service.dispatch_text_changed_action(player, event)
+  end
+
+  function service.on_gui_selection_state_changed(event)
+    local element = event_element(event)
+    if not element then
+      return false
+    end
+
+    local player = player_from_event(event)
+    if not player then
+      return false
+    end
+
+    return service.dispatch_selection_state_action(player, event, element_tags(element))
   end
 
   return service

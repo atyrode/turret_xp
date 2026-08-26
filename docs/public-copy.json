@@ -33,6 +33,7 @@
     "Pick specializations and sub-specializations with strong tradeoffs.",
     "Feed fire, electric, explosive, or toxic resources into passive element ranks to strengthen elemental effects and combos.",
     "Name favorite turrets and show their level above them.",
+    "Use setup presets, independent label toggles, and logistic Veteran Core requests to automate repeated turret setup.",
     "Choose exact Veteran Cores from platform hubs for space-platform defenses.",
     "Tune XP pacing in mod settings."
   ],
@@ -48,6 +49,10 @@
     {
       "title": "Specialized Defenders",
       "body": "Choose strong identities with tradeoffs: long-range snipers, rapid machine guns, tough bulwarks, or brutal close-range brawlers."
+    },
+    {
+      "title": "Setup Automation",
+      "body": "Apply build presets, keep future points on Auto, copy setup policy to new turrets, and let logistic bots deliver a requested Veteran Core into an empty turret."
     },
     {
       "title": "Element Projects",
