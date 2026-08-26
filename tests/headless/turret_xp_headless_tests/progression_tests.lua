@@ -11,10 +11,7 @@ local call = support.call
 
 local tests = {}
 function tests.run_evolution_body_test(surface)
-  local turret = create_turret(surface, { 8, 0 }, 20)
-  call("install_core", turret, { level = 40 })
-
-  local summary = call("set_evolution", turret, {
+  local evolution = {
     specialization = "sniper",
     base = {
       damage = 2,
@@ -24,7 +21,13 @@ function tests.run_evolution_body_test(surface)
     augments = {
       repair = 1,
     },
+  }
+  local turret = create_turret(surface, { 8, 0 }, 20)
+  call("install_core", turret, {
+    level = call("target_required_level", evolution),
   })
+
+  local summary = call("set_evolution", turret, evolution)
 
   assert_eq(summary.evolution.specialization, "sniper", "specialization did not persist")
   assert_eq(summary.evolution.augments.range, nil, "retired range augment rank should not persist")
@@ -33,8 +36,19 @@ function tests.run_evolution_body_test(surface)
 end
 
 function tests.run_specialization_secondary_multiplier_test(surface)
+  local fixture_level = call("target_required_level", {
+    base = {
+      crit_damage = 10,
+      ammo_regen = 3,
+    },
+    augments = {
+      repair = 2,
+    },
+    specialization = "sniper",
+    sub_specialization = "sniper_deadeye",
+  })
   local turret = create_turret(surface, { 14, 8 }, 20)
-  local summary = call("install_core", turret, { level = 80 })
+  local summary = call("install_core", turret, { level = fixture_level })
   assert_true(summary ~= nil, "failed to install core for specialization multiplier test")
   local base_cooldown = summary.attack_cooldown
   local base_damage_modifier = summary.attack_damage_modifier
@@ -328,12 +342,7 @@ function tests.run_ammo_productivity_test(surface)
 end
 
 function tests.run_targeted_reset_test(surface)
-  local turret_position = { x = 36, y = 8 }
-  local turret = create_turret(surface, turret_position, 10)
-  local summary = call("install_core", turret, { level = 50 })
-  assert_true(summary ~= nil, "failed to install core for targeted reset test")
-
-  summary = call("set_evolution", turret, {
+  local evolution = {
     base = {
       damage = 3,
       resistance = 4,
@@ -358,7 +367,15 @@ function tests.run_targeted_reset_test(surface)
         burn_remaining = 0,
       },
     },
+  }
+  local turret_position = { x = 36, y = 8 }
+  local turret = create_turret(surface, turret_position, 10)
+  local summary = call("install_core", turret, {
+    level = call("target_required_level", evolution),
   })
+  assert_true(summary ~= nil, "failed to install core for targeted reset test")
+
+  summary = call("set_evolution", turret, evolution)
   assert_eq(summary.evolution.base.damage, 3, "test setup did not apply base ranks")
   assert_eq(summary.evolution.augments.repair, 2, "test setup did not apply augment regeneration ranks")
   assert_eq(summary.evolution.augments.luck, 1, "test setup did not apply augment ranks")
@@ -406,19 +423,7 @@ function tests.run_targeted_reset_test(surface)
 end
 
 function tests.run_full_evolution_reset_test(surface)
-  local turret_position = { x = 48, y = 8 }
-  local turret = create_turret(surface, turret_position, 10)
-  local summary = call("install_core", turret, {
-    level = 55,
-    kills = 12,
-    damage = 3456,
-    xp = 42,
-    total_xp = 12345,
-    custom_name = "Reset Keeper",
-  })
-  assert_true(summary ~= nil, "failed to install core for full evolution reset test")
-
-  summary = call("set_evolution", turret, {
+  local evolution = {
     base = {
       damage = 3,
       resistance = 4,
@@ -452,14 +457,28 @@ function tests.run_full_evolution_reset_test(surface)
         battery = 3,
       },
     },
+  }
+  local fixture_level = call("target_required_level", evolution) + 5
+  local turret_position = { x = 48, y = 8 }
+  local turret = create_turret(surface, turret_position, 10)
+  local summary = call("install_core", turret, {
+    level = fixture_level,
+    kills = 12,
+    damage = 3456,
+    xp = 42,
+    total_xp = 12345,
+    custom_name = "Reset Keeper",
   })
+  assert_true(summary ~= nil, "failed to install core for full evolution reset test")
+
+  summary = call("set_evolution", turret, evolution)
   assert_eq(summary.evolution.base.damage, 3, "full reset setup did not apply base ranks")
   assert_eq(summary.evolution.augments.luck, 2, "full reset setup did not apply augment ranks")
   assert_eq(summary.evolution.specialization, "sniper", "full reset setup did not apply specialization")
 
   turret = require_turret_near(surface, turret_position, "full reset turret not found after setup body swap")
   summary = call("reset_evolution", turret)
-  assert_eq(summary.level, 55, "full reset should keep core level")
+  assert_eq(summary.level, fixture_level, "full reset should keep core level")
   assert_eq(summary.kills, 12, "full reset should keep kill history")
   assert_eq(summary.damage, 3456, "full reset should keep damage history")
   assert_eq(summary.custom_name, "Reset Keeper", "full reset should keep custom name")

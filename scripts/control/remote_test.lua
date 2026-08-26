@@ -179,11 +179,19 @@ return function(M)
       position = current_entity and { x = current_entity.position.x, y = current_entity.position.y } or nil,
       custom_name = state.custom_name,
       show_name_label = state.show_name_label == true,
-      show_label_level = state.show_label_level ~= false,
+      show_label_level = state.show_label_level == true,
+      show_unspent_label = state.show_unspent_label == true,
+      label_text = get_profile_label_text(state),
       label_color_preset = state.label_color_preset,
       label_color = copy_serializable(state.label_color or {}),
       label_entity_valid = state.label_entity and state.label_entity.valid or false,
       name_render_valid = state.name_render and state.name_render.valid or false,
+      automation_enabled = state.automation_enabled == true,
+      automation_target = copy_serializable(state.automation_target),
+      automation_target_model = profile_automation.target_model(state),
+      build_mode = state.build_mode == true,
+      automation_conflict = state.automation_conflict == true,
+      automation_last_spent = state.automation_last_spent or 0,
       shield_bar_valid = shield_bar_valid,
       shield_bar_fill_valid = shield_bar_filled_segments > 0,
       shield_bar_segment_count = type(shield_bar_segments) == "table" and #shield_bar_segments or 0,
@@ -262,6 +270,16 @@ return function(M)
       xp_kill_credit = profile.xp_kill_credit or 0,
       total_xp = profile.total_xp or 0,
       combat_xp_gain_schema = profile.combat_xp_gain_schema or 0,
+      custom_name = profile.custom_name or "",
+      show_name_label = profile.show_name_label == true,
+      show_label_level = profile.show_label_level == true,
+      show_unspent_label = profile.show_unspent_label == true,
+      label_text = get_profile_label_text(profile),
+      label_display_schema = profile.label_display_schema,
+      automation_enabled = profile.automation_enabled == true,
+      automation_target = copy_serializable(profile.automation_target),
+      automation_target_model = profile_automation.target_model(profile),
+      build_mode = profile.build_mode == true,
       skills = copy_serializable(profile.skills or {}),
       evolution = {
         base = copy_serializable(evolution.base or {}),
@@ -275,6 +293,8 @@ return function(M)
         specialization = evolution.specialization,
         sub_specialization = evolution.sub_specialization,
         element_project = copy_serializable(evolution.element_project),
+        available_core_points = get_available_skill_points(profile),
+        available_augment_points = get_available_augment_points(profile),
         migrated_legacy_skills = evolution.migrated_legacy_skills == true,
       },
     }
@@ -291,8 +311,11 @@ return function(M)
       "custom_name",
       "show_name_label",
       "show_label_level",
+      "show_unspent_label",
       "label_color",
       "label_color_preset",
+      "automation_enabled",
+      "automation_target",
       "bound_turret",
       "xp_damage",
       "xp_kill_credit",
@@ -332,6 +355,12 @@ return function(M)
 
   -- Core/profile fixtures.
   turret_xp_test_register_methods(turret_xp_test_remote_methods, {
+    progression_gates = function()
+      return copy_serializable(GATES)
+    end,
+    target_required_level = function(target)
+      return profile_automation.required_level_for_target(target)
+    end,
     install_core = function(entity, fields)
       local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields)
       local installed = install_profile_on_turret(entity, profile)
@@ -364,6 +393,13 @@ return function(M)
     end,
     serialize_profile_snapshot = function(fields)
       return serialize_profile(fields)
+    end,
+    label_text_sample = function(fields)
+      local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields)
+      return {
+        text = get_profile_label_text(profile),
+        profile = turret_xp_test_profile_summary(profile),
+      }
     end,
     set_evolution = function(entity, fields)
       local state = is_gun_turret(entity) and get_turret_state(entity) or nil
@@ -453,6 +489,145 @@ return function(M)
       local synced = combat.sync_turret_body_when_idle(entity, state)
       feeder.ensure(synced or entity, state)
       return turret_xp_test_state_summary(synced or entity)
+    end,
+  })
+
+  local function turret_xp_test_policy_from_entity(entity)
+    if not is_gun_turret(entity) then
+      return nil
+    end
+
+    local profile = get_turret_state(entity)
+    if profile then
+      local policy = profile_automation.policy_from_profile(profile)
+      policy.request_core = true
+      return copy_serializable(policy)
+    end
+
+    return copy_serializable(profile_automation.policy_from_host(get_turret_host(entity, false)))
+  end
+
+  local function turret_xp_test_core_request_status(entity)
+    ensure_storage()
+    local status = core_requester.status(entity)
+    local host = get_turret_host(entity, false)
+    local requester = host and host.core_requester or nil
+    local inventory = nil
+    if requester and requester.valid then
+      inventory = compat.try("read test core requester inventory", function()
+        return requester.get_inventory(defines.inventory.chest)
+      end)
+    end
+
+    status.host_request_core = host and host.request_core == true or false
+    status.has_pending_policy = type(host and host.pending_policy) == "table"
+    status.requester_unit_number = requester and requester.valid and requester.unit_number or nil
+    status.delivered_count = inventory and inventory.valid and inventory.get_item_count(CHIP_NAME) or 0
+    status.active_count = turret_xp_test_table_count(storage.turret_xp.core_requesters)
+    return status
+  end
+
+  -- Build-mode, copy-policy, and logistic request fixtures.
+  turret_xp_test_register_methods(turret_xp_test_remote_methods, {
+    apply_build_target = function(entity, force)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local result = profile_automation.apply_to_profile(entity, state, {
+        force = force == true,
+      })
+      local synced = combat.sync_turret_body_when_idle(entity, state)
+      local summary = turret_xp_test_state_summary(synced or entity)
+      summary.build_result = result
+      return summary
+    end,
+    set_core_request = function(entity, enabled)
+      core_requester.set_request(entity, enabled == true)
+      return turret_xp_test_core_request_status(entity)
+    end,
+    core_request_status = function(entity)
+      return turret_xp_test_core_request_status(entity)
+    end,
+    insert_requested_core = function(entity, fields)
+      local host = is_gun_turret(entity) and get_turret_host(entity, false) or nil
+      local requester = host and host.core_requester or nil
+      local inventory = requester
+          and requester.valid
+          and compat.try("read core requester inventory for insert", function()
+            return requester.get_inventory(defines.inventory.chest)
+          end)
+        or nil
+      if not inventory or not inventory.valid then
+        return {
+          inserted = 0,
+          status = turret_xp_test_core_request_status(entity),
+        }
+      end
+
+      local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields)
+      local inserted = inventory.insert(make_chip_item_stack(profile))
+      return {
+        inserted = inserted or 0,
+        status = turret_xp_test_core_request_status(entity),
+      }
+    end,
+    process_core_requests = function(limit)
+      return copy_serializable(core_requester.process_requests(limit))
+    end,
+    policy_from_entity = function(entity)
+      return turret_xp_test_policy_from_entity(entity)
+    end,
+    apply_policy = function(entity, policy)
+      local applied = profile_automation.apply_policy_to_host(entity, policy)
+      return {
+        applied = applied == true,
+        state = turret_xp_test_state_summary(entity),
+        request = turret_xp_test_core_request_status(entity),
+      }
+    end,
+    paste_policy = function(source, destination)
+      local policy = turret_xp_test_policy_from_entity(source)
+      local applied = profile_automation.apply_policy_to_host(destination, policy)
+      return {
+        applied = applied == true,
+        policy = copy_serializable(policy),
+        state = turret_xp_test_state_summary(destination),
+        request = turret_xp_test_core_request_status(destination),
+      }
+    end,
+    blueprint_setup_event_policy = function(entity, direct_mapping)
+      local written = 0
+      local tags = {}
+      local fake_blueprint = {
+        set_blueprint_entity_tag = function(index, key, value)
+          tags[index] = tags[index] or {}
+          tags[index][key] = copy_serializable(value)
+          written = written + 1
+        end,
+      }
+      local mapping = {
+        [1] = entity,
+      }
+      local event_mapping = direct_mapping == true and mapping
+        or {
+          object_name = "LuaLazyLoadedValue",
+          valid = true,
+          get = function()
+            return mapping
+          end,
+        }
+
+      handlers.on_player_setup_blueprint({
+        stack = fake_blueprint,
+        mapping = event_mapping,
+      })
+
+      return {
+        written = written,
+        tags = tags,
+      }
     end,
   })
 
@@ -551,6 +726,45 @@ return function(M)
     return nil
   end
 
+  local function find_gui_action(parent, action, tag_key, tag_value)
+    if not parent or not parent.valid then
+      return nil
+    end
+
+    if parent.tags and parent.tags.turret_xp_action == action and (not tag_key or parent.tags[tag_key] == tag_value) then
+      return parent
+    end
+
+    for _, child in pairs(parent.children or {}) do
+      local found = find_gui_action(child, action, tag_key, tag_value)
+      if found then
+        return found
+      end
+    end
+
+    return nil
+  end
+
+  local function find_gui_caption_key(parent, caption_key)
+    if not parent or not parent.valid then
+      return nil
+    end
+
+    local caption = parent.caption
+    if type(caption) == "table" and caption[1] == caption_key then
+      return parent
+    end
+
+    for _, child in pairs(parent.children or {}) do
+      local found = find_gui_caption_key(child, caption_key)
+      if found then
+        return found
+      end
+    end
+
+    return nil
+  end
+
   local function gui_style_property(element, property)
     if not element or not element.valid or not element.style then
       return nil
@@ -571,6 +785,18 @@ return function(M)
     return nil
   end
 
+  local function gui_style_name(element)
+    if not element or not element.valid then
+      return nil
+    end
+
+    if type(element.style) == "string" then
+      return element.style
+    end
+
+    return element.style_name
+  end
+
   local function gui_element_name(element)
     local name = element and element.valid and element.name or nil
     if name == "" then
@@ -582,6 +808,10 @@ return function(M)
 
   local function make_fake_gui_element(definition)
     definition = definition or {}
+    if definition.type == "checkbox" and type(definition.state) ~= "boolean" then
+      error("fake GUI checkbox requires boolean state", 2)
+    end
+
     local element = {
       valid = true,
       type = definition.type or "flow",
@@ -590,6 +820,17 @@ return function(M)
       tooltip = definition.tooltip,
       tags = definition.tags,
       direction = definition.direction,
+      sprite = definition.sprite,
+      quality = definition.quality,
+      elem_tooltip = definition.elem_tooltip,
+      state = definition.state,
+      toggled = definition.toggled == true,
+      auto_toggle = definition.auto_toggle == true,
+      value = definition.value,
+      selected_index = definition.selected_index,
+      items = definition.items,
+      visible = definition.visible ~= false,
+      enabled = definition.enabled ~= false,
       style = {},
       style_name = definition.style,
       children = {},
@@ -599,6 +840,10 @@ return function(M)
       local child = make_fake_gui_element(child_definition)
       element.children[#element.children + 1] = child
       return child
+    end
+
+    for _, child_definition in ipairs(definition.children or {}) do
+      element.add(child_definition)
     end
 
     element.clear = function()
@@ -612,7 +857,36 @@ return function(M)
       element.valid = false
     end
 
+    setmetatable(element, {
+      __index = function(parent, key)
+        if type(key) ~= "string" then
+          return nil
+        end
+        for _, child in ipairs(parent.children or {}) do
+          if child.name == key then
+            return child
+          end
+        end
+        return nil
+      end,
+    })
+
     return element
+  end
+
+  local function make_fake_dispatch_player(entity)
+    return {
+      valid = true,
+      index = 65536,
+      opened = entity,
+      gui = {
+        relative = make_fake_gui_element({ type = "flow" }),
+        left = make_fake_gui_element({ type = "flow" }),
+        screen = make_fake_gui_element({ type = "flow" }),
+      },
+      print = function() end,
+      create_local_flying_text = function() end,
+    }
   end
 
   local function stats_row_layout_summary(row)
@@ -716,6 +990,115 @@ return function(M)
       forget_open_turret(player)
       return true
     end,
+    open_gui_contract = function(entity)
+      if not is_gun_turret(entity) then
+        return {
+          opened = false,
+        }
+      end
+
+      local player = make_fake_dispatch_player(entity)
+      local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
+      add_core_panel(root, "empty")
+      update_core_panel(root, player, entity, nil)
+      local panel = find_gui_element(root, GUI.core)
+      local status = panel and find_gui_element(panel, GUI.core_status) or nil
+      local slot = panel and find_gui_element(panel, GUI.core_slot) or nil
+      local slot_style = slot and (type(slot.style) == "string" and slot.style or slot.style_name) or nil
+      local summary = {
+        opened = panel and panel.valid == true or false,
+        key = panel and panel.tags and panel.tags.key or nil,
+        core_status_caption = status and copy_serializable(status.caption) or nil,
+        core_slot_enabled = slot and slot.enabled == true or false,
+        core_slot_sprite = slot and slot.sprite or nil,
+        core_slot_toggled = slot and slot.toggled == true or false,
+        core_slot_style = slot_style,
+        has_inventory_picker = panel and find_gui_element(panel, GUI.inventory_cores) ~= nil or false,
+        has_core_request_checkbox = panel and find_gui_action(panel, "toggle-core-request") ~= nil or false,
+      }
+      if storage and storage.turret_xp then
+        storage.turret_xp.players[player.index] = nil
+        storage.turret_xp.player_settings[player.index] = nil
+      end
+      return summary
+    end,
+    installed_gui_contract = function(entity)
+      if not is_gun_turret(entity) then
+        return {
+          opened = false,
+        }
+      end
+
+      local state = get_turret_state(entity)
+      if not state then
+        return {
+          opened = false,
+        }
+      end
+
+      local player = make_fake_dispatch_player(entity)
+      local root = make_fake_gui_element({ type = "frame", name = GUI.panel })
+      add_core_panel(root, "installed")
+      add_build_panel(root)
+      add_evolution_panel(root)
+      update_core_panel(root, player, entity, state)
+      update_build_panel(root, state)
+      local display_state = profile_automation.build_preview_profile(state) or state
+      update_evolution_panel(root, entity, display_state, "firearm-magazine")
+
+      local panel = find_gui_element(root, GUI.core)
+      local core_header = panel and find_gui_element(panel, GUI.core_header) or nil
+      local label_controls = panel and find_gui_element(panel, GUI.core_label_controls) or nil
+      local build_container = find_gui_element(root, GUI.core_build_controls_container)
+      local auto = build_container and find_gui_element(build_container, GUI.core_automation_enabled) or nil
+      local build_controls = build_container and find_gui_element(build_container, GUI.core_build_controls) or nil
+      local build_details = build_container and find_gui_element(build_container, GUI.core_build_details) or nil
+      local evolution = find_gui_element(root, GUI.evolution)
+      local allocate_damage = find_gui_action(evolution, "allocate-base", "upgrade", "damage")
+      local forever_damage = find_gui_action(evolution, "toggle-base-forever", "upgrade", "damage")
+      local build_level = find_gui_caption_key(build_container, "turret-xp.build-mode-level")
+      local build_core = find_gui_caption_key(build_container, "turret-xp.build-mode-core")
+      local build_augments = find_gui_caption_key(build_container, "turret-xp.build-mode-augments")
+      local build_core_forever = find_gui_caption_key(build_container, "turret-xp.build-mode-core-forever")
+      local build_augment_forever = find_gui_caption_key(build_container, "turret-xp.build-mode-augment-forever")
+
+      local summary = {
+        opened = panel and panel.valid == true or false,
+        build_container_type = build_container and build_container.type or nil,
+        build_controls_inside_core = panel and find_gui_element(panel, GUI.core_build_controls) ~= nil or false,
+        core_header_type = core_header and core_header.type or nil,
+        core_header_style = gui_style_name(core_header),
+        label_controls_type = label_controls and label_controls.type or nil,
+        label_controls_style = gui_style_name(label_controls),
+        label_controls_bottom_margin = gui_style_property(label_controls, "bottom_margin"),
+        build_mode = state.build_mode == true,
+        automation_enabled = state.automation_enabled == true,
+        build_controls_type = build_controls and build_controls.type or nil,
+        build_controls_style = gui_style_name(build_controls),
+        build_details_type = build_details and build_details.type or nil,
+        build_details_style = gui_style_name(build_details),
+        has_auto_checkbox = auto ~= nil,
+        auto_state = auto and auto.state == true or false,
+        auto_enabled = auto and auto.enabled == true or false,
+        allocate_damage_enabled = allocate_damage and allocate_damage.enabled == true or false,
+        allocate_damage_tooltip = allocate_damage and copy_serializable(allocate_damage.tooltip) or nil,
+        has_damage_forever_checkbox = forever_damage ~= nil,
+        damage_forever_state = forever_damage and forever_damage.state == true or false,
+        damage_forever_enabled = forever_damage and forever_damage.enabled == true or false,
+        damage_forever_caption = forever_damage and copy_serializable(forever_damage.caption) or nil,
+        damage_forever_tooltip = forever_damage and copy_serializable(forever_damage.tooltip) or nil,
+        has_build_level_summary = build_level ~= nil,
+        has_build_core_summary = build_core ~= nil,
+        has_build_augment_summary = build_augments ~= nil,
+        has_build_core_forever_summary = build_core_forever ~= nil,
+        has_build_augment_forever_summary = build_augment_forever ~= nil,
+      }
+      if storage and storage.turret_xp then
+        storage.turret_xp.players[player.index] = nil
+        storage.turret_xp.player_settings[player.index] = nil
+      end
+      return summary
+    end,
     gui_snapshot_frame = function(player)
       return gui_snapshot_frame_for_player(player, false)
     end,
@@ -733,6 +1116,110 @@ return function(M)
         panel_height = LAYOUT.evolution_outer_height + 72,
         fallback_crop = "center",
       }
+    end,
+    left_column_layout_sample = function(entity, build_mode)
+      if not is_gun_turret(entity) then
+        return {
+          available = false,
+        }
+      end
+
+      local state = get_turret_state(entity)
+      if not state then
+        return {
+          available = false,
+        }
+      end
+
+      local original_build_mode = state.build_mode
+      local original_automation_enabled = state.automation_enabled
+      local original_automation_target = copy_serializable(state.automation_target)
+      profile_automation.set_build_mode(state, build_mode == true)
+
+      local player = make_fake_dispatch_player(entity)
+      local shell = build_gui_shell_screen(player, "installed")
+      if not shell or not shell.body then
+        state.build_mode = original_build_mode
+        state.automation_enabled = original_automation_enabled
+        state.automation_target = original_automation_target
+        return {
+          available = false,
+        }
+      end
+
+      add_core_panel(shell.body, "installed")
+      add_build_panel(shell.body)
+      add_xp_panel(shell.body)
+      add_stats_panel(shell.body)
+      if not update_turret_gui(player, entity) then
+        update_core_panel(shell.frame, player, entity, state)
+        update_build_panel(shell.frame, state)
+      end
+
+      local sample = {
+        available = true,
+        build_mode = state.build_mode == true,
+        body = {
+          type = shell.body.type,
+          style = gui_style_name(shell.body),
+          width = gui_style_property(shell.body, "width"),
+          horizontal_align = gui_style_property(shell.body, "horizontal_align"),
+          vertical_spacing = gui_style_property(shell.body, "vertical_spacing"),
+        },
+        children = {},
+        named = {},
+      }
+
+      for index, child in ipairs(shell.body.children or {}) do
+        local stats_scroll = find_gui_element(child, GUI.stats_scroll)
+        local core_header = find_gui_element(child, GUI.core_header)
+        local label_controls = find_gui_element(child, GUI.core_label_controls)
+        local build_controls = find_gui_element(child, GUI.core_build_controls)
+        local build_details = find_gui_element(child, GUI.core_build_details)
+        local entry = {
+          index = index,
+          name = gui_element_name(child),
+          type = child.type,
+          style = gui_style_name(child),
+          width = gui_style_property(child, "width"),
+          minimal_width = gui_style_property(child, "minimal_width"),
+          maximal_width = gui_style_property(child, "maximal_width"),
+          top_margin = gui_style_property(child, "top_margin"),
+          bottom_margin = gui_style_property(child, "bottom_margin"),
+          left_section = child.tags and child.tags.turret_xp_left_section == true or false,
+          build_mode_section = child.tags and child.tags.turret_xp_build_mode == true or false,
+          has_stats_scroll = stats_scroll ~= nil,
+          stats_scroll_height = gui_style_property(stats_scroll, "height"),
+          core_header_style = gui_style_name(core_header),
+          label_controls_bottom_margin = gui_style_property(label_controls, "bottom_margin"),
+          build_controls_type = build_controls and build_controls.type or nil,
+          build_controls_style = gui_style_name(build_controls),
+          build_details_type = build_details and build_details.type or nil,
+          build_details_style = gui_style_name(build_details),
+        }
+        sample.children[#sample.children + 1] = entry
+        if entry.name then
+          sample.named[entry.name] = entry
+          if entry.name == GUI.core then
+            sample.named.core = entry
+          elseif entry.name == GUI.core_build_controls_container then
+            sample.named.build = entry
+          elseif entry.name == GUI.xp_panel then
+            sample.named.xp = entry
+          end
+        elseif entry.has_stats_scroll then
+          sample.named.stats_panel = entry
+        end
+      end
+
+      if storage and storage.turret_xp then
+        storage.turret_xp.players[player.index] = nil
+        storage.turret_xp.player_settings[player.index] = nil
+      end
+      state.build_mode = original_build_mode
+      state.automation_enabled = original_automation_enabled
+      state.automation_target = original_automation_target
+      return sample
     end,
     stats_panel_layout_sample = function(entity)
       if not is_gun_turret(entity) then
@@ -802,7 +1289,7 @@ return function(M)
       end
 
       local player = {
-        index = -1,
+        index = 65536,
         opened = entity,
         gui = {
           relative = {},
@@ -825,6 +1312,28 @@ return function(M)
         return nil
       end
 
+      local player = make_fake_dispatch_player(entity)
+      remember_open_turret(player, entity)
+      dispatch_gui_checked_state_action(player, {
+        element = {
+          valid = true,
+          state = visible == true,
+        },
+      }, {
+        turret_xp_action = "toggle-label-level",
+      })
+
+      local summary = turret_xp_test_state_summary(entity)
+      forget_open_turret(player)
+
+      return summary
+    end,
+    dispatch_toggle_label_unspent = function(entity, visible)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
       local player = {
         index = -1,
         opened = entity,
@@ -840,12 +1349,88 @@ return function(M)
           state = visible == true,
         },
       }, {
-        turret_xp_action = "toggle-label-level",
+        turret_xp_action = "toggle-label-unspent",
       })
 
       local summary = turret_xp_test_state_summary(entity)
       forget_open_turret(player)
 
+      return summary
+    end,
+    dispatch_core_slot_cursor_install = function(entity, fields)
+      if not is_gun_turret(entity) then
+        return nil
+      end
+
+      local player = make_fake_dispatch_player(entity)
+      local cursor_inventory = game.create_inventory(1)
+      local profile = turret_xp_test_set_profile_fields(create_blank_profile(), fields or {})
+      cursor_inventory[1].set_stack(make_chip_item_stack(profile))
+      player.cursor_stack = cursor_inventory[1]
+
+      remember_open_turret(player, entity)
+      dispatch_gui_click_action(player, {
+        player_index = player.index,
+        element = make_fake_gui_element({
+          type = "sprite-button",
+          name = GUI.core_slot,
+          tags = {
+            turret_xp_action = "core-slot",
+          },
+        }),
+      }, {
+        turret_xp_action = "core-slot",
+      })
+      forget_open_turret(player)
+
+      local summary = turret_xp_test_state_summary(entity)
+      local status = turret_xp_test_core_request_status(entity)
+      local cursor_has_stack = cursor_inventory[1].valid_for_read
+      local cursor_name = cursor_has_stack and cursor_inventory[1].name or nil
+      cursor_inventory.destroy()
+
+      return {
+        state = summary,
+        request = status,
+        cursor_has_stack = cursor_has_stack,
+        cursor_name = cursor_name,
+      }
+    end,
+    dispatch_click_action = function(entity, tags, event)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local player = make_fake_dispatch_player(entity)
+      remember_open_turret(player, entity)
+      dispatch_gui_click_action(player, event or {}, tags or {})
+
+      forget_open_turret(player)
+
+      local synced = combat.sync_turret_body_when_idle(entity, state)
+      local summary = turret_xp_test_state_summary(synced or entity)
+      return summary
+    end,
+    dispatch_checked_action = function(entity, tags, visible)
+      local state = is_gun_turret(entity) and get_turret_state(entity) or nil
+      if not state then
+        return nil
+      end
+
+      local player = make_fake_dispatch_player(entity)
+      remember_open_turret(player, entity)
+      dispatch_gui_checked_state_action(player, {
+        element = {
+          valid = true,
+          state = visible == true,
+        },
+      }, tags or {})
+
+      forget_open_turret(player)
+
+      local synced = combat.sync_turret_body_when_idle(entity, state)
+      local summary = turret_xp_test_state_summary(synced or entity)
       return summary
     end,
     runtime_render_pressure_sample = function(core_count, repeat_updates)

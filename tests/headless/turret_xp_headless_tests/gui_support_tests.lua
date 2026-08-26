@@ -15,6 +15,18 @@ function tests.run_layout_constants_test()
     layout.panel_width,
     "panel width must derive from the column model"
   )
+  assert_eq(
+    layout.left_section_width,
+    layout.left_column_width - (layout.left_section_side_margin * 2),
+    "left section width must derive from the left-column inset"
+  )
+  assert_eq(
+    layout.empty_left_section_width,
+    layout.empty_panel_width - (layout.left_section_side_margin * 2),
+    "empty-panel section width must derive from the full-width body inset"
+  )
+  assert_true(layout.left_section_spacing > 0, "left column sections must have shell-owned vertical spacing")
+  assert_true(layout.left_section_padding > 0, "left column sections must have shared section padding")
   assert_eq(layout.evolution_scroll_width, layout.evolution_column_width, "Evolution scroll pane should own the full right-column viewport")
   assert_eq(
     layout.evolution_content_width,
@@ -79,8 +91,10 @@ function tests.run_layout_constants_test()
     layout.platform_core_row_detail_width < layout.left_column_width,
     "platform core row details must stay inside the left-column panel"
   )
-  assert_true(layout.stats_scroll_width < layout.left_column_width, "Stats pane must stay inside the left column")
-  assert_true(layout.inventory_core_picker_width < layout.left_column_width, "inventory core picker must stay inside the left column")
+  assert_eq(layout.stats_scroll_width, layout.left_section_width, "Stats pane must share the left-column section width")
+  assert_true(layout.stats_live_height > layout.stats_build_mode_height, "live Stats pane must be taller than Build-mode Stats")
+  assert_eq(layout.stats_height, layout.stats_live_height, "legacy Stats height alias must match the live height")
+  assert_true(layout.inventory_core_picker_width < layout.left_section_width, "inventory core picker must stay inside a left section")
   assert_eq(layout.empty_panel_width, layout.panel_width, "empty core panel should use the full two-column shell width")
   assert_true(
     layout.empty_inventory_core_picker_width > layout.inventory_core_picker_width,
@@ -172,13 +186,77 @@ function tests.run_layout_constants_test()
       + layout.rank_stepper_width
       + layout.rank_allocation_spacing_width,
     layout.evolution_inner_width,
-    "rank allocation row columns must derive from the Evolution inner width"
+    "rank allocation row columns must derive from the Evolution inner width without reserving inline loop controls"
   )
   assert_true(layout.rank_allocation_detail_width > 0, "rank allocation detail text must retain a positive width")
   assert_true(layout.rank_stepper_width < layout.evolution_inner_width, "rank stepper controls must fit inside Evolution rows")
   assert_true(
     layout.empty_inventory_core_name_width < layout.empty_inventory_core_specialization_width,
     "wide inventory core table should favor specialization readability over long names"
+  )
+end
+
+local function assert_left_section_contract(entry, layout, expected_style, label, build_mode)
+  assert_true(entry ~= nil, label .. " section was missing from the layout sample")
+  assert_eq(entry.type, "frame", label .. " section must be a frame")
+  assert_eq(entry.style, expected_style, label .. " section style drifted")
+  assert_eq(entry.width, layout.left_section_width, label .. " section width drifted")
+  assert_eq(entry.minimal_width, layout.left_section_width, label .. " section minimum width drifted")
+  assert_eq(entry.maximal_width, layout.left_section_width, label .. " section maximum width drifted")
+  assert_eq(entry.left_section, true, label .. " section must keep the left-section tag")
+  assert_eq(entry.build_mode_section, build_mode == true, label .. " section build-mode tag drifted")
+  assert_eq(entry.top_margin, nil, label .. " section must not use local top margin")
+  assert_eq(entry.bottom_margin, nil, label .. " section must not use local bottom margin")
+end
+
+function tests.run_left_column_layout_contract_test(surface)
+  local layout = call("layout")
+  local turret = create_turret(surface, { 10, 0 }, 20)
+  local summary = call("install_core", turret, {
+    level = 12,
+  })
+  assert_true(summary ~= nil, "failed to install core for left-column layout contract test")
+
+  local sample = call("left_column_layout_sample", turret, false)
+  assert_true(sample ~= nil and sample.available == true, "left-column layout sample was unavailable")
+  assert_eq(sample.body.width, layout.left_column_width, "left column body width drifted")
+  assert_eq(sample.body.horizontal_align, "center", "left column body must center shared-width sections")
+  assert_eq(sample.body.vertical_spacing, layout.left_section_spacing, "left column body spacing must be shell-owned")
+
+  assert_left_section_contract(sample.named.core, layout, "turret_xp_left_section_frame", "Core", false)
+  assert_left_section_contract(sample.named.build, layout, "turret_xp_left_section_frame", "Build", false)
+  assert_left_section_contract(sample.named.xp, layout, "turret_xp_left_section_frame", "XP", false)
+  assert_eq(sample.named.core.core_header_style, "subheader_frame", "Core section should keep a darker identity header")
+  assert_eq(sample.named.core.label_controls_bottom_margin, 2, "Core label controls should leave bottom breathing room")
+  assert_eq(sample.named.build.build_controls_type, "frame", "Build section should keep its controls in a darker header frame")
+  assert_eq(sample.named.build.build_controls_style, "subheader_frame", "live Build header should use the normal darker style")
+  assert_eq(sample.named.build.build_details_type, nil, "live Build section should not render expanded details")
+
+  local stats = sample.named.stats_panel
+  assert_true(stats ~= nil, "Stats pane was missing from the left-column layout sample")
+  assert_eq(stats.type, "frame", "Stats pane must be a frame")
+  assert_eq(stats.style, "inside_shallow_frame", "Stats pane must keep the shared content-pane shell")
+  assert_eq(stats.width, layout.stats_scroll_width, "Stats pane width must match the left-section width")
+  assert_eq(stats.stats_scroll_height, layout.stats_live_height, "live Stats pane should reclaim vertical space")
+  assert_eq(stats.top_margin, nil, "Stats pane must not use local top margin")
+  assert_eq(stats.bottom_margin, nil, "Stats pane must not use local bottom margin")
+
+  local build_sample = call("left_column_layout_sample", turret, true)
+  assert_true(build_sample ~= nil and build_sample.available == true, "Build-mode left-column layout sample was unavailable")
+  assert_left_section_contract(build_sample.named.core, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Core", true)
+  assert_left_section_contract(build_sample.named.build, layout, "turret_xp_left_section_frame_build_mode", "Build-mode Build", true)
+  assert_left_section_contract(build_sample.named.xp, layout, "turret_xp_left_section_frame_build_mode", "Build-mode XP", false)
+  assert_eq(build_sample.named.core.core_header_style, "turret_xp_build_mode_subheader_frame", "Build-mode Core header should tint")
+  assert_eq(build_sample.named.build.build_controls_style, "turret_xp_build_mode_subheader_frame", "Build-mode Build header should tint")
+  assert_eq(
+    build_sample.named.build.build_details_style,
+    "inside_shallow_frame_with_padding",
+    "Build mode should use a nested light details section"
+  )
+  assert_eq(
+    build_sample.named.stats_panel.stats_scroll_height,
+    layout.stats_build_mode_height,
+    "Build mode should shrink Stats for planning details"
   )
 end
 
@@ -202,14 +280,7 @@ end
 function tests.run_stats_panel_alignment_test(surface)
   local layout = call("layout")
   local turret = create_turret(surface, { 2, 0 }, 20)
-  local summary = call("install_core", turret, {
-    level = 30,
-    kills = 8,
-    damage = 1200,
-  })
-  assert_true(summary ~= nil, "failed to install core for stats panel alignment test")
-
-  summary = call("set_evolution", turret, {
+  local evolution = {
     base = {
       ammo_regen = 4,
       damage = 3,
@@ -218,7 +289,15 @@ function tests.run_stats_panel_alignment_test(surface)
     augments = {
       luck = 1,
     },
+  }
+  local summary = call("install_core", turret, {
+    level = call("target_required_level", evolution),
+    kills = 8,
+    damage = 1200,
   })
+  assert_true(summary ~= nil, "failed to install core for stats panel alignment test")
+
+  summary = call("set_evolution", turret, evolution)
   assert_true(summary ~= nil, "failed to set evolution state for stats panel alignment test")
 
   local sample = call("stats_panel_layout_sample", turret)
@@ -348,19 +427,31 @@ function tests.run_gui_action_dispatch_test(surface)
   assert_eq(summary.show_label_level, true, "GUI checked-state dispatch did not restore the level suffix")
 
   local rank_turret = create_turret(surface, { 6, 0 }, 10)
-  summary = call("install_core", rank_turret, { level = 40 })
+  summary = call("install_core", rank_turret, {
+    level = call("target_required_level", {
+      augments = {
+        luck = 2,
+      },
+    }),
+  })
   assert_true(summary ~= nil, "failed to install core for GUI rank modifier dispatch test")
+  local available_core_points = summary.evolution.available_core_points
+  local available_augment_points = summary.evolution.available_augment_points
 
   local rank_sample = call("dispatch_rank_modifier_sample", rank_turret)
   assert_true(rank_sample ~= nil, "GUI rank modifier dispatch did not return a sample")
-  assert_eq(rank_sample.base_after_ctrl_add, 40, "Ctrl-click did not spend all available core points")
+  assert_eq(rank_sample.base_after_ctrl_add, available_core_points, "Ctrl-click did not spend all available core points")
   assert_eq(rank_sample.base_available_after_ctrl_add, 0, "Ctrl-click core allocation left available points")
   assert_eq(rank_sample.base_after_ctrl_remove, 0, "Ctrl-click did not remove all core ranks")
-  assert_eq(rank_sample.base_available_after_ctrl_remove, 40, "Ctrl-click core removal did not refund all points")
-  assert_eq(rank_sample.augment_after_ctrl_add, 2, "Ctrl-click did not spend all available augment points")
+  assert_eq(rank_sample.base_available_after_ctrl_remove, available_core_points, "Ctrl-click core removal did not refund all points")
+  assert_eq(rank_sample.augment_after_ctrl_add, available_augment_points, "Ctrl-click did not spend all available augment points")
   assert_eq(rank_sample.augment_available_after_ctrl_add, 0, "Ctrl-click augment allocation left available points")
   assert_eq(rank_sample.augment_after_ctrl_remove, 0, "Ctrl-click did not remove all augment ranks")
-  assert_eq(rank_sample.augment_available_after_ctrl_remove, 2, "Ctrl-click augment removal did not refund all points")
+  assert_eq(
+    rank_sample.augment_available_after_ctrl_remove,
+    available_augment_points,
+    "Ctrl-click augment removal did not refund all points"
+  )
 end
 
 function tests.run_inventory_core_picker_test(surface)

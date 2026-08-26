@@ -66,7 +66,9 @@ function tests.run_legacy_migration_test()
 
   local tagged = call("deserialize_profile_snapshot", {
     schema = 1,
-    level = 50,
+    level = call("target_required_level", {
+      elements = { "fire", "explosive" },
+    }),
     evolution = {
       augments = {
         piercing = 4,

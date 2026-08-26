@@ -4,7 +4,7 @@ This guide is split by depth. Run the smoke path for ordinary feedback, the regr
 
 ## Install
 
-Current development package target: `0.11.3`.
+Current development package target: `0.12.0`.
 
 Preferred once published:
 
@@ -31,7 +31,7 @@ Use this when you only need to confirm the mod loads and the main loop works.
 5. Confirm level, XP, HP, shooting speed, range, Magazine, Ammo, damage, estimated DPS, kills, and Evolution sections appear.
 6. Let the turret shoot enemies and confirm XP, damage, kill credit, and level progress update.
 7. Spend one core upgrade and confirm ranks, points, and stats refresh without moving the vanilla turret GUI.
-8. Name the core, toggle `Show`, and confirm the floating label appears above the turret.
+8. Name the core, toggle `Name`, `Level`, and `Unspent` independently, and confirm the floating label shows only the enabled parts above the turret.
 9. Extract and reinstall the core, then confirm XP, upgrades, name, and label settings move with it.
 10. Select the turret and run `/turret-xp` to confirm the fallback open command.
 
@@ -59,6 +59,20 @@ Use this path before merging gameplay, GUI, persistence, feeder, combat, or rele
 6. Hover stat-name info markers and confirm formulas live there. HP and Range quality breakdowns should live on the quality diamond.
 7. Confirm stats reserve scrollbar space and values do not render under the scrollbar.
 8. Confirm numeric rich text colors only numbers; units and prose stay neutral.
+9. Enter Build mode, plan core ranks, augments, specialization, elements, and a checked loop priority, then confirm the UI tint and large Build mode title make it clear that this is a preview path. The core identity/name panel should remain separate and airy, the Enter/Exit button should stay anchored at the right edge of the Build panel, target level/core/augment/specialization/element summaries should appear only while Build mode is open, and each loop checkbox should appear as a labeled row under its upgrade or augment.
+10. Exit Build mode, confirm the installed-core header returns to a compact live row, enable Follow build on that path, add levels, and confirm finite targets are spent first while loop priorities keep Follow build enabled. Untick Follow build and re-enter Build mode; the saved build should be editable again. When a finite target is satisfied, Follow build should disappear from the live row.
+11. In Build mode, Ctrl-click a rank increase on an overleveled core and confirm it fills the currently available planned point budget without enabling `Loop forever`.
+12. Set a manual specialization, paste a conflicting copied build, and confirm the manual specialization is not overwritten while the conflict is surfaced.
+13. Copy/paste settings from a configured veteran turret to an empty turret and confirm label visibility, label color, copied build target, Follow build state, bound state, and pending core fulfillment copy without copying the source name, XP, level, kills, or damage. The pending Veteran Core slot should keep the blue requested-core look while still accepting a manually placed core.
+
+### Logistics And Setup Policy
+
+1. Blueprint or copy/paste a configured veteran turret, build the empty copy, and confirm the copied turret requests one Veteran Core when it is in a logistic network.
+2. Deliver a tagged Veteran Core by bot and confirm it installs on that turret with its profile intact while applying the copied build policy.
+3. Repeat with manual placement into the pending core slot and confirm the copied build policy still applies to the carried core.
+4. Deliver a core, then mine or destroy the empty requested turret before the refresh installs it; the delivered core should spill rather than vanish.
+5. Copy/paste a bound veteran turret and confirm the copied turret becomes bound after a core is delivered or manually placed.
+6. Build a batch of requested empty copied turrets and watch UPS/TPS during normal play; there should be no visible stutter from waiting requests.
 
 ### GUI Snapshot Review
 
@@ -146,6 +160,9 @@ Most useful feedback:
 - Did Bind/Unbind make quick turret moves clearer, or does it need different wording or placement?
 - Did the core slot feel close enough to an inventory slot, especially cursor transfer and swap?
 - Did label color and level visibility cover the customization needed for now?
+- Did independent Name/Level/Unspent label controls feel clear?
+- Did Build mode and Auto save setup time without feeling like they stole manual choices?
+- Did logistic Veteran Core requests behave like a useful setup convenience for empty turrets?
 - Did the hidden turret-tile input feel reliable and readable enough?
 - Did passive material progress feel like a clear material goal?
 - Which specialization, element, combo, augment, or stat felt confusing, too weak, or too strong?

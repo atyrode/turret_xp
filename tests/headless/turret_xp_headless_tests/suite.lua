@@ -1,5 +1,6 @@
 local support = require("support")
 
+local automation_tests = require("automation_tests")
 local bound_turret_tests = require("bound_turret_tests")
 local combat_tests = require("combat_tests")
 local compat_tests = require("compat_tests")
@@ -17,6 +18,7 @@ local function run_immediate_tests()
   support.assert_true(remote.interfaces[support.IFACE] ~= nil, "Turret XP test remote interface is unavailable")
 
   gui_support_tests.run_layout_constants_test()
+  gui_support_tests.run_left_column_layout_contract_test(surface)
   gui_support_tests.run_gui_support_samples_test()
   gui_support_tests.run_stats_panel_alignment_test(surface)
   compat_tests.run_compat_samples_test(surface)
@@ -29,6 +31,13 @@ local function run_immediate_tests()
   prototype_budget_tests.run_prototype_budget_test()
   prototype_budget_tests.run_place_result_regression_test()
   gui_support_tests.run_profile_label_test(surface)
+  automation_tests.run_label_display_policy_test(surface)
+  automation_tests.run_build_mode_planning_test(surface)
+  automation_tests.run_core_request_lifecycle_test(surface)
+  automation_tests.run_core_request_pressure_test(surface)
+  automation_tests.run_target_build_policy_test(surface)
+  automation_tests.run_copy_policy_test(surface)
+  automation_tests.run_gui_dispatch_contract_test(surface)
   gui_support_tests.run_runtime_render_pressure_test()
   runtime_pressure_tests.run_world_runtime_pressure_test(surface)
   gui_support_tests.run_gui_action_dispatch_test(surface)
@@ -59,7 +68,9 @@ return {
   test_prefix = support.TEST_PREFIX,
   run_immediate_tests = run_immediate_tests,
   check_deferred_tests = function()
-    combat_tests.check_combat_test(support.get_surface())
-    combat_tests.check_status_damage_test(support.get_surface())
+    local surface = support.get_surface()
+    combat_tests.check_combat_test(surface)
+    combat_tests.check_status_damage_test(surface)
+    automation_tests.run_empty_turret_gui_open_test(surface)
   end,
 }

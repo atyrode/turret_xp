@@ -87,6 +87,7 @@ function profile_service.new(deps)
         root.chips[host.chip_id] = nil
       end
     end
+    deps.destroy_core_requester(entity, true)
     root.turrets[key] = nil
   end
 
@@ -124,6 +125,9 @@ function profile_service.new(deps)
     profile.entity = entity
     root.chips[profile.chip_id] = profile
     host.chip_id = profile.chip_id
+    host.request_core = false
+    deps.destroy_core_requester(entity, true)
+    deps.apply_pending_policy(entity, profile, host)
     deps.ensure_feeder(entity, profile)
     deps.update_name_render(entity, profile)
     deps.update_shield_bar_render(entity, profile, false)

@@ -104,6 +104,95 @@ function gui_components.new(deps)
     return outer, header, scroll
   end
 
+  function service.add_left_section(parent, options)
+    options = options or {}
+    local build_mode = options.build_mode == true
+    local section_style = options.style or (build_mode and "turret_xp_left_section_frame_build_mode" or "turret_xp_left_section_frame")
+    local width = options.width or deps.LAYOUT.left_section_width
+
+    local frame = parent.add({
+      type = "frame",
+      name = options.name,
+      direction = options.direction or "vertical",
+      style = section_style,
+    })
+    frame.tags = options.tags or {
+      turret_xp_left_section = true,
+      turret_xp_build_mode = build_mode,
+    }
+    deps.set_style(frame, "horizontally_stretchable", false)
+    deps.set_style(frame, "width", width)
+    deps.set_style(frame, "minimal_width", width)
+    deps.set_style(frame, "maximal_width", width)
+    deps.set_style(frame, "padding", options.padding or deps.LAYOUT.left_section_padding)
+    if options.vertical_spacing then
+      deps.set_style(frame, "vertical_spacing", options.vertical_spacing)
+    end
+
+    local header
+    if options.title or options.right_caption then
+      header = frame.add({
+        type = "flow",
+        direction = "horizontal",
+      })
+      deps.set_style(header, "horizontally_stretchable", true)
+      deps.set_style(header, "vertical_align", "center")
+      deps.set_style(header, "horizontal_spacing", 6)
+      deps.set_style(header, "bottom_margin", options.header_bottom_margin or 4)
+
+      if options.title then
+        local title = header.add({
+          type = "label",
+          caption = options.title,
+          style = "caption_label",
+        })
+        deps.set_style(title, "font", "default-bold")
+      end
+
+      header.add({
+        type = "empty-widget",
+        style = "flib_horizontal_pusher",
+      })
+
+      if options.right_caption then
+        local right = header.add({
+          type = "label",
+          caption = options.right_caption,
+          style = "caption_label",
+        })
+        deps.set_style(right, "font_color", deps.COLOR.muted)
+      end
+    end
+
+    return frame, header
+  end
+
+  function service.add_subheader_frame(parent, options)
+    options = options or {}
+    local build_mode = options.build_mode == true
+    local frame = parent.add({
+      type = "frame",
+      name = options.name,
+      direction = options.direction or "horizontal",
+      style = options.style or (build_mode and "turret_xp_build_mode_subheader_frame" or "subheader_frame"),
+    })
+    deps.set_style(frame, "horizontally_stretchable", options.horizontally_stretchable ~= false)
+    deps.set_style(frame, "vertical_align", options.vertical_align or "center")
+    if options.horizontal_spacing then
+      deps.set_style(frame, "horizontal_spacing", options.horizontal_spacing)
+    end
+    if options.top_margin then
+      deps.set_style(frame, "top_margin", options.top_margin)
+    end
+    if options.bottom_margin then
+      deps.set_style(frame, "bottom_margin", options.bottom_margin)
+    end
+    if options.padding then
+      deps.set_style(frame, "padding", options.padding)
+    end
+    return frame
+  end
+
   function service.add_section_frame(parent, options)
     options = options or {}
 
@@ -235,11 +324,12 @@ function gui_components.new(deps)
 
   function service.add_stats_section_header(parent, caption)
     local has_previous_content = #(parent.children or {}) > 0
+    local build_mode = parent.tags and parent.tags.turret_xp_build_mode == true
 
     local header = parent.add({
       type = "frame",
       direction = "horizontal",
-      style = "subheader_frame",
+      style = build_mode and "turret_xp_build_mode_subheader_frame" or "subheader_frame",
     })
     deps.set_style(header, "horizontally_stretchable", true)
     deps.set_style(header, "vertical_align", "center")
@@ -258,7 +348,7 @@ function gui_components.new(deps)
       style = "heading_2_label",
     })
     deps.set_style(label, "font", "default-bold")
-    deps.set_style(label, "font_color", deps.COLOR.section_header)
+    deps.set_style(label, "font_color", build_mode and deps.COLOR.build_mode or deps.COLOR.section_header)
     deps.set_style(label, "single_line", true)
 
     header.add({
@@ -313,7 +403,7 @@ function gui_components.new(deps)
     return delimiter
   end
 
-  function service.add_choice_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name)
+  function service.add_choice_row(parent, sprite, name, detail, right_caption, tags, enabled, row_name, action_tooltip)
     local row_definition = {
       type = "table",
       column_count = 3,
@@ -363,6 +453,7 @@ function gui_components.new(deps)
       local button = row.add({
         type = "button",
         caption = right_caption,
+        tooltip = action_tooltip,
         tags = tags,
         enabled = enabled,
       })
@@ -434,11 +525,15 @@ function gui_components.new(deps)
 
   function service.add_evolution_section(parent, options)
     options = options or {}
+    local build_mode = parent.tags and parent.tags.turret_xp_build_mode == true
     local section = parent.add({
       type = "frame",
       direction = "vertical",
-      style = "deep_frame_in_shallow_frame",
+      style = build_mode and "turret_xp_build_mode_deep_frame" or "deep_frame_in_shallow_frame",
     })
+    section.tags = {
+      turret_xp_build_mode = build_mode,
+    }
     deps.set_evolution_content_width(section)
     deps.set_style(section, "top_margin", 6)
     deps.set_style(section, "bottom_margin", 6)
@@ -475,7 +570,7 @@ function gui_components.new(deps)
       style = "caption_label",
     })
     deps.set_style(title_label, "font", "default-bold")
-    deps.set_style(title_label, "font_color", deps.COLOR.section_header)
+    deps.set_style(title_label, "font_color", build_mode and deps.COLOR.build_mode or deps.COLOR.section_header)
 
     header.add({
       type = "empty-widget",

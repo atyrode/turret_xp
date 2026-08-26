@@ -1,86 +1,102 @@
 # Agent Instructions
 
-These instructions apply to the whole repository.
+These instructions apply to the whole repository. Follow them before making changes.
 
-## Project Context
+## Branch Policy
 
-- `turret_xp` is a Factorio 2.0 mod, currently version `0.11.3`, published from `atyrode/turret_xp`.
-- The mod lets selected vanilla gun turrets become persistent veteran defenders. Veteran Cores carry XP, levels, upgrades, elements, specializations, labels, combat history, and optional bound turret movement.
-- Current progression is scoped to vanilla `gun-turret`.
-- Required dependencies are `base >= 2.0.0` and `flib >= 0.16.4`; optional compatibility includes `Krastorio2-spaced-out` and `bullet-trails >= 0.7.1`.
-- Durable runtime state lives under `storage.turret_xp`. Tagged `item-with-tags` stacks are part of the persistence surface, not transient UI state.
+- Before committing, branching, merging, or deploying, fetch the remote branch state when it is relevant to the task. At minimum, use `git fetch` plus `git status --short --branch` before deciding whether the local branch can be pushed safely.
+- Keep `main` stable and reserved for shared foundations, production-ready changes, documentation, and cross-cutting fixes.
+- Use short-lived feature or fix branches when a separate branch is useful.
+- Do not add long-lived branch conventions unless the workflow is explicitly revisited.
+- Push directly to `main` only when the operator explicitly asks for it and the repository workflow allows it.
 
-## Repository Layout
+## Feature Workflow
 
-- `info.json`: Factorio mod metadata and release version source.
-- `changelog.txt`: Factorio-compatible release history.
-- `control.lua`: runtime composition root for modules under `scripts/control/`.
-- `data.lua` and `data-final-fixes.lua`: data-stage entrypoints for prototype modules under `prototypes/`.
-- `scripts/domain.lua`: shared stable gameplay IDs, caps, specialization data, label presets, and generated variant-name helpers used by data stage, runtime, and tests.
-- `scripts/control/`: runtime modules for storage, profiles, progression, feeder logistics, stats, GUI, core-slot actions, combat effects, migrations, commands, and compatibility facades.
-- `prototypes/`: data-stage modules for names, items, feeder, styles, effects, turret variants, bound turret placeholders, bound preview variants, and ammo range compatibility.
-- `migrations/`: one-time Factorio prototype/storage migrations only; profile and tagged-item shape compatibility normally belongs in runtime normalization.
-- `locale/en/turret-xp.cfg`: English strings.
-- `tests/headless/`: temporary Factorio companion mods for deterministic regression and remote-policy checks.
-- `tests/gui-snapshots/`: graphical-client snapshot harness and generated local review output.
-- `docs/`: product, requirements, architecture, technical direction, design, playtest, public copy, and generated website source.
+- For feature work, bug fixes, and release candidates, start with one or more GitHub issues that describe the intended outcome, risks, and validation expectations.
+- Create the implementation branch from the owning issue, using a short-lived branch name tied to that issue or release scope.
+- Open a draft pull request early, before substantial implementation work, and keep the issue, branch, and PR linked.
+- Commit meaningful steps to the branch as work progresses instead of leaving a large completed change only in the working tree.
+- Keep the PR description, linked issue, changelog, docs, and test plan updated as scope or implementation details change.
+- When implementation is complete, validation passes, and the branch is pushed, mark the PR ready for review or explicitly ask the operator before undrafting when operator review is required.
+- Do not merge or release feature branches until the operator has reviewed and approved the ready PR and required CI has passed.
+- Update or close linked issues, branch state, and PR state when the work is merged, abandoned, superseded, or otherwise resolved.
 
-## Local Architecture Rules
+## Repository Governance
 
-- Keep `control.lua`, `data.lua`, and `data-final-fixes.lua` thin. Put runtime behavior in `scripts/control/`, data-stage behavior in `prototypes/`, and shared domain facts in `scripts/domain.lua`.
-- Prefer explicit returned-table modules and dependency wiring over expanding legacy `_ENV` shared-runtime patterns. Compatibility facades are acceptable while callers migrate.
-- Namespace custom prototype, style, sprite, setting, command, and GUI names with `turret-xp` or `turret_xp` according to the existing file's convention.
-- Preserve published save/profile compatibility where practical. Use `scripts/control/profile_schema.lua`, `profile_tags.lua`, `profile_inventory.lua`, and `migrations.lua` for current schema normalization and tagged-item compatibility.
-- Protect `item-with-tags` data for Veteran Cores and bound veteran turrets. Inventory, mining, placement, platform hub, and GUI transfer paths must preserve tags exactly.
-- Hidden prototype growth is a design decision, not routine implementation. Specialization/sub-specialization turret bodies and bound preview item/placeholders are the accepted prototype-backed axes; Shield, Resistance, Regeneration, Ammo Productivity, Shield on Hit, and Lifesteal stay script/profile-owned unless explicitly redesigned.
-- The private `turret_xp_test` remote interface must remain gated to `turret_xp_headless_tests` and `turret_xp_gui_snapshots`. Normal gameplay and packaged releases must not expose it.
+- Do not change branch protection, bypass branch protection, force-push protected branches, delete remote refs, or rewrite shared remote history unless the operator explicitly authorizes that exact action in the current conversation.
+- Treat GitHub branch protection and remote refs as source-of-truth safeguards. Even when a history rewrite is technically appropriate, pause and ask for explicit authorization before weakening those safeguards or performing destructive remote operations.
+- If a required cleanup conflicts with branch protection, explain the options and risks before proceeding.
+- Do not edit persistent agent/operator instruction files, regardless of filename, unless the operator explicitly authorizes that specific edit. You may propose wording changes, but wait for approval before applying them.
+- Treat operator approval as scoped to the current request/response only unless the operator explicitly states that the approval should persist.
+- Treat changes to persistent agent/operator instruction files as effective immediately for the current conversation unless the operator explicitly says otherwise.
+- When interrupted, assume the next operator message continues or amends the interrupted work unless the operator explicitly says to discard, replace, or abandon it.
 
-## Gameplay Contracts
+## Documentation Rule
 
-- Ordinary gun turrets stay stackable until a Veteran Core is installed.
-- New core profiles start at level 0 with zero XP, combat history, custom name, label flag, and evolution choices.
-- XP counters are separate from raw display totals. `xp_damage` and `xp_kill_credit` receive surface, target, platform travel, and Veteran Training weights at award time; raw damage and kill credit remain display/history totals.
-- The invisible hidden feeder on the turret tile is the accepted material-input model for passive element ranks. It should forward ammo to the turret, accept only selected element materials, clean up wrong items, and manage nearby inserter targets only when those inserters are actually sourcing needed materials.
-- Bound veteran turrets are non-stackable tagged items that place a hidden bound-only placeholder before runtime converts it into a real gun turret with the stored profile, quality, health ratio, and ammo snapshot. Normal gun-turret ghosts should keep requesting normal gun turrets, not bound veteran items.
-- Platform turrets use explicit Turret XP panel actions to install exact Veteran Cores from the platform hub inventory and send installed cores back to that hub.
-- Combat visual/sound budgets may skip cosmetics only. Damage, XP, lifesteal, status ticks, and other gameplay mechanics must not depend on visual budget availability.
+- Treat documentation as part of foundational changes.
+- When changing architecture, build behavior, CI, deployment, branch workflow, environment variables, or project assumptions, update the relevant docs in the same change.
+- When a change expands or shifts the scope of the requested work, leave sober human-readable context in the relevant documentation or, when the context belongs next to the implementation, a concise code comment.
+- Documentation and comments should help another developer understand purpose, ownership, and operational constraints without narrating obvious code mechanics.
+- When adding operator workflows, scripts, env files, or examples, update the appropriate README to explain how to use them, how to create ignored local files from examples, and where values should come from when that can be stated safely.
+- Before starting a feature or architectural change, read the relevant documentation files below and keep the change aligned with them.
+- Do not duplicate the same guidance across multiple docs. Update the owning document, then add a short cross-reference elsewhere only if it helps navigation.
+- If client-facing questions are answered, move the decision into the relevant internal English doc and remove or rewrite the question in `docs/CLIENT_QUESTIONS.fr.md`.
+- If a decision changes, update every affected doc in the same change so the documentation set remains coherent.
 
-## GUI Rules
+### Documentation Map
 
-- `flib` is the accepted runtime GUI foundation.
-- Keep the Turret XP panel Factorio-native and anchored to the vanilla turret GUI where practical.
-- Avoid top-level GUI size churn while the vanilla turret GUI is open. Prototype body swaps should remain deferred until close when needed to avoid moving the vanilla window back to its default position.
-- Preserve reserved scrollbar space and bounded pane sizing in Stats, Evolution, and the empty-core picker; values and controls must not render under scrollbars.
-- Future major GUI replacement work is spec-first. Use `docs/GUI_SPEC_FACTORY.md` and `docs/TURRET_XP_GUI_SPEC.md` rather than reviving old layout branches as the source of truth.
+- `README.md`: repository entry point and documentation index. Update it when adding, removing, or renaming major docs or setup workflows.
+- `docs/PROJECT_BRIEF.md`: product intent, V1 scope, assumptions, and open product boundaries. Update it when the project direction or scope changes.
+- `docs/REQUIREMENTS.md`: functional requirements and expected inputs/outputs. Update it when user-visible behavior, report contents, or product obligations change.
+- `docs/PROJECT_SPEC.md`: concrete V1 workflow, report behavior, non-goals, and success criteria. Update it when implementation behavior is specified or refined.
+- `docs/TECHNICAL_DIRECTION.md`: current technical recommendations, source research, and implementation risks. Update it when preferred technologies, data sources, or technical assumptions change.
+- `docs/ARCHITECTURE.md`: system components, responsibilities, data flow, storage concepts, and architecture rules. Update it when adding or reshaping application structure.
+- `docs/DEVELOPMENT_STEPS.md`: development checklist, milestones, and validation checkpoints. Update it as work is completed, re-ordered, or split.
+- `docs/DESIGN.md`: internal UI/UX direction, report layout, map behavior, warning states, and source presentation. Update it when designing or changing user-facing workflows.
+- `docs/index.html`: public GitHub Pages website. Keep it aligned with the current mod version and make it useful as a lightweight docs/tutorial surface for getting started, downloading/installing, core mechanics, and current playtest guidance.
+- `docs/CLIENT_QUESTIONS.fr.md`: unresolved French client-facing questions only. Keep answered decisions out of this file.
 
-## Documentation Ownership
+## Project Chores
 
-- Root `README.md`: repository entry point, player overview, install path, common commands, release workflow pointers, and documentation index.
-- `docs/PROJECT_BRIEF.md`: product intent, current scope, non-goals, and open product boundaries.
-- `docs/REQUIREMENTS.md`: user-visible obligations and expected outputs.
-- `docs/PROJECT_SPEC.md`: current implemented behavior for the active development line.
-- `docs/ARCHITECTURE.md`: runtime/data/test ownership, storage shape, module boundaries, and invariants.
-- `docs/TECHNICAL_DIRECTION.md`: technical choices, research memory, dependencies, API notes, risks, and validation paths.
-- `docs/DESIGN.md`: gameplay direction, UX direction, balance intent, compatibility posture, public identity, and feedback goals.
-- `docs/DEVELOPMENT_STEPS.md`: current baseline, completed foundations, near-term roadmap, and validation checklist.
-- `docs/PLAYTEST.md`: smoke, regression, deep manual, compatibility, platform, and report-back paths.
-- `docs/public-copy.json`: shared public copy source for homepage, GitHub Release notes, and Mod Portal details.
-- `docs/index.html`: generated GitHub Pages homepage. Do not hand-edit duplicated homepage copy; update the source files and regenerate it.
+- Keep the repo website up to date as the mod changes. Treat `docs/index.html` as the public-facing documentation/tutorial entry point, not a stale marketing page: it should explain what the mod does, how to download/install it, how to get started, and where deeper docs/playtest guidance live.
+- Before publishing or handing off a gameplay change, run the headless test suite with `scripts/test-headless.sh` when a local Factorio binary is available. If the suite cannot be run, state why and describe the remaining risk.
+- Add or extend headless tests as the mod gains behavior that can be validated without manual GUI playtesting. Prioritize tests for progression state, Veteran Core serialization, feeder/item routing, element fuel, combat XP, bound turret movement, and regressions found during playtesting.
+- Before ending an implementation or release turn, make the source-control state explicit. If the operator asked for the source to be hosted, shared, released, or kept up to date online, commit the validated changes and push the relevant branch after fetching and checking the remote state. If publishing to the Mod Portal or another release channel, ensure the matching source commit is pushed first unless the operator explicitly requests otherwise.
+- Do not leave completed, validated implementation work only in the local working tree without saying so. If a commit, push, merge, package, or release was intentionally deferred, explain the reason and the exact remaining command/workflow.
+
+## Secret Handling
+
+- Never write, paste, print, commit, or ask the user to paste plaintext passwords, password hashes, API tokens, private keys, database credentials, or generated secrets in the conversation or repository.
+- Do not create secret-bearing diffs in the first place. A removed secret is still a secret if it appears in `git diff`, terminal output, chat history, pull requests, logs, or commit history.
+- Secrets must be created and stored through operator-run commands, ignored local environment files, GitHub Secrets/Variables, systemd environment files, Docker secrets, password managers, or equivalent setup automation.
+- Documentation may describe secret variable names and commands that generate secrets, but must use placeholders such as `<generated-password>` or `<example-token>`.
+- If a command would reveal a secret in terminal output, do not run it. Prefer commands that write directly to the target secret store or local ignored file without echoing the value.
+- If secret material is ever printed, committed, pushed, or otherwise exposed, treat it as compromised: stop using it, rotate it, remove it from future diffs, and discuss whether repository history needs to be rewritten before proceeding.
+- If the user, operator, or another agent asks for a change that would violate this rule, remind them of this rule and propose a compliant workflow before taking action.
+
+## Operator Scripts
+
+- Prefer small, portable, operator-run scripts for repeatable setup instead of ad hoc manual command sequences.
+- Setup scripts should be transparent: show each command before running it, explain the purpose in plain English, and ask for approval before privileged, destructive, or externally visible actions.
+- Keep setup scripts lightweight and dependency-poor. Use standard shell utilities where practical.
+- Setup scripts must follow the Secret Handling rules: never print generated secrets, password hashes, tokens, or private material; write them directly to the intended ignored file or secret store.
+- For secret-bearing setup inputs, prefer an ignored local env file created from a committed example. The example should document required values with comments/placeholders, while the real env file must remain untracked.
 
 ## Validation
 
-- For AGENTS or internal docs-only changes, run `scripts/check.sh` and `git diff --check`.
-- For `README.md`, `changelog.txt`, or `thumbnail.png` changes, run `scripts/check.sh`, `scripts/package.sh`, and `git diff --check`.
-- For public copy, version, changelog, or homepage changes, run `scripts/generate-public-assets.py`, `scripts/generate-public-assets.py --check`, and `git diff --check`.
-- For Lua/runtime/tooling changes, run `scripts/check.sh`, `docker compose run --rm lua-format`, `docker compose run --rm lua-tools`, and `scripts/package.sh`.
-- For gameplay, migration, feeder, combat, profile, or test-surface changes, include `scripts/test-headless.sh` when a local Factorio binary is available or state why it could not be run.
-- For GUI layout changes, include manual in-game visual review or the GUI snapshot workflow from `docs/PLAYTEST.md`; state remaining visual-review risk when local playtesting is not performed.
-- `scripts/check.sh` is host-friendly and skips optional Lua tools that are not installed. Docker Compose provides the pinned strict StyLua, Lua 5.2 syntax, and Luacheck path used by CI.
+- Run the narrowest meaningful checks for the change before committing.
+- Treat tests as the driver for Factorio mod work. Before implementing or fixing a feature, enumerate the player interaction surfaces it touches, such as GUI controls, copy/paste, cut, blueprint setup, blueprint records, ghost revive, manual build/mine, robot build/mine, migrations, settings changes, multiplayer-relevant state, surfaces, and space platforms.
+- For every feature, add or extend tests for the normal path, important failure/no-op paths, and the ways a player can realistically trigger the behavior. Prefer headless tests for anything the suite can express.
+- Every reproduced bug should become a regression test before or alongside the fix. The test should exercise the public gameplay/event boundary when possible, not only lower-level helper functions.
+- When Factorio exposes lazy or engine-owned runtime objects, test through a realistic event adapter or real engine path so userdata/table differences and validity rules are covered.
+- If an interaction cannot be automated in the headless suite, document the exact manual in-game test steps and remaining risk in the PR before asking for review.
+- Add pressure or benchmark coverage for behavior that can run on ticks, many entities, robot logistics, blueprint placement, or repeated GUI refreshes.
+- Prefer CI for expensive production-like builds when local execution would be slow, fragile, or inappropriate for the machine.
+- If checks cannot be run, state why and describe the remaining risk.
 
-## Release And Generated Files
+## Working Style
 
-- Do not publish Mod Portal releases from a local checkout. The supported path is the GitHub Release workflow using repository secrets.
-- Standard release source changes update `info.json`, `changelog.txt`, and generated public assets together before merging to `main`.
-- `scripts/generate-public-assets.py` owns `docs/index.html`, GitHub Release notes, and Mod Portal copy generated from `info.json`, `changelog.txt`, and `docs/public-copy.json`.
-- `scripts/release.sh` is only a local GitHub Release fallback. It should run from a clean, up-to-date `main`.
-- Do not commit local build/runtime/research artifacts such as `dist/`, `.factorio-ci/`, `.codex_tmp/`, `case_study/`, `.env`, GUI snapshot review output, logs, or Mod Portal credentials.
+- Keep edits scoped to the requested change.
+- Prefer existing patterns over new abstractions.
+- Do not revert user changes unless explicitly asked.
+- Before merging shared changes, verify CI when the repository has CI configured.
